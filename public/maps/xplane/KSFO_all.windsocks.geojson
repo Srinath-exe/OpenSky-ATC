@@ -1,0 +1,15 @@
+{
+"type": "FeatureCollection",
+"name": "KSFO_all.windsocks",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -122.38229428, 37.61005584 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -122.36855511, 37.62645415 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -122.38101132, 37.60781818 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -122.36547211, 37.62739881 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -122.39213785, 37.62924075 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -122.35901928, 37.61338184 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -122.38921976, 37.62582632 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -122.36041429, 37.61125353 ] } }
+]
+}

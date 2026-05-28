@@ -1,0 +1,18 @@
+{
+"type": "FeatureCollection",
+"name": "KBOS_all.windsocks",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "illuminated": true, "name": "New Windsock 4" }, "geometry": { "type": "Point", "coordinates": [ -71.00438692, 42.37647035 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "New Windsock 3" }, "geometry": { "type": "Point", "coordinates": [ -71.00643295, 42.36767251 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "New Windsock 2" }, "geometry": { "type": "Point", "coordinates": [ -71.01853008, 42.35491877 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "New Windsock 1" }, "geometry": { "type": "Point", "coordinates": [ -71.01074115, 42.34908362 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "New Windsock 1" }, "geometry": { "type": "Point", "coordinates": [ -71.00277074, 42.36530285 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -70.99552158, 42.35642315 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -71.00289909, 42.37403054 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -71.0110066, 42.35516227 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -71.01012641, 42.36068323 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -70.99040038, 42.36054677 ] } },
+{ "type": "Feature", "properties": { "illuminated": true, "name": "Windsock" }, "geometry": { "type": "Point", "coordinates": [ -71.01452108, 42.37094211 ] } }
+]
+}
