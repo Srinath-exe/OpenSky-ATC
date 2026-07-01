@@ -4,8 +4,10 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 // ============================================================
-//  TYPE DEFINITIONS
+//  HiFi Multi-Airport Map — Dark Aeronautical Theme
+//  Unified with /lax visual style: dark background, crisp layers.
 // ============================================================
+
 export interface AirportConfig {
   icao: string;
   name: string;
@@ -14,6 +16,15 @@ export interface AirportConfig {
   runways_info: string[];
   sources: Record<string, any>;
   layers: any[];
+  demoPlanes: AircraftMarker[];
+}
+
+interface AircraftMarker {
+  callsign: string;
+  lng: number;
+  lat: number;
+  heading: number;
+  color: string;
 }
 
 function buildSources(icao: string): Record<string, any> {
@@ -35,421 +46,334 @@ function buildSources(icao: string): Record<string, any> {
   };
 }
 
-// ============================================================
-//  NAVIGRAPH JEPPESEN CHART STYLE — Light "Enroute High" Theme
-//
-//  Colors extracted directly from Navigraph Charts v5:
-//  - Land/paper background:  #dde1e6   (cool light grey-blue)
-//  - Airport boundary fill:  #ccd0d6   (slightly darker paper)
-//  - Apron pavement:         #b8bcbf   (warm medium grey)
-//  - Taxiway pavement:       #a8acaf   (cooler darker grey)
-//  - Terminal buildings:     #4e5d78   (Navigraph dark navy blue)
-//  - Runway asphalt:         #27292e   (near-black dark charcoal)
-//  - Taxiway edge lines:     #f5c800   (vivid Navigraph yellow)
-//  - Centerlines:            #f5c800   (same yellow, thinner)
-//  - Hold-short lines:       #cc3300   (bright red-orange)
-//  - Sign labels:            black on #f5c800 yellow box
-//  - Jetbridges:             #3d5a80   (muted steel blue)
-//  - Gate dots (PAX):        #c94090   (Navigraph magenta-pink)
-//  - Gate dots (cargo):      #6c757d   (muted grey)
-// ============================================================
+// ── Unified dark color palette (same as /lax) ──────────────────────────────
+const C = {
+  bg:        '#111827',
+  boundary:  '#1f2937',
+  apron:     '#374151',
+  taxiway:   '#4b5563',
+  runway:    '#0b0f19',
+  runwayAsphalt: '#2c3038',
+  runwayShoulder: '#1e2125',
+  yellow:    '#facc15',
+  holdRed:   '#ef4444',
+  white:     '#f9fafb',
+  signText:  '#facc15',
+  gateBlue:  '#60a5fa',
+  gateGrey:  '#9ca3af',
+  panelBg:   '#1f2937',
+  panelText: '#e5e7eb',
+  terminal:  '#2d3748',
+  jetbridge: '#3d5a80',
+  jetbridgeAccent: '#718096',
+};
 
-const NAVIGRAPH_LAYERS = [
-  // ── 1. Land/paper background ─────────────────────────────────────────────
-  {
-    id: 'bg',
-    type: 'background',
-    paint: { 'background-color': '#dde1e6' },
-  },
+function buildLayers(): any[] {
+  return [
+    // Background
+    { id: 'bg', type: 'background', paint: { 'background-color': C.bg } },
 
-  // ── 2. Airport boundary area (tinted paper zone) ─────────────────────────
-  {
-    id: 'boundary-fill',
-    type: 'fill',
-    source: 'boundary',
-    paint: {
-      'fill-color': '#ccd0d5',
-      'fill-opacity': 1.0,
+    // Boundary
+    {
+      id: 'boundary-fill',
+      type: 'fill',
+      source: 'boundary',
+      paint: { 'fill-color': C.boundary, 'fill-opacity': 1 },
     },
-  },
-  {
-    id: 'boundary-line',
-    type: 'line',
-    source: 'boundary',
-    paint: {
-      'line-color': '#9aa0a8',
-      'line-width': 1.0,
-      'line-opacity': 0.6,
-    },
-  },
 
-  // ── 3. Apron / ramp pavement ─────────────────────────────────────────────
-  {
-    id: 'apron-fill',
-    type: 'fill',
-    source: 'aprons',
-    paint: {
-      'fill-color': '#b6babe',
-      'fill-opacity': 1.0,
+    // Aprons & Taxiways
+    {
+      id: 'apron-fill',
+      type: 'fill',
+      source: 'aprons',
+      paint: { 'fill-color': C.apron, 'fill-opacity': 1 },
     },
-  },
-  {
-    id: 'apron-outline',
-    type: 'line',
-    source: 'aprons',
-    layout: { 'line-join': 'round', 'line-cap': 'round' },
-    paint: {
-      'line-color': '#9aa0a8',
-      'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.4, 16, 0.8, 18, 1.5],
-      'line-opacity': 0.5,
+    {
+      id: 'taxiway-fill',
+      type: 'fill',
+      source: 'taxiways',
+      paint: { 'fill-color': C.taxiway, 'fill-opacity': 1 },
     },
-  },
 
-  // ── 4. Taxiway pavement ───────────────────────────────────────────────────
-  {
-    id: 'taxiway-fill',
-    type: 'fill',
-    source: 'taxiways',
-    paint: {
-      'fill-color': '#a8acb0',
-      'fill-opacity': 1.0,
+    // Terminal buildings
+    {
+      id: 'terminal-fill',
+      type: 'fill',
+      source: 'terminals',
+      paint: { 'fill-color': C.terminal, 'fill-opacity': 0.92 },
     },
-  },
-  {
-    id: 'taxiway-outline',
-    type: 'line',
-    source: 'taxiways',
-    layout: { 'line-join': 'round', 'line-cap': 'round' },
-    paint: {
-      'line-color': '#8a9098',
-      'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.3, 15, 0.6, 16, 1.0, 18, 1.8],
-      'line-opacity': 0.5,
+    {
+      id: 'terminal-outline',
+      type: 'line',
+      source: 'terminals',
+      layout: { 'line-join': 'miter', 'line-cap': 'butt' },
+      paint: {
+        'line-color': '#1a202c',
+        'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.8, 15, 1.2, 16, 1.8, 18, 2.5],
+        'line-opacity': 0.85,
+      },
     },
-  },
 
-  // ── 5. TERMINAL BUILDINGS (Navigraph dark navy/indigo) ───────────────────
-  // This is the defining visual element — large dark blue structures
-  {
-    id: 'terminal-fill',
-    type: 'fill',
-    source: 'terminals',
-    paint: {
-      'fill-color': '#4a5568',   // Dark navy blue — exact Navigraph terminal tone
-      'fill-opacity': 0.92,
+    // Taxiway lines
+    {
+      id: 'taxiway-edges',
+      type: 'line',
+      source: 'edges',
+      filter: ['in', 'YELLOW', ['get', 'painted_line_type']],
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': C.yellow,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.5, 14, 1, 16, 1.5, 18, 2.5],
+      },
     },
-  },
-  {
-    id: 'terminal-outline',
-    type: 'line',
-    source: 'terminals',
-    layout: { 'line-join': 'miter', 'line-cap': 'butt' },
-    paint: {
-      'line-color': '#2d3748',
-      'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.8, 15, 1.2, 16, 1.8, 18, 2.5],
-      'line-opacity': 0.85,
+    {
+      id: 'taxiway-centerlines',
+      type: 'line',
+      source: 'centerlines',
+      filter: ['!', ['in', 'ILS', ['get', 'painted_line_type']]],
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': C.yellow,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.4, 14, 0.8, 16, 1.2, 18, 2],
+        'line-opacity': 0.8,
+      },
     },
-  },
 
-  // ── 6. Runway — wide pitch-black asphalt band ─────────────────────────────
-  {
-    id: 'runway-shoulder',
-    type: 'line',
-    source: 'runways',
-    layout: { 'line-cap': 'butt', 'line-join': 'miter' },
-    paint: {
-      'line-color': '#1e2125',
-      'line-width': ['interpolate', ['linear'], ['zoom'],
-        11, 3, 12, 5, 13, 9, 14, 16, 15, 28, 16, 46, 17, 74, 18, 118],
-      'line-opacity': 1.0,
+    // Runways
+    {
+      id: 'runway-shoulder',
+      type: 'line',
+      source: 'runways',
+      layout: { 'line-cap': 'butt', 'line-join': 'miter' },
+      paint: {
+        'line-color': C.runwayShoulder,
+        'line-width': ['interpolate', ['linear'], ['zoom'],
+          11, 4, 12, 6, 13, 11, 14, 18, 15, 30, 16, 50, 17, 80, 18, 128],
+      },
     },
-  },
-  {
-    id: 'runway-pavement',
-    type: 'line',
-    source: 'runways',
-    layout: { 'line-cap': 'butt', 'line-join': 'miter' },
-    paint: {
-      'line-color': '#2c3038',
-      'line-width': ['interpolate', ['linear'], ['zoom'],
-        11, 2, 12, 3.5, 13, 6, 14, 12, 15, 20, 16, 34, 17, 54, 18, 88],
+    {
+      id: 'runway-pavement',
+      type: 'line',
+      source: 'runways',
+      layout: { 'line-cap': 'butt', 'line-join': 'miter' },
+      paint: {
+        'line-color': C.runwayAsphalt,
+        'line-width': ['interpolate', ['linear'], ['zoom'],
+          11, 3, 12, 4.5, 13, 8, 14, 14, 15, 22, 16, 38, 17, 60, 18, 96],
+      },
     },
-  },
+    {
+      id: 'runway-edge-left',
+      type: 'line',
+      source: 'runways',
+      minzoom: 13,
+      layout: { 'line-cap': 'butt' },
+      paint: {
+        'line-color': C.white,
+        'line-width': 1.5,
+        'line-offset': ['interpolate', ['linear'], ['zoom'],
+          13, 4, 14, 6.5, 15, 10.5, 16, 17.5, 17, 28, 18, 45],
+        'line-opacity': 0.95,
+      },
+    },
+    {
+      id: 'runway-edge-right',
+      type: 'line',
+      source: 'runways',
+      minzoom: 13,
+      layout: { 'line-cap': 'butt' },
+      paint: {
+        'line-color': C.white,
+        'line-width': 1.5,
+        'line-offset': ['interpolate', ['linear'], ['zoom'],
+          13, -4, 14, -6.5, 15, -10.5, 16, -17.5, 17, -28, 18, -45],
+        'line-opacity': 0.95,
+      },
+    },
+    {
+      id: 'runway-centerline',
+      type: 'line',
+      source: 'runways',
+      minzoom: 13,
+      paint: {
+        'line-color': C.white,
+        'line-width': 1.5,
+        'line-dasharray': [10, 7],
+        'line-opacity': 0.90,
+      },
+    },
 
-  // ── 7. Runway edge stripes (white) ───────────────────────────────────────
-  {
-    id: 'runway-edge-left',
-    type: 'line',
-    source: 'runways',
-    minzoom: 13,
-    layout: { 'line-cap': 'butt' },
-    paint: {
-      'line-color': '#ffffff',
-      'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.8, 14, 1.0, 15, 1.4, 16, 2.0, 18, 3.2],
-      'line-offset': ['interpolate', ['linear'], ['zoom'],
-        13, 3.5, 14, 6, 15, 10, 16, 16, 17, 26, 18, 42],
-      'line-opacity': 0.95,
-    },
-  },
-  {
-    id: 'runway-edge-right',
-    type: 'line',
-    source: 'runways',
-    minzoom: 13,
-    layout: { 'line-cap': 'butt' },
-    paint: {
-      'line-color': '#ffffff',
-      'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.8, 14, 1.0, 15, 1.4, 16, 2.0, 18, 3.2],
-      'line-offset': ['interpolate', ['linear'], ['zoom'],
-        13, -3.5, 14, -6, 15, -10, 16, -16, 17, -26, 18, -42],
-      'line-opacity': 0.95,
-    },
-  },
-
-  // ── 8. Runway centerline dashes (white) ──────────────────────────────────
-  {
-    id: 'runway-centerline',
-    type: 'line',
-    source: 'runways',
-    minzoom: 14,
-    paint: {
-      'line-color': '#ffffff',
-      'line-width': ['interpolate', ['linear'], ['zoom'], 14, 0.7, 15, 1.0, 16, 1.5, 18, 2.6],
-      'line-dasharray': [12, 8],
-      'line-opacity': 0.90,
-    },
-  },
-
-  // ── 9. Taxiway EDGE lines — vivid Navigraph yellow ───────────────────────
-  {
-    id: 'taxiway-edge-main',
-    type: 'line',
-    source: 'edges',
-    layout: { 'line-join': 'round', 'line-cap': 'round' },
-    paint: {
-      'line-color': '#f5c800',
-      'line-width': ['interpolate', ['linear'], ['zoom'],
-        11, 0.4, 12, 0.6, 13, 0.9, 14, 1.1, 15, 1.5, 16, 2.0, 17, 2.6, 18, 3.4],
-      'line-opacity': 1.0,
-    },
-  },
-
-  // ── 10. Taxiway CENTERLINES — thinner yellow ─────────────────────────────
-  {
-    id: 'centerline-main',
-    type: 'line',
-    source: 'centerlines',
-    layout: { 'line-join': 'round', 'line-cap': 'round' },
-    paint: {
-      'line-color': '#f5c800',
-      'line-width': ['interpolate', ['linear'], ['zoom'],
-        11, 0.3, 12, 0.5, 13, 0.7, 14, 0.9, 15, 1.1, 16, 1.4, 17, 1.8, 18, 2.4],
-      'line-opacity': 0.95,
-    },
-  },
-
-  // ── 11. White painted markings ────────────────────────────────────────────
-  {
-    id: 'other-line-white',
-    type: 'line',
-    source: 'otherLines',
-    filter: ['any',
-      ['==', ['get', 'painted_line_type'], 'SOLID_WHITE'],
-      ['==', ['get', 'painted_line_type'], 'WIDE_SOLID_WHITE'],
-    ],
-    layout: { 'line-join': 'round', 'line-cap': 'round' },
-    paint: {
-      'line-color': '#ffffff',
-      'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.6, 15, 1.0, 16, 1.6, 18, 2.5],
-      'line-opacity': 0.85,
-    },
-  },
-
-  // ── 12. Red painted markings ─────────────────────────────────────────────
-  {
-    id: 'other-line-red',
-    type: 'line',
-    source: 'otherLines',
-    filter: ['==', ['get', 'painted_line_type'], 'SOLID_RED'],
-    layout: { 'line-join': 'round', 'line-cap': 'round' },
-    paint: {
-      'line-color': '#cc3300',
-      'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.7, 15, 1.2, 16, 1.8, 18, 3.0],
-      'line-opacity': 0.9,
-    },
-  },
-
-  // ── 13. Hold-short lines — solid red-orange double bars ──────────────────
-  {
-    id: 'hold-lines',
-    type: 'line',
-    source: 'holds',
-    minzoom: 12,
-    layout: { 'line-cap': 'square' },
-    paint: {
-      'line-color': '#cc3300',
-      'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1.0, 13, 1.5, 14, 2.2, 15, 3.0, 16, 4.2, 18, 6.5],
-      'line-opacity': 1.0,
-    },
-  },
-
-  // ── 14. JETBRIDGES — steel-blue connectors (terminal edge → gate) ─────────
-  // Styled to match Navigraph's thin dark connector lines
-  {
-    id: 'jetbridge-line',
-    type: 'line',
-    source: 'jetbridges',
-    minzoom: 14,
-    layout: { 'line-join': 'round', 'line-cap': 'butt' },
-    paint: {
-      'line-color': '#2d3748',        // Dark navy matching terminal outline
-      'line-width': ['interpolate', ['linear'], ['zoom'],
-        14, 2.0, 15, 2.8, 16, 3.8, 17, 5.0, 18, 6.5],
-      'line-opacity': 0.9,
-    },
-  },
-  // Bright accent stripe on the jetbridge (lighter centre line)
-  {
-    id: 'jetbridge-stripe',
-    type: 'line',
-    source: 'jetbridges',
-    minzoom: 15,
-    layout: { 'line-join': 'round', 'line-cap': 'butt' },
-    paint: {
-      'line-color': '#718096',        // Lighter steel blue accent
-      'line-width': ['interpolate', ['linear'], ['zoom'],
-        15, 0.8, 16, 1.2, 17, 1.8, 18, 2.4],
-      'line-opacity': 0.7,
-    },
-  },
-
-  // ── 15. Windsock positions ───────────────────────────────────────────────
-  {
-    id: 'windsock-icon',
-    type: 'circle',
-    source: 'windsocks',
-    minzoom: 13,
-    paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3, 15, 4.5, 18, 6],
-      'circle-color': '#e07b00',
-      'circle-stroke-color': '#ffffff',
-      'circle-stroke-width': 1.5,
-    },
-  },
-
-  // ── 16. Gate / parking stand circles ────────────────────────────────────
-  // PAX gates = Navigraph magenta-pink; cargo/other = grey
-  {
-    id: 'gates-circle',
-    type: 'circle',
-    source: 'gates',
-    paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'],
-        12, 1.2, 13, 2.0, 14, 3.2, 15, 4.5, 16, 6.0, 17, 7.5, 18, 9.5],
-      'circle-color': [
-        'match', ['get', 'location_type'],
-        'gate',     '#c94090',    // Navigraph PAX pink/magenta
-        'tie_down', '#6c757d',    // GA / ramp — grey
-        '#9b59b6'                 // fallback purple
+    // Markings
+    {
+      id: 'markings-white',
+      type: 'line',
+      source: 'otherLines',
+      filter: ['any',
+        ['==', ['get', 'painted_line_type'], 'SOLID_WHITE'],
+        ['==', ['get', 'painted_line_type'], 'WIDE_SOLID_WHITE'],
       ],
-      'circle-stroke-color': '#ffffff',
-      'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 13, 1.0, 15, 1.5, 18, 2.0],
-      'circle-opacity': 0.95,
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': C.white,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.5, 16, 1, 18, 1.5],
+        'line-opacity': 0.8,
+      },
     },
-  },
+    {
+      id: 'markings-red',
+      type: 'line',
+      source: 'otherLines',
+      filter: ['==', ['get', 'painted_line_type'], 'SOLID_RED'],
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': C.holdRed,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 13, 0.6, 16, 1.2, 18, 2],
+        'line-opacity': 0.9,
+      },
+    },
 
-  // ── 17. Gate labels ──────────────────────────────────────────────────────
-  {
-    id: 'gates-label',
-    type: 'symbol',
-    source: 'gates',
-    minzoom: 15,
-    layout: {
-      'text-field': ['get', 'name'],
-      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 15, 8, 16, 10, 17, 11.5, 18, 13],
-      'text-offset': [0, -1.5],
-      'text-anchor': 'bottom',
-      'text-allow-overlap': false,
+    // Hold-short bars
+    {
+      id: 'hold-lines',
+      type: 'line',
+      source: 'holds',
+      minzoom: 12,
+      layout: { 'line-cap': 'square' },
+      paint: {
+        'line-color': C.holdRed,
+        'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1, 14, 2, 16, 3, 18, 5],
+      },
     },
-    paint: {
-      'text-color': '#1a202c',
-      'text-halo-color': '#ffffff',
-      'text-halo-width': 2.0,
-    },
-  },
 
-  // ── 18. Taxiway guidance signs ───────────────────────────────────────────
-  // Classic Jeppesen/Navigraph yellow box with black text
-  // Replicated with a thick yellow text-halo around black text
-  {
-    id: 'sign-label',
-    type: 'symbol',
-    source: 'signs',
-    minzoom: 13,
-    layout: {
-      'text-field': ['get', 'label'],
-      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 13, 7.5, 14, 9, 15, 10.5, 16, 12, 17, 13.5, 18, 15],
-      'text-anchor': 'center',
-      'text-allow-overlap': false,
-      'text-ignore-placement': false,
+    // Jetbridges
+    {
+      id: 'jetbridge-line',
+      type: 'line',
+      source: 'jetbridges',
+      minzoom: 14,
+      layout: { 'line-join': 'round', 'line-cap': 'butt' },
+      paint: {
+        'line-color': C.jetbridge,
+        'line-width': ['interpolate', ['linear'], ['zoom'],
+          14, 2.0, 15, 2.8, 16, 3.8, 17, 5.0, 18, 6.5],
+        'line-opacity': 0.9,
+      },
     },
-    paint: {
-      'text-color': '#000000',         // black text
-      'text-halo-color': '#f5c800',    // vivid yellow "box" background
-      'text-halo-width': 5.5,          // thick halo = sign box
+    {
+      id: 'jetbridge-stripe',
+      type: 'line',
+      source: 'jetbridges',
+      minzoom: 15,
+      layout: { 'line-join': 'round', 'line-cap': 'butt' },
+      paint: {
+        'line-color': C.jetbridgeAccent,
+        'line-width': ['interpolate', ['linear'], ['zoom'],
+          15, 0.8, 16, 1.2, 17, 1.8, 18, 2.4],
+        'line-opacity': 0.7,
+      },
     },
-  },
 
-  // ── 19. Runway designation labels (10L/28R) ──────────────────────────────
-  {
-    id: 'runway-label',
-    type: 'symbol',
-    source: 'runways',
-    minzoom: 13,
-    layout: {
-      'text-field': ['concat', ['get', 'name_1'], '/', ['get', 'name_2']],
-      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 13, 9, 14, 11, 15, 13, 16, 15, 18, 18],
-      'symbol-placement': 'line',
-      'text-rotation-alignment': 'map',
-      'text-allow-overlap': false,
+    // Windsocks
+    {
+      id: 'windsock-dot',
+      type: 'circle',
+      source: 'windsocks',
+      minzoom: 13,
+      paint: {
+        'circle-radius': 3,
+        'circle-color': '#f97316',
+        'circle-stroke-color': C.white,
+        'circle-stroke-width': 1.5,
+      },
     },
-    paint: {
-      'text-color': '#ffffff',
-      'text-halo-color': '#1a202c',
-      'text-halo-width': 3.0,
-    },
-  },
 
-  // ── 20. Terminal name labels (shown on the dark terminal buildings) ────────
-  {
-    id: 'terminal-label',
-    type: 'symbol',
-    source: 'terminals',
-    minzoom: 14,
-    layout: {
-      'text-field': ['get', 'name'],
-      'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 14, 9, 15, 10.5, 16, 12, 18, 14],
-      'text-anchor': 'center',
-      'text-allow-overlap': false,
-      'text-max-width': 10,
+    // Gates
+    {
+      id: 'gates-circle',
+      type: 'circle',
+      source: 'gates',
+      minzoom: 13,
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 2, 15, 3.5, 17, 5, 18, 7],
+        'circle-color': [
+          'match', ['get', 'location_type'],
+          'gate',     C.gateBlue,
+          'tie_down', C.gateGrey,
+          C.gateGrey,
+        ],
+        'circle-stroke-color': C.bg,
+        'circle-stroke-width': 1,
+      },
     },
-    paint: {
-      'text-color': '#e2e8f0',         // Light text on dark terminal
-      'text-halo-color': '#2d3748',
-      'text-halo-width': 1.5,
+
+    // Labels
+    {
+      id: 'gates-label',
+      type: 'symbol',
+      source: 'gates',
+      minzoom: 17,
+      layout: {
+        'text-field': ['coalesce', ['get', 'name'], ''],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 17, 10, 18, 14],
+        'text-offset': [0, -1.2],
+        'text-anchor': 'bottom',
+        'text-allow-overlap': false,
+      },
+      paint: {
+        'text-color': C.signText,
+        'text-halo-color': '#000000',
+        'text-halo-width': 2,
+      },
     },
-  },
-];
+    {
+      id: 'terminal-label',
+      type: 'symbol',
+      source: 'terminals',
+      minzoom: 14,
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-font': ['Open Sans Regular', 'Arial Unicode MS Regular'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 14, 9, 15, 10.5, 16, 12, 18, 14],
+        'text-anchor': 'center',
+        'text-allow-overlap': false,
+        'text-max-width': 10,
+      },
+      paint: {
+        'text-color': '#e2e8f0',
+        'text-halo-color': '#2d3748',
+        'text-halo-width': 1.5,
+      },
+    },
+  ];
+}
+
+function makePlaneSVG(color: string, heading: number) {
+  return `
+    <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"
+      style="transform: rotate(${heading - 90}deg); transform-origin: center;"
+    >
+      <circle cx="14" cy="14" r="13" fill="none" stroke="#000000" stroke-width="2.5" opacity="0.6"/>
+      <path d="M14 3 C15 8, 15 10, 15 14 L15 22 L13 22 L13 14 C13 10, 13 8, 14 3 Z" fill="${color}"/>
+      <path d="M14 12 L6 18 L8 20 L14 14 L20 20 L22 18 L14 12 Z" fill="${color}"/>
+      <path d="M12 20 L11 25 L14 24 L17 25 L16 20 Z" fill="${color}"/>
+      <circle cx="14" cy="4" r="1.5" fill="#ffffff" opacity="0.5"/>
+    </svg>
+  `;
+}
+
+function getLastWord(name: string) {
+  if (!name) return '';
+  const parts = name.trim().split(' ');
+  return parts[parts.length - 1];
+}
 
 function buildAirportConfig(
   icao: string,
   name: string,
   center: [number, number],
   elevation: string,
-  runways_info: string[]
+  runways_info: string[],
+  demoPlanes: AircraftMarker[]
 ): AirportConfig {
   return {
     icao,
@@ -458,17 +382,30 @@ function buildAirportConfig(
     elevation,
     runways_info,
     sources: buildSources(icao),
-    layers: NAVIGRAPH_LAYERS,
+    layers: buildLayers(),
+    demoPlanes,
   };
 }
 
 const TOP_AIRPORTS: AirportConfig[] = [
-  buildAirportConfig('KSFO', 'San Francisco Intl',   [-122.37895905, 37.62175045], '13 FT',  ['10L/28R', '10R/28L', '01L/19R', '01R/19L']),
-  buildAirportConfig('KJFK', 'New York JFK',          [-73.7781,       40.6413],    '13 FT',  ['04L/22R', '04R/22L', '13L/31R', '13R/31L']),
-  buildAirportConfig('KLAX', 'Los Angeles Intl',      [-118.4081,      33.9416],    '128 FT', ['06L/24R', '06R/24L', '07L/25R', '07R/25L']),
-  buildAirportConfig('KBOS', 'Boston Logan',          [-71.0052,       42.3656],    '20 FT',  ['04L/22R', '04R/22L', '09/27',   '15R/33L', '14/32']),
-  buildAirportConfig('VIDP', 'Delhi Indira Gandhi',   [77.1006,        28.5562],    '777 FT', ['09L/27R', '09R/27L', '10/28',   '11/29']),
+  buildAirportConfig('KSFO', 'San Francisco Intl',   [-122.37895905, 37.62175045], '13 FT',  ['10L/28R', '10R/28L', '01L/19R', '01R/19L'], []),
+  buildAirportConfig('KJFK', 'New York JFK',          [-73.7781,       40.6413],    '13 FT',  ['04L/22R', '04R/22L', '13L/31R', '13R/31L'], []),
+  buildAirportConfig('KLAX', 'Los Angeles Intl',      [-118.4081,      33.9416],    '128 FT', ['06L/24R', '06R/24L', '07L/25R', '07R/25L'], []),
+  buildAirportConfig('KBOS', 'Boston Logan',          [-71.0052,       42.3656],    '20 FT',  ['04L/22R', '04R/22L', '09/27',   '15R/33L', '14/32'], []),
+  buildAirportConfig('VIDP', 'Delhi Indira Gandhi',   [77.1006,        28.5562],    '777 FT', ['09L/27R', '09R/27L', '10/28',   '11/29'], []),
+  buildAirportConfig('EGKK', 'London Gatwick',        [-0.1876,        51.1516],    '202 FT', ['08L/26R', '08R/26L'], []),
 ];
+
+// Layer groups for toggling
+const LAYER_GROUPS: Record<string, string[]> = {
+  taxiways:   ['taxiway-fill', 'taxiway-edges', 'taxiway-centerlines', 'apron-fill'],
+  terminals:  ['terminal-fill', 'terminal-outline', 'terminal-label'],
+  runways:    ['runway-shoulder', 'runway-pavement', 'runway-centerline', 'runway-edge-left', 'runway-edge-right'],
+  edges:      ['markings-white', 'markings-red', 'hold-lines'],
+  jetbridges: ['jetbridge-line', 'jetbridge-stripe'],
+  gates:      ['gates-circle', 'gates-label'],
+  signs:      ['windsock-dot'],
+};
 
 // ============================================================
 //  MAIN COMPONENT
@@ -476,6 +413,7 @@ const TOP_AIRPORTS: AirportConfig[] = [
 export default function HiFiMap() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef       = useRef<maplibregl.Map | null>(null);
+  const planeMarkers = useRef<maplibregl.Marker[]>([]);
 
   const [activeIndex,       setActiveIndex]       = useState(0);
   const [zoom,              setZoom]              = useState(14);
@@ -484,6 +422,7 @@ export default function HiFiMap() {
   const [errorMsg,          setErrorMsg]          = useState<string | null>(null);
   const [activeTab,         setActiveTab]         = useState<'airports' | 'charts' | 'layers'>('airports');
   const [chartMode,         setChartMode]         = useState<'HIGH IFR' | 'LOW IFR' | 'VFR'>('HIGH IFR');
+  const [selectedGate,      setSelectedGate]      = useState<any | null>(null);
 
   const [layersVis, setLayersVis] = useState({
     taxiways: true,
@@ -496,6 +435,111 @@ export default function HiFiMap() {
   });
 
   const active = useMemo(() => TOP_AIRPORTS[activeIndex], [activeIndex]);
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  function clearPlaneMarkers() {
+    planeMarkers.current.forEach((mk) => mk.remove());
+    planeMarkers.current = [];
+  }
+
+  function addPlaneMarkers(m: maplibregl.Map, planes: AircraftMarker[]) {
+    clearPlaneMarkers();
+    planes.forEach((plane) => {
+      const el = document.createElement('div');
+      el.style.width = '28px';
+      el.style.height = '28px';
+      el.innerHTML = makePlaneSVG(plane.color, plane.heading);
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([plane.lng, plane.lat])
+        .addTo(m);
+      planeMarkers.current.push(marker);
+    });
+  }
+
+  function loadDynamicLabels(m: maplibregl.Map, icao: string) {
+    const base = `/maps/xplane/${icao}/combined`;
+
+    // Remove previous dynamic layers FIRST (before their sources)
+    ['runway-label-start', 'runway-label-end', 'taxiway-labels-layer'].forEach((lid) => {
+      if (m.getLayer(lid)) m.removeLayer(lid);
+    });
+    // Then remove the sources
+    ['runway-labels-start', 'runway-labels-end', 'taxiway-labels'].forEach((sid) => {
+      if (m.getSource(sid)) m.removeSource(sid);
+    });
+
+    // Runway threshold labels
+    fetch(`${base}/runways.geojson`)
+      .then((r) => r.json())
+      .then((data: any) => {
+        const starts: any[] = [];
+        const ends: any[] = [];
+        data.features.forEach((f: any) => {
+          const coords = f.geometry.coordinates;
+          if (!coords || coords.length < 2) return;
+          starts.push({ type: 'Feature', properties: { label: f.properties.name_1 }, geometry: { type: 'Point', coordinates: coords[0] } });
+          ends.push({ type: 'Feature', properties: { label: f.properties.name_2 }, geometry: { type: 'Point', coordinates: coords[coords.length - 1] } });
+        });
+        m.addSource('runway-labels-start', { type: 'geojson', data: { type: 'FeatureCollection', features: starts } });
+        m.addSource('runway-labels-end',   { type: 'geojson', data: { type: 'FeatureCollection', features: ends } });
+        m.addLayer({
+          id: 'runway-label-start', type: 'symbol', source: 'runway-labels-start', minzoom: 13,
+          layout: { 'text-field': ['get', 'label'], 'text-size': ['interpolate', ['linear'], ['zoom'], 13, 10, 15, 13, 18, 17], 'text-allow-overlap': true },
+          paint: { 'text-color': C.white, 'text-halo-color': C.runway, 'text-halo-width': 2 },
+        });
+        m.addLayer({
+          id: 'runway-label-end', type: 'symbol', source: 'runway-labels-end', minzoom: 13,
+          layout: { 'text-field': ['get', 'label'], 'text-size': ['interpolate', ['linear'], ['zoom'], 13, 10, 15, 13, 18, 17], 'text-allow-overlap': true },
+          paint: { 'text-color': C.white, 'text-halo-color': C.runway, 'text-halo-width': 2 },
+        });
+      })
+      .catch((err) => console.error('Failed runway labels:', err));
+
+    // Taxiway name labels from signs
+    fetch(`${base}/signs.geojson`)
+      .then((r) => r.json())
+      .then((data: any) => {
+        const taxiwaySigns = data.features.filter((f: any) => {
+          const label = f.properties?.label || '';
+          return /^[A-Z]([0-9]?[A-Z]?)?$/.test(label) && label.length <= 3;
+        });
+        if (taxiwaySigns.length > 0) {
+          m.addSource('taxiway-labels', { type: 'geojson', data: { type: 'FeatureCollection', features: taxiwaySigns } });
+          m.addLayer({
+            id: 'taxiway-labels-layer', type: 'symbol', source: 'taxiway-labels', minzoom: 13,
+            layout: { 'text-field': ['get', 'label'], 'text-size': ['interpolate', ['linear'], ['zoom'], 13, 10, 15, 13, 18, 17], 'text-allow-overlap': false },
+            paint: { 'text-color': C.signText, 'text-halo-color': '#000000', 'text-halo-width': 3 },
+          });
+        }
+      })
+      .catch((err) => console.error('Failed taxiway labels:', err));
+  }
+
+  function setupGateInteractions(m: maplibregl.Map) {
+    m.on('click', (e) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: ['gates-circle'] });
+      if (features && features.length > 0) {
+        const f = features[0];
+        setSelectedGate({
+          name: f.properties.name,
+          type: f.properties.location_type,
+          heading: f.properties.heading,
+          width: f.properties.width_code,
+          airlines: f.properties.airline_codes,
+          operation: f.properties.operation_type,
+          airplaneTypes: f.properties.airplane_types,
+          coords: (f.geometry as any).coordinates,
+        });
+      } else {
+        setSelectedGate(null);
+      }
+    });
+
+    m.on('mousemove', (e) => {
+      const features = m.queryRenderedFeatures(e.point, { layers: ['gates-circle'] });
+      m.getCanvas().style.cursor = features.length ? 'pointer' : '';
+    });
+  }
 
   // ── Create map once ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -520,11 +564,20 @@ export default function HiFiMap() {
       attributionControl: false,
     });
 
-    m.addControl(new maplibregl.NavigationControl({ showCompass: true, showZoom: true }), 'top-right');
+    m.addControl(new maplibregl.NavigationControl({ showCompass: true, showZoom: true }), 'bottom-right');
     m.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }), 'bottom-left');
 
     m.on('zoom',  () => setZoom(Math.round(m.getZoom() * 10) / 10));
-    m.on('load',  () => { setReady(true); setLoadStatus('Chart Ready'); setTimeout(() => m.resize(), 50); });
+
+    m.on('load',  () => {
+      setReady(true);
+      setLoadStatus('Chart Ready');
+      setTimeout(() => m.resize(), 50);
+      addPlaneMarkers(m, active.demoPlanes);
+      loadDynamicLabels(m, active.icao);
+      setupGateInteractions(m);
+    });
+
     m.on('error', (e: any) => {
       const msg = e?.error?.message || JSON.stringify(e?.error) || 'Unknown error';
       console.error('[HiFiMap]', msg);
@@ -540,15 +593,16 @@ export default function HiFiMap() {
     }, 8000);
 
     mapRef.current = m;
-    return () => { clearTimeout(forceTimer); m.remove(); mapRef.current = null; };
+    return () => { clearTimeout(forceTimer); clearPlaneMarkers(); m.remove(); mapRef.current = null; };
   }, []);
 
-  // ── Switch airport ─────────────────────────────────────────────────────────
+  // ── Switch airport ────────────────────────────────────────────────────────
   useEffect(() => {
     const m = mapRef.current;
     if (!m || !m.loaded()) return;
 
     setReady(false);
+    setSelectedGate(null);
     setLoadStatus(`Loading ${active.icao}...`);
 
     Object.keys(active.sources).forEach(id => {
@@ -558,41 +612,36 @@ export default function HiFiMap() {
 
     m.flyTo({ center: active.center, zoom: 14, speed: 1.2 });
 
-    const t = setTimeout(() => { setReady(true); setLoadStatus('Chart Ready'); }, 800);
+    const t = setTimeout(() => {
+      setReady(true);
+      setLoadStatus('Chart Ready');
+      addPlaneMarkers(m, active.demoPlanes);
+      loadDynamicLabels(m, active.icao);
+    }, 800);
+
     return () => clearTimeout(t);
   }, [active]);
 
-  // ── Toggle layers ──────────────────────────────────────────────────────────
+  // ── Toggle layers ─────────────────────────────────────────────────────────
   const toggleLayer = (key: keyof typeof layersVis) => {
     const m = mapRef.current;
     if (!m) return;
     const newVal = !layersVis[key];
     setLayersVis(prev => ({ ...prev, [key]: newVal }));
-    const groups: Record<string, string[]> = {
-      taxiways:   ['taxiway-fill', 'taxiway-outline', 'apron-fill', 'apron-outline'],
-      terminals:  ['terminal-fill', 'terminal-outline', 'terminal-label'],
-      runways:    ['runway-shoulder', 'runway-pavement', 'runway-centerline', 'runway-edge-left', 'runway-edge-right', 'runway-label'],
-      edges:      ['taxiway-edge-main', 'centerline-main', 'other-line-white', 'other-line-red', 'hold-lines'],
-      gates:      ['gates-circle', 'gates-label'],
-      signs:      ['sign-label', 'windsock-icon'],
-      jetbridges: ['jetbridge-line', 'jetbridge-stripe'],
-    };
-    (groups[key] || []).forEach(id => {
+    (LAYER_GROUPS[key] || []).forEach(id => {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', newVal ? 'visible' : 'none');
     });
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="w-full h-screen flex overflow-hidden select-none" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="w-full h-screen flex overflow-hidden select-none" style={{ fontFamily: "'Inter', system-ui, sans-serif", background: C.bg }}>
 
-      {/* ══════════════════════════════════════════════════════════════════
+      {/* ═════════════════════════════════════════════════════════════════════
           ICON BAR — far-left dark sidebar
-          ══════════════════════════════════════════════════════════════════ */}
+          ═════════════════════════════════════════════════════════════════════ */}
       <div className="flex-shrink-0 flex flex-col items-center py-4 justify-between z-30" style={{ width: 62, background: '#13161c', borderRight: '1px solid #242830' }}>
-        {/* Top nav items */}
         <div className="flex flex-col gap-0.5 items-center w-full">
-          {/* Logo */}
           <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 cursor-pointer" style={{ background: 'linear-gradient(135deg,#1e6fd9,#0d4fa3)', boxShadow: '0 4px 16px rgba(30,111,217,.35)' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="white"/>
@@ -624,7 +673,6 @@ export default function HiFiMap() {
           }/>
         </div>
 
-        {/* Bottom: Settings */}
         <SideIconBtn active={false} onClick={()=>{}} label="Settings" icon={
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
@@ -633,9 +681,9 @@ export default function HiFiMap() {
         }/>
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          CONSOLE PANEL — airport list / chart info / layer toggles
-          ══════════════════════════════════════════════════════════════════ */}
+      {/* ═════════════════════════════════════════════════════════════════════
+          CONSOLE PANEL
+          ═════════════════════════════════════════════════════════════════════ */}
       <div className="flex-shrink-0 flex flex-col z-20" style={{ width: 272, background: '#1b1f28', borderRight: '1px solid #242830' }}>
 
         {/* Panel header */}
@@ -647,7 +695,6 @@ export default function HiFiMap() {
               {activeTab === 'layers'   && 'Map Overlays'}
             </span>
           </div>
-          {/* HIGH IFR pill — matches reference image exactly */}
           <div className="flex flex-col items-center px-2 py-1 rounded cursor-pointer" style={{ background: '#0d1117', border: '1px solid #374151' }}>
             <span className="text-[9px] font-black tracking-widest leading-none" style={{ color: '#f3f4f6' }}>HIGH</span>
             <span className="text-[9px] font-black tracking-widest leading-none" style={{ color: '#f3f4f6' }}>IFR</span>
@@ -726,13 +773,13 @@ export default function HiFiMap() {
             <div className="space-y-1.5">
               <p className="text-[9px] font-bold tracking-widest uppercase px-1" style={{ color: '#4b5563' }}>Chart Overlays</p>
               {[
-                { key:'taxiways',   label:'Taxiway Pavements',    swatch:'#a8acb0', icon:'▪' },
-                { key:'terminals',  label:'Terminal Buildings',    swatch:'#4a5568', icon:'■' },
+                { key:'taxiways',   label:'Taxiway Pavements',    swatch:'#4b5563', icon:'▪' },
+                { key:'terminals',  label:'Terminal Buildings',    swatch:'#2d3748', icon:'■' },
                 { key:'runways',    label:'Runway Assets',         swatch:'#2c3038', icon:'▬' },
-                { key:'edges',      label:'Edge & Guidance Lines', swatch:'#f5c800', icon:'—' },
-                { key:'jetbridges', label:'Jetbridges',            swatch:'#2d3748', icon:'╌' },
-                { key:'gates',      label:'Parking Stands',        swatch:'#c94090', icon:'●' },
-                { key:'signs',      label:'Taxiway Signs',         swatch:'#f5c800', icon:'■' },
+                { key:'edges',      label:'Edge & Guidance Lines', swatch:'#facc15', icon:'—' },
+                { key:'jetbridges', label:'Jetbridges',            swatch:'#3d5a80', icon:'╌' },
+                { key:'gates',      label:'Parking Stands',        swatch:'#60a5fa', icon:'●' },
+                { key:'signs',      label:'Taxiway Signs',         swatch:'#f97316', icon:'■' },
               ].map(({ key, label, swatch, icon }) => {
                 const isOn = layersVis[key as keyof typeof layersVis];
                 return (
@@ -759,8 +806,8 @@ export default function HiFiMap() {
         {/* Panel footer */}
         <div className="px-4 py-2.5 flex-shrink-0" style={{ borderTop:'1px solid #2b303b', background:'#161a22' }}>
           <div className="flex justify-between text-[10px] font-mono">
-            <span style={{color:'#4b5563'}}>Navigraph Charts</span>
-            <span style={{color:'#374151'}}>v5.24.0</span>
+            <span style={{color:'#4b5563'}}>Aero Charts</span>
+            <span style={{color:'#374151'}}>v1.0</span>
           </div>
           <p className="text-[8px] font-mono text-center mt-1" style={{ color:'#cc3300', borderTop:'1px solid #2b303b', paddingTop:4, marginTop:4, letterSpacing:'0.05em' }}>
             NOT FOR REAL-WORLD NAVIGATION
@@ -768,10 +815,10 @@ export default function HiFiMap() {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════════
+      {/* ═════════════════════════════════════════════════════════════════════
           MAIN MAP AREA
-          ══════════════════════════════════════════════════════════════════ */}
-      <div className="flex-1 relative overflow-hidden">
+          ═════════════════════════════════════════════════════════════════════ */}
+      <div className="flex-1 relative overflow-hidden" style={{ background: C.bg }}>
 
         {/* Floating top header */}
         <div className="absolute top-3 left-3 right-20 z-10 flex items-center justify-between rounded-xl px-4 py-2.5" style={{ background:'rgba(19,22,28,.90)', backdropFilter:'blur(12px)', border:'1px solid rgba(43,48,59,.85)', boxShadow:'0 4px 28px rgba(0,0,0,.4)' }}>
@@ -798,16 +845,16 @@ export default function HiFiMap() {
         </div>
 
         {/* Map canvas */}
-        <div ref={mapContainer} className="absolute inset-0 w-full h-full"/>
+        <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
 
-        {/* Loading overlay */}
+        {/* Loading overlay — DARK themed */}
         {!ready && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center z-20" style={{ background:'#dde1e6' }}>
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-20" style={{ background: C.bg }}>
             <div className="relative mb-5">
-              <div className="w-16 h-16 rounded-full" style={{ border:'3px solid #c8cdd4', borderTopColor:'#1e6fd9', animation:'spin 1s linear infinite' }}/>
-              <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black font-mono" style={{ color:'#1e6fd9' }}>{active.icao}</div>
+              <div className="w-16 h-16 rounded-full" style={{ border:'3px solid #374151', borderTopColor:'#f5c800', animation:'spin 1s linear infinite' }}/>
+              <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black font-mono" style={{ color:'#f5c800' }}>{active.icao}</div>
             </div>
-            <div className="text-sm font-semibold" style={{ color:'#374151' }}>Loading Chart</div>
+            <div className="text-sm font-semibold" style={{ color:'#d1d5db' }}>Loading Chart</div>
             <div className="text-[11px] font-mono mt-1" style={{ color:'#6b7280' }}>{loadStatus}</div>
           </div>
         )}
@@ -823,23 +870,74 @@ export default function HiFiMap() {
           </div>
         )}
 
+        {/* Gate info panel */}
+        {selectedGate && (
+          <div className="absolute top-20 left-4 z-40 w-64 rounded-lg border border-gray-700 shadow-xl overflow-hidden" style={{ background: C.panelBg }}>
+            <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
+              <h3 className="font-bold text-base" style={{ color: C.panelText }}>
+                {getLastWord(selectedGate.name)}
+              </h3>
+              <button
+                onClick={() => setSelectedGate(null)}
+                className="text-gray-400 hover:text-white text-lg leading-none"
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="px-4 py-3 space-y-2 text-sm" style={{ color: C.panelText }}>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Type</span>
+                <span className="capitalize">{selectedGate.type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Heading</span>
+                <span>{Math.round(selectedGate.heading)}&deg;</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Width</span>
+                <span>{selectedGate.width || 'N/A'}</span>
+              </div>
+              {selectedGate.airlines && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Airlines</span>
+                  <span className="uppercase">{selectedGate.airlines}</span>
+                </div>
+              )}
+              {selectedGate.airplaneTypes && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Aircraft</span>
+                  <span className="capitalize">{selectedGate.airplaneTypes.replace(/\|/g, ', ')}</span>
+                </div>
+              )}
+              {selectedGate.operation && (
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Operation</span>
+                  <span className="capitalize">{selectedGate.operation}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Watermark */}
         <div className="absolute bottom-8 right-4 z-10 text-right pointer-events-none">
-          <div className="text-[10px] font-semibold" style={{ color:'#6b7280' }}>© Navigraph | X-Plane Data</div>
+          <div className="text-[10px] font-semibold" style={{ color:'#6b7280' }}>© Aero Charts | X-Plane Data</div>
           <div className="text-[9px] font-mono mt-0.5" style={{ color:'#cc3300' }}>NOT FOR NAVIGATIONAL USE</div>
         </div>
 
-        {/* Legend — bottom left overlay showing layer color key */}
+        {/* Legend — dark themed, matching /lax */}
         <div className="absolute bottom-10 left-4 z-10 rounded-xl p-3 space-y-1.5" style={{ background:'rgba(19,22,28,.88)', backdropFilter:'blur(8px)', border:'1px solid rgba(43,48,59,.8)' }}>
           <p className="text-[8px] font-black tracking-widest uppercase mb-2" style={{ color:'#4b5563' }}>Legend</p>
           {[
-            { color:'#4a5568', label:'Terminal Buildings' },
-            { color:'#b6babe', label:'Apron / Ramp' },
-            { color:'#a8acb0', label:'Taxiway Pavement' },
-            { color:'#f5c800', label:'Taxiway Lines' },
-            { color:'#cc3300', label:'Hold Short' },
-            { color:'#c94090', label:'Passenger Gates' },
-            { color:'#2d3748', label:'Jetbridges' },
+            { color:'#60a5fa', label:'Passenger Gate' },
+            { color:'#9ca3af', label:'Cargo / Tie-down' },
+            { color:'#4b5563', label:'Taxiway Pavement' },
+            { color:'#374151', label:'Apron / Ramp' },
+            { color:'#facc15', label:'Taxiway Lines' },
+            { color:'#ef4444', label:'Hold Short' },
+            { color:'#2d3748', label:'Terminal Buildings' },
+            { color:'#3d5a80', label:'Jetbridges' },
           ].map(({ color, label }) => (
             <div key={label} className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: color }}/>

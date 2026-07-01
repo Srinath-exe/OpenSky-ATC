@@ -10,6 +10,7 @@ AIRPORTS = [
     ('KLAX', 'Los Angeles Intl'),
     ('KBOS', 'Boston Logan Intl'),
     ('VIDP', 'Indira Gandhi Intl'),
+    ('EGKK', 'London Gatwick'),
 ]
 
 base_root = '/root/atc/public/maps/xplane'
@@ -38,6 +39,30 @@ def feature_area(feat):
     elif gtype == 'MultiPolygon' and coords:
         return sum(polygon_area_deg2(ring[0]) for ring in coords if ring)
     return 0.0
+
+
+def dist_to_segment(px, py, x1, y1, x2, y2):
+    """Distance from point to line segment."""
+    dx = x2 - x1
+    dy = y2 - y1
+    if dx == 0 and dy == 0:
+        return math.sqrt((px-x1)**2 + (py-y1)**2)
+    t = max(0, min(1, ((px-x1)*dx + (py-y1)*dy) / (dx*dx + dy*dy)))
+    projx = x1 + t*dx
+    projy = y1 + t*dy
+    return math.sqrt((px-projx)**2 + (py-projy)**2)
+
+
+def is_runway_polygon(polygon_coords, runway_coords, threshold=0.002):
+    """Check if polygon is near any runway centerline."""
+    for ring in polygon_coords:
+        for c in ring:
+            for rw in runway_coords:
+                for i in range(len(rw)-1):
+                    d = dist_to_segment(c[0], c[1], rw[i][0], rw[i][1], rw[i+1][0], rw[i+1][1])
+                    if d < threshold:
+                        return True
+    return False
 
 
 # Thresholds (in degree^2).
@@ -85,7 +110,7 @@ for icao, name in AIRPORTS:
 
     # ----------------------------------------------------------------
     # Categorize pavements
-    # Step 1: exclude runway polygons (match by name_1/name_2)
+    # Step 1: exclude runway polygons by name or geometry
     # Step 2: classify remaining by area — large polys = aprons
     # ----------------------------------------------------------------
     runway_names = set()
@@ -94,13 +119,20 @@ for icao, name in AIRPORTS:
         runway_names.add(r['properties'].get('name_2', ''))
     runway_names.discard('')
 
+    runway_coords = [r['geometry']['coordinates'] for r in runways['features']]
+
     runway_polys = []
     non_runway = []
 
     for p in pavements['features']:
         pname = p['properties'].get('name', '')
-        # Check if this pavement's name starts with a runway designator
-        if runway_names and any(pname.startswith(r) for r in runway_names):
+        geom = p['geometry']
+        coords = geom['coordinates']
+        # Method 1: name-based detection (works for KSFO, KLAX, etc.)
+        name_match = runway_names and any(pname.startswith(r) for r in runway_names)
+        # Method 2: geometry-based detection (works for EGKK where all named "New Taxiway")
+        geom_match = is_runway_polygon(coords, runway_coords)
+        if name_match or geom_match:
             runway_polys.append(p)
         else:
             non_runway.append(p)
@@ -128,7 +160,7 @@ for icao, name in AIRPORTS:
             taxiway_polys.append(p)
 
     # ----------------------------------------------------------------
-    # Categorize lines
+    # Categorize lines (fixed for airports like EGKK with 'VERY_WIDE_YELLOW')
     # ----------------------------------------------------------------
     hold_lines = []
     centerlines = []
@@ -142,6 +174,10 @@ for icao, name in AIRPORTS:
         elif 'CENTERLINE' in t or 'BROKEN_WHITE' in t:
             centerlines.append(l)
         elif 'EDGE' in t or 'BORDER' in t:
+            edge_lines.append(l)
+        # Additional yellow taxiway edges (EGKK-style airports)
+        elif any(y in t for y in ['VERY_WIDE_YELLOW', 'WIDE_SOLID_YELLOW', 'DOUBLE_SOLID_YELLOW',
+                                   'SOLID_YELLOW', 'BROKEN_YELLOW', 'SEPARATED_BROKEN_YELLOW']):
             edge_lines.append(l)
         else:
             other_lines.append(l)

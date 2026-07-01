@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(sed -i \"s|eng.update\\(0.1\\); // triggers handleTransitions? no - manual||; s|const { parseCommand } = await import\\('/root/atc/src/lib/sim/commands.ts'\\);||\" /tmp/claude-0/-root-atc/cc3d15a8-19bd-40a9-8605-f4f211015aee/scratchpad/to.ts)",
+      "Bash(sed -i \"1i import { parseCommand } from '/root/atc/src/lib/sim/commands.ts';\" /tmp/claude-0/-root-atc/cc3d15a8-19bd-40a9-8605-f4f211015aee/scratchpad/to.ts)"
+    ]
+  }
+}

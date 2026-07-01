@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>SkyControl — Real Airport Demo</title>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet"/>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0d1117; font-family:'Courier New',monospace; color:#e5e7eb; overflow:hidden; }
+  #map { width:100vw; height:100vh; }
+
+  /* Canvas overlay — sits exactly on top of the MapLibre canvas */
+  #overlay {
+    position:absolute; top:0; left:0;
+    width:100%; height:100%;
+    pointer-events:none;
+    z-index:10;
+  }
+
+  /* HUD */
+  #hud {
+    position:absolute; top:12px; left:12px; z-index:20;
+    background:rgba(13,17,23,.88); border:1px solid #1f2937;
+    border-radius:10px; padding:12px 16px;
+    backdrop-filter:blur(8px);
+    min-width:220px;
+  }
+  #hud h1 { font-size:13px; letter-spacing:3px; color:#facc15; margin-bottom:4px; }
+  #hud .sub { font-size:9px; color:#4b5563; letter-spacing:2px; text-transform:uppercase; margin-bottom:10px; }
+  #hud .stat { font-size:10px; color:#9ca3af; margin-bottom:3px; }
+  #hud .stat b { color:#e5e7eb; }
+  #hud .btns { display:flex; gap:6px; margin-top:10px; }
+  #hud button {
+    flex:1; padding:6px 8px; font-size:9px; font-family:'Courier New',monospace;
+    letter-spacing:2px; text-transform:uppercase; border:none; border-radius:5px;
+    cursor:pointer; font-weight:bold;
+  }
+  .btn-spawn { background:#1d4ed8; color:#fff; }
+  .btn-spawn:hover { background:#2563eb; }
+  .btn-clear { background:#1f2937; color:#9ca3af; border:1px solid #374151 !important; }
+  .btn-clear:hover { background:#374151; color:#fff; }
+
+  /* Airport switcher */
+  #switcher {
+    position:absolute; top:12px; right:12px; z-index:20;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  #switcher button {
+    padding:6px 14px; font-size:10px; font-family:'Courier New',monospace;
+    letter-spacing:2px; text-transform:uppercase; border-radius:5px;
+    cursor:pointer; font-weight:bold;
+    background:#0d1117; color:#6b7280;
+    border:1px solid #1f2937;
+    transition:all .15s;
+  }
+  #switcher button.active { background:#1e2a3a; color:#facc15; border-color:#3b4f6b; }
+  #switcher button:hover:not(.active) { background:#1f2937; color:#9ca3af; }
+
+  /* Legend */
+  #legend {
+    position:absolute; bottom:28px; left:12px; z-index:20;
+    background:rgba(13,17,23,.88); border:1px solid #1f2937;
+    border-radius:8px; padding:8px 12px;
+    backdrop-filter:blur(8px);
+  }
+  #legend .row { display:flex; align-items:center; gap:8px; font-size:9px; color:#9ca3af; margin-bottom:3px; }
+  #legend .swatch { width:20px; height:3px; border-radius:2px; }
+  #legend .circle { width:8px; height:8px; border-radius:50%; }
+
+  .maplibregl-ctrl-attrib { display:none !important; }
+  .maplibregl-ctrl-group {
+    background:#13161c !important; border:1px solid #242830 !important;
+    border-radius:8px !important;
+  }
+  .maplibregl-ctrl-group button {
+    background:#13161c !important; color:#6b7280 !important;
+    border-color:#242830 !important;
+  }
+  .maplibregl-ctrl-group button span { filter:invert(.5); }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+<canvas id="overlay"></canvas>
+
+<div id="hud">
+  <h1>SKYCONTROL</h1>
+  <div class="sub">Ground Movement Sim · Real X-Plane Data</div>
+  <div class="stat">Airport: <b id="stat-icao">—</b></div>
+  <div class="stat">Aircraft: <b id="stat-ac">0</b></div>
+  <div class="stat">Nodes: <b id="stat-nodes">—</b></div>
+  <div class="stat">Graph edges: <b id="stat-edges">—</b></div>
+  <div class="btns">
+    <button class="btn-spawn" onclick="spawnRandom()">+ Spawn</button>
+    <button class="btn-clear" onclick="clearAll()">Clear</button>
+  </div>
+</div>
+
+<div id="switcher">
+  <button onclick="loadAirport('KLAX')" id="btn-KLAX">KLAX</button>
+  <button onclick="loadAirport('KSFO')" id="btn-KSFO">KSFO</button>
+  <button onclick="loadAirport('KJFK')" id="btn-KJFK">KJFK</button>
+  <button onclick="loadAirport('KBOS')" id="btn-KBOS">KBOS</button>
+  <button onclick="loadAirport('VIDP')" id="btn-VIDP">VIDP</button>
+</div>
+
+<div id="legend">
+  <div class="row"><div class="swatch" style="background:#ef4444"></div> Trail (past path)</div>
+  <div class="row"><div class="swatch" style="background:#22c55e; height:2px; border-top:1px dashed #22c55e"></div> Route ahead</div>
+  <div class="row"><div class="circle" style="background:#facc15; border:1px solid #000"></div> Aircraft</div>
+  <div class="row"><div class="circle" style="background:#1d4ed8; border:1px solid #60a5fa"></div> Gate</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+//  AIRPORT CONFIGS
+// ─────────────────────────────────────────────────────────────────────────────
+const AIRPORTS = {
+  KLAX: { center: [-118.4081, 33.9416], zoom: 13.5 },
+  KSFO: { center: [-122.37896, 37.62175], zoom: 13.5 },
+  KJFK: { center: [-73.7781, 40.6413], zoom: 13.2 },
+  KBOS: { center: [-71.0052, 42.3656], zoom: 13.5 },
+  VIDP: { center: [77.1006, 28.5562], zoom: 13.2 },
+};
+
+const C = {
+  bg:'#111827', boundary:'#1f2937', apron:'#374151', taxiway:'#4b5563',
+  runway:'#0b0f19', runwayAsphalt:'#2c3038', runwayShoulder:'#1e2125',
+  yellow:'#facc15', holdRed:'#ef4444', white:'#f9fafb', gateBlue:'#60a5fa',
+  terminal:'#2d3748', jetbridge:'#3d5a80',
+};
+
+function buildMapStyle(icao) {
+  const base = `/maps/xplane/${icao}/combined`;
+  return {
+    version: 8,
+    glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+    sources: {
+      boundary:    { type:'geojson', data:`${base}/boundary.geojson` },
+      aprons:      { type:'geojson', data:`${base}/pavement_aprons.geojson` },
+      taxiways:    { type:'geojson', data:`${base}/pavement_taxiways.geojson` },
+      terminals:   { type:'geojson', data:`${base}/terminals.geojson` },
+      runways:     { type:'geojson', data:`${base}/pavement_runways.geojson` },
+      holds:       { type:'geojson', data:`${base}/lines_holds.geojson` },
+      centerlines: { type:'geojson', data:`${base}/lines_centerlines.geojson` },
+      edges:       { type:'geojson', data:`${base}/lines_edges.geojson` },
+      otherLines:  { type:'geojson', data:`${base}/lines_other.geojson` },
+      gates:       { type:'geojson', data:`${base}/startup_locations.geojson` },
+    },
+    layers: [
+      { id:'bg',             type:'background', paint:{'background-color':C.bg} },
+      { id:'boundary-fill',  type:'fill',   source:'boundary',  paint:{'fill-color':C.boundary,'fill-opacity':1} },
+      { id:'apron-fill',     type:'fill',   source:'aprons',    paint:{'fill-color':C.apron,'fill-opacity':1} },
+      { id:'taxiway-fill',   type:'fill',   source:'taxiways',  paint:{'fill-color':C.taxiway,'fill-opacity':1} },
+      { id:'terminal-fill',  type:'fill',   source:'terminals', paint:{'fill-color':C.terminal,'fill-opacity':.92} },
+      { id:'terminal-line',  type:'line',   source:'terminals', paint:{'line-color':'#1a202c','line-width':1} },
+      {
+        id:'runway-shoulder', type:'line', source:'runways',
+        layout:{'line-cap':'butt','line-join':'miter'},
+        paint:{'line-color':C.runwayShoulder,'line-width':['interpolate',['linear'],['zoom'],11,4,14,18,16,50,18,128]},
+      },
+      {
+        id:'runway-pavement', type:'line', source:'runways',
+        layout:{'line-cap':'butt','line-join':'miter'},
+        paint:{'line-color':C.runwayAsphalt,'line-width':['interpolate',['linear'],['zoom'],11,3,14,14,16,38,18,96]},
+      },
+      {
+        id:'runway-cl', type:'line', source:'runways',
+        paint:{'line-color':C.white,'line-width':1.5,'line-dasharray':[10,7],'line-opacity':.8},
+      },
+      {
+        id:'taxiway-edges', type:'line', source:'edges',
+        filter:['in','YELLOW',['get','painted_line_type']],
+        layout:{'line-join':'round','line-cap':'round'},
+        paint:{'line-color':C.yellow,'line-width':['interpolate',['linear'],['zoom'],11,.5,14,1,16,1.5,18,2.5]},
+      },
+      {
+        id:'taxiway-cl', type:'line', source:'centerlines',
+        filter:['!',['in','ILS',['get','painted_line_type']]],
+        layout:{'line-join':'round','line-cap':'round'},
+        paint:{'line-color':C.yellow,'line-width':['interpolate',['linear'],['zoom'],11,.4,14,.8,16,1.2,18,2],'line-opacity':.7},
+      },
+      {
+        id:'hold-lines', type:'line', source:'holds', minzoom:12,
+        paint:{'line-color':C.holdRed,'line-width':['interpolate',['linear'],['zoom'],12,1,14,2,16,3,18,5]},
+      },
+      {
+        id:'gates-circle', type:'circle', source:'gates', minzoom:13,
+        paint:{
+          'circle-radius':['interpolate',['linear'],['zoom'],13,2,15,3.5,17,5],
+          'circle-color':['match',['get','location_type'],'gate',C.gateBlue,'#9ca3af'],
+          'circle-stroke-color':C.bg,'circle-stroke-width':1,
+        },
+      },
+    ],
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  MAP INIT
+// ─────────────────────────────────────────────────────────────────────────────
+const map = new maplibregl.Map({
+  container: 'map',
+  style: buildMapStyle('KLAX'),
+  center: AIRPORTS.KLAX.center,
+  zoom: AIRPORTS.KLAX.zoom,
+  minZoom: 11, maxZoom: 19,
+  attributionControl: false,
+});
+map.addControl(new maplibregl.NavigationControl({ showCompass:true, showZoom:true }), 'bottom-right');
+
+// Canvas overlay — resize with window
+const overlay = document.getElementById('overlay');
+const ctx2 = overlay.getContext('2d');
+function resizeOverlay() {
+  overlay.width  = map.getCanvas().width;
+  overlay.height = map.getCanvas().height;
+  overlay.style.width  = overlay.width  + 'px';
+  overlay.style.height = overlay.height + 'px';
+}
+window.addEventListener('resize', resizeOverlay);
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  TAXIWAY GRAPH BUILDER — from real X-Plane centerlines GeoJSON
+// ─────────────────────────────────────────────────────────────────────────────
+let graph = null;   // { nodes: [{id,lng,lat,type}], adj: Map<id, [{id,lng,lat}]> }
+let gateNodes = []; // subset of nodes that are gates
+let currentIcao = 'KLAX';
+
+async function buildGraph(icao) {
+  const base = `/maps/xplane/${icao}/combined`;
+  const [clData, gateData] = await Promise.all([
+    fetch(`${base}/lines_centerlines.geojson`).then(r=>r.json()),
+    fetch(`${base}/startup_locations.geojson`).then(r=>r.json()),
+  ]);
+
+  // ── 1. Collect all centerline polyline points ─────────────────────────────
+  //    Each LineString → sequence of [lng,lat] points. Adjacent pairs = edges.
+  const rawSegs = []; // [{a:[lng,lat], b:[lng,lat]}]
+  for (const f of clData.features) {
+    const coords = f.geometry.coordinates;
+    for (let i = 0; i < coords.length - 1; i++) {
+      rawSegs.push({ a: coords[i], b: coords[i+1] });
+    }
+  }
+
+  // ── 2. Cluster nearby endpoints → canonical nodes ─────────────────────────
+  const TOL = 0.00004; // ~4m tolerance in degrees
+  const nodes = [];    // [{id, lng, lat}]
+  const nodeIndex = []; // same order, for spatial lookup
+
+  function findOrCreate(lng, lat) {
+    for (let i = 0; i < nodes.length; i++) {
+      if (Math.abs(nodes[i].lng - lng) < TOL && Math.abs(nodes[i].lat - lat) < TOL)
+        return i;
+    }
+    nodes.push({ id: nodes.length, lng, lat, type:'taxiway' });
+    return nodes.length - 1;
+  }
+
+  // ── 3. Build adjacency list ───────────────────────────────────────────────
+  const adjMap = new Map(); // id → Set of ids
+  const edges = [];
+
+  for (const { a, b } of rawSegs) {
+    const ia = findOrCreate(a[0], a[1]);
+    const ib = findOrCreate(b[0], b[1]);
+    if (ia === ib) continue;
+    if (!adjMap.has(ia)) adjMap.set(ia, new Set());
+    if (!adjMap.has(ib)) adjMap.set(ib, new Set());
+    adjMap.get(ia).add(ib);
+    adjMap.get(ib).add(ia);
+    edges.push([ia, ib]);
+  }
+
+  // ── 4. Add gate nodes ─────────────────────────────────────────────────────
+  const gateFeatures = gateData.features.filter(f => f.properties.location_type === 'gate');
+  // Limit to first 60 gates for performance
+  const selectedGates = gateFeatures.slice(0, 60);
+
+  gateNodes = [];
+  for (const f of selectedGates) {
+    const [lng, lat] = f.geometry.coordinates;
+    // Find the nearest taxiway node to connect this gate
+    let nearestId = -1, nearestDist = Infinity;
+    for (let i = 0; i < nodes.length; i++) {
+      const d = Math.hypot(nodes[i].lng - lng, nodes[i].lat - lat);
+      if (d < nearestDist) { nearestDist = d; nearestId = i; }
+    }
+    if (nearestId < 0 || nearestDist > 0.003) continue; // too far, skip
+
+    const gid = nodes.length;
+    nodes.push({ id: gid, lng, lat, type:'gate', name: f.properties.name });
+    if (!adjMap.has(gid)) adjMap.set(gid, new Set());
+    if (!adjMap.has(nearestId)) adjMap.set(nearestId, new Set());
+    adjMap.get(gid).add(nearestId);
+    adjMap.get(nearestId).add(gid);
+    gateNodes.push(gid);
+  }
+
+  // ── 5. Find runway-end nodes (extremities of the graph) ───────────────────
+  //  Nodes with only 1 connection that are far from the center = runway ends
+  const center = { lng: nodes.reduce((s,n)=>s+n.lng,0)/nodes.length, lat: nodes.reduce((s,n)=>s+n.lat,0)/nodes.length };
+  const runwayEndNodes = nodes
+    .filter(n => n.type === 'taxiway' && (adjMap.get(n.id)?.size ?? 0) <= 1)
+    .filter(n => Math.hypot(n.lng - center.lng, n.lat - center.lat) > 0.008)
+    .map(n => n.id);
+
+  graph = { nodes, adjMap, runwayEndNodes };
+
+  document.getElementById('stat-icao').textContent   = icao;
+  document.getElementById('stat-nodes').textContent  = nodes.length;
+  document.getElementById('stat-edges').textContent  = edges.length;
+  console.log(`[${icao}] Graph built: ${nodes.length} nodes, ${edges.length} edges, ${gateNodes.length} gates, ${runwayEndNodes.length} runway ends`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  A* PATHFINDER  (works on node ids)
+// ─────────────────────────────────────────────────────────────────────────────
+function geoDist(a, b) {
+  const R = 6371000;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  return Math.sqrt(dLat*dLat + dLng*dLng) * R;
+}
+
+function astar(startId, endId) {
+  if (startId === endId) return [startId];
+  const { nodes, adjMap } = graph;
+  const end = nodes[endId];
+
+  const open = new Set([startId]);
+  const came = {};
+  const g = { [startId]: 0 };
+  const f = { [startId]: geoDist(nodes[startId], end) };
+
+  let iter = 0;
+  while (open.size && iter++ < 5000) {
+    let cur = null;
+    for (const n of open) if (cur === null || (f[n]??Infinity) < (f[cur]??Infinity)) cur = n;
+    if (cur === endId) {
+      const path = [];
+      let c = cur;
+      while (c !== undefined) { path.unshift(c); c = came[c]; }
+      return path;
+    }
+    open.delete(cur);
+    for (const nb of (adjMap.get(cur) || [])) {
+      const tg = (g[cur] ?? 0) + geoDist(nodes[cur], nodes[nb]);
+      if (tg < (g[nb] ?? Infinity)) {
+        came[nb] = cur;
+        g[nb] = tg;
+        f[nb] = tg + geoDist(nodes[nb], end);
+        open.add(nb);
+      }
+    }
+  }
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  AIRCRAFT STATE
+// ─────────────────────────────────────────────────────────────────────────────
+const CALLSIGNS = ['AAL123','UAL456','DAL789','BAW321','SWA654','JBU987','QTR111','UAE555','DLH222','JAI777'];
+const COLORS    = ['#facc15','#fb923c','#a78bfa','#34d399','#60a5fa','#f472b6','#fde68a','#86efac','#fca5a5','#c4b5fd'];
+let aircrafts = [];
+let idCounter = 0;
+
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function spawnRandom() {
+  if (!graph || gateNodes.length === 0 || graph.runwayEndNodes.length === 0) return;
+  if (aircrafts.length >= 10) return;
+
+  const fromId = pickRandom(gateNodes);
+  const toId   = pickRandom(graph.runwayEndNodes);
+  const path   = astar(fromId, toId);
+  if (!path || path.length < 2) return;
+
+  const startNode = graph.nodes[path[0]];
+  const color = COLORS[idCounter % COLORS.length];
+  const cs    = CALLSIGNS[idCounter % CALLSIGNS.length];
+  idCounter++;
+
+  aircrafts.push({
+    id: idCounter,
+    callsign: cs,
+    color,
+    path,          // array of node ids
+    seg: 0,        // current segment
+    t: 0,          // 0..1 within segment
+    speedMps: 6 + Math.random() * 4,  // m/s taxi speed
+    lng: startNode.lng,
+    lat: startNode.lat,
+    heading: 0,
+    trail: [{ lng: startNode.lng, lat: startNode.lat }],
+    done: false,
+  });
+  document.getElementById('stat-ac').textContent = aircrafts.length;
+}
+
+function clearAll() {
+  aircrafts = [];
+  document.getElementById('stat-ac').textContent = 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  PHYSICS UPDATE  (called each animation frame)
+// ─────────────────────────────────────────────────────────────────────────────
+let lastTime = performance.now();
+
+function updateAircrafts(now) {
+  const dt = Math.min((now - lastTime) / 1000, 0.1); // seconds, capped
+  lastTime = now;
+
+  for (const ac of aircrafts) {
+    if (ac.done) continue;
+    if (ac.seg >= ac.path.length - 1) { ac.done = true; continue; }
+
+    const fromNode = graph.nodes[ac.path[ac.seg]];
+    const toNode   = graph.nodes[ac.path[ac.seg + 1]];
+    const segLen   = geoDist(fromNode, toNode); // meters
+    if (segLen < 0.1) { ac.seg++; ac.t = 0; continue; }
+
+    // Advance t by speed / segLen
+    ac.t += (ac.speedMps * dt) / segLen;
+
+    if (ac.t >= 1) {
+      ac.t -= 1;
+      ac.seg++;
+      if (ac.seg >= ac.path.length - 1) { ac.done = true; continue; }
+    }
+
+    const fn = graph.nodes[ac.path[ac.seg]];
+    const tn = graph.nodes[ac.path[ac.seg + 1]];
+    ac.lng = fn.lng + (tn.lng - fn.lng) * ac.t;
+    ac.lat = fn.lat + (tn.lat - fn.lat) * ac.t;
+
+    // Heading in degrees (screen-space: east=0, north=-90)
+    const dx = tn.lng - fn.lng;
+    const dy = tn.lat - fn.lat;
+    ac.heading = Math.atan2(dy, dx) * 180 / Math.PI;
+
+    // Trail
+    const last = ac.trail[ac.trail.length - 1];
+    const trailDist = geoDist(last, { lng: ac.lng, lat: ac.lat });
+    if (trailDist > 8) {
+      ac.trail.push({ lng: ac.lng, lat: ac.lat });
+      if (ac.trail.length > 60) ac.trail.shift();
+    }
+  }
+
+  aircrafts = aircrafts.filter(ac => !ac.done);
+  document.getElementById('stat-ac').textContent = aircrafts.length;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  CANVAS RENDERING
+// ─────────────────────────────────────────────────────────────────────────────
+function project(lng, lat) {
+  const pt = map.project([lng, lat]);
+  // Map canvas may be retina-scaled
+  const scale = map.getCanvas().width / map.getContainer().clientWidth;
+  return { x: pt.x * scale, y: pt.y * scale };
+}
+
+function drawTrail(ac) {
+  if (ac.trail.length < 2) return;
+  for (let i = 1; i < ac.trail.length; i++) {
+    const a = project(ac.trail[i-1].lng, ac.trail[i-1].lat);
+    const b = project(ac.trail[i].lng,   ac.trail[i].lat);
+    const alpha = (i / ac.trail.length) * 0.9;
+    ctx2.strokeStyle = `rgba(239,68,68,${alpha})`;
+    ctx2.lineWidth = 2.5;
+    ctx2.beginPath();
+    ctx2.moveTo(a.x, a.y);
+    ctx2.lineTo(b.x, b.y);
+    ctx2.stroke();
+  }
+}
+
+function drawRoutePath(ac) {
+  if (ac.seg >= ac.path.length - 1) return;
+  const cur = project(ac.lng, ac.lat);
+  ctx2.setLineDash([6, 5]);
+  ctx2.strokeStyle = 'rgba(34,197,94,0.6)';
+  ctx2.lineWidth = 1.8;
+  ctx2.beginPath();
+  ctx2.moveTo(cur.x, cur.y);
+  for (let i = ac.seg + 1; i < ac.path.length; i++) {
+    const n = graph.nodes[ac.path[i]];
+    const p = project(n.lng, n.lat);
+    ctx2.lineTo(p.x, p.y);
+  }
+  ctx2.stroke();
+  ctx2.setLineDash([]);
+}
+
+function drawAircraftIcon(ac) {
+  const { x, y } = project(ac.lng, ac.lat);
+  // Heading in canvas terms: MapLibre lng/lat → x increases east, y increases north
+  // atan2(dy_lat, dx_lng) gives geographic angle; in screen coords y is flipped
+  const screenAngle = (ac.heading * -1 - 90) * Math.PI / 180; // convert to canvas rotation
+
+  ctx2.save();
+  ctx2.translate(x, y);
+  ctx2.rotate(screenAngle);
+
+  const s = 8;
+  ctx2.fillStyle = ac.color;
+  ctx2.strokeStyle = 'rgba(0,0,0,0.8)';
+  ctx2.lineWidth = 1;
+
+  // Body
+  ctx2.beginPath();
+  ctx2.moveTo(0, -s*1.3);
+  ctx2.lineTo(s*.2, 0);
+  ctx2.lineTo(s*.2, s*.8);
+  ctx2.lineTo(-s*.2, s*.8);
+  ctx2.lineTo(-s*.2, 0);
+  ctx2.closePath();
+  ctx2.fill(); ctx2.stroke();
+
+  // Wings
+  ctx2.beginPath();
+  ctx2.moveTo(0, -s*.1);
+  ctx2.lineTo(s*1.2, s*.55);
+  ctx2.lineTo(s*1.0, s*.75);
+  ctx2.lineTo(0, s*.35);
+  ctx2.lineTo(-s*1.0, s*.75);
+  ctx2.lineTo(-s*1.2, s*.55);
+  ctx2.closePath();
+  ctx2.fill(); ctx2.stroke();
+
+  // Tail
+  ctx2.beginPath();
+  ctx2.moveTo(0, s*.65);
+  ctx2.lineTo(s*.5, s*1.2);
+  ctx2.lineTo(-s*.5, s*1.2);
+  ctx2.closePath();
+  ctx2.fill(); ctx2.stroke();
+
+  ctx2.restore();
+
+  // Label — always upright
+  const labelX = x + 13;
+  const labelY = y - 4;
+  const speed = Math.round(ac.speedMps * 1.94384); // m/s → knots
+
+  ctx2.save();
+  ctx2.font = 'bold 9px Courier New';
+  ctx2.textAlign = 'left';
+
+  // Dark halo
+  ctx2.strokeStyle = 'rgba(0,0,0,0.85)';
+  ctx2.lineWidth = 3;
+  ctx2.strokeText(ac.callsign, labelX, labelY);
+  ctx2.strokeText(speed + 'kt', labelX, labelY + 10);
+
+  ctx2.fillStyle = ac.color;
+  ctx2.fillText(ac.callsign, labelX, labelY);
+  ctx2.fillStyle = 'rgba(250,204,21,0.8)';
+  ctx2.fillText(speed + 'kt', labelX, labelY + 10);
+  ctx2.restore();
+
+  // Position dot
+  ctx2.beginPath();
+  ctx2.arc(x, y, 2.5, 0, Math.PI*2);
+  ctx2.fillStyle = '#fff';
+  ctx2.fill();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  MAIN ANIMATION LOOP
+// ─────────────────────────────────────────────────────────────────────────────
+function loop(now) {
+  requestAnimationFrame(loop);
+  if (!graph) return;
+
+  resizeOverlay();
+  updateAircrafts(now);
+
+  ctx2.clearRect(0, 0, overlay.width, overlay.height);
+
+  // Draw all routes first (under trails/icons)
+  for (const ac of aircrafts) drawRoutePath(ac);
+  for (const ac of aircrafts) drawTrail(ac);
+  for (const ac of aircrafts) drawAircraftIcon(ac);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  AIRPORT SWITCHING
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadAirport(icao) {
+  clearAll();
+  graph = null;
+  gateNodes = [];
+  currentIcao = icao;
+
+  // Update button states
+  document.querySelectorAll('#switcher button').forEach(b => b.classList.remove('active'));
+  document.getElementById(`btn-${icao}`).classList.add('active');
+  document.getElementById('stat-nodes').textContent = '...';
+  document.getElementById('stat-edges').textContent = '...';
+
+  const cfg = AIRPORTS[icao];
+  map.flyTo({ center: cfg.center, zoom: cfg.zoom, speed: 1.5 });
+
+  // Update map sources
+  const base = `/maps/xplane/${icao}/combined`;
+  const sourceKeys = ['boundary','aprons','taxiways','terminals','runways','holds','centerlines','edges','otherLines','gates'];
+  const fileMap = {
+    boundary:'boundary.geojson', aprons:'pavement_aprons.geojson',
+    taxiways:'pavement_taxiways.geojson', terminals:'terminals.geojson',
+    runways:'pavement_runways.geojson', holds:'lines_holds.geojson',
+    centerlines:'lines_centerlines.geojson', edges:'lines_edges.geojson',
+    otherLines:'lines_other.geojson', gates:'startup_locations.geojson',
+  };
+  for (const key of sourceKeys) {
+    const src = map.getSource(key);
+    if (src) src.setData(`${base}/${fileMap[key]}`);
+  }
+
+  await buildGraph(icao);
+  // Auto-spawn a few
+  spawnRandom(); spawnRandom(); spawnRandom();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  STARTUP
+// ─────────────────────────────────────────────────────────────────────────────
+map.on('load', async () => {
+  resizeOverlay();
+  document.getElementById('btn-KLAX').classList.add('active');
+  await buildGraph('KLAX');
+  spawnRandom(); spawnRandom(); spawnRandom();
+  requestAnimationFrame(loop);
+});
+</script>
+</body>
+</html>
