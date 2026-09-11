@@ -8,7 +8,7 @@ import {
   dedupeBacktracks, arcLengths, resample, distToSegment, NM_TO_M, FT_TO_M,
 } from './projection';
 import { OsmAirport, findPath, taxiwaysForPath } from '../osmAirport';
-import { getPerformance, randomCommercialType, wakeSeparationNM } from './aircraftDB';
+import { getPerformance, randomCommercialType, randomCommercialTypeOf, wakeSeparationNM, WeightClass } from './aircraftDB';
 import { AircraftState, DrivePath, SimEvent, SimEventType, FlightKind, PendingCmd } from './types';
 import { stepAircraft, setPhase, isAirborne } from './aircraft';
 import {
@@ -52,6 +52,8 @@ export class SimEngine {
   private airspaceRadiusM = 30 * NM_TO_M;
   private ilsRunways: ILSRunway[] = [];
   private beacons: Array<{ id: string; x: number; y: number }> = [];
+  private activeEnds: Set<string> | null = null; // null = all runway ends active
+  private runwayWeights: Map<string, Set<WeightClass>> | null = null; // end name → allowed weight classes
   private acc = 0;
   private idc = 0;
   private pendingEvents: SimEvent[] = [];
@@ -67,6 +69,23 @@ export class SimEngine {
     this.airspaceRadiusM = cfg.radiusM;
     this.ilsRunways = cfg.ilsRunways;
     this.beacons = cfg.beacons;
+  }
+
+  // Restrict spawning to a chosen subset of runway ends (active-runway config
+  // picked on the home page). Pass null/empty to allow every end.
+  setActiveRunwayEnds(ends: string[] | null) {
+    this.activeEnds = ends && ends.length ? new Set(ends.map(e => e.toUpperCase())) : null;
+  }
+  private endActive(name: string): boolean { return !this.activeEnds || this.activeEnds.has(name.toUpperCase()); }
+
+  // Per-runway-end allowed weight classes (e.g. a short strip disallowing
+  // Heavy/Super). Pass null to allow every class everywhere.
+  setRunwayWeightAllow(map: Record<string, WeightClass[]> | null) {
+    if (!map) { this.runwayWeights = null; return; }
+    this.runwayWeights = new Map(Object.entries(map).map(([k, v]) => [k.toUpperCase(), new Set(v)]));
+  }
+  private weightsFor(endName: string): Set<WeightClass> | null {
+    return this.runwayWeights?.get(endName.toUpperCase()) ?? null;
   }
 
   // ── geometry ───────────────────────────────────────────────────────────────
@@ -117,9 +136,9 @@ export class SimEngine {
   byId(id: number): AircraftState | undefined { return this.aircraft.find(a => a.id === id); }
 
   // ── identity / base ────────────────────────────────────────────────────────
-  private newIdentity(type?: string) {
+  private newIdentity(type?: string, allowedWeights?: Set<WeightClass> | null) {
     const al = rnd(AIRLINES); const fno = 1 + ri(998);
-    return { callsign: `${al.icao}${fno}`, flightNo: `${al.iata}${fno}`, airline: al.name, perf: getPerformance(type ?? randomCommercialType()) };
+    return { callsign: `${al.icao}${fno}`, flightNo: `${al.iata}${fno}`, airline: al.name, perf: getPerformance(type ?? randomCommercialTypeOf(allowedWeights)) };
   }
   private base(ident: ReturnType<SimEngine['newIdentity']>, kind: FlightKind, pos: XY, heading: number): AircraftState {
     return {
@@ -152,13 +171,16 @@ export class SimEngine {
   spawnDeparture(): AircraftState | null {
     if (!this.air.gates.length || !this.air.runways.length) return null;
     const gate = this.freeGate(); if (!gate) return null;
-    const rw = rnd(this.air.runways); const end = rnd(rw.ends);
+    const activeEnds = this.air.runways.flatMap(rw => rw.ends.filter(e => this.endActive(e.name)).map(e => ({ rw, end: e })));
+    const fallbackRw = rnd(this.air.runways);
+    const pick = activeEnds.length ? rnd(activeEnds) : { rw: fallbackRw, end: rnd(fallbackRw.ends) };
+    const rw = pick.rw; const end = pick.end;
     const ids = findPath(this.air, gate.nodeId, end.nodeId);
     if (!ids || ids.length < 2) return null;
     const path = this.pathFromNodes(ids, true);
     if (!path) return null;
     const start = path.pts[0];
-    const ac = this.base(this.newIdentity(), 'departure', start, path.pts.length > 1 ? headingTo(start, path.pts[1]) : 0);
+    const ac = this.base(this.newIdentity(undefined, this.weightsFor(end.name)), 'departure', start, path.pts.length > 1 ? headingTo(start, path.pts[1]) : 0);
     ac.plan.gateRef = gate.ref; ac.plan.runway = end.name;
     // Use a real beacon as departure fix if airspace is loaded, so SID routing works
     ac.plan.fix = this.beacons.length > 0 ? rnd(this.beacons).id : rnd(CITIES);
@@ -194,14 +216,16 @@ export class SimEngine {
   // Fallback: spawn arrival on short final (when no Endless ATC airspace loaded).
   spawnArrival(): AircraftState | null {
     if (!this.air.gates.length || !this.air.runways.length) return null;
-    const free = this.air.runways.filter(rw => !rw.ends.some(e => this.runwayOccupied(e.name)));
-    const rw = (free.length ? rnd(free) : rnd(this.air.runways));
-    const end = rnd(rw.ends);
+    const activeEnds = this.air.runways.flatMap(rw => rw.ends.filter(e => this.endActive(e.name) && !this.runwayOccupied(e.name)).map(e => ({ rw, end: e })));
+    const fallbackFree = this.air.runways.filter(rw => !rw.ends.some(e => this.runwayOccupied(e.name)));
+    const fallbackRw = fallbackFree.length ? rnd(fallbackFree) : rnd(this.air.runways);
+    const pick = activeEnds.length ? rnd(activeEnds) : { rw: fallbackRw, end: rnd(fallbackRw.ends) };
+    const rw = pick.rw; const end = pick.end;
     const hdg = this.runwayHeading(end.name);
     const thr = this.endXY(end); const far = this.endXY(this.runwayByEnd(end.name)!.other);
     const start = advance(thr, (hdg + 180) % 360, 11000);
     const path = this.buildPath([start, thr, far], 'approach');
-    const ac = this.base(this.newIdentity(), 'arrival', start, hdg);
+    const ac = this.base(this.newIdentity(undefined, this.weightsFor(end.name)), 'arrival', start, hdg);
     ac.plan.runway = end.name; ac.plan.fix = rnd(CITIES); ac.plan.gateRef = rnd(this.air.gates).ref;
     ac.path = path;
     // Glideslope altitude in ft: dist_m × tan(3°) × ft/m
@@ -365,6 +389,10 @@ export class SimEngine {
     const a = this.find(cs); if (!a) return notFound(cs);
     if (!isAirborne(a)) return `${a.callsign}: on the ground`;
     const rwyUp = runwayName.toUpperCase();
+    const allowed = this.weightsFor(rwyUp);
+    if (allowed && allowed.size && !allowed.has(a.perf.weightClass)) {
+      return `${a.callsign}: ${a.perf.weightClass}-category not permitted runway ${rwyUp}`;
+    }
     const ils = this.ilsRunways.find(r => r.name === rwyUp);
     if (!ils) {
       // Fall back to OSM runway heading

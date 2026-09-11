@@ -8,6 +8,7 @@ import { SimEngine } from '@/lib/sim/engine';
 import { buildOsmAirport, OsmAirport } from '@/lib/osmAirport';
 import { EAirport, loadEndlessAirport, coordToXY } from '@/lib/airspace/eairport';
 import { parseCommand } from '@/lib/sim/commands';
+import type { WeightClass } from '@/lib/sim/aircraftDB';
 import { XY, advance, headingTo } from '@/lib/sim/projection';
 import type { ILSRunway } from '@/lib/sim/ils';
 
@@ -35,6 +36,12 @@ export interface RadioLine { who: 'ATC' | 'PILOT' | 'SYS'; text: string; key: nu
 
 const LS_SCORE_KEY = 'skycontrol_high_score';
 const LS_TTS_KEY = 'skycontrol_tts';
+// Shared localStorage keys so the settings page and the sim store agree on names.
+export const LS_KEYS = {
+  score: LS_SCORE_KEY, tts: LS_TTS_KEY,
+  groundTheme: 'skycontrol_ground_theme',
+  autoTower: 'skycontrol_autotower',
+};
 
 function speak(text: string) {
   if (typeof window === 'undefined') return;
@@ -101,7 +108,7 @@ class SimStore {
   setRate(r: number) { this.rate = r; this.emit(); }
   togglePause() { this.paused = !this.paused; this.emit(); }
 
-  async load(icao: string) {
+  async load(icao: string, activeRunwayEnds?: string[], runwayWeightAllow?: Record<string, WeightClass[]>) {
     this.loading = true; this.icao = icao; this.radio = []; this.selectedId = null; this.emit();
     let fc: any, airspace: EAirport | null = null;
     try {
@@ -116,6 +123,9 @@ class SimStore {
     this.osm = osm;
     this.airspace = airspace;
     this.engine = new SimEngine(osm);
+    this.engine.setActiveRunwayEnds(activeRunwayEnds ?? null);
+    this.engine.setRunwayWeightAllow(runwayWeightAllow ?? null);
+    if (typeof window !== 'undefined') this.engine.autoTower = localStorage.getItem(LS_KEYS.autoTower) !== '0';
     this.radar = airspace ? this.buildRadar(airspace) : null;
 
     // Pass airspace config to the engine (ILS data + beacons)

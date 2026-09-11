@@ -104,3 +104,13 @@ export const COMMERCIAL_TYPES = ['B738', 'A320', 'A20N', 'B38M', 'E190', 'A333',
 export function randomCommercialType(): string {
   return COMMERCIAL_TYPES[Math.floor(Math.random() * COMMERCIAL_TYPES.length)];
 }
+
+// Same pool, restricted to a set of weight classes (e.g. a short runway that
+// disallows Heavy/Super). Falls back to the unrestricted pool if the filter
+// would leave nothing to pick from.
+export function randomCommercialTypeOf(allowed?: Set<WeightClass> | null): string {
+  if (!allowed || allowed.size === 0) return randomCommercialType();
+  const pool = COMMERCIAL_TYPES.filter(t => allowed.has(AIRCRAFT_DB[t].weightClass));
+  if (!pool.length) return randomCommercialType();
+  return pool[Math.floor(Math.random() * pool.length)];
+}

@@ -3,30 +3,59 @@
 //  Dark navy + desaturated satellite + black taxiway/runway ribbons.
 //  Used by both the OsmRadar demo and the SkyControl ground view.
 // ============================================================
-export function buildOsmStyle(icao: string) {
+import { SATELLITE_BOUNDS } from './satelliteBounds';
+
+export function buildOsmStyle(icao: string, theme: 'chart' | 'satellite' = 'chart') {
   const src = `/maps/osm/${icao}.geojson`;
+  const sat = theme === 'satellite';
+  const bounds = SATELLITE_BOUNDS[icao];
+  // Prefer a pre-baked static image (no per-zoom tile refetch, no reload flicker)
+  // over live XYZ tiles. Falls back to tiles only for airports without one yet.
+  const imageSource = (url: string, minLng: number, minLat: number, maxLng: number, maxLat: number) => ({
+    type: 'image' as const,
+    url,
+    coordinates: [
+      [minLng, maxLat], [maxLng, maxLat], [maxLng, minLat], [minLng, minLat],
+    ] as [number, number][],
+  });
+  const satSource = bounds
+    ? imageSource(`/maps/satellite/${icao}.jpg`, bounds.minLng, bounds.minLat, bounds.maxLng, bounds.maxLat)
+    : { type: 'raster' as const, tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, maxzoom: 19, attribution: '© Esri' };
+  // Soft far-padded backdrop so panning past the detail image shows terrain, not void.
+  const wideSource = bounds ? imageSource(`/maps/satellite/${icao}_wide.jpg`, bounds.wideMinLng, bounds.wideMinLat, bounds.wideMaxLng, bounds.wideMaxLat) : null;
   const taxiW      = ['interpolate', ['linear'], ['zoom'], 11, 1.5, 13, 4,   14, 7,    15, 11,   16, 17,   17, 26,   18, 40] as any;
   const taxiCasing = ['interpolate', ['linear'], ['zoom'], 11, 4,   13, 6.5, 14, 9.5,  15, 13.5, 16, 19.5, 17, 28.5, 18, 42.5] as any;
   const rwyW       = ['interpolate', ['linear'], ['zoom'], 11, 4,   13, 11,  14, 19,   15, 32,   16, 52,   17, 80,   18, 124] as any;
   const rwyCasing  = ['interpolate', ['linear'], ['zoom'], 11, 6,   13, 13,  14, 21,   15, 34,   16, 54,   17, 82,   18, 126] as any;
 
+  // Photoreal satellite mode: raster shown at true color/opacity; synthetic
+  // pavement fills fade way down so the imagery itself reads through (like
+  // a real aerial view), keeping only faint outlines + labels for wayfinding.
+  // (Blur/contrast to melt parked aircraft is already baked into the static
+  // image by scripts/fetch_satellite.py, so paint stays near-neutral here.)
+  const satPaint = sat
+    ? { 'raster-opacity': 1, 'raster-saturation': 0, 'raster-brightness-max': 1, 'raster-brightness-min': 0, 'raster-hue-rotate': 0, 'raster-contrast': 0.02 }
+    : { 'raster-opacity': 0.46, 'raster-saturation': -0.82, 'raster-brightness-max': 0.4, 'raster-brightness-min': 0.015, 'raster-hue-rotate': 198, 'raster-contrast': 0.06 };
+
   return {
     version: 8 as const,
     glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
     sources: {
-      sat: { type: 'raster' as const, tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, maxzoom: 19, attribution: '© Esri' },
+      ...(wideSource ? { satWide: wideSource } : {}),
+      sat: satSource,
       osm: { type: 'geojson' as const, data: src },
     },
     layers: [
-      { id: 'bg', type: 'background' as const, paint: { 'background-color': '#070d18' } },
-      { id: 'sat', type: 'raster' as const, source: 'sat', paint: { 'raster-opacity': 0.46, 'raster-saturation': -0.82, 'raster-brightness-max': 0.4, 'raster-brightness-min': 0.015, 'raster-hue-rotate': 198, 'raster-contrast': 0.06 } },
-      { id: 'apron', type: 'fill' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'apron'] as any, paint: { 'fill-color': '#0d1726', 'fill-opacity': 0.84 } },
-      { id: 'hangar', type: 'fill' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'hangar'] as any, paint: { 'fill-color': '#131e30', 'fill-opacity': 0.7 } },
-      { id: 'terminal', type: 'fill' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'terminal'] as any, paint: { 'fill-color': '#1a2c47', 'fill-opacity': 0.94 } },
-      { id: 'terminal-line', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'terminal'] as any, paint: { 'line-color': '#2a4466', 'line-width': 1 } },
-      { id: 'taxiway-casing', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'taxiway'] as any, layout: { 'line-cap': 'round' as const, 'line-join': 'round' as const }, paint: { 'line-color': '#1b2b43', 'line-width': taxiCasing } },
-      { id: 'taxiway', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'taxiway'] as any, layout: { 'line-cap': 'round' as const, 'line-join': 'round' as const }, paint: { 'line-color': '#04070e', 'line-width': taxiW } },
-      { id: 'taxiway-cl', type: 'line' as const, source: 'osm', minzoom: 13.5, filter: ['==', ['get', 'aeroway'], 'taxiway'] as any, layout: { 'line-cap': 'round' as const, 'line-join': 'round' as const }, paint: { 'line-color': 'rgba(240,200,70,0.32)', 'line-width': ['interpolate', ['linear'], ['zoom'], 13.5, 0.4, 16, 1, 18, 1.6] as any } },
+      { id: 'bg', type: 'background' as const, paint: { 'background-color': sat ? '#05070a' : '#070d18' } },
+      ...(wideSource ? [{ id: 'sat-wide', type: 'raster' as const, source: 'satWide', paint: satPaint }] : []),
+      { id: 'sat', type: 'raster' as const, source: 'sat', paint: satPaint },
+      { id: 'apron', type: 'fill' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'apron'] as any, paint: { 'fill-color': '#0d1726', 'fill-opacity': sat ? 0.06 : 0.84 } },
+      { id: 'hangar', type: 'fill' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'hangar'] as any, paint: { 'fill-color': '#131e30', 'fill-opacity': sat ? 0.06 : 0.7 } },
+      { id: 'terminal', type: 'fill' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'terminal'] as any, paint: { 'fill-color': '#1a2c47', 'fill-opacity': sat ? 0.08 : 0.94 } },
+      { id: 'terminal-line', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'terminal'] as any, paint: { 'line-color': sat ? 'rgba(255,255,255,0.55)' : '#2a4466', 'line-width': 1 } },
+      { id: 'taxiway-casing', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'taxiway'] as any, layout: { 'line-cap': 'round' as const, 'line-join': 'round' as const }, paint: { 'line-color': '#1b2b43', 'line-width': taxiCasing, 'line-opacity': sat ? 0.12 : 1 } },
+      { id: 'taxiway', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'taxiway'] as any, layout: { 'line-cap': 'round' as const, 'line-join': 'round' as const }, paint: { 'line-color': '#04070e', 'line-width': taxiW, 'line-opacity': sat ? 0.10 : 1 } },
+      { id: 'taxiway-cl', type: 'line' as const, source: 'osm', minzoom: 13.5, filter: ['==', ['get', 'aeroway'], 'taxiway'] as any, layout: { 'line-cap': 'round' as const, 'line-join': 'round' as const }, paint: { 'line-color': sat ? 'rgba(250,215,90,0.85)' : 'rgba(240,200,70,0.32)', 'line-width': ['interpolate', ['linear'], ['zoom'], 13.5, 0.4, 16, 1, 18, 1.6] as any } },
       // taxiway designator labels (A, B, K …) repeated along each taxiway, in a
       // black "sign" pill like real airport diagrams
       {
@@ -50,9 +79,9 @@ export function buildOsmStyle(icao: string) {
         },
         paint: { 'text-color': '#0a0e16', 'text-halo-color': '#f6c43a', 'text-halo-width': 2.2 },
       },
-      { id: 'runway-casing', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'runway'] as any, layout: { 'line-cap': 'butt' as const }, paint: { 'line-color': '#21354e', 'line-width': rwyCasing } },
-      { id: 'runway', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'runway'] as any, layout: { 'line-cap': 'butt' as const }, paint: { 'line-color': '#03050b', 'line-width': rwyW } },
-      { id: 'runway-cl', type: 'line' as const, source: 'osm', minzoom: 12.5, filter: ['==', ['get', 'aeroway'], 'runway'] as any, paint: { 'line-color': 'rgba(220,230,245,0.5)', 'line-width': 1, 'line-dasharray': [4, 6] } },
+      { id: 'runway-casing', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'runway'] as any, layout: { 'line-cap': 'butt' as const }, paint: { 'line-color': '#21354e', 'line-width': rwyCasing, 'line-opacity': sat ? 0.12 : 1 } },
+      { id: 'runway', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'runway'] as any, layout: { 'line-cap': 'butt' as const }, paint: { 'line-color': '#03050b', 'line-width': rwyW, 'line-opacity': sat ? 0.08 : 1 } },
+      { id: 'runway-cl', type: 'line' as const, source: 'osm', minzoom: 12.5, filter: ['==', ['get', 'aeroway'], 'runway'] as any, paint: { 'line-color': sat ? 'rgba(255,255,255,0.85)' : 'rgba(220,230,245,0.5)', 'line-width': 1, 'line-dasharray': [4, 6] } },
       { id: 'runway-label', type: 'symbol' as const, source: 'osm', minzoom: 12, filter: ['==', ['get', 'aeroway'], 'runway'] as any, layout: { 'symbol-placement': 'line-center' as const, 'text-field': ['get', 'ref'] as any, 'text-size': 11, 'text-font': ['Open Sans Bold', 'Open Sans Regular'], 'text-letter-spacing': 0.1 }, paint: { 'text-color': 'rgba(210,225,245,0.85)', 'text-halo-color': '#04060c', 'text-halo-width': 1.4 } },
       { id: 'gate-dot', type: 'circle' as const, source: 'osm', minzoom: 13, filter: ['in', ['get', 'aeroway'], ['literal', ['gate', 'stand']]] as any, paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 1.2, 16, 2.6, 18, 4.2] as any, 'circle-color': 'rgba(96,160,235,0.6)', 'circle-stroke-color': 'rgba(140,190,255,0.82)', 'circle-stroke-width': 0.6 } },
       { id: 'gate-label', type: 'symbol' as const, source: 'osm', minzoom: 14.5, filter: ['all', ['in', ['get', 'aeroway'], ['literal', ['gate', 'stand']]], ['!=', ['to-string', ['get', 'ref']], '']] as any, layout: { 'text-field': ['get', 'ref'] as any, 'text-size': ['interpolate', ['linear'], ['zoom'], 14.5, 7.5, 17, 10.5, 19, 13] as any, 'text-font': ['Open Sans Bold', 'Open Sans Regular'], 'text-offset': [0, 0.85] as any, 'text-anchor': 'top' as const, 'text-allow-overlap': false, 'text-optional': true }, paint: { 'text-color': ['case', ['==', ['get', 'aeroway'], 'gate'], 'rgba(180,210,250,0.95)', 'rgba(150,185,228,0.8)'] as any, 'text-halo-color': 'rgba(4,8,16,0.95)', 'text-halo-width': 1.4 } },

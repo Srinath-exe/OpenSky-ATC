@@ -1,9 +1,14 @@
 'use client';
 import React, { useEffect, useRef, useState, useSyncExternalStore, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { sim, ATC_AIRPORTS } from '@/components/atc/simStore';
+import Link from 'next/link';
+import { sim, ATC_AIRPORTS, LS_KEYS } from '@/components/atc/simStore';
 import { isAirborne } from '@/lib/sim/aircraft';
 import type { AircraftState } from '@/lib/sim/types';
+import type { WeightClass } from '@/lib/sim/aircraftDB';
+
+const START_CFG_KEY = 'skycontrol_start_config';
+interface StartConfig { icao: string; ends: string[]; weights: Record<string, WeightClass[]>; }
 
 const GroundView   = dynamic(() => import('@/components/atc/GroundView'),   { ssr: false });
 const ApproachView = dynamic(() => import('@/components/atc/ApproachView'), { ssr: false });
@@ -46,13 +51,26 @@ const PHASE_LABEL: Record<string, [string, string]> = {
 export default function AtcPage() {
   useSim();
   const [mode, setMode] = useState<'GROUND' | 'APPROACH'>('APPROACH');
+  const [groundTheme, setGroundTheme] = useState<'chart' | 'satellite'>(() => {
+    if (typeof window === 'undefined') return 'satellite';
+    return (localStorage.getItem(LS_KEYS.groundTheme) as 'chart' | 'satellite') ?? 'satellite';
+  });
   const [cmd,  setCmd]  = useState('');
   const [clock, setClock] = useState('--:--:--');
   const logRef = useRef<HTMLDivElement>(null);
   const cmdRef = useRef<HTMLInputElement>(null);
 
-  // Boot
-  useEffect(() => { if (!sim.engine && !sim.loading) sim.load('EGLL'); }, []);
+  // Boot — consume a one-shot start config left by the home page (airport +
+  // active runways + allowed weight classes), else default to EGLL, all open.
+  useEffect(() => {
+    if (sim.engine || sim.loading) return;
+    let cfg: StartConfig | null = null;
+    try {
+      const raw = localStorage.getItem(START_CFG_KEY);
+      if (raw) { cfg = JSON.parse(raw); localStorage.removeItem(START_CFG_KEY); }
+    } catch { /* ignore malformed config */ }
+    sim.load(cfg?.icao ?? 'EGLL', cfg?.ends, cfg?.weights);
+  }, []);
 
   // UTC clock
   useEffect(() => {
@@ -119,18 +137,20 @@ export default function AtcPage() {
       <div className="atc-root">
         {/* ══════════════════ CANVAS LAYER ══════════════════ */}
         <div className="atc-canvas">
-          {mode === 'GROUND' ? <GroundView /> : <ApproachView />}
+          {mode === 'GROUND' ? <GroundView theme={groundTheme} /> : <ApproachView />}
         </div>
 
         {/* ══════════════════ LEFT SIDEBAR ══════════════════ */}
         <aside className="atc-left">
           {/* Brand */}
           <div className="brand-row">
-            <div className="brand-mark">◆</div>
-            <div>
+            <Link href="/" className="brand-mark" style={{ textDecoration: 'none' }}>◆</Link>
+            <div style={{ flex: 1 }}>
               <div className="brand-name">SKYCONTROL</div>
               <div className="brand-sub">{mode === 'GROUND' ? 'GROUND · TOWER' : 'APPROACH · TRACON'}</div>
             </div>
+            <Link href="/" className="brand-nav-btn" title="Home">⌂</Link>
+            <Link href="/settings" className="brand-nav-btn" title="Settings">⚙</Link>
           </div>
 
           {/* Mode toggle */}
@@ -138,6 +158,14 @@ export default function AtcPage() {
             <button className={`seg-btn${mode === 'APPROACH' ? ' seg-active' : ''}`} onClick={() => setMode('APPROACH')}>RADAR</button>
             <button className={`seg-btn${mode === 'GROUND'   ? ' seg-active' : ''}`} onClick={() => setMode('GROUND')}>GROUND</button>
           </div>
+
+          {/* Ground map look toggle */}
+          {mode === 'GROUND' && (
+            <div className="seg-ctrl" style={{ marginTop: 6 }}>
+              <button className={`seg-btn${groundTheme === 'satellite' ? ' seg-active' : ''}`} onClick={() => { setGroundTheme('satellite'); localStorage.setItem(LS_KEYS.groundTheme, 'satellite'); }}>SATELLITE</button>
+              <button className={`seg-btn${groundTheme === 'chart'     ? ' seg-active' : ''}`} onClick={() => { setGroundTheme('chart'); localStorage.setItem(LS_KEYS.groundTheme, 'chart'); }}>CHART</button>
+            </div>
+          )}
 
           {/* Stats */}
           <div className="stat-row">
@@ -553,6 +581,14 @@ const GLOBAL_CSS = `
   }
   .brand-name { font-size: 12px; font-weight: 800; letter-spacing: 3px; color: var(--text); line-height: 1; }
   .brand-sub  { font-size: 8px; letter-spacing: 1.5px; color: var(--muted); margin-top: 4px; }
+  .brand-nav-btn {
+    width: 24px; height: 24px; border-radius: var(--r3); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 13px; text-decoration: none;
+    border: 1px solid var(--border); background: rgba(5,10,20,.6);
+    transition: color .15s, border-color .15s;
+  }
+  .brand-nav-btn:hover { color: var(--text); border-color: var(--border2); }
 
   .seg-ctrl {
     display: flex; gap: 3px; background: rgba(5,10,20,.8);

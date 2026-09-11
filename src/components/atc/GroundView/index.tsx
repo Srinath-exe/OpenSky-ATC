@@ -16,22 +16,23 @@ if (typeof window !== 'undefined' && !(window as any).__abortFetchPatched) {
 }
 
 // Ground map renderer over the SHARED sim engine (the store owns the sim loop).
-export default function GroundView() {
+export default function GroundView({ theme = 'chart' }: { theme?: 'chart' | 'satellite' }) {
   const mapDiv = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const raf = useRef(0);
   const lastIcao = useRef('');
+  const lastTheme = useRef(theme);
 
   useEffect(() => {
     if (!mapDiv.current || map.current) return;
     const start = ATC_AIRPORTS[sim.icao] ?? ATC_AIRPORTS.EGLL;
     const m = new maplibregl.Map({
-      container: mapDiv.current, style: buildOsmStyle(sim.icao || 'EGLL') as any,
+      container: mapDiv.current, style: buildOsmStyle(sim.icao || 'EGLL', theme) as any,
       center: start.center, zoom: start.groundZoom, minZoom: 11, maxZoom: 19, attributionControl: false, dragRotate: false,
     });
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
-    map.current = m; lastIcao.current = sim.icao;
+    map.current = m; lastIcao.current = sim.icao; lastTheme.current = theme;
 
     const hit = (pt: maplibregl.Point) => {
       const e = sim.engine; if (!e) return null;
@@ -98,6 +99,14 @@ export default function GroundView() {
     raf.current = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(raf.current); map.current = null; m.remove(); };
   }, []);
+
+  // Swap chart ↔ satellite look without recreating the map (keeps camera position).
+  useEffect(() => {
+    const m = map.current;
+    if (!m || lastTheme.current === theme) return;
+    lastTheme.current = theme;
+    m.setStyle(buildOsmStyle(sim.icao || 'EGLL', theme) as any);
+  }, [theme]);
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
