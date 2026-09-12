@@ -23,8 +23,8 @@ import {
   WAKE_DEPARTURE_S, WAKE_FINAL_NM, WAKE_CATEGORY_BY_CLASS, newAircraftFields, Emergency, EmergencyType, ReadbackStatus,
   VehicleTarget, VehicleType, WeatherState, Vehicle, Alert, defaultPushback, defaultStartup, EVENT_WHO,
 } from './types';
-import { stepAircraft, isAirborne, StepCtx, HOLD_BUFFER_M, DEP_TURN_FT, TAXI_DECEL, EMERG_DECEL, takeoffAccelKts, approachVal } from './aircraft';
-import { ILSRunway, canCaptureLoc, overshootsLoc, locTargetHdg, gsAltFt, gsDistM, distAlongFwd, aboveGlideslope, ilsFromGeometry, ILS_CONST } from './ils';
+import { stepAircraft, isAirborne, StepCtx, HOLD_BUFFER_M, DEP_TURN_FT, TAXI_DECEL, EMERG_DECEL, takeoffAccelKts, approachVal, brakingDistM } from './aircraft';
+import { ILSRunway, canCaptureLoc, overshootsLoc, locTargetHdg, gsAltFt, gsDistM, distAlongFwd, crossTrackM, aboveGlideslope, ilsFromGeometry, ILS_CONST } from './ils';
 import { rng, rnd, ri, rf, chance, subStream } from './rng';
 import { stage as deriveStage, StageCtx, distToThresholdFromPathNM } from './stage';
 import type {
@@ -150,6 +150,7 @@ interface Scratch {
   rtoRecoverAt: number | null;
   lastLevelAt: number;
   overshootSaid: boolean;
+  locMinXtM: number | null;   // smallest |cross-track| seen while armed and not captured (divergence detection)
   arffDispatchedAt: number | null;
   handoffLateScored: boolean;
   wakeWarned: Set<number>;
@@ -166,7 +167,7 @@ function newScratch(): Scratch {
     nextRequestAt: null, nextRequestKind: null, rollAt: null, handoffAt: null, handoffTo: null, exitPlan: null, taxiDest: null,
     crossingRef: null, onRunwayRef: null, luawAt: null, gaAt: null, stoppedSince: null, continueApproach: false, queried4NM: false,
     vacated: false, passedFixes: new Set(), lastStage: null, emergNoticeAt: 0, crosswindChecked: false, despawnAt: null, rtoRecoverAt: null,
-    lastLevelAt: 0, overshootSaid: false, arffDispatchedAt: null, handoffLateScored: false, wakeWarned: new Set(), entryKey: null, touchdownDone: false,
+    lastLevelAt: 0, overshootSaid: false, locMinXtM: null, arffDispatchedAt: null, handoffLateScored: false, wakeWarned: new Set(), entryKey: null, touchdownDone: false,
     crossingEntered: false, crossingMinD: Infinity, enteredAirspace: false,
   };
 }
@@ -1093,7 +1094,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
   }
 
   /** Runway exits of a physical runway: taxiway nodes adjacent to centreline nodes. */
-  private runwayExits(ref: string): RunwayExit[] {
+  runwayExits(ref: string): RunwayExit[] {
     const c = this.exitsCache.get(ref); if (c) return c;
     const out: RunwayExit[] = [];
     const set = this.runwayNodes.get(ref) ?? new Set<string>();
@@ -1967,8 +1968,10 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     if (expedite) a.expediteTaxiUntil = this.time + 90;
     if (holdShortOf?.kind === 'runway') a.lahsoHoldShortOf = upper(holdShortOf.runway);
     const s = this.sc(a);
-    if (a.phase === 'rollout' && a.plan.runway) {
-      // re-plan the exit and move the braking target with it, otherwise the aircraft keeps the touchdown plan's holdAt/speed
+    if (a.phase === 'rollout' && a.plan.runway && a.path && a.path.kind !== 'taxi') {
+      // re-plan the exit and move the braking target with it, otherwise the aircraft keeps the touchdown plan's holdAt/speed.
+      // Never once the aircraft is already on the exit path: a runway exit plan on a taxi path leaves it rolling to the
+      // path end at the exit speed and it never comes to a stop (-> stuck in rollout).
       const rs = this.runwayState(a.plan.runway)!;
       const ex = this.chooseExit(a, rs.ref, rs.headingTrue, a.speed, a.exitTaxiway, false) ?? (a.exitTaxiway ? this.chooseExit(a, rs.ref, rs.headingTrue, a.speed, null, false) : null);
       if (ex) { s.exitPlan = ex; if (a.path) a.path.holdAt = ex.at; a.cmdIas = ex.speedKt; }
@@ -2231,7 +2234,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     a.landingCleared = false; a.landingClearedAt = null;
     if (a.goAround) { a.goAround = false; if (a.phase === 'go_around') a.phase = 'climb'; }
     a.underControl = true; a.attention = false;
-    this.sc(a).overshootSaid = false; this.sc(a).queried4NM = false;
+    this.sc(a).overshootSaid = false; this.sc(a).queried4NM = false; this.sc(a).locMinXtM = null;
   }
   cmdLOC(a: AircraftState, runway: string, maintainAlt: number | null): EngineOutcome {
     const r = this.cmdILS(a, runway); if (!r.ok) return r;
@@ -2709,8 +2712,16 @@ export class SimEngine implements EngineCommandApi, StageCtx {
               if ((a.cmdIas ?? a.targetSpeed) > 200) { a.targetSpeed = 200; a.cmdIas = null; }
               this.addScore('ESTABLISHED', a.callsign, null, a.assignedRunway);
               this.emit('info', a, `${a.callsign} established localizer ${a.assignedRunway}`, undefined, 'PILOT');
-            } else if (!s.overshootSaid) { s.overshootSaid = true; this.emit('info', a, `${a.callsign}: unable to capture, above the glideslope`, undefined, 'PILOT'); }
+            } else if (!s.overshootSaid) { s.overshootSaid = true; this.raiseRequest(a, 'further', null, `${this.telephony(a.callsign)}, unable to capture, we're above the glideslope for ${r.name}, request vectors.`); }
           } else if (!s.overshootSaid && overshootsLoc(a.pos, a.heading, r, arcade)) { s.overshootSaid = true; this.raiseRequest(a, 'further', null, `${this.telephony(a.callsign)}, we're through the localizer for ${r.name}, request vectors back.`); }
+          else if (!s.overshootSaid) {
+            // Cleared on a heading that never reaches the beam (or drifting away after missing it): once the cross-track
+            // has opened by 0.4 NM from the closest point seen since the clearance, the crew asks for vectors instead
+            // of flying on to the airspace boundary.
+            const xt = Math.abs(crossTrackM(a.pos, r));
+            if (s.locMinXtM == null || xt < s.locMinXtM) s.locMinXtM = xt;
+            else if (xt > s.locMinXtM + 0.4 * NM_TO_M && xt > 1500 && distAlongFwd(a.pos, r) > 0 && Math.abs(angleDelta(a.heading, r.locCourse)) > 12) { s.overshootSaid = true; this.raiseRequest(a, 'further', null, `${this.telephony(a.callsign)}, we're not going to intercept the localizer for ${r.name} on this heading, request vectors.`); }
+          }
         }
         if (a.ilsCaptured) {
           // Track the localizer: the LOC law gives a desired TRACK; convert to a heading with the wind-correction angle
@@ -2785,6 +2796,40 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         const b = this.byId(a.followId);
         if (!b || isAirborne(b) || b.phase === 'parked' || b.phase === 'arrived') a.followId = null;
         else if (dist(a.pos, b.pos) < a.perf.safetyRadiusMeters + b.perf.safetyRadiusMeters + 20 || b.speed < 0.5 && dist(a.pos, b.pos) < 120) a.trafficHold = true;
+      }
+    }
+    // Path look-ahead: crossing traffic. The cone test above only sees traffic ahead of the nose; two aircraft
+    // converging on a taxiway intersection from the side (or one taxiing into a stopped aircraft round a bend) are
+    // caught by sampling the next few seconds of each path. The one that would reach the meeting point later
+    // gives way; an aircraft already committed (< 15 m from the point) is never stopped.
+    const ahead = (x: AircraftState): { s: number; p: XY }[] => {
+      const p = x.path; if (!p) return [];
+      const look = Math.min(p.total - x.distAlong, brakingDistM(x.speed, TAXI_DECEL) + 35 + x.speed * KTS_TO_MPS * 3);
+      const out: { s: number; p: XY }[] = [];
+      for (let d = 0; d <= look; d += 7) out.push({ s: d, p: sampleAlong(p.pts, p.cum, x.distAlong + d).pos });
+      return out;
+    };
+    const aheadOf = new Map<number, { s: number; p: XY }[]>();
+    for (const a of moving) if (a.phase !== 'hold_short' && a.phase !== 'rollout' && !this.manualHold.has(a.id) && a.path) aheadOf.set(a.id, ahead(a));
+    for (const a of moving) {
+      const sa = aheadOf.get(a.id); if (!sa || a.trafficHold) continue;
+      for (const b of blockers) {
+        if (b === a || a.followId === b.id) continue;
+        const sb = aheadOf.get(b.id);
+        const gap = a.perf.safetyRadiusMeters + b.perf.safetyRadiusMeters;
+        if (!sb || b.speed < 1) {
+          // stopped (or path-less) aircraft on the way: stop short of it
+          const dNow = dist(a.pos, b.pos);
+          const near = dNow > 8 && sa.find(q => q.s > 12 && dist(q.p, b.pos) < Math.min(dNow, gap * 0.65 + 8));
+          if (near && Math.abs(angleDelta(travelHdg(a), headingTo(a.pos, b.pos))) < 120) { a.trafficHold = true; if (!blockedBy.has(a.id)) blockedBy.set(a.id, b.id); break; }
+          continue;
+        }
+        let hit: { i: number; j: number } | null = null;
+        for (let i = 0; i < sa.length && !hit; i++) for (let j = 0; j < sb.length; j++) if (dist(sa[i].p, sb[j].p) < gap * 0.75 + 6) { hit = { i, j }; break; }
+        if (!hit) continue;
+        const tA = sa[hit.i].s / Math.max(3, a.speed), tB = sb[hit.j].s / Math.max(3, b.speed);
+        const later = tA > tB + 0.5 || (Math.abs(tA - tB) <= 0.5 && a.id > b.id);
+        if (later && sa[hit.i].s > 15) { a.trafficHold = true; if (!blockedBy.has(a.id)) blockedBy.set(a.id, b.id); break; }
       }
     }
     // close pairs facing each other both stop; then break mutual blocks by lower id (B14). A pushback is a fixed
@@ -3074,6 +3119,15 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       // On the runway path: exit when reaching the planned exit (or stop for an emergency / no exit)
       const plan = s.exitPlan;
       if (plan && a.distAlong >= plan.at - 1 && a.speed <= plan.speedKt + 3) {
+        // traffic moved onto the exit since touchdown (an aircraft pulled up to the hold line there): roll on to the next one
+        if (!(a.exitTaxiway && plan.taxiway === a.exitTaxiway) && this.exitBlocked(a, plan.twyNodeId, this.nodeXY(plan.runwayNodeId) ?? a.pos)) {
+          const next = this.chooseExit(a, rs.ref, rs.headingTrue, a.speed, null, false);
+          if (next && next.twyNodeId !== plan.twyNodeId) {
+            s.exitPlan = next; a.path.holdAt = next.at; a.cmdIas = next.speedKt;
+            this.emit('info', a, `${a.callsign}: ${plan.taxiway ?? 'the exit'} is blocked, rolling to ${next.taxiway ?? 'the next one'}`, undefined, 'PILOT');
+            return;
+          }
+        }
         this.exitViaTaxiway(a, rs, plan, false);
         return;
       }
@@ -3146,7 +3200,11 @@ export class SimEngine implements EngineCommandApi, StageCtx {
   }
   private trGoAround(a: AircraftState, s: Scratch) {
     if (a.altitude >= this.missedApproachAltFt - 100 && this.settings.autoHandoff && a.onFrequency === 'tower' && a.handedTo == null) this.execHandoff(a, 'approach');
-    if (s.gaAt != null && this.time - s.gaAt > 30 && !s.overshootSaid) { s.overshootSaid = true; this.emit('info', a, `${a.callsign}: flying runway heading, climbing ${this.missedApproachAltFt}, request further instructions`, undefined, 'PILOT'); }
+    // 30 s into the missed approach the crew asks for vectors as a proper request (it shows in the request queue and
+    // is answered by any heading / direct / ILS instruction), unless the going-around call is still open or already answered with vectors
+    const rs = a.plan.runway ? this.runwayState(a.plan.runway) : undefined;
+    const stillRunwayHdg = !rs || Math.abs(angleDelta(a.targetHeading, rs.headingTrue)) < 1;
+    if (s.gaAt != null && this.time - s.gaAt > 30 && !s.overshootSaid && stillRunwayHdg && !a.requests.some(r => r.answeredAt == null)) { s.overshootSaid = true; this.raiseRequest(a, 'further', null, `${this.telephony(a.callsign)}, flying runway heading, climbing ${this.missedApproachAltFt}, request further instructions.`); }
   }
 
   /** Pick the runway exit: first high-speed exit reachable at <= 30 kt (M) / 25 kt (H,S), else the next 90-degree exit at <= 15 kt. */
@@ -3164,6 +3222,9 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       const twy = this.nodeXY(ex.twyNodeId)!;
       const angle = Math.abs(angleDelta(hdg, headingTo(ex.xy, twy)));
       if (angle > 125) continue; // would need a backtrack
+      // an exit blocked by ground traffic (an aircraft holding short of the runway on that taxiway, or a vehicle / aircraft
+      // sitting on it) is skipped unless the controller asked for it by name: taking it parks the arrival nose-to-nose on the strip
+      if (!(wantTaxiway && (ex.taxiway === wantTaxiway)) && this.exitBlocked(a, ex.twyNodeId, ex.xy)) continue;
       const hs = angle >= 8 && angle <= 55;
       const exitSpeed = hs ? hsSpeed : 15;
       const need = fromStandstill ? 0 : this.brakingM(speedKt, decel) - this.brakingM(exitSpeed, decel);
@@ -3186,6 +3247,17 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     const first = fromStandstill ? cands[0] : (cands.find(c => c.hs) ?? cands[0]);
     return strip(first);
     function strip(c: ExitPlan & { along: number; hs: boolean }): ExitPlan { return { runwayNodeId: c.runwayNodeId, twyNodeId: c.twyNodeId, at: c.at, speedKt: c.speedKt, taxiway: c.taxiway, angleDeg: c.angleDeg }; }
+  }
+  /** Ground traffic sitting on / holding at the first 150 m of an exit taxiway (measured from the runway edge node). */
+  private exitBlocked(a: AircraftState, twyNodeId: string, rwyXY: XY): boolean {
+    const twy = this.nodeXY(twyNodeId); if (!twy) return false;
+    const h = headingTo(rwyXY, twy);
+    for (const b of this.aircraft) {
+      if (b === a || isAirborne(b) || b.phase === 'parked' || b.phase === 'arrived') continue;
+      const along = alongTrack(b.pos, rwyXY, h), cross = Math.abs(crossTrack(b.pos, rwyXY, h));
+      if (along > 20 && along < 150 + b.perf.lengthMeters && cross < 35) return true;
+    }
+    return false;
   }
   /** Runway exits for the command panel picker (04 §1.4): distance ahead of the aircraft along its landing runway, side, high-speed flag, engine default. */
   exitsAhead(a: AircraftState): Array<{ taxiway: string; distAheadM: number; dir: 'L' | 'R'; highSpeed: boolean; engineDefault: boolean; passed: boolean }> {

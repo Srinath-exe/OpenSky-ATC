@@ -425,3 +425,33 @@ test('typed commands through executeText: ILS, cleared to land, exit, taxi to st
   assert.ok(arr.ok, 'on stand via typed commands');
   assert.ok(ledgerHas(e, 'PARKED', 'BAW77'));
 });
+
+test('an exit instruction received on the exit taxiway does not leave the aircraft rolling at the exit speed (stuck rollout)', () => {
+  const e = makeEngine('EGLL', { ends: ['27R', '27L'] });
+  const a = e.spawnAt({ callsign: 'LEAD', type: 'A320', kind: 'arrival', phase: 'rollout', runway: '27L', speedKts: 60, onFrequency: 'tower' });
+  const onExit = runUntil(e, () => a.path?.kind === 'taxi', 240);
+  assert.ok(onExit.ok, 'turns off the runway');
+  assert.equal(cmd(e, makeAst('exitAt', 'LEAD', { exit: { kind: 'next', dir: 'L' }, expedite: false, holdShortOf: null, contactGround: false })).code, 'ok_queued');
+  const taxi = runUntil(e, () => a.phase === 'taxi' || a.phase === 'hold_short', 240);
+  assert.ok(taxi.ok, `comes to a stop at the end of the exit (phase ${a.phase}, speed ${a.speed.toFixed(0)})`);
+});
+
+test('the crew skips an exit blocked by an aircraft holding short of the runway on it', () => {
+  const e = makeEngine('EGLL', { ends: ['27R', '27L'] });
+  const a = e.spawnAt({ callsign: 'LEAD', type: 'A320', kind: 'arrival', phase: 'rollout', runway: '27L', speedKts: 60, onFrequency: 'tower' });
+  run(e, 1);
+  const plan = e.exitsAhead(a).find(x => x.engineDefault)!;
+  assert.ok(plan, 'has a default exit');
+  // park a blocker just off the runway on that exit taxiway
+  const rs = e.runwayState('27L')!;
+  const ex = e.runwayExits(rs.ref).find(x => x.taxiway === plan.taxiway)!;
+  const twy = e.nodeXY(ex.twyNodeId)!;
+  const b = e.spawnAt({ callsign: 'BLK', type: 'A320', kind: 'departure', phase: 'hold_short', runway: '27L', onFrequency: 'tower' });
+  const len = dist(ex.xy, twy); b.pos = { x: ex.xy.x + ((twy.x - ex.xy.x) / len) * 70, y: ex.xy.y + ((twy.y - ex.xy.y) / len) * 70 }; b.path = null; b.speed = 0;   // 70 m down the exit: at the hold line
+  const onExit = runUntil(e, () => a.path?.kind === 'taxi', 240);
+  assert.ok(onExit.ok, 'turns off the runway');
+  assert.ok(evs(e, 'info', 'LEAD').some(ev => /blocked, rolling to/.test(ev.message)), 'reports the blocked exit');
+  const taxi = runUntil(e, () => a.phase === 'taxi', 240);
+  assert.ok(taxi.ok, 'stops clear on another exit');
+  assert.ok(dist(a.pos, b.pos) > 60, `clear of the blocker (${dist(a.pos, b.pos).toFixed(0)} m)`);
+});

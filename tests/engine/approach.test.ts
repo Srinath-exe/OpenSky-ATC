@@ -260,7 +260,7 @@ test('ILS intercept rules: 25-degree intercept captures (ESTABLISHED, LOC then G
   assert.equal(oc.extra?.aboveGlideslope, true);
   run(e, 20);
   assert.equal(c.ilsCaptured, false);
-  assert.ok(evs(e, 'info', 'BAW90').some(ev => /above the glideslope/.test(ev.message)));
+  assert.ok(c.requests.some(r => r.kind === 'further' && /above the glideslope/.test(r.text)), 'pilot reports above the glideslope and asks for vectors');
   // cancel approach -> heading + altitude, ILS flags cleared (on the established BAW90 re-cleared lower)
   assert.equal(cmd(e, makeAst('altitude', 'BAW90', { ft: 3000 })).code, 'ok_queued');
   const cap90 = runUntil(e, () => c.ilsCaptured, 300);
