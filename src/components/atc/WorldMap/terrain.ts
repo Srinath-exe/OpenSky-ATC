@@ -424,6 +424,25 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
     const c = world.toLocal(b.centroid.lng, b.centroid.lat); const r = Math.sqrt(b.areaM2) * (b.kind === 'apron' ? 0.9 : 1.4);
     const sp = new THREE.Sprite(glowMat); sp.position.copy(toV3(c.x, c.y, base + 2)); sp.scale.set(r, r, 1); sp.visible = false; g.add(sp); glows.push(sp);
   }
+  // stands: yellow lead-in lines and a small number plate at each stop position (real refs only; synthesized R-numbers too)
+  const leadPos: number[] = []; const plates = new THREE.Group();
+  const plateMat = new Map<string, THREE.MeshBasicMaterial>();
+  for (const st of air.stands) {
+    const pts = st.leadInPts.map(p => world.toLocal(p.lng, p.lat));
+    for (let i = 1; i < pts.length; i++) { const a = toV3(pts[i - 1].x, pts[i - 1].y, base + 0.42), b = toV3(pts[i].x, pts[i].y, base + 0.42); leadPos.push(a.x, a.y, a.z, b.x, b.y, b.z); }
+    if (!st.ref || plates.children.length > 400) continue;
+    let pm = plateMat.get(st.ref); if (!pm) { pm = new THREE.MeshBasicMaterial({ map: designatorTexture(st.ref), transparent: true, depthWrite: false, opacity: 0.9 }); plateMat.set(st.ref, pm); }
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(9, 4.5), pm); const sp = world.toLocal(st.lng, st.lat);
+    pl.rotation.x = -Math.PI / 2; pl.rotation.z = -(st.headingIn) * Math.PI / 180; pl.position.copy(toV3(sp.x, sp.y, base + 0.45));
+    // plate sits 12 m before the stop point, along the lead-in, so the aircraft does not cover it
+    const back = new THREE.Vector3(Math.sin(st.headingIn * Math.PI / 180), 0, -Math.cos(st.headingIn * Math.PI / 180)).multiplyScalar(-14);
+    pl.position.add(back); plates.add(pl);
+  }
+  const leadGeo = new THREE.BufferGeometry(); leadGeo.setAttribute('position', new THREE.Float32BufferAttribute(leadPos, 3));
+  const leadMat = new THREE.LineBasicMaterial({ color: PALETTE.taxiLine, transparent: true, opacity: 0.7 });
+  g.add(new THREE.LineSegments(leadGeo, leadMat)); fades.push({ mat: leadMat, base: 0.7, near: 900, far: 2600 });
+  g.add(plates); const plateFade = { near: 500, far: 1600 };
+  fades.push(...[...plateMat.values()].map(m => ({ mat: m, base: 0.9, near: plateFade.near, far: plateFade.far })));
   let curNight = 0;
   night.push({ setNight: (n) => {
     curNight = n; tm.opacity = 0.95 * n; tp.visible = n > 0.03; glowMat.opacity = 0.75 * n; for (const sp of glows) sp.visible = n > 0.03;

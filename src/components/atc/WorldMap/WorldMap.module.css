@@ -53,3 +53,14 @@
 .menuRow:hover { background: rgba(255, 255, 255, 0.08); }
 .menuRow kbd { font: 400 11px / 1 var(--font, "DM Sans", system-ui); color: rgba(255, 255, 255, 0.45); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 6px; padding: 2px 6px; }
 .menuEmpty { padding: 8px 10px; color: rgba(255, 255, 255, 0.5); font: 400 12px / 1 var(--font, "DM Sans", system-ui); }
+
+.windChip {
+  position: absolute; left: var(--ground-inset-left, 16px); top: 16px; z-index: 5; display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px 6px 8px; border-radius: 999px; pointer-events: none;
+  background: rgba(24, 24, 26, 0.6); border: 1px solid rgba(255, 255, 255, 0.10); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+  font: 300 12px / 1 var(--font, "DM Sans", system-ui); color: rgba(255, 255, 255, 0.85); font-variant-numeric: tabular-nums;
+}
+.windArrow { display: inline-block; width: 18px; height: 18px; line-height: 18px; text-align: center; color: #f5933f; font-size: 14px; transition: transform 600ms ease; }
+.windText { color: #fff; }
+.windMeta { color: rgba(255, 255, 255, 0.5); }
+.root[data-standalone="false"] .windChip { left: calc(var(--bay-w, 300px) + 2 * var(--float-gap, 12px)); }

@@ -130,6 +130,12 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(Array.from({ length: 64 }, (_, i) => new THREE.Vector3(Math.cos(i / 64 * Math.PI * 2), 0, Math.sin(i / 64 * Math.PI * 2)))),
       new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 0.12, gapSize: 0.08, transparent: true, opacity: 0.85 }));
     ring.computeLineDistances(); ring.visible = false; scene.add(ring);
+    const hoverRing = new THREE.LineLoop(ring.geometry, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 })); hoverRing.visible = false; scene.add(hoverRing);
+    // heading vectors (1 minute ahead) for airborne traffic, like the radar
+    const vecGeo = new THREE.BufferGeometry(); vecGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6 * 64), 3)); vecGeo.setDrawRange(0, 0);
+    const vecLines = new THREE.LineSegments(vecGeo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 })); vecLines.frustumCulled = false; scene.add(vecLines);
+    const vehRouteGeo = new THREE.BufferGeometry(); vehRouteGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6 * 2000), 3)); vehRouteGeo.setDrawRange(0, 0);
+    const vehRoutes = new THREE.LineSegments(vehRouteGeo, new THREE.LineBasicMaterial({ color: PALETTE.orange, transparent: true, opacity: 0.7 })); vehRoutes.frustumCulled = false; scene.add(vehRoutes);
     const routeMat = new LineMaterial({ color: 0xffffff, linewidth: 3, transparent: true, opacity: 0.9, dashed: false });
     let route: Line2 | null = null;
     let terrainUniforms: Record<string, THREE.IUniform> | null = null;
@@ -332,10 +338,19 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
           m.label.dataset.hover = a.id === sim.hoveredId ? 'true' : 'false';
         }
       }
+      // heading vectors: 60 s of ground speed ahead of every airborne aircraft
+      { const arr = vecGeo.getAttribute('position').array as Float32Array; let k = 0;
+        for (const a of eng.aircraft) { if (!isAirborne(a) || k >= 64) continue; const m = markers.get(a.id); if (!m) continue;
+          const d = a.speed * 0.5144 * 60; const hx = Math.sin(a.heading * Math.PI / 180) * d, hz = -Math.cos(a.heading * Math.PI / 180) * d;
+          arr.set([m.mesh.position.x, m.mesh.position.y, m.mesh.position.z, m.mesh.position.x + hx, m.mesh.position.y, m.mesh.position.z + hz], k * 6); k++; }
+        vecGeo.setDrawRange(0, k * 2); vecGeo.getAttribute('position').needsUpdate = true; }
+      // hover ring
+      const hov = sim.hoveredId != null && sim.hoveredId !== sim.selectedId ? markers.get(sim.hoveredId) : null;
+      if (hov) { hoverRing.visible = true; hoverRing.position.copy(hov.mesh.position).setY(hov.mesh.position.y + 0.5); const hr = Math.max(50, cam.dist * 0.024); hoverRing.scale.set(hr, 1, hr); } else hoverRing.visible = false;
       for (const [id, m] of markers) if (!live.has(id)) { traffic.remove(m.mesh); if (m.model) traffic.remove(m.model); decor.remove(m.shadow); decor.remove(m.stem); m.stem.geometry.dispose(); m.label.remove(); markers.delete(id); }
       // vehicles (only when away from the station, so the map stays calm)
       const liveV = new Set<string>();
-      let fleet: Array<{ id: string; type: string; state: string; pos: { x: number; y: number }; heading: number }> = [];
+      let fleet: Array<{ id: string; type: string; state: string; pos: { x: number; y: number }; heading: number; path: { pts: { x: number; y: number }[] } | null }> = [];
       try { fleet = eng.fleet.list(); } catch { fleet = []; }
       for (const v of fleet) {
         if (v.state === 'standby') continue;
@@ -354,6 +369,13 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         else { m.label.style.display = ''; m.label.style.transform = `translate(${((tmp.x + 1) / 2 * r.width + 10).toFixed(1)}px, ${((1 - tmp.y) / 2 * r.height - 8).toFixed(1)}px)`; const t = `${v.id} · ${v.state.replace('_', ' ')}`; if (m.label.textContent !== t) m.label.textContent = t; }
       }
       for (const [id, m] of vehicles) if (!liveV.has(id)) { vehGroup.remove(m.mesh); m.label.remove(); vehicles.delete(id); }
+      // vehicle routes (en route / returning) as thin orange lines on the ground
+      { const arr = vehRouteGeo.getAttribute('position').array as Float32Array; let k = 0;
+        for (const v of fleet as Array<{ state: string; path: { pts: { x: number; y: number }[] } | null }>) {
+          if (!v.path || (v.state !== 'enroute' && v.state !== 'returning')) continue;
+          const pts = v.path.pts; for (let i = 1; i < pts.length && k < 2000; i++) { const a = pts[i - 1], b = pts[i];
+            arr.set([a.x, (world?.heightAt(a.x, a.y) ?? 0) + 0.9, -a.y, b.x, (world?.heightAt(b.x, b.y) ?? 0) + 0.9, -b.y], k * 6); k++; } }
+        vehRouteGeo.setDrawRange(0, k * 2); vehRouteGeo.getAttribute('position').needsUpdate = true; }
       // selection ring + route + follow
       const sel = sim.selectedId != null ? eng.byId(sim.selectedId) : null;
       if (sel) {
@@ -435,6 +457,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
           )) : <div className={styles.menuEmpty}>No actions available</div>}
         </div>
       ) : null}
+      <WindChip />
       <div className={styles.toolbar} data-testid="world-toolbar" onPointerDown={(ev) => ev.stopPropagation()}>
         <Segmented ariaLabel="Time of day" small value={timeMode} onChange={pickTime} items={[{ id: 'auto', label: 'Auto', testId: 'world-time-auto' }, { id: 'day', label: 'Day', testId: 'world-time-day' }, { id: 'dusk', label: 'Dusk', testId: 'world-time-dusk' }, { id: 'night', label: 'Night', testId: 'world-time-night' }]} testId="world-time" />
         <div className={styles.toolCol}>
@@ -448,6 +471,21 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       </div>
       {status !== 'ready' ? <div className={styles.status} data-testid="world-status">{status === 'error' ? 'World data unavailable' : 'Building the world…'}</div> : null}
       {standalone ? <div className={styles.hint}>drag · pan &nbsp; right-drag · orbit &nbsp; wheel · zoom &nbsp; Home · reset view</div> : null}
+    </div>
+  );
+}
+
+/** Wind + sim clock chip (top-left of the world view): direction arrow points where the wind blows TO, magnetic dir/kts as read on the ATIS. */
+function WindChip() {
+  const wind = useSim((s) => { try { const w = s.engine?.wx(); return w ? { dir: w.windDirTrue, kts: w.windKt, gust: w.gustKt, vis: w.visM, cloud: w.cloud, precip: w.precip } : null; } catch { return null; } }, []);
+  const mag = useSim((s) => s.engine?.magVar ?? 0);
+  if (!wind) return null;
+  const dirMag = ((wind.dir - mag) % 360 + 360) % 360;
+  return (
+    <div className={styles.windChip} data-testid="world-wind">
+      <span className={styles.windArrow} style={{ transform: `rotate(${wind.dir + 180}deg)` }} aria-hidden="true">↑</span>
+      <span className={styles.windText}>{String(Math.round(dirMag)).padStart(3, '0')}° · {Math.round(wind.kts)}{wind.gust ? `G${Math.round(wind.gust)}` : ''} kt</span>
+      <span className={styles.windMeta}>{wind.vis >= 10000 ? '10 km+' : `${(wind.vis / 1000).toFixed(1)} km`} · {wind.cloud}{wind.precip !== 'none' ? ` · ${wind.precip}` : ''}</span>
     </div>
   );
 }
