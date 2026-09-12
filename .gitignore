@@ -60,3 +60,4 @@ Thumbs.db
 tsconfig.tsbuildinfo
 
 !docs/qa/*.png
+.tmp/

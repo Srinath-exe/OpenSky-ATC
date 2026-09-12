@@ -144,16 +144,68 @@ export function arcLengths(pts: XY[]): { cum: number[]; total: number } {
 }
 
 // Point + tangent heading at arc-length `d` along a polyline with cumulative `cum`.
+// Binary search over `cum` (B17: paths carry thousands of points).
 export function sampleAlong(pts: XY[], cum: number[], d: number): { pos: XY; heading: number } {
   const total = cum[cum.length - 1];
   if (d <= 0) return { pos: pts[0], heading: headingTo(pts[0], pts[1] ?? pts[0]) };
   if (d >= total) { const n = pts.length; return { pos: pts[n - 1], heading: headingTo(pts[n - 2] ?? pts[n - 1], pts[n - 1]) }; }
-  let i = 1;
-  while (i < cum.length && cum[i] < d) i++;
+  const i = upperIndex(cum, d);
   const seg = cum[i] - cum[i - 1];
   const t = seg > 1e-6 ? (d - cum[i - 1]) / seg : 0;
   const a = pts[i - 1], b = pts[i];
   return { pos: { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }, heading: headingTo(a, b) };
+}
+
+// Smallest index i >= 1 with cum[i] >= d (cum is non-decreasing).
+export function upperIndex(cum: number[], d: number): number {
+  let lo = 1, hi = cum.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (cum[mid] < d) lo = mid + 1; else hi = mid;
+  }
+  return lo;
+}
+
+// Arc-length of the point on the polyline nearest to `p`, searched from
+// arc-length `from` onward (monotonic search for hold nodes along a route).
+// Returns { at, dist } with dist = distance from p to the polyline.
+export function projectOntoPath(pts: XY[], cum: number[], p: XY, from = 0, maxAhead = Infinity): { at: number; dist: number } {
+  let best = { at: from, dist: Infinity };
+  const start = Math.max(1, upperIndex(cum, from));
+  for (let i = start; i < pts.length; i++) {
+    if (cum[i - 1] - from > maxAhead) break;
+    const a = pts[i - 1], b = pts[i];
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy;
+    let t = len2 < 1e-9 ? 0 : ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const q = { x: a.x + dx * t, y: a.y + dy * t };
+    const d = Math.hypot(p.x - q.x, p.y - q.y);
+    if (d < best.dist) best = { at: cum[i - 1] + (cum[i] - cum[i - 1]) * t, dist: d };
+  }
+  if (best.at < from) best.at = from;
+  return best;
+}
+
+// Signed cross-track distance of p from the infinite line through a in direction `hdg` (positive = right of track).
+export function crossTrack(p: XY, a: XY, hdg: number): number {
+  const rx = Math.sin((hdg + 90) * DEG), ry = Math.cos((hdg + 90) * DEG);
+  return (p.x - a.x) * rx + (p.y - a.y) * ry;
+}
+
+// Signed along-track distance of p from a in direction `hdg` (positive = ahead).
+export function alongTrack(p: XY, a: XY, hdg: number): number {
+  return (p.x - a.x) * Math.sin(hdg * DEG) + (p.y - a.y) * Math.cos(hdg * DEG);
+}
+
+// Intersection point of two segments (a1-a2, b1-b2) or null when they do not cross.
+export function segmentIntersection(a1: XY, a2: XY, b1: XY, b2: XY): XY | null {
+  const d = (a2.x - a1.x) * (b2.y - b1.y) - (a2.y - a1.y) * (b2.x - b1.x);
+  if (Math.abs(d) < 1e-9) return null;
+  const t = ((b1.x - a1.x) * (b2.y - b1.y) - (b1.y - a1.y) * (b2.x - b1.x)) / d;
+  const u = ((b1.x - a1.x) * (a2.y - a1.y) - (b1.y - a1.y) * (a2.x - a1.x)) / d;
+  if (t < 0 || t > 1 || u < 0 || u > 1) return null;
+  return { x: a1.x + (a2.x - a1.x) * t, y: a1.y + (a2.y - a1.y) * t };
 }
 
 // Unit conversions used throughout the sim.

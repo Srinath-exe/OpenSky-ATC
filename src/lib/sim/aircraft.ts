@@ -1,77 +1,121 @@
 // ============================================================
-//  Aircraft physics & state machine
+//  Aircraft physics & state machine (pure — no engine data, no DOM)
 //
-//  Ground movement: ARC-LENGTH PATH FOLLOWING on a Chaikin-smoothed polyline.
-//  Airborne flight: free integration toward autopilot targets (heading/alt/speed).
-//  ILS approach: localizer + glideslope targets are SET by the engine's
-//  handleTransitions() each tick; aircraft.ts just integrates toward them.
+//  Ground movement: ARC-LENGTH PATH FOLLOWING on a Chaikin-smoothed polyline
+//  with hold-short PLACES (DrivePath.holds — the next unreleased hold is the
+//  only place the aircraft stops for a clearance; B4/B5).
+//  Pushback: the aircraft follows a short pushback path TAIL FIRST at 3 kt
+//  while the engine sequences tug attach / push / disconnect.
+//  Takeoff: runway roll with class acceleration, rotation at Vr minus the
+//  headwind component, initial climb on runway heading to 400 ft AGL.
+//  Airborne flight: free integration toward autopilot targets; motion is
+//  along the wind-corrected track at ground speed (weather.applyWind).
+//  Landing: glideslope with 50 ft TCH, flare, touchdown 300-450 m past the
+//  threshold, rollout deceleration profile to a planned exit speed.
 //
-//  Altitude throughout this module is in FEET. Distances in metres. Speed knots.
+//  Altitude throughout this module is in FEET AGL. Distances in metres.
+//  Speed knots (ground speed on the ground, IAS-ish in the air).
 // ============================================================
-import {
-  XY, dist, headingTo, angleDelta, advance, sampleAlong, KTS_TO_MPS, FT_TO_M,
-} from './projection';
-import { AircraftState, FlightPhase, PendingCmd } from './types';
+import { dist, headingTo, angleDelta, advance, sampleAlong, KTS_TO_MPS, FT_TO_M } from './projection';
+import type { AircraftState, FlightPhase, PathHold, SimEventData, SimEventType } from './types';
+import { EMERGENCY_CATALOGUE } from './emergencies';
+import { TCH_FT } from './ils';
 
 const FT_PER_M = 1 / FT_TO_M;  // 3.28084
 
 const TRAIL_STEP_M = 8, TRAIL_MAX = 260;
-const TAXI_ACCEL = 4.5, TAXI_DECEL = 7;       // kts/s
+/** Taxi accel 1.2 m/s^2, brake 2.5 m/s^2, emergency brake 3.0 (03 §8) in kt/s. */
+export const TAXI_ACCEL = 1.2 / KTS_TO_MPS;     // 2.33 kt/s
+export const TAXI_DECEL = 2.5 / KTS_TO_MPS;     // 4.86 kt/s
+export const EMERG_DECEL = 3.0 / KTS_TO_MPS;    // 5.83 kt/s
 const HEADING_DAMP = 100;                       // deg/s ceiling
 const GROUND_DEG_PER_M = 5.5;                  // curvature limit → no pivots when stopped
-const HOLD_BUFFER_M = 7;
+/** Nose stops this far before the hold line node (03 §1.5: stop < 10 m before the line). */
+export const HOLD_BUFFER_M = 7;
+export const PUSHBACK_KT = 3;
+/** Turns allowed / phase climb from this AGL (03 §2.2). */
+export const DEP_TURN_FT = 400;
+/** Initial climb rate to 1500 ft AGL (03 §2.2). */
+const INITIAL_CLIMB_FPM = 2800;
+const INITIAL_CLIMB_TO_FT = 1500;
+
+export type Ev = { push: (m: string, t?: SimEventType) => void };
+
+/** What the physics needs from the engine each step (kept tiny so tests can mock it). */
+export interface StepCtx {
+  time: number;
+  /** Wind triangle: ground speed and track for a heading/TAS (weather.applyWindToGroundSpeed). */
+  wind(hdgTrue: number, tasKt: number): { gsKt: number; trackTrue: number };
+  /** Headwind component (kt, tailwind negative) on a runway heading. */
+  headwindKt(rwyHdgTrue: number): number;
+  /** Runway surface braking factor: dry 1, wet 0.65, contaminated 0.4. */
+  surfaceFactor(): number;
+  /** Engine-computed taxi speed cap for this tick (apron / crossing / expedite), kt. */
+  taxiSpeedCapKt(a: AircraftState): number;
+  emit(type: SimEventType, a: AircraftState, message: string, data?: SimEventData): void;
+  setPhase(a: AircraftState, phase: FlightPhase): void;
+}
 
 export function setPhase(a: AircraftState, phase: FlightPhase, events: Ev) {
   if (a.phase === phase) return;
   a.phase = phase;
-  events.push(`${a.callsign} → ${phase}`, 'phase');
+  events.push(`${a.callsign} -> ${phase}`, 'phase');
 }
-type Ev = { push: (m: string, t?: any) => void };
 
-export function stepAircraft(a: AircraftState, dt: number, events: Ev, simTime: number) {
-  // Apply pending commands whose pilot-delay has elapsed.
-  while (a.pendingCmds.length > 0 && a.pendingCmds[0].applyAt <= simTime) {
-    const cmd: PendingCmd = a.pendingCmds.shift()!;
-    if (cmd.kind === 'heading') { a.targetHeading = cmd.value; a.navMode = 'heading'; }
-    else if (cmd.kind === 'altitude') a.targetAltitude = cmd.value;
-    else if (cmd.kind === 'speed') a.targetSpeed = cmd.value;
-  }
-
+/** Per-tick physics for one aircraft. Pending-command draining is the engine's job (it needs engine data). */
+export function stepAircraft(a: AircraftState, dt: number, ctx: StepCtx) {
   switch (a.phase) {
-    case 'parked': break;
-    case 'pushback': stepPushback(a, dt, events); break;
+    case 'parked': case 'startup': case 'arrived': a.speed = 0; break;
+    case 'pushback': stepPushback(a, dt); break;
     case 'taxi':
-    case 'hold_short': stepTaxi(a, dt, events); break;
-    case 'lineup': stepLineup(a, dt); break;
-    case 'takeoff': stepTakeoff(a, dt, events); break;
+    case 'hold_short': stepTaxi(a, dt, ctx); break;
+    case 'lineup': stepLineup(a, dt, ctx); break;
+    case 'takeoff': stepTakeoff(a, dt, ctx); break;
     case 'climb':
     case 'cruise':
     case 'descent':
-    case 'approach': stepAirborneFree(a, dt); break;
-    case 'landing': stepLanding(a, dt, events); break;
-    case 'rollout': stepRollout(a, dt); break;
+    case 'approach':
+    case 'go_around':
+    case 'departed': stepAirborneFree(a, dt, ctx); break;
+    case 'landing': stepLanding(a, dt, ctx); break;
+    case 'rollout': stepRollout(a, dt, ctx); break;
     default: break;
   }
   pushTrail(a);
 }
 
 // ── integrators ────────────────────────────────────────────────────────────────
-function approachVal(cur: number, target: number, maxStep: number): number {
+export function approachVal(cur: number, target: number, maxStep: number): number {
   if (cur < target) return Math.min(cur + maxStep, target);
   if (cur > target) return Math.max(cur - maxStep, target);
   return cur;
 }
-function brakingDistM(speedKts: number, decelKtsS: number): number {
+export function brakingDistM(speedKts: number, decelKtsS: number): number {
   const v = speedKts * KTS_TO_MPS, a = Math.max(0.1, decelKtsS * KTS_TO_MPS);
   return (v * v) / (2 * a);
 }
 
-function follow(a: AircraftState, dt: number, targetSpeed: number, accel: number, decel: number): boolean {
+/** Arc-length the aircraft must stop at for the next unreleased hold, or null. */
+export function nextStopAt(a: AircraftState): number | null {
+  const p = a.path;
+  if (!p) return null;
+  const h = p.holds && p.holds.length ? p.holds[0] : null;
+  if (h && !a.holdReleased) return h.at - HOLD_BUFFER_M;
+  if (!h && p.holdAt != null && !a.holdReleased) return p.holdAt - HOLD_BUFFER_M;
+  return null;
+}
+
+/**
+ * Advance along the path at `targetSpeed` (kt) honouring traffic holds and
+ * the next stop point. `reverse` = tail-first (pushback). Returns true at the
+ * path end.
+ */
+function follow(a: AircraftState, dt: number, targetSpeed: number, accel: number, decel: number, reverse = false): boolean {
   const p = a.path!;
   let tgt = targetSpeed;
   if (a.trafficHold) tgt = 0;
-  if (p.holdAt != null && !a.holdReleased) {
-    const stopAt = p.holdAt - HOLD_BUFFER_M;
+  const stopAt = nextStopAt(a);
+  if (stopAt != null) {
     const remain = stopAt - a.distAlong;
     if (remain <= brakingDistM(a.speed, decel) + 1.5) tgt = 0;
   }
@@ -81,144 +125,254 @@ function follow(a: AircraftState, dt: number, targetSpeed: number, accel: number
 
   const movedM = a.speed * KTS_TO_MPS * dt;
   a.distAlong += movedM;
-  if (p.holdAt != null && !a.holdReleased) a.distAlong = Math.min(a.distAlong, p.holdAt - HOLD_BUFFER_M);
+  if (stopAt != null && a.distAlong > stopAt) { a.distAlong = stopAt; }
   const atEnd = a.distAlong >= p.total - 0.5;
   if (atEnd) a.distAlong = p.total;
 
   const s = sampleAlong(p.pts, p.cum, a.distAlong);
   a.pos = s.pos;
-  const d = angleDelta(a.heading, s.heading);
+  const want = reverse ? (s.heading + 180) % 360 : s.heading;
+  const d = angleDelta(a.heading, want);
   const maxStep = Math.min(HEADING_DAMP * dt, GROUND_DEG_PER_M * movedM + 0.05);
   a.heading = (a.heading + Math.sign(d) * Math.min(Math.abs(d), maxStep) + 360) % 360;
   return atEnd;
 }
 
-function taxiTargetSpeed(a: AircraftState): number {
+/** Progressive taxi speed: straight -> maxTaxiSpeed, bends -> taxiTurnSpeed, into a stand -> creep. */
+function taxiTargetSpeed(a: AircraftState, capKt: number): number {
   const p = a.path!;
   const h0 = sampleAlong(p.pts, p.cum, a.distAlong).heading;
   let bend = 0;
-  for (const look of [14, 28]) {
+  for (const look of [14, 28, 45]) {
     const h = sampleAlong(p.pts, p.cum, Math.min(a.distAlong + look, p.total)).heading;
     bend = Math.max(bend, Math.abs(angleDelta(h0, h)));
   }
   const t = Math.min(1, bend / 32);
-  const slow = a.perf.taxiTurnSpeed * 0.7;
+  const slow = a.perf.taxiTurnSpeed * 0.8;
   let v = a.perf.maxTaxiSpeed + (slow - a.perf.maxTaxiSpeed) * t;
+  v = Math.min(v, capKt);
   const remain = p.total - a.distAlong;
-  if (p.holdAt == null && remain < 25) v = Math.min(v, a.perf.taxiTurnSpeed * (remain / 25));
+  // final 30 m into a stand at <= 5 kt (03 §1.9), then a marshaller stop
+  if (nextStopAt(a) == null && remain < 60) v = Math.min(v, Math.max(2, 5 * (remain / 30)));
   return Math.max(0, v);
 }
 
 // ── pushback ─────────────────────────────────────────────────────────────────
-function stepPushback(a: AircraftState, dt: number, events: Ev) {
-  a.targetSpeed = 3;
-  a.speed = approachVal(a.speed, 3, TAXI_ACCEL * dt);
-  a.pos = advance(a.pos, (a.heading + 180) % 360, a.speed * KTS_TO_MPS * dt);
-  a.distAlong += a.speed * KTS_TO_MPS * dt;
-  if (a.distAlong >= 22) { a.speed = 0; a.distAlong = 0; setPhase(a, 'taxi', events); }
+function stepPushback(a: AircraftState, dt: number) {
+  if (a.pushback.stage !== 'pushing' || !a.path) {
+    a.speed = approachVal(a.speed, 0, TAXI_DECEL * dt);
+    return;
+  }
+  const end = follow(a, dt, PUSHBACK_KT, TAXI_ACCEL, TAXI_DECEL, true);
+  a.pushback.pushedM = a.distAlong;
+  if (end) { a.speed = 0; }
 }
 
-// ── taxi (path-follow) ─────────────────────────────────────────────────────────
-function stepTaxi(a: AircraftState, dt: number, events: Ev) {
-  if (!a.path) { a.speed = 0; return; }
-  const atEnd = follow(a, dt, taxiTargetSpeed(a), TAXI_ACCEL, TAXI_DECEL);
+// ── taxi (path-follow with hold places) ────────────────────────────────────────
+function stepTaxi(a: AircraftState, dt: number, ctx: StepCtx) {
+  if (!a.path) { a.speed = approachVal(a.speed, 0, TAXI_DECEL * dt); return; }
+  const p = a.path;
+  const atEnd = follow(a, dt, taxiTargetSpeed(a, ctx.taxiSpeedCapKt(a)), TAXI_ACCEL, TAXI_DECEL);
 
-  if (a.path.holdAt != null && !a.holdReleased && !a.trafficHold) {
-    const remain = (a.path.holdAt - HOLD_BUFFER_M) - a.distAlong;
-    if (remain <= 3) {
-      if (a.phase !== 'hold_short') { setPhase(a, 'hold_short', events); events.push(`${a.callsign} holding short ${a.plan.runway ?? ''}`.trim(), 'reached_hold'); }
+  // Passed a released hold -> it is behind us now; the next one arms itself.
+  const h: PathHold | undefined = p.holds?.[0];
+  if (h && a.holdReleased && a.distAlong > h.at + 4) {
+    p.holds!.shift();
+    a.holdReleased = false;
+    a.holdShortNode = null; a.holdShortRunway = null;
+    p.holdAt = p.holds!.length ? p.holds![0].at : undefined;
+  }
+
+  const stopAt = nextStopAt(a);
+  if (stopAt != null && !a.trafficHold) {
+    const remain = stopAt - a.distAlong;
+    if (remain <= 3 && a.speed < 3) {
       a.speed = Math.max(0, a.speed - TAXI_DECEL * 2 * dt);
       if (a.speed < 0.3) a.speed = 0;
+      if (a.phase !== 'hold_short') {
+        const hold = p.holds?.[0];
+        a.holdShortNode = hold?.nodeId ?? a.holdShortNode;
+        a.holdShortRunway = hold && hold.runway ? hold.runway : null;
+        ctx.setPhase(a, 'hold_short');
+        const what = hold?.runway ? `runway ${hold.runway}` : a.holdShortTaxiway ? `taxiway ${a.holdShortTaxiway}` : 'position';
+        ctx.emit('reached_hold', a, `${a.callsign} holding short ${what}`);
+      }
       return;
     }
   }
-  if (a.phase !== 'taxi' && !(a.path.holdAt != null && !a.holdReleased)) a.phase = 'taxi';
+  if (a.phase === 'hold_short' && (stopAt == null || a.speed > 0.5)) ctx.setPhase(a, 'taxi');
 
-  if (atEnd && a.speed < 0.4) {
-    if (a.plan.kind === 'arrival') { setPhase(a, 'arrived', events); events.push(`${a.callsign} at stand ${a.plan.gateRef ?? ''}`.trim(), 'arrived'); }
-  }
+  // Reaching the end of a taxi path (a stand, a holding point node, ...) is
+  // handled by the engine (it knows the destination kind).
+  if (atEnd) a.speed = approachVal(a.speed, 0, TAXI_DECEL * dt);
 }
 
-// ── lineup ─────────────────────────────────────────────────────────────────────
-function stepLineup(a: AircraftState, dt: number) {
-  if (a.path) follow(a, dt, 0, TAXI_ACCEL, TAXI_DECEL);
-  else a.speed = approachVal(a.speed, 0, TAXI_DECEL * dt);
+// ── lineup: taxi onto the runway and stop aligned ──────────────────────────────
+function stepLineup(a: AircraftState, dt: number, ctx: StepCtx) {
+  if (!a.path) { a.speed = approachVal(a.speed, 0, TAXI_DECEL * dt); return; }
+  const cap = Math.min(a.perf.taxiTurnSpeed, ctx.taxiSpeedCapKt(a));
+  const end = follow(a, dt, cap, TAXI_ACCEL, TAXI_DECEL);
+  if (end) a.speed = approachVal(a.speed, 0, TAXI_DECEL * dt);
 }
 
 // ── takeoff ────────────────────────────────────────────────────────────────────
-function takeoffAccelKts(a: AircraftState): number {
-  switch (a.perf.weightClass) { case 'L': return 5.5; case 'M': return 3.9; case 'H': return 3.2; default: return 2.8; }
-}
-function stepTakeoff(a: AircraftState, dt: number, events: Ev) {
-  if (!a.path) { a.phase = 'climb'; return; }
-  const misaligned = Math.abs(angleDelta(a.heading, a.targetHeading)) > 12;
-  if (misaligned) { follow(a, dt, a.perf.taxiTurnSpeed, TAXI_ACCEL, TAXI_DECEL); return; }
-  const accel = a.perf.specialRules.militaryManeuvering ? 9 : takeoffAccelKts(a);
-  follow(a, dt, a.perf.takeoffRotationSpeed + 30, accel, TAXI_DECEL);
-  if (a.speed >= a.perf.takeoffRotationSpeed) {
-    setPhase(a, 'climb', events);
-    events.push(`${a.callsign} airborne, runway ${a.plan.runway ?? ''}`.trim(), 'airborne');
-    a.path = null; a.distAlong = 0;
-    a.targetAltitude = a.plan.cruiseAlt ?? 13000;
-    a.targetHeading = a.heading;
-    a.targetSpeed = Math.min(a.perf.maxAirspeedTMA, a.perf.takeoffRotationSpeed + 70);
-    a.navMode = 'sid'; // departures start in SID mode → climb to departure fix
-    a.attention = true;
+/** Class acceleration on the roll (03 §2.2: jets 1.8-2.3 m/s^2, light 1.5), kt/s. */
+export function takeoffAccelKts(a: AircraftState): number {
+  if (a.perf.specialRules.militaryManeuvering) return 4.5 / KTS_TO_MPS;
+  switch (a.perf.weightClass) {
+    case 'L': return 1.5 / KTS_TO_MPS;
+    case 'M': return 2.1 / KTS_TO_MPS;
+    case 'H': return 1.85 / KTS_TO_MPS;
+    default: return 1.7 / KTS_TO_MPS;
   }
 }
 
-// ── free airborne flight ───────────────────────────────────────────────────────
-function stepAirborneFree(a: AircraftState, dt: number) {
-  // Hard speed ceiling: 250 kt below 10,000 ft (FL100)
-  const maxSpd = a.altitude < 10000 ? Math.min(a.targetSpeed, 250) : a.targetSpeed;
+function stepTakeoff(a: AircraftState, dt: number, ctx: StepCtx) {
+  // Airborne part of the takeoff (50-400 ft): runway heading, initial climb.
+  if (!a.path) {
+    stepInitialClimb(a, dt, ctx);
+    return;
+  }
+  if (!a.takeoffCleared) {
+    // Spooling up / holding on the runway: stationary (or still taxiing onto it for a rolling takeoff).
+    const cap = Math.min(a.perf.taxiTurnSpeed, ctx.taxiSpeedCapKt(a));
+    if (a.holdReleased) follow(a, dt, cap, TAXI_ACCEL, TAXI_DECEL); else a.speed = approachVal(a.speed, 0, TAXI_DECEL * dt);
+    return;
+  }
+  const misaligned = Math.abs(angleDelta(a.heading, a.targetHeading)) > 12;
+  if (misaligned) { follow(a, dt, a.perf.taxiTurnSpeed, TAXI_ACCEL, TAXI_DECEL); return; }
+  const accel = takeoffAccelKts(a);
+  const head = ctx.headwindKt(a.targetHeading);
+  const vrGround = Math.max(40, a.perf.takeoffRotationSpeed - head);
+  const end = follow(a, dt, vrGround + 40, accel, TAXI_DECEL);
+  if (a.speed >= vrGround || end) {
+    // Rotation / liftoff
+    a.path = null; a.distAlong = 0;
+    a.altitude = 5;
+    a.targetHeading = a.heading;
+    a.targetSpeed = Math.min(a.perf.maxAirspeedTMA, a.perf.takeoffRotationSpeed + 70);
+    a.attention = true;
+    a.delay.airborneAt = ctx.time;
+    ctx.emit('airborne', a, `${a.callsign} airborne runway ${a.plan.runway ?? ''}`.trim());
+  }
+}
 
-  const rateUp = a.expedite ? a.perf.maxClimbRate * 1.5 : a.perf.maxClimbRate;
-  const rateDn = a.expedite ? a.perf.maxDescentRate * 1.5 : a.perf.maxDescentRate;
+/** 5-400 ft AGL: runway heading, 2800 fpm, accelerating. The engine flips to `climb` at 400 ft. */
+function stepInitialClimb(a: AircraftState, dt: number, ctx: StepCtx) {
+  const spd = emergencyMaxSpeed(a, a.targetSpeed);
+  a.speed = approachVal(a.speed, spd, a.perf.accelerationRateAir * dt);
+  a.altitude += (Math.min(INITIAL_CLIMB_FPM, a.perf.maxClimbRate * 1.2) / 60) * dt * climbFactor(a);
+  const w = ctx.wind(a.heading, a.speed);
+  a.pos = advance(a.pos, w.trackTrue, w.gsKt * KTS_TO_MPS * dt);
+}
+
+function climbFactor(a: AircraftState): number {
+  return a.emergency ? EMERGENCY_CATALOGUE[a.emergency.type].perf.maxClimbRateFactor : 1;
+}
+function emergencyMaxSpeed(a: AircraftState, spd: number): number {
+  const m = a.emergency ? EMERGENCY_CATALOGUE[a.emergency.type].perf.maxSpeedKt : null;
+  return m != null ? Math.min(spd, m) : spd;
+}
+
+// ── free airborne flight ───────────────────────────────────────────────────────
+export function stepAirborneFree(a: AircraftState, dt: number, ctx: StepCtx) {
+  // Hard speed ceiling: 250 kt below 10,000 ft (14 CFR 91.117)
+  let maxSpd = a.altitude < 10000 ? Math.min(a.targetSpeed, 250) : a.targetSpeed;
+  maxSpd = emergencyMaxSpeed(a, maxSpd);
+  maxSpd = Math.max(maxSpd, a.perf.minAirspeedTMA * 0.9);
+
+  const climbCap = a.altitude < INITIAL_CLIMB_TO_FT && a.plan.kind === 'departure' && a.phase === 'climb'
+    ? Math.min(INITIAL_CLIMB_FPM, a.perf.maxClimbRate * 1.2) : a.perf.maxClimbRate;
+  const rateUp = (a.expedite ? climbCap * 1.4 : climbCap) * climbFactor(a);
+  const rateDn = a.expedite ? a.perf.maxDescentRate * 1.4 : a.perf.maxDescentRate;
 
   a.speed = approachVal(a.speed, maxSpd, (maxSpd >= a.speed ? a.perf.accelerationRateAir : a.perf.decelerationRateAir) * dt);
 
-  // Respect forced turn direction (L/R from heading command); clear when on target.
+  // Turn rate from bank 25 deg: rate = g tan(bank) / V  (~3 deg/s at 180 kt, 2 deg/s at 250 kt)
+  const v = Math.max(60, a.speed) * KTS_TO_MPS;
+  const rate = Math.min(a.perf.turnRateAir * 1.6, (9.81 * Math.tan(25 * Math.PI / 180) / v) * 180 / Math.PI);
   const dh = angleDelta(a.heading, a.targetHeading);
   let turnDh = dh;
-  if (a.turnDir === 'R') turnDh  =  (a.targetHeading - a.heading + 360) % 360;
+  if (a.turnDir === 'R') turnDh = (a.targetHeading - a.heading + 360) % 360;
   else if (a.turnDir === 'L') turnDh = -(((a.heading - a.targetHeading) + 360) % 360);
-  a.heading = (a.heading + Math.sign(turnDh) * Math.min(Math.abs(turnDh), a.perf.turnRateAir * dt) + 360) % 360;
+  a.heading = (a.heading + Math.sign(turnDh) * Math.min(Math.abs(turnDh), rate * dt) + 360) % 360;
   if (Math.abs(dh) < 1) a.turnDir = null; // reached target — clear forced direction
 
   const climb = rateUp / 60, desc = rateDn / 60;
   a.altitude = approachVal(a.altitude, a.targetAltitude, (a.targetAltitude >= a.altitude ? climb : desc) * dt);
-  a.pos = advance(a.pos, a.heading, a.speed * KTS_TO_MPS * dt);
+  const w = ctx.wind(a.heading, a.speed);
+  a.pos = advance(a.pos, w.trackTrue, w.gsKt * KTS_TO_MPS * dt);
 
-  // Phase update: ILS capture locks phase to 'approach' so handleTransitions can detect it.
-  if (a.ilsCaptured) {
-    a.phase = 'approach';
-  } else if (a.altitude < a.targetAltitude - 50) {
-    a.phase = 'climb';
-  } else if (a.altitude > a.targetAltitude + 50) {
-    a.phase = 'descent';
-  } else if (a.phase === 'climb' || a.phase === 'descent') {
-    a.phase = 'cruise';
-  }
+  // Phase relabel: go_around is sticky until the controller re-vectors; ILS capture pins `approach`.
+  if (a.phase === 'go_around' || a.phase === 'departed') return;
+  if (a.ilsCaptured) a.phase = 'approach';
+  else if (a.altitude < a.targetAltitude - 50) a.phase = 'climb';
+  else if (a.altitude > a.targetAltitude + 50) a.phase = 'descent';
+  else if (a.phase === 'climb' || a.phase === 'descent') a.phase = 'cruise';
 }
 
-// ── landing: track approach path, glideslope to touchdown ─────────────────────
-function stepLanding(a: AircraftState, dt: number, events: Ev) {
-  if (!a.path) { stepAirborneFree(a, dt); return; }
-  follow(a, dt, a.perf.approachSpeed, a.perf.accelerationRateAir, a.perf.decelerationRateAir);
-  // Altitude on 3° glideslope in feet (correctly converted from metres remaining)
-  const remain = Math.max(0, a.thresholdDist - a.distAlong);
-  a.altitude = Math.max(0, remain * Math.tan(3 * Math.PI / 180) * FT_PER_M);
-  if (a.distAlong >= a.thresholdDist - 1) {
+// ── landing: track approach path on the glideslope to touchdown ───────────────
+function stepLanding(a: AircraftState, dt: number, ctx: StepCtx) {
+  if (!a.path) { stepAirborneFree(a, dt, ctx); return; }
+  const p = a.path;
+  const vapp = a.perf.approachSpeed + (a.emergency ? EMERGENCY_CATALOGUE[a.emergency.type].perf.vappPlusKt : 0);
+  const tgt = Math.min(a.targetSpeed || vapp, Math.max(vapp, a.cmdIas ?? 0));
+  a.speed = approachVal(a.speed, tgt, (tgt >= a.speed ? a.perf.accelerationRateAir : a.perf.decelerationRateAir) * dt);
+  const tangent = sampleAlong(p.pts, p.cum, a.distAlong).heading;
+  const gs = ctx.wind(tangent, a.speed).gsKt;
+  const movedM = gs * KTS_TO_MPS * dt;
+  a.distAlong = Math.min(p.total, a.distAlong + movedM);
+  const s = sampleAlong(p.pts, p.cum, a.distAlong);
+  a.pos = s.pos;
+  const d = angleDelta(a.heading, s.heading);
+  a.heading = (a.heading + Math.sign(d) * Math.min(Math.abs(d), 12 * dt) + 360) % 360;
+
+  // Glideslope: 3 deg to a 50 ft TCH; touchdown zone 300-450 m past the threshold.
+  const remain = a.thresholdDist - a.distAlong;            // + before threshold, - past it
+  const tdzM = TCH_FT / (Math.tan(3 * Math.PI / 180) * FT_PER_M);
+  const gsAlt = Math.max(0, (remain + tdzM) * Math.tan(3 * Math.PI / 180) * FT_PER_M);
+  if (a.altitude > TCH_FT || remain > 0) {
+    a.altitude = gsAlt;
+  } else {
+    // Flare: sink limited to ~350 fpm below 50 ft -> touchdown ~350-450 m in.
+    a.altitude = Math.max(0, a.altitude - (350 / 60) * dt);
+  }
+  if (a.altitude <= 0.01 && remain <= 0) {
     a.altitude = 0;
-    setPhase(a, 'rollout', events);
-    events.push(`${a.callsign} touchdown runway ${a.plan.runway ?? ''}`.trim(), 'touchdown');
+    a.speed = Math.max(60, a.speed - 5);
+    a.delay.touchdownAt = ctx.time;
+    ctx.setPhase(a, 'rollout');
+    ctx.emit('touchdown', a, `${a.callsign} touchdown runway ${a.plan.runway ?? ''}`.trim());
   }
 }
 
-// ── rollout ────────────────────────────────────────────────────────────────────
-function stepRollout(a: AircraftState, dt: number) {
-  if (a.path) follow(a, dt, 0, TAXI_ACCEL, a.perf.decelerationRateAir * 6);
-  else a.speed = approachVal(a.speed, 0, a.perf.decelerationRateAir * 6 * dt);
+// ── rollout: brake to the planned exit speed at path.holdAt (exit arc-length) ──
+/** Rollout deceleration (m/s^2): dry 1.5-2.5 -> 2.0, scaled by surface and emergency factor. */
+export function rolloutDecelMps2(a: AircraftState, surface: number): number {
+  const f = a.emergency ? EMERGENCY_CATALOGUE[a.emergency.type].perf.rolloutFactor : 1;
+  return 2.0 * surface / f;
+}
+
+function stepRollout(a: AircraftState, dt: number, ctx: StepCtx) {
+  if (!a.path) { a.speed = approachVal(a.speed, 0, (rolloutDecelMps2(a, ctx.surfaceFactor()) / KTS_TO_MPS) * dt); return; }
+  const p = a.path;
+  const decel = rolloutDecelMps2(a, ctx.surfaceFactor()) / KTS_TO_MPS; // kt/s
+  const exitAt = p.holdAt ?? p.total;
+  const exitSpd = a.cmdIas != null && a.cmdIas < 60 ? a.cmdIas : 0; // engine stores the planned exit speed in cmdIas during rollout
+  const remain = Math.max(0, exitAt - a.distAlong);
+  // Highest speed we may still carry here and reach exitSpd at the exit with `decel`.
+  const vAllowed = Math.sqrt(Math.max(0, (exitSpd * KTS_TO_MPS) ** 2 + 2 * decel * KTS_TO_MPS * remain)) / KTS_TO_MPS;
+  const tgt = Math.min(a.speed, vAllowed);
+  a.targetSpeed = tgt;
+  a.speed = approachVal(a.speed, tgt, decel * dt);
+  if (a.trafficHold) a.speed = approachVal(a.speed, 0, decel * dt);
+  const movedM = a.speed * KTS_TO_MPS * dt;
+  a.distAlong = Math.min(p.total, a.distAlong + movedM);
+  const s = sampleAlong(p.pts, p.cum, a.distAlong);
+  a.pos = s.pos;
+  const d = angleDelta(a.heading, s.heading);
+  const maxStep = Math.min(HEADING_DAMP * dt, GROUND_DEG_PER_M * movedM + 0.05);
+  a.heading = (a.heading + Math.sign(d) * Math.min(Math.abs(d), maxStep) + 360) % 360;
 }
 
 // ── trail ──────────────────────────────────────────────────────────────────────
@@ -230,13 +384,14 @@ function pushTrail(a: AircraftState) {
   }
 }
 
+const AIR = new Set<FlightPhase>(['climb', 'cruise', 'descent', 'approach', 'landing', 'go_around', 'departed']);
 export function isAirborne(a: AircraftState): boolean {
-  return ['climb', 'cruise', 'descent', 'approach', 'landing'].includes(a.phase);
+  return AIR.has(a.phase) || (a.phase === 'takeoff' && a.path == null);
 }
-export function isGround(a: AircraftState): boolean {
-  return ['parked', 'pushback', 'taxi', 'hold_short', 'lineup', 'takeoff', 'rollout', 'arrived'].includes(a.phase);
-}
+export function isGround(a: AircraftState): boolean { return !isAirborne(a); }
 export function routeProgress(a: AircraftState): number {
   if (!a.path || a.path.total < 1) return 0;
   return Math.min(1, a.distAlong / a.path.total);
 }
+/** Heading the aircraft would fly to a point (compass, true). */
+export function bearingTo(a: AircraftState, p: { x: number; y: number }): number { return headingTo(a.pos, p); }

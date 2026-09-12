@@ -11,6 +11,11 @@ Output: public/maps/osm/<ICAO>.geojson   (one FeatureCollection per airport)
 
 Usage:  python3 scripts/fetch_osm_airports.py [ICAO ...]
         (no args = fetch all in AIRPORTS below)
+        python3 scripts/fetch_osm_airports.py --supplement [ICAO ...]
+        (only refresh the service-infrastructure supplement — fire stations,
+         fuel farm tanks, aviation fuel points — merged into the EXISTING
+         geojson as Point features tagged `supplement: true`; the aeroway
+         geometry is left untouched so the taxiway graph never changes)
 """
 import json, os, sys, time, urllib.request, urllib.parse
 
@@ -119,9 +124,92 @@ def add_stands(feats):
     return out
 
 
+# ── service-infrastructure supplement (consumed by src/lib/osmAirport.ts stations) ──
+SUPPLEMENT_QUERY = """
+[out:json][timeout:60];
+(
+  nwr["amenity"="fire_station"]({bbox});
+  nwr["emergency"="fire_station"]({bbox});
+  nwr["man_made"="storage_tank"]({bbox});
+  nwr["aeroway"="fuel"]({bbox});
+);
+out center tags;
+"""
+
+
+def supplement_features(lat, lng, half):
+    s, w = lat - half, lng - half
+    n, e = lat + half, lng + half
+    res = fetch(SUPPLEMENT_QUERY.format(bbox=f"{s},{w},{n},{e}"))
+    feats = []
+    for el in res.get("elements", []):
+        tags = el.get("tags", {})
+        if el["type"] == "node":
+            c = [el.get("lon"), el.get("lat")]
+        else:
+            ctr = el.get("center") or {}
+            c = [ctr.get("lon"), ctr.get("lat")]
+        if c[0] is None or c[1] is None:
+            continue
+        feats.append({
+            "type": "Feature",
+            "properties": {
+                "aeroway": tags.get("aeroway") if tags.get("aeroway") == "fuel" else None,
+                "supplement": True,
+                "amenity": tags.get("amenity"),
+                "emergency": tags.get("emergency"),
+                "man_made": tags.get("man_made"),
+                "name": tags.get("name"),
+                "operator": tags.get("operator"),
+                "id": el.get("id"),
+                "osm_type": el["type"],
+            },
+            "geometry": {"type": "Point", "coordinates": c},
+        })
+    return feats
+
+
+def merge_supplement(icao, feats):
+    """Replace the supplement features of an existing geojson in place (create the file if missing)."""
+    out = os.path.abspath(os.path.join(OUT_DIR, f"{icao}.geojson"))
+    if os.path.exists(out):
+        with open(out) as fh:
+            fc = json.load(fh)
+    else:
+        lat, lng, _ = AIRPORTS[icao]
+        fc = {"type": "FeatureCollection", "icao": icao, "center": [lng, lat], "features": []}
+    kept = [f for f in fc["features"] if not (f.get("properties") or {}).get("supplement")]
+    fc["features"] = kept + feats
+    with open(out, "w") as fh:
+        json.dump(fc, fh)
+    kinds = {}
+    for f in feats:
+        k = f["properties"].get("amenity") or f["properties"].get("man_made") or f["properties"].get("aeroway") or "?"
+        kinds[k] = kinds.get(k, 0) + 1
+    print(f"   supplement: {len(feats)} features {kinds} -> {out}")
+
+
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
-    targets = sys.argv[1:] or list(AIRPORTS.keys())
+    args = sys.argv[1:]
+    supplement_only = "--supplement" in args
+    args = [a for a in args if a != "--supplement"]
+    targets = args or list(AIRPORTS.keys())
+    if supplement_only:
+        for icao in targets:
+            if icao not in AIRPORTS:
+                print(f"!! {icao}: no bbox configured, skipping")
+                continue
+            lat, lng, half = AIRPORTS[icao]
+            print(f"== {icao}: querying Overpass (supplement) ...", flush=True)
+            try:
+                feats = supplement_features(lat, lng, half)
+            except Exception as e:
+                print(f"!! {icao}: Overpass failed: {e}")
+                continue
+            merge_supplement(icao, feats)
+            time.sleep(1.5)
+        return
     for icao in targets:
         if icao not in AIRPORTS:
             print(f"!! {icao}: no bbox configured, skipping")
@@ -145,6 +233,11 @@ def main():
         print(f"   {len(feats)} features -> {out}")
         print(f"   {counts}")
         time.sleep(1.5)  # be polite to Overpass
+        try:
+            merge_supplement(icao, supplement_features(lat, lng, half))
+        except Exception as e:
+            print(f"!! {icao}: supplement failed: {e}")
+        time.sleep(1.5)
 
 
 if __name__ == "__main__":
