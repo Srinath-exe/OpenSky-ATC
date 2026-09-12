@@ -408,7 +408,7 @@ export default function GroundView({ theme: themeProp }: GroundViewProps) {
     // ── manual pan breaks follow; wheel / drag close floating chrome ──
     m.on('dragstart', () => {
       closeFloating();
-      if (groundUi.state.follow) { groundUi.setFollow(false); store.pushToast({ kind: 'info', text: 'Follow off', duration: 2000 }); }
+      if (groundUi.state.follow) { groundUi.setFollow(false); store.pushToast({ kind: 'info', text: 'Follow off', duration: 4000 }); }
     });
     m.on('wheel', () => { setMenuSafe(null); groundUi.closePopover(); });
     m.on('zoomstart', () => setActivePresetSafe(null));
