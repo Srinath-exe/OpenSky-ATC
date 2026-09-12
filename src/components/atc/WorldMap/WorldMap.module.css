@@ -1,0 +1,29 @@
+.root { position: absolute; inset: 0; overflow: hidden; background: var(--bg-0, #0b0b0c); }
+.canvasHost { position: absolute; inset: 0; cursor: grab; touch-action: none; }
+.canvasHost canvas { display: block; width: 100% !important; height: 100% !important; }
+.labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.label {
+  position: absolute; left: 0; top: 0; will-change: transform;
+  font: 300 12px / 1 var(--font, "DM Sans", system-ui); letter-spacing: 0.02em; color: rgba(255, 255, 255, 0.82);
+  padding: 4px 8px; border-radius: 999px; white-space: nowrap;
+  background: rgba(24, 24, 26, 0.55); border: 1px solid rgba(255, 255, 255, 0.10);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  font-variant-numeric: tabular-nums;
+}
+.label[data-selected="true"] { color: #f5933f; border-color: rgba(245, 147, 63, 0.5); }
+.label[data-hover="true"] { border-color: rgba(255, 255, 255, 0.35); }
+.tip {
+  position: absolute; left: 0; top: 0; pointer-events: none; z-index: 2;
+  font: 400 12px / 1.3 var(--font, "DM Sans", system-ui); color: #fff; padding: 6px 10px; border-radius: 12px;
+  background: rgba(24, 24, 26, 0.72); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(20px);
+}
+.status {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  font: 300 14px / 1 var(--font, "DM Sans", system-ui); color: rgba(255, 255, 255, 0.6); letter-spacing: 0.04em;
+}
+.hint {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); pointer-events: none;
+  font: 300 11px / 1 var(--font, "DM Sans", system-ui); color: rgba(255, 255, 255, 0.35); letter-spacing: 0.03em; white-space: nowrap;
+}
+.root[data-standalone="false"] .hint { bottom: 52px; }
+.label[data-vehicle="true"] { font-size: 11px; color: rgba(255, 255, 255, 0.7); padding: 3px 7px; }

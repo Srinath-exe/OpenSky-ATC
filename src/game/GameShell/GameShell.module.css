@@ -172,3 +172,7 @@
   .bay, .logRow, .view { transition: none; }
   .vehicles, .paused { animation: none; }
 }
+
+/* 3D / 2D world toggle (airports with a baked world) — bottom-left of the map, above the comm log */
+.worldToggle { position: absolute; left: calc(var(--bay-w) + 2 * var(--float-gap)); bottom: var(--float-gap); z-index: var(--z-float); }
+.shell[data-bay-collapsed="true"] .worldToggle { left: calc(44px + 2 * var(--float-gap)); }
