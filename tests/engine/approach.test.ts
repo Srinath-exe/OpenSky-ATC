@@ -249,8 +249,8 @@ test('ILS intercept rules: 25-degree intercept captures (ESTABLISHED, LOC then G
   const ll2 = e.proj.toLngLat(p2.x, p2.y);
   const b = e.spawnAt({ callsign: 'BAW60', type: 'A320', kind: 'arrival', phase: 'approach', posLL: { lat: ll2.lat, lng: ll2.lng, altFt: 2500 }, heading: (e.runwayHeading('27R') + 300) % 360, speedKts: 200 });
   assert.equal(cmd(e, makeAst('ils', 'BAW60', { runway: '27R' })).code, 'ok_queued');
-  const thru = runUntil(e, () => evs(e, 'info', 'BAW60').some(ev => /flown through the localizer/.test(ev.message)), 200);
-  assert.ok(thru.ok, 'pilot reports flying through');
+  const thru = runUntil(e, () => b.requests.some(r => r.kind === 'further' && /through the localizer/.test(r.text)), 200);
+  assert.ok(thru.ok, 'pilot reports flying through and requests vectors back');
   assert.equal(b.ilsCaptured, false);
   assert.ok(ILS_CONST.interceptDeg === 30);
   // above the glideslope: cannot capture
