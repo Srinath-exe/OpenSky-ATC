@@ -57,3 +57,4 @@ Thumbs.db
 # Ignore huge generated map data (optional: remove these if you want to commit the map data to GitHub)
 # /public/maps/xplane/
 # /public/maps/lax_experiment/
+tsconfig.tsbuildinfo

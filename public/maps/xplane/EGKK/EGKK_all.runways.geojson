@@ -1,9 +1,0 @@
-{
-"type": "FeatureCollection",
-"name": "EGKK.runways",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-"features": [
-{ "type": "Feature", "properties": { "width": 45.0, "surface_type": "ASPHALT", "shoulder_surface_type": "UNKNOWN_1527", "smoothness": 0.25, "centerline_lights": 1, "edge_lights": 3, "auto_distance_remaining_signs": false, "name_1": "08R", "name_2": "26L", "dthr_length_1": 395.0, "dthr_length_2": 425.0, "overrun_length_1": 0.0, "overrun_length_2": 30.0, "marking_1": "UNKNOWN_7", "marking_2": "UNKNOWN_7", "lighting_1": "CALVERT_II", "lighting_2": "CALVERT_II", "tdz_lighting_1": true, "tdz_lighting_2": true, "reil_1": "UNKNOWN_3", "reil_2": "UNKNOWN_3" }, "geometry": { "type": "LineString", "coordinates": [ [ -0.21237479, 51.14509934 ], [ -0.16592961, 51.15149939 ] ] } },
-{ "type": "Feature", "properties": { "width": 45.0, "surface_type": "ASPHALT", "shoulder_surface_type": "UNKNOWN_853", "smoothness": 0.25, "centerline_lights": 0, "edge_lights": 1, "auto_distance_remaining_signs": false, "name_1": "08L", "name_2": "26R", "dthr_length_1": 321.0, "dthr_length_2": 415.0, "overrun_length_1": 0.0, "overrun_length_2": 0.0, "marking_1": "UNKNOWN_7", "marking_2": "UNKNOWN_7", "lighting_1": "NONE", "lighting_2": "NONE", "tdz_lighting_1": false, "tdz_lighting_2": false, "reil_1": "UNKNOWN_3", "reil_2": "UNKNOWN_3" }, "geometry": { "type": "LineString", "coordinates": [ [ -0.2126029, 51.14689012 ], [ -0.17674082, 51.15183207 ] ] } }
-]
-}
