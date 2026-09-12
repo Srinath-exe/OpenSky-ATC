@@ -1,0 +1,41 @@
+.btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  border-radius: 50%; border: var(--bw) solid transparent; color: var(--text-1); cursor: pointer; user-select: none;
+  transition: background-color var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out), transform var(--t-base) var(--ease-out);
+}
+.btn:focus-visible, .btn[data-force="focus"] { box-shadow: var(--focus-ring); }
+.btn:disabled { cursor: not-allowed; color: var(--text-5); }
+.s32 { width: 32px; height: 32px; }
+.s36 { width: 36px; height: 36px; }
+.s40 { width: var(--circle-nav); height: var(--circle-nav); }
+.s44 { width: var(--circle-map); height: var(--circle-map); }
+.s56 { width: var(--circle-mobile); height: var(--circle-mobile); }
+
+/* nav glass circle: .06 fill + .06 border */
+.glass { background: var(--glass-btn); border-color: var(--w-06); }
+.glass:hover:not(:disabled), .glass[data-force="hover"] { background: var(--glass-btn-hover); }
+.glass:active:not(:disabled), .glass[data-force="pressed"] { background: var(--glass-btn-pressed); }
+/* map control: .10 fill + .10 border */
+.map { background: var(--glass-map-btn); border-color: var(--w-10); }
+.map:hover:not(:disabled), .map[data-force="hover"] { background: var(--glass-map-btn-hover); }
+.map:active:not(:disabled), .map[data-force="pressed"] { background: var(--glass-map-btn-pressed); }
+/* mobile header: --bg-1 fill + .05 border */
+.solid { background: var(--bg-1); border-color: var(--w-05); }
+.solid:hover:not(:disabled) { background: var(--bg-2); }
+.solid:active:not(:disabled) { background: var(--bg-3); }
+/* ghost: transparent */
+.ghost { background: transparent; color: var(--text-2); }
+.ghost:hover:not(:disabled), .ghost[data-force="hover"] { background: var(--w-06); color: var(--text-1); }
+.ghost:active:not(:disabled), .ghost[data-force="pressed"] { background: var(--w-10); color: var(--text-1); }
+/* raised (--bg-4 thumb-like) */
+.raised { background: var(--bg-4); box-shadow: var(--shadow-thumb); }
+.raised:hover:not(:disabled) { background: var(--bg-4-hover); }
+
+.active { background: var(--bg-3) !important; border-color: var(--w-16) !important; color: var(--text-1); }
+.accentIcon { color: var(--orange); }
+.danger { background: var(--red-tint) !important; color: var(--red); border-color: var(--red-border-25) !important; }
+.icon { display: inline-flex; align-items: center; justify-content: center; }
+.loading .icon { visibility: hidden; }
+.spinner { position: absolute; inset: 0; margin: auto; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid currentColor; border-right-color: transparent; animation: global(ds-spin) 800ms linear infinite; }
+.badge { position: absolute; top: -4px; right: -4px; }
+.ring { box-shadow: 0 0 0 1px var(--w-12); }

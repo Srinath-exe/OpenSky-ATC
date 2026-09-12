@@ -1,0 +1,30 @@
+/* SKYCONTROL type scale classes (01 section 2.2, A18). Sentence case throughout; caps only in .micro-caps. */
+
+.display-xl { font: var(--fw-display-xl) var(--fs-display-xl) / var(--lh-display-xl) var(--font); letter-spacing: var(--ls-display-xl); }
+.display-l  { font: var(--fw-display-l) var(--fs-display-l) / var(--lh-display-l) var(--font); letter-spacing: var(--ls-display-l); }
+.display-m  { font: var(--fw-display-m) var(--fs-display-m) / var(--lh-display-m) var(--font); letter-spacing: var(--ls-display-m); }
+.title-l    { font: var(--fw-title-l) var(--fs-title-l) / var(--lh-title-l) var(--font); letter-spacing: var(--ls-title-l); }
+.title-m    { font: var(--fw-title-m) var(--fs-title-m) / var(--lh-title-m) var(--font); letter-spacing: var(--ls-title-m); }
+.body-m     { font: var(--fw-body-m) var(--fs-body-m) / var(--lh-body-m) var(--font); letter-spacing: var(--ls-body-m); }
+.body-s     { font: var(--fw-body-s) var(--fs-body-s) / var(--lh-body-s) var(--font); letter-spacing: var(--ls-body-s); }
+.label-xs   { font: var(--fw-label-xs) var(--fs-label-xs) / var(--lh-label-xs) var(--font); letter-spacing: var(--ls-label-xs); }
+.micro-caps { font: var(--fw-micro-caps) var(--fs-micro-caps) / var(--lh-micro-caps) var(--font); letter-spacing: var(--ls-micro-caps); text-transform: uppercase; }
+
+.display-xl, .display-l, .display-m, .title-l, .title-m { white-space: nowrap; }
+@media (max-width: 767px) { .display-xl, .display-l, .display-m, .title-l, .title-m { white-space: normal; } }
+
+/* Text tiers */
+.text-1 { color: var(--text-1); }
+.text-2 { color: var(--text-2); }
+.text-3 { color: var(--text-3); }
+.text-4 { color: var(--text-4); }
+.text-5 { color: var(--text-5); }
+
+/* Numerals */
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: "kern", "tnum"; }
+.pnum { font-variant-numeric: proportional-nums; font-feature-settings: "kern"; }
+
+/* Multi-line body copy (alert descriptions, recommendations) */
+.prose { font: var(--fw-body-m) var(--fs-body-m) / var(--lh-multiline) var(--font); max-width: var(--max-line); }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nowrap { white-space: nowrap; }

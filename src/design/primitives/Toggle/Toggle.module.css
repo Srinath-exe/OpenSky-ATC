@@ -1,0 +1,21 @@
+/* 4.19 toggle 40x22, off .10 / on orange, knob Ø18 white, 160ms */
+.wrap { display: inline-flex; align-items: center; gap: var(--s-3); cursor: pointer; }
+.wrap.disabled { cursor: not-allowed; }
+.track {
+  position: relative; width: var(--toggle-w); height: var(--toggle-h); border-radius: var(--r-pill); flex-shrink: 0;
+  background: var(--w-10); transition: background-color var(--t-lift) var(--ease-out); cursor: pointer; border: 0; padding: 0;
+}
+.track:hover, .track[data-force="hover"] { background: var(--w-14); }
+.track:focus-visible, .track[data-force="focus"] { box-shadow: var(--focus-ring); }
+.on { background: var(--orange); }
+.on:hover, .on[data-force="hover"] { background: var(--orange-90); }
+.knob { position: absolute; top: 2px; left: 2px; width: var(--toggle-knob); height: var(--toggle-knob); border-radius: 50%; background: var(--text-1); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); transition: transform var(--t-lift) var(--ease-out); }
+.on .knob { transform: translateX(18px); }
+.track:active .knob { transform: scale(0.92); }
+.on:active .knob { transform: translateX(18px) scale(0.92); }
+.track:disabled { background: var(--w-05); cursor: not-allowed; }
+.track:disabled .knob { background: var(--w-40); box-shadow: none; }
+.track.on:disabled { background: var(--orange-40); }
+.label { font: var(--fw-body-m) var(--fs-body-m) / 1.2 var(--font); color: var(--text-2); }
+.disabled .label { color: var(--text-5); }
+.sub { display: block; font: var(--fw-body-s) var(--fs-body-s) / 1.3 var(--font); color: var(--text-3); margin-top: 2px; }

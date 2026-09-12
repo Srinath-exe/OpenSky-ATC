@@ -9,7 +9,7 @@ import {
 } from './projection';
 import { OsmAirport, findPath, taxiwaysForPath } from '../osmAirport';
 import { getPerformance, randomCommercialType, randomCommercialTypeOf, wakeSeparationNM, WeightClass } from './aircraftDB';
-import { AircraftState, DrivePath, SimEvent, SimEventType, FlightKind, PendingCmd } from './types';
+import { AircraftState, DrivePath, SimEvent, SimEventType, FlightKind, PendingCmd, newAircraftFields } from './types';
 import { stepAircraft, setPhase, isAirborne } from './aircraft';
 import {
   ILSRunway, canCaptureLoc, locTargetHdg, gsAltFt, gsDistM,
@@ -155,6 +155,8 @@ export class SimEngine {
       pendingCmds: [], underControl: false, attention: false,
       route: [], routeIndex: 0, holdingShort: false,
       trail: [{ ...pos }], spawnedAt: this.time,
+      // Wave-0 contract fields (types.ts newAircraftFields is the single source of defaults)
+      ...newAircraftFields(ident.perf.weightClass, this.time),
     };
   }
 

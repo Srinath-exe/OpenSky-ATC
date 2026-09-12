@@ -1,0 +1,47 @@
+/* A11.2 modal: scrim .72 + blur 6; panel --bg-1 radius 24 padding 24 width 440; A5 bottom sheet */
+.scrim { position: fixed; inset: 0; z-index: var(--z-modal); background: var(--scrim); -webkit-backdrop-filter: blur(var(--scrim-blur)); backdrop-filter: blur(var(--scrim-blur)); display: flex; align-items: center; justify-content: center; padding: 16px; animation: global(ds-fade-in) var(--t-base) var(--ease-out) both; }
+.scrimLeaving { animation: global(ds-fade-out) var(--t-base) var(--ease-out) both; }
+.panel {
+  position: relative; width: var(--modal-w); max-width: 100%; max-height: calc(100vh - 32px); overflow: auto;
+  background: var(--bg-1); border: var(--bw) solid var(--line); border-radius: var(--r-card-lg); padding: var(--card-pad-lg);
+  box-shadow: var(--shadow-modal); color: var(--text-1); animation: global(ds-pop) var(--t-base) var(--ease-out) both; outline: none;
+}
+.panelLeaving { animation: global(ds-fade-out) var(--t-base) var(--ease-out) both; }
+.wide { width: 640px; }
+.head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.title { font: var(--fw-title-l) var(--fs-title-l) / var(--lh-title-l) var(--font); color: var(--text-1); }
+.close { margin: -6px -6px 0 0; }
+.body { margin-top: 12px; font: var(--fw-body-m) var(--fs-body-m) / var(--lh-multiline) var(--font); color: var(--text-2); }
+.footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+.footerLeft { margin-right: auto; }
+@media (max-width: 767px) {
+  .scrim { align-items: flex-end; padding: 0; }
+  .panel { width: 100%; border-radius: var(--r-card-lg) var(--r-card-lg) 0 0; max-height: 92vh; animation: ds-sheet-in var(--t-slow) var(--ease-out) both; }
+}
+/* Sheet */
+.sheetScrim { position: fixed; inset: 0; z-index: var(--z-sheet); background: var(--scrim); animation: global(ds-fade-in) var(--t-base) var(--ease-out) both; }
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: calc(var(--z-sheet) + 1);
+  background: var(--glass-fill-strong); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-top: var(--bw) solid var(--glass-border); border-radius: var(--r-card-lg) var(--r-card-lg) 0 0; box-shadow: var(--glass-shadow);
+  padding: 8px var(--card-pad-lg) calc(var(--card-pad-lg) + env(safe-area-inset-bottom, 0px)); color: var(--text-1);
+  display: flex; flex-direction: column; transition: height var(--t-slow) var(--ease-out), transform var(--t-slow) var(--ease-out);
+  animation: ds-sheet-in var(--t-slow) var(--ease-out) both; touch-action: none; outline: none;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .sheet { background: var(--glass-fill-fallback); } }
+.sheetLeaving { animation: ds-sheet-out var(--t-base) var(--ease-out) both; }
+@keyframes ds-sheet-in { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes ds-sheet-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(24px); opacity: 0; } }
+.handle { width: 40px; height: 4px; border-radius: 2px; background: var(--grab-handle); margin: 0 auto 16px; flex-shrink: 0; cursor: grab; }
+.sheetHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-shrink: 0; }
+.sheetTitle { font: var(--fw-title-l) var(--fs-title-l) / var(--lh-title-l) var(--font); display: flex; align-items: baseline; gap: 8px; }
+.sheetCount { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.sheetBody { flex: 1; min-height: 0; overflow-y: auto; -webkit-mask-image: var(--fade-mask); mask-image: var(--fade-mask); }
+.peek { height: 88px; }
+.half { height: 50vh; }
+.full { height: 92vh; }
+/* inline (showcase) sheets size against their host instead of the viewport */
+.sheetInline.peek { height: 88px; }
+.sheetInline.half { height: 50%; }
+.sheetInline.full { height: 92%; }
+@media (prefers-reduced-motion: reduce) { .panel, .sheet { animation: global(ds-fade-in) var(--t-base) both; } .sheet { transition: none; } }

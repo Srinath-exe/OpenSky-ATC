@@ -1,0 +1,7 @@
+/* A4 scroll region: overflow auto, 6px scrollbar on hover, 12px fade mask at both edges */
+.root { position: relative; min-height: 0; min-width: 0; }
+.v { overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+.h { overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; }
+.fade { -webkit-mask-image: var(--fade-mask); mask-image: var(--fade-mask); }
+.h.fade { -webkit-mask-image: linear-gradient(to right, transparent, var(--mask-solid) 12px, var(--mask-solid) calc(100% - 12px), transparent); mask-image: linear-gradient(to right, transparent, var(--mask-solid) 12px, var(--mask-solid) calc(100% - 12px), transparent); }
+.newPill { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 1; }

@@ -1,0 +1,25 @@
+/* 2.2 big-number pattern: leading group white, trailing group --text-4 same size, unit body-s on the baseline, 8px gap */
+.kpi { display: inline-flex; align-items: baseline; gap: 8px; color: var(--text-1); white-space: nowrap; }
+.xl { font: var(--fw-display-xl) var(--fs-display-xl) / var(--lh-display-xl) var(--font); letter-spacing: var(--ls-display-xl); }
+.l  { font: var(--fw-display-l) var(--fs-display-l) / var(--lh-display-l) var(--font); letter-spacing: var(--ls-display-l); }
+.m  { font: var(--fw-display-m) var(--fs-display-m) / var(--lh-display-m) var(--font); letter-spacing: var(--ls-display-m); }
+.prefix { color: var(--text-1); white-space: pre; }
+.prefixDim { color: var(--text-2); }
+.hi { color: var(--text-1); letter-spacing: inherit; }
+.lo { color: var(--text-4); letter-spacing: inherit; }
+.loDisplay { color: var(--text-4); }
+.unit { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); letter-spacing: 0; color: var(--text-2); }
+.unitDim { color: var(--text-3); }
+.unitPct { margin-left: -6px; }
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: "kern", "tnum"; }
+.delta { display: inline-flex; align-items: center; gap: 2px; font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); letter-spacing: 0; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.deltaUp { color: var(--text-2); }
+.deltaDown { color: var(--orange); }
+.deltaRed { color: var(--red); }
+.deltaGreen { color: var(--green); }
+.label { display: block; font: var(--fw-label-xs) var(--fs-label-xs) / 1.2 var(--font); letter-spacing: var(--ls-label-xs); color: var(--text-3); margin-bottom: 6px; }
+.block { display: inline-flex; flex-direction: column; align-items: flex-start; }
+.dim { color: var(--text-3); }
+.dim .hi, .dim .lo { color: var(--text-3); }
+.empty .hi { color: var(--text-4); }
+.red .hi { color: var(--red); }

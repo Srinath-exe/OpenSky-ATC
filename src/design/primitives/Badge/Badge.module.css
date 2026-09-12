@@ -1,0 +1,17 @@
+.badge {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  min-width: var(--badge-s); height: var(--badge-s); padding: 0 4px; border-radius: var(--r-pill);
+  font: var(--fw-medium) var(--fs-label-xs) / 1 var(--font); letter-spacing: var(--ls-label-xs);
+  font-variant-numeric: tabular-nums; color: var(--text-1); background: var(--red);
+  border: var(--bw) solid transparent;
+}
+.m { min-width: var(--badge-m); height: var(--badge-m); padding: 0 5px; }
+.red { background: var(--red); color: var(--text-1); }
+.orange { background: var(--orange-tint-20); border-color: var(--orange-border); color: var(--orange); }
+.neutral { background: var(--bg-4); color: var(--text-2); }
+.white { background: var(--text-1); color: var(--bg-0); }
+.glow { box-shadow: var(--red-glow); background: var(--red-glow-core); }
+.pulse { animation: global(ds-badge-ring) var(--t-pulse) var(--ease-out) 2; }
+.bump { animation: global(ds-bump) var(--t-bump) var(--ease-out); }
+.dot { width: 8px; height: 8px; min-width: 0; padding: 0; }
+@media (prefers-reduced-motion: reduce) { .pulse, .bump { animation: none; } }

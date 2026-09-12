@@ -1,0 +1,9 @@
+/* A11.10 skeleton: .06 blocks radius 8, shimmer .10 sweep 1.4s; never spinners in cards */
+.sk { position: relative; overflow: hidden; background: var(--skeleton); border-radius: var(--r-skeleton); display: block; }
+.sk::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--skeleton-shimmer), transparent); animation: global(ds-shimmer) var(--t-shimmer) linear infinite; }
+.text { height: 12px; border-radius: 6px; }
+.number { height: 36px; width: 120px; }
+.circle { border-radius: 50%; }
+.pill { border-radius: var(--r-pill); height: var(--pill-m); width: 96px; }
+.lines { display: flex; flex-direction: column; gap: 10px; }
+@media (prefers-reduced-motion: reduce) { .sk::after { animation: none; } }

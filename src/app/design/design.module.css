@@ -1,0 +1,60 @@
+/* /design showcase shell - dev route for visual QA */
+.page { min-height: 100vh; background: var(--bg-0); color: var(--text-1); padding: 0 var(--gutter) 80px; overflow-y: auto; height: 100vh; }
+.nav { position: sticky; top: 0; z-index: var(--z-nav); display: flex; align-items: center; gap: 24px; height: var(--nav-h); background: var(--bg-0); border-bottom: 1px solid var(--line); margin: 0 calc(var(--gutter) * -1) 32px; padding: 0 var(--gutter); }
+.navTitle { font: var(--fw-title-m) var(--fs-title-m) / 1 var(--font); color: var(--text-1); display: flex; align-items: center; gap: 12px; }
+.navSub { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--text-3); }
+.navLinks { display: flex; gap: 16px; overflow-x: auto; flex: 1; }
+.navLinks a { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--text-3); white-space: nowrap; }
+.navLinks a:hover { color: var(--text-1); }
+.section { margin-bottom: 56px; scroll-margin-top: 80px; }
+.h { display: flex; align-items: baseline; gap: 12px; margin-bottom: 20px; }
+.h1 { font: var(--fw-title-l) var(--fs-title-l) / 1.2 var(--font); color: var(--text-1); }
+.hRef { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--text-3); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-items: start; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 12px; align-items: start; }
+.row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.rowTop { align-items: flex-start; }
+.col { display: flex; flex-direction: column; gap: 12px; }
+.spec { display: flex; flex-direction: column; gap: 8px; }
+.label { font: var(--fw-label-xs) var(--fs-label-xs) / 1.2 var(--font); letter-spacing: var(--ls-label-xs); color: var(--text-4); text-transform: none; }
+.card { background: var(--bg-1); border-radius: var(--r-card); padding: var(--card-pad); display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.cardTitle { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--text-3); }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.swatch { height: 64px; border-radius: var(--r-inner); border: 1px solid var(--line); display: flex; align-items: flex-end; padding: 8px; }
+.swatchName { font: var(--fw-label-xs) var(--fs-label-xs) / 1.2 var(--font); color: var(--text-2); background: rgba(11, 11, 12, 0.6); padding: 2px 6px; border-radius: 4px; }
+.typeRow { display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.tnum { font-variant-numeric: tabular-nums; }
+.tile { width: 200px; }
+.tiles { display: grid; grid-template-columns: 200px 200px; gap: 12px; }
+.satellite { position: relative; height: 720px; border-radius: var(--r-card); overflow: hidden; background: var(--bg-0); }
+.satImg { position: absolute; inset: 0; background: url('/maps/satellite/KSFO.jpg') center / cover no-repeat; filter: var(--map-filter); }
+.satImg::after { content: ""; position: absolute; inset: 0; background: var(--map-vignette), var(--map-veil); }
+.satTitle { position: absolute; left: 24px; top: 24px; display: flex; flex-direction: column; gap: 12px; z-index: 2; }
+.satSub { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--text-3); margin-top: -4px; }
+.satRight { position: absolute; top: 84px; right: 20px; width: 400px; z-index: 2; }
+.satBottom { position: absolute; left: 20px; bottom: 20px; display: flex; gap: 12px; z-index: 2; align-items: flex-end; }
+.satControls { position: absolute; left: 20px; bottom: 282px; display: flex; gap: 8px; z-index: 2; }
+.satNav { position: absolute; right: 20px; top: 20px; display: flex; gap: 8px; align-items: center; z-index: 3; }
+.puck { position: absolute; left: 46%; top: 44%; width: 56px; height: 56px; border-radius: 50%; background: var(--puck-fill); -webkit-backdrop-filter: blur(var(--puck-blur)); backdrop-filter: blur(var(--puck-blur)); border: 1px solid var(--puck-ring); box-shadow: var(--shadow-puck); display: flex; align-items: center; justify-content: center; color: var(--text-1); z-index: 2; }
+.ring { position: absolute; left: calc(46% - 62px); top: calc(44% - 62px); width: 180px; height: 180px; border-radius: 50%; border: 1.5px dashed var(--w-45); z-index: 1; }
+.popover { position: absolute; left: calc(46% + 68px); top: calc(44% + 12px); width: 220px; z-index: 2; }
+.dataBlock { position: absolute; display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: var(--r-pill); background: var(--data-block); font: var(--fw-medium) var(--fs-label-xs) / 1 var(--font); color: var(--text-1); z-index: 2; gap: 4px; }
+.dataDim { color: var(--text-2); font-weight: var(--fw-regular); }
+.dataDot { color: var(--text-4); }
+.chevron { position: absolute; color: var(--text-1); z-index: 2; }
+.iconGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.iconCell { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 4px; border-radius: var(--r-inner); background: var(--bg-1); color: var(--text-1); }
+.iconName { font: var(--fw-label-xs) var(--fs-label-xs) / 1.2 var(--font); color: var(--text-3); text-align: center; overflow-wrap: anywhere; }
+.inlineHost { position: relative; height: 360px; border-radius: var(--r-card); overflow: hidden; background: var(--bg-1); }
+.logLine { display: grid; grid-template-columns: 40px 1fr; gap: 8px; font: var(--fw-body-s) var(--fs-body-s) / 1.5 var(--font); color: var(--text-2); padding: 2px 0; }
+.who { font: var(--fw-medium) var(--fs-label-xs) / 1.6 var(--font); letter-spacing: var(--ls-label-xs); }
+.whoAtc { color: var(--text-1); }
+.whoPilot { color: var(--text-2); }
+.whoSys { color: var(--text-3); }
+.metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 12px; }
+.note { font: var(--fw-body-s) var(--fs-body-s) / 1.4 var(--font); color: var(--text-3); max-width: var(--max-line); }
+.ruler { display: flex; align-items: flex-end; gap: 5px; height: 16px; }
+.tick { width: 1px; height: 6px; background: var(--tick); }
+.tickMajor { height: 10px; background: var(--tick-major); }
+.spaceBar { height: 12px; background: var(--w-12); border-radius: 2px; }
+.radiusBox { width: 72px; height: 48px; background: var(--bg-2); border: 1px solid var(--line-strong); }

@@ -1,0 +1,52 @@
+/* SKYCONTROL map treatment (01 section 5, A10). Colours come from tokens.css; canvases read them via getComputedStyle. */
+
+/* Baked satellite imagery: monochrome terrain with a faint green memory */
+.map-satellite { position: relative; filter: var(--map-filter); }
+.map-satellite::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--map-vignette), var(--map-veil); }
+.map-veil { position: absolute; inset: 0; pointer-events: none; background: var(--map-vignette), var(--map-veil); }
+.map-veil--lost { background: var(--map-vignette), var(--map-veil-lost); }
+.map-paused { filter: saturate(0.8); }
+
+/* Position puck (4.15): Ø56 glass disc; Ø40 on the approach scope */
+.map-puck { width: 56px; height: 56px; border-radius: 50%; background: var(--puck-fill); -webkit-backdrop-filter: blur(var(--puck-blur)); backdrop-filter: blur(var(--puck-blur)); border: 1px solid var(--puck-ring); box-shadow: var(--shadow-puck); display: flex; align-items: center; justify-content: center; color: var(--text-1); transition: transform 1s linear; }
+.map-puck--radar { width: 40px; height: 40px; }
+.map-puck > svg { transition: transform 400ms var(--ease-inout); }
+
+/* Separation / radius ring: 1.5px white dashed, slow crawl */
+.map-ring { fill: rgba(255, 255, 255, 0.03); stroke: rgba(255, 255, 255, 0.45); stroke-width: 1.5; stroke-dasharray: 4 4; animation: ds-crawl 4s linear infinite; }
+.map-ring--conflict { stroke: var(--red); animation: ds-crawl 4s linear infinite, ds-pulse-opacity 1.6s var(--ease-inout) infinite; }
+
+/* Data block (A10): 24 tall pill, --bg-3 @ .80, no blur */
+.map-datablock { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 10px; border-radius: var(--r-pill); background: var(--data-block); color: var(--text-1); font: var(--fw-medium) var(--fs-label-xs) / 1 var(--font); letter-spacing: var(--ls-label-xs); white-space: nowrap; transition: transform var(--t-base) var(--ease-out); }
+.map-datablock .dim { color: var(--text-2); font-weight: var(--fw-regular); }
+.map-datablock .dot { color: var(--text-4); }
+.map-datablock--hover { background: var(--bg-3); }
+.map-datablock--selected { background: var(--bg-4); border: 1px solid var(--w-18); }
+.map-datablock--conflict { color: var(--red); background: linear-gradient(var(--red-tint), var(--red-tint)), var(--bg-3); }
+.map-datablock--emergency { background: var(--red-85); color: var(--text-1); }
+.map-datablock--handed { color: var(--text-3); background: rgba(28, 28, 30, 0.6); }
+
+/* Route lines (4.15) for SVG overlays */
+.map-route { fill: none; stroke: var(--text-1); stroke-width: var(--stroke-route); stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.5)); }
+.map-route--planned { stroke-dasharray: 6 4; filter: none; }
+.map-route--secondary { stroke: var(--lime-marker); stroke-width: 2; filter: none; }
+.map-route--road { stroke: rgba(255, 255, 255, 0.35); stroke-width: 1.5; filter: none; }
+.map-conflict-line { stroke: var(--red); stroke-width: 1; stroke-dasharray: 4 4; animation: ds-crawl-8 1s linear infinite, ds-pulse-opacity 1.2s var(--ease-inout) infinite; }
+
+/* Markers */
+.map-pin { width: 26px; height: 26px; border-radius: 50%; background: var(--map-pin-fill); color: var(--map-pin-glyph); display: flex; align-items: center; justify-content: center; }
+.map-pin--muted { background: var(--map-pin-muted-fill); color: var(--map-pin-muted-glyph); }
+.map-marker { width: 32px; height: 32px; border-radius: 50%; color: var(--text-1); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25); }
+.map-marker--vor { background: var(--blue-marker); }
+.map-marker--airport { background: var(--pink-marker); }
+.map-marker--threshold { background: var(--lime-marker); }
+.map-hotspot { width: 10px; height: 10px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 12px var(--orange); }
+
+/* Map controls / pills rows (4.16, A1-6) */
+.map-controls { position: absolute; left: 20px; bottom: 282px; display: flex; gap: 8px; z-index: var(--z-float); }
+.map-pills { display: flex; gap: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .map-ring, .map-ring--conflict, .map-conflict-line { animation: none; }
+  .map-puck, .map-puck > svg { transition: none; }
+}

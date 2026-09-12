@@ -1,0 +1,345 @@
+/* SKYCONTROL design tokens - the single styling source (01-DESIGN-SYSTEM.md sections 1-3, A1, A3, A4, A5, 7)
+   Dark-only product. Every value is a literal px / rgba; do not convert to rem (A18). */
+
+:root {
+  color-scheme: dark;
+
+  /* ---------- 1.1 Neutral ground (near-neutral, never blue-black) ---------- */
+  --bg-0: #0b0b0c;            /* app shell, page, map void */
+  --bg-1: #121212;            /* solid cards on the shell */
+  --bg-1-hover: #151515;      /* solid card hover (A1-4) */
+  --bg-2: #1c1c1e;            /* nested surfaces: stat tiles, count pills, chips */
+  --bg-3: #252628;            /* active/selected pill, hover surface */
+  --bg-4: #3a3b3c;            /* raised controls: thumbs, floating circular buttons */
+  --line: rgba(255, 255, 255, 0.06);        /* dividers */
+  --line-strong: rgba(255, 255, 255, 0.12); /* outlined pills, inputs, card edge */
+  --chip-on-glass: rgba(255, 255, 255, 0.14);        /* plate circle over glass */
+  --chip-on-glass-strong: rgba(255, 255, 255, 0.18); /* plate pill over glass */
+
+  /* White alpha ramp (every rgba(255,255,255,x) used by the spec) */
+  --w-02: rgba(255, 255, 255, 0.02);
+  --w-03: rgba(255, 255, 255, 0.03);
+  --w-04: rgba(255, 255, 255, 0.04);
+  --w-05: rgba(255, 255, 255, 0.05);
+  --w-06: rgba(255, 255, 255, 0.06);
+  --w-08: rgba(255, 255, 255, 0.08);
+  --w-10: rgba(255, 255, 255, 0.10);
+  --w-12: rgba(255, 255, 255, 0.12);
+  --w-14: rgba(255, 255, 255, 0.14);
+  --w-16: rgba(255, 255, 255, 0.16);
+  --w-18: rgba(255, 255, 255, 0.18);
+  --w-20: rgba(255, 255, 255, 0.20);
+  --w-22: rgba(255, 255, 255, 0.22);
+  --w-25: rgba(255, 255, 255, 0.25);
+  --w-28: rgba(255, 255, 255, 0.28);
+  --w-30: rgba(255, 255, 255, 0.30);
+  --w-35: rgba(255, 255, 255, 0.35);
+  --w-40: rgba(255, 255, 255, 0.40);
+  --w-45: rgba(255, 255, 255, 0.45);
+  --w-55: rgba(255, 255, 255, 0.55);
+  --w-70: rgba(255, 255, 255, 0.70);
+  --w-80: rgba(255, 255, 255, 0.80);
+  --w-85: rgba(255, 255, 255, 0.85);
+
+  /* ---------- 1.2 Glass ---------- */
+  --glass-fill: rgba(40, 40, 42, 0.50);
+  --glass-fill-strong: rgba(24, 24, 26, 0.72);
+  --glass-fill-fallback: rgba(24, 24, 26, 0.92);   /* A16 no-backdrop-filter fallback */
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border-hover: rgba(255, 255, 255, 0.16);
+  --glass-border-lit: rgba(255, 255, 255, 0.18);
+  --glass-highlight: rgba(255, 255, 255, 0.14);   /* 1px inner top edge */
+  --glass-blur: 40px;
+  --glass-saturate: 1.15;
+  --glass-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.30);
+  --glass-lit-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.08) 40%, rgba(255, 255, 255, 0.02) 100%);
+  --glass-lit-gradient-60: linear-gradient(135deg, rgba(255, 255, 255, 0.17) 0%, rgba(255, 255, 255, 0.05) 40%, rgba(255, 255, 255, 0.01) 100%);
+  --glass-prism: conic-gradient(from 200deg, rgba(255, 255, 255, 0), rgba(120, 170, 255, 0.55), rgba(255, 255, 255, 0) 30%, rgba(255, 190, 120, 0.35) 55%, rgba(255, 255, 255, 0));
+  --glass-btn: rgba(255, 255, 255, 0.06);          /* icon buttons */
+  --glass-btn-hover: rgba(255, 255, 255, 0.12);
+  --glass-btn-pressed: rgba(255, 255, 255, 0.16);
+  --glass-map-btn: rgba(255, 255, 255, 0.10);      /* map control circles */
+  --glass-map-btn-hover: rgba(255, 255, 255, 0.16);
+  --glass-map-btn-pressed: rgba(255, 255, 255, 0.22);
+  --puck-fill: rgba(255, 255, 255, 0.28);
+  --puck-ring: rgba(255, 255, 255, 0.35);
+  --puck-blur: 12px;
+
+  /* ---------- 1.3 Text ---------- */
+  --text-1: #ffffff;  /* primary: titles, leading digits, values, active tab */
+  --text-2: #c8c8c8;  /* secondary: nav tabs, labels next to values, list titles */
+  --text-3: #868686;  /* tertiary: captions, timestamps, axis labels, placeholders */
+  --text-3-on-glass: #a9a9a9; /* A17: promoted --text-3 on glass over bright map */
+  --text-4: #606060;  /* dimmed trailing digits and units of big numbers (decorative only) */
+  --text-5: #444446;  /* lowest-priority ticks, disabled (decorative only) */
+
+  /* ---------- 1.4 Accent orange (single accent hue) ---------- */
+  --orange: #f5933f;
+  --orange-deep: #ea7226;
+  --orange-text: #f5933f;
+  --orange-tint-03: rgba(245, 147, 63, 0.03);
+  --orange-tint-04: rgba(245, 147, 63, 0.04);
+  --orange-tint-08: rgba(245, 147, 63, 0.08);
+  --orange-tint-15: rgba(245, 147, 63, 0.15);
+  --orange-tint-16: rgba(245, 147, 63, 0.16);
+  --orange-tint-20: rgba(245, 147, 63, 0.20);
+  --orange-tint-24: rgba(245, 147, 63, 0.24);
+  --orange-tint-30: rgba(245, 147, 63, 0.30);
+  --orange-tint-35: rgba(245, 147, 63, 0.35);
+  --orange-40: rgba(245, 147, 63, 0.40);
+  --orange-60: rgba(245, 147, 63, 0.60);
+  --orange-90: rgba(245, 147, 63, 0.90);
+  --orange-border: rgba(245, 147, 63, 0.35);
+  --orange-glow: 0 0 24px rgba(245, 147, 63, 0.35);
+  --orange-glow-50: 0 0 24px rgba(245, 147, 63, 0.175);
+  --orange-glow-30: 0 0 24px rgba(245, 147, 63, 0.105);
+
+  /* ---------- 1.5 Status ---------- */
+  --red: #fb0a08;
+  --red-tint: rgba(251, 10, 8, 0.10);
+  --red-tint-08: rgba(251, 10, 8, 0.08);
+  --red-tint-12: rgba(251, 10, 8, 0.12);
+  --red-tint-16: rgba(251, 10, 8, 0.16);
+  --red-tint-24: rgba(251, 10, 8, 0.24);
+  --red-border: rgba(251, 10, 8, 0.35);
+  --red-border-25: rgba(251, 10, 8, 0.25);
+  --red-border-45: rgba(251, 10, 8, 0.45);
+  --red-border-55: rgba(251, 10, 8, 0.55);
+  --red-border-70: rgba(251, 10, 8, 0.70);
+  --red-40: rgba(251, 10, 8, 0.40);
+  --red-85: rgba(251, 10, 8, 0.85);
+  --red-glow: 0 0 12px rgba(251, 10, 8, 0.55);
+  --red-glow-core: #ff3a3a;
+  --red-glow-ring: #501519;
+  --green: #57cd50;
+  --green-dim: rgba(87, 205, 80, 0.70);
+  --blue-marker: #0a609b;
+  --pink-marker: #b5647a;
+  --lime-marker: #8e9716;
+  --lime-50: rgba(142, 151, 22, 0.50);
+  --lime-feather: rgba(142, 151, 22, 0.06);
+
+  /* ---------- 1.6 Chart neutrals ---------- */
+  --chart-grey-bar: rgba(255, 255, 255, 0.55);
+  --chart-line-muted: rgba(255, 255, 255, 0.30);
+  --chart-line-hi: #ffffff;
+  --chart-grid: rgba(255, 255, 255, 0.12);
+  --chart-grid-faint: rgba(255, 255, 255, 0.04);
+  --chart-target: rgba(255, 255, 255, 0.85);
+  --chart-band: rgba(255, 255, 255, 0.04);
+  --chart-area: rgba(255, 255, 255, 0.03);
+  --tick: rgba(255, 255, 255, 0.45);
+  --tick-major: rgba(255, 255, 255, 0.20);
+  --tick-lit: rgba(255, 255, 255, 0.70);
+
+  /* ---------- 1.7 / 5 Map tint ---------- */
+  --map-water: #1d2c33;
+  --map-water-2: #202f36;
+  --map-veg: #3b4f37;
+  --map-veg-2: #3d4d3e;
+  --map-rock: #2b2b2b;
+  --map-rock-2: #474948;
+  --map-veil: rgba(8, 10, 12, 0.28);
+  --map-veil-lost: rgba(8, 10, 12, 0.38);
+  --map-vignette: radial-gradient(120% 90% at 50% 40%, rgba(0, 0, 0, 0) 55%, rgba(8, 10, 12, 0.55) 100%);
+  --map-filter: saturate(0.45) brightness(0.62) contrast(1.15);
+  --chart-ground: #131414;
+  --chart-block: #1c1c1c;
+  --chart-block-2: #2c2c2c;
+  --chart-street: rgba(255, 255, 255, 0.08);
+  --chart-road: rgba(255, 255, 255, 0.35);
+  --chart-water: #0f1011;
+  --gnd-runway: #2a2a2b;
+  --gnd-runway-edge: rgba(255, 255, 255, 0.14);
+  --gnd-taxiway: #232324;
+  --gnd-apron: #1e1e1f;
+  --gnd-terminal: #1a1a1b;
+  --route-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+
+  /* ---------- 2 Typography ---------- */
+  --font: var(--font-dm-sans, "DM Sans"), "DM Sans Fallback", "Outfit", "Helvetica Neue", Arial, sans-serif;
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+
+  --fs-display-xl: 44px; --lh-display-xl: 1;    --ls-display-xl: -0.02em; --fw-display-xl: 300;
+  --fs-display-l: 36px;  --lh-display-l: 1;     --ls-display-l: -0.02em;  --fw-display-l: 300;
+  --fs-display-m: 28px;  --lh-display-m: 1.05;  --ls-display-m: -0.01em;  --fw-display-m: 300;
+  --fs-title-l: 20px;    --lh-title-l: 1.2;     --ls-title-l: 0;          --fw-title-l: 400;
+  --fs-title-m: 16px;    --lh-title-m: 1.25;    --ls-title-m: 0;          --fw-title-m: 400;
+  --fs-body-m: 14px;     --lh-body-m: 1.4;      --ls-body-m: 0;           --fw-body-m: 400;
+  --fs-body-s: 13px;     --lh-body-s: 1.4;      --ls-body-s: 0;           --fw-body-s: 400;
+  --fs-label-xs: 11px;   --lh-label-xs: 1.2;    --ls-label-xs: 0.01em;    --fw-label-xs: 400;
+  --fs-micro-caps: 10px; --lh-micro-caps: 1.2;  --ls-micro-caps: 0.08em;  --fw-micro-caps: 500;
+  --lh-multiline: 1.5;
+  --max-line: 60ch;
+
+  /* ---------- 3 Spacing ---------- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-7: 28px; --s-8: 32px; --s-10: 40px;
+  --card-pad: 20px;      /* title-m cards (desktop) */
+  --card-pad-lg: 24px;   /* hero / glass cards on mobile, warning panel, modal */
+  --tile-pad: 16px;      /* stat tiles, compact strips */
+  --card-gap: 12px;      /* sibling cards */
+  --pill-gap: 8px;       /* pills in a row */
+  --nav-tab-gap: 32px;   /* nav tabs, text to text */
+  --icon-label-gap: 8px;
+  --group-icon-gap: 10px;
+  --gutter: 20px;
+  --title-to-kpi: 24px; --kpi-to-tabs: 24px; --tabs-to-chart: 28px; --chart-to-axis: 12px;
+
+  /* ---------- 3 Shape ---------- */
+  --r-card: 20px;
+  --r-card-lg: 24px;
+  --r-inner: 14px;
+  --r-menu: 14px;
+  --r-row: 12px;
+  --r-chip: 10px;
+  --r-menu-item: 10px;
+  --r-skeleton: 8px;
+  --r-kbd: 2px;
+  --r-pill: 999px;
+  --bw: 1px;
+
+  /* ---------- 3 Icons and strokes ---------- */
+  --icon-xs: 12px; --icon-s: 16px; --icon-m: 20px; --icon-l: 24px;
+  --icon-14: 14px; --icon-18: 18px; --icon-22: 22px;
+  --stroke-icon: 1.5px;
+  --stroke-chart: 1.5px;
+  --stroke-bar: 2px;
+  --stroke-route: 3px;
+  --stroke-wire: 1px;
+
+  /* ---------- A3 Pill / control scale ---------- */
+  --pill-xs: 24px; --pill-xs-px: 10px; --pill-xs-icon: 12px; --pill-xs-gap: 4px;
+  --pill-s: 30px;  --pill-s-px: 14px;  --pill-s-icon: 14px;  --pill-s-gap: 6px;
+  --pill-m: 36px;  --pill-m-px: 16px;  --pill-m-icon: 16px;  --pill-m-gap: 8px;
+  --pill-l: 40px;  --pill-l-px: 18px;  --pill-l-icon: 18px;  --pill-l-gap: 8px;
+  --pill-xl: 44px; --pill-xl-px: 20px; --pill-xl-icon: 18px; --pill-xl-gap: 8px;
+  --circle-nav: 40px;   --circle-nav-icon: 20px;
+  --circle-map: 44px;   --circle-map-icon: 18px;
+  --circle-mobile: 56px; --circle-mobile-icon: 22px;
+  --circle-xs: 32px;    --circle-xs-icon: 16px;
+  --badge-s: 18px;
+  --badge-m: 22px;
+  --toggle-w: 40px; --toggle-h: 22px; --toggle-knob: 18px;
+  --input-h: 40px;
+  --row-h: 44px;
+  --menu-item-h: 36px;
+  --hit-min: 44px;
+  --plate-circle: 28px; --plate-circle-l: 36px; --plate-pill-w: 72px; --plate-pill-w-l: 96px;
+
+  /* ---------- 6 / A5 Layout ---------- */
+  --nav-h: 64px;
+  --left-col: 440px;
+  --panel-w: 400px;
+  --panel-top: 84px;
+  --bottom-row-h: 250px;
+  --strip-w: 194px; --strip-h: 176px; --strip-selected-w: 400px; --strip-selected-h: 440px;
+  --tile-w: 200px; --tile-h: 104px;
+  --modal-w: 440px;
+  --toast-min-w: 280px; --toast-max-w: 420px;
+  --menu-max-w: 320px; --menu-max-h: 320px;
+  --search-w: 320px; --search-w-focus: 400px;
+  --bp-mobile: 767px; --bp-tablet: 1023px; --bp-laptop: 1439px; --min-width: 360px;
+
+  /* ---------- A4 z-index ---------- */
+  --z-map: 0;
+  --z-map-overlay: 1;
+  --z-float: 10;
+  --z-nav: 20;
+  --z-menu: 30;
+  --z-sheet: 35;
+  --z-modal: 40;
+  --z-toast: 50;
+
+  /* ---------- 7 Motion ---------- */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 120ms;
+  --t-lift: 160ms;
+  --t-base: 200ms;
+  --t-bump: 240ms;
+  --t-slow: 320ms;
+  --t-bars: 400ms;
+  --t-draw: 600ms;
+  --t-count: 600ms;
+  --t-pan: 600ms;
+  --t-fix: 1000ms;
+  --t-pulse: 1200ms;
+  --t-shimmer: 1400ms;
+  --t-marker: 1600ms;
+  --stagger: 40ms;
+  --stagger-bar: 30ms;
+
+  /* ---------- Shadows ---------- */
+  --shadow-glass: var(--glass-shadow);
+  --shadow-menu: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-toast: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 32px 80px rgba(0, 0, 0, 0.6);
+  --shadow-thumb: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-puck: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --shadow-tooltip: 0 8px 24px rgba(0, 0, 0, 0.45);
+
+  /* ---------- A2 Focus / selection / scrims ---------- */
+  --focus-ring: 0 0 0 1px var(--bg-0), 0 0 0 3px rgba(255, 255, 255, 0.45);
+  --focus-ring-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  --focus-underline: rgba(255, 255, 255, 0.45);
+  --selection: rgba(245, 147, 63, 0.30);
+  --caret: #ffffff;
+  --scrim: rgba(6, 6, 7, 0.72);
+  --scrim-blur: 6px;
+  --scrim-loading: rgba(11, 11, 12, 0.92);
+  --skeleton: rgba(255, 255, 255, 0.06);
+  --skeleton-shimmer: rgba(255, 255, 255, 0.10);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.14);
+  --scrollbar-w: 6px;
+  --fade-mask: linear-gradient(transparent, #000 12px, #000 calc(100% - 12px), transparent);
+  --grab-handle: rgba(255, 255, 255, 0.20);
+  --rule-left: rgba(255, 255, 255, 0.80);
+  --wire: rgba(255, 255, 255, 0.85);
+  --wire-dim: rgba(255, 255, 255, 0.55);
+  --data-block: rgba(37, 38, 40, 0.80);
+  --map-pin-fill: rgba(210, 212, 214, 0.92);   /* station pin disc (5.x) */
+  --map-pin-glyph: #2c2f33;
+  --map-pin-muted-fill: rgba(44, 47, 51, 0.92);
+  --map-pin-muted-glyph: #b7b7b9;
+  --btn-primary-hover: #e8e8e8;                /* A2 primary button hover */
+  --btn-primary-pressed: #d4d4d4;              /* A2 primary button pressed */
+  --bg-4-hover: #444546;                       /* raised control hover */
+  --mask-solid: #000;                          /* opaque stop for mask-image gradients */
+  --tag-bg: rgba(37, 38, 40, 0.80);
+}
+
+/* ---------- A5 breakpoints: shape/space tokens use the explicit column, type uses the scale ---------- */
+@media (max-width: 1439px) {
+  :root {
+    --gutter: 16px;
+    --nav-h: 56px;
+    --left-col: 380px;
+    --panel-w: 340px;
+    --fs-display-xl: 36px;
+  }
+}
+@media (max-width: 1023px) {
+  :root {
+    --r-card: 24px;
+    --card-pad: 24px;
+    --left-col: 360px;
+    --fs-display-xl: 50px; --fs-display-l: 41px; --fs-display-m: 32px;
+    --fs-title-l: 23px; --fs-title-m: 18px; --fs-body-m: 16px; --fs-body-s: 15px;
+    --fs-label-xs: 12px; --fs-micro-caps: 11px;
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    --nav-h: 56px;
+    --circle-map: 56px;
+    --fs-display-xl: 55px; --fs-display-l: 45px; --fs-display-m: 35px;
+    --fs-title-l: 25px; --fs-title-m: 20px; --fs-body-m: 18px; --fs-body-s: 16px;
+    --fs-label-xs: 14px; --fs-micro-caps: 13px;
+    --pill-l: 40px;
+  }
+}
+@media (max-width: 359px) {
+  :root { --gutter: 12px; }
+}

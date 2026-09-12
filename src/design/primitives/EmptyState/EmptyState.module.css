@@ -1,0 +1,8 @@
+/* A11.10 empty states: centred, icon 24 --text-4, body-m --text-3, body-s --text-4, 40px vertical padding */
+.root { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; padding: 40px 16px; color: var(--text-3); }
+.compact { padding: 20px 16px; }
+.icon { display: inline-flex; color: var(--text-4); margin-bottom: 4px; }
+.title { font: var(--fw-body-m) var(--fs-body-m) / 1.4 var(--font); color: var(--text-3); max-width: var(--max-line); }
+.hint { font: var(--fw-body-s) var(--fs-body-s) / 1.4 var(--font); color: var(--text-4); max-width: var(--max-line); }
+.action { margin-top: 8px; }
+.error .title { color: var(--red); }

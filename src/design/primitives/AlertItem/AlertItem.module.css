@@ -1,0 +1,52 @@
+/* 4.12 / A13 alert item: tinted card, radius 20, padding 18 20, Ø22 badge, chevron */
+.item {
+  position: relative; border-radius: var(--r-card); padding: 18px 20px; color: var(--text-1);
+  transition: background-color var(--t-fast) var(--ease-out), box-shadow var(--t-base) var(--ease-out);
+  animation: ds-alert-enter var(--t-base) var(--ease-out) both;
+}
+@keyframes ds-alert-enter { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.critical { background: var(--red-tint-12); }
+.warning { background: var(--red-tint-08); }
+.advisory { background: var(--orange-tint-08); }
+.info { background: var(--w-04); }
+.item:hover { box-shadow: inset 0 0 0 999px var(--w-03); }
+.head { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; cursor: pointer; border-radius: 10px; }
+.head:focus-visible { box-shadow: var(--focus-ring); }
+.badge { flex-shrink: 0; margin-top: -1px; }
+.titles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.title { font: var(--fw-body-m) var(--fs-body-m) / 1.4 var(--font); color: var(--text-1); }
+.time { font: var(--fw-body-s) var(--fs-body-s) / 1.2 var(--font); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.chevron { display: inline-flex; color: var(--text-2); flex-shrink: 0; margin-top: 2px; transition: transform var(--t-base) var(--ease-inout), color var(--t-fast); }
+.head:hover .chevron { color: var(--text-1); }
+.chevronOpen { transform: rotate(180deg); }
+.bodyWrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--t-base) var(--ease-out); }
+.bodyOpen { grid-template-rows: 1fr; }
+.body { overflow: hidden; min-height: 0; }
+.bodyInner { padding-top: 16px; padding-left: 32px; display: flex; flex-direction: column; gap: 12px; }
+.sectionLabel { font: var(--fw-body-s) var(--fs-body-s) / 1.2 var(--font); color: var(--text-3); }
+.affected { display: flex; flex-direction: column; gap: 12px; }
+.affectedItem { border-left: 2px solid var(--rule-left); padding-left: 16px; display: flex; flex-direction: column; gap: 2px; }
+.affectedName { font: var(--fw-body-m) var(--fs-body-m) / 1.3 var(--font); color: var(--text-1); }
+.affectedDetail { font: var(--fw-body-s) var(--fs-body-s) / 1.3 var(--font); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.description { font: var(--fw-body-m) var(--fs-body-m) / var(--lh-multiline) var(--font); color: var(--text-2); max-width: var(--max-line); }
+.recommend { display: flex; align-items: flex-start; gap: 10px; margin-left: -32px; }
+.recommendIcon { display: inline-flex; width: 22px; justify-content: center; color: var(--text-1); flex-shrink: 0; margin-top: 8px; }
+.recommendText { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+.recommendTitle { font: var(--fw-body-m) var(--fs-body-m) / 1.3 var(--font); color: var(--text-1); }
+.recommendDone { display: inline-flex; align-items: center; gap: 8px; font: var(--fw-body-s) var(--fs-body-s) / 1.3 var(--font); color: var(--text-3); }
+.doneIcon { color: var(--green); display: inline-flex; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.emergencyDot { width: 8px; height: 8px; border-radius: 50%; background: var(--red-glow-core); box-shadow: var(--red-glow); display: inline-block; margin-right: 8px; vertical-align: middle; }
+@media (prefers-reduced-motion: reduce) { .item { animation: global(ds-fade-in) var(--t-base) both; } .bodyWrap { transition: none; } }
+
+/* Group: icon 18 + title-m + (parenthetical), 12px to the first item, 24px between groups */
+.group { display: flex; flex-direction: column; gap: 12px; }
+.groupHead { display: flex; align-items: center; gap: var(--group-icon-gap); color: var(--text-1); font: var(--fw-title-m) var(--fs-title-m) / var(--lh-title-m) var(--font); }
+.groupIcon { display: inline-flex; }
+.groupParen { color: var(--text-3); }
+.groupCount { margin-left: auto; font: var(--fw-body-m) var(--fs-body-m) / 1 var(--font); font-variant-numeric: tabular-nums; }
+.countRed { color: var(--red); }
+.countWhite { color: var(--text-1); }
+.countText2 { color: var(--text-2); }
+.countText3 { color: var(--text-3); }
+.groupItems { display: flex; flex-direction: column; gap: 12px; }

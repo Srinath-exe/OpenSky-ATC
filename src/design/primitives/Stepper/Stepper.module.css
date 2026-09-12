@@ -1,0 +1,12 @@
+/* Command-tree wizard chrome: breadcrumb chips, step body, back / cancel / confirm */
+.root { display: flex; flex-direction: column; gap: 16px; min-width: 0; outline: none; }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.sep { color: var(--text-4); display: inline-flex; }
+.title { font: var(--fw-title-m) var(--fs-title-m) / var(--lh-title-m) var(--font); color: var(--text-1); }
+.subtitle { font: var(--fw-body-s) var(--fs-body-s) / 1.3 var(--font); color: var(--text-3); margin-top: 2px; }
+.body { min-height: 0; }
+.summary { font: var(--fw-body-s) var(--fs-body-s) / 1.4 var(--font); color: var(--text-3); padding: 10px 12px; border-radius: var(--r-inner); background: var(--w-04); font-variant-numeric: tabular-nums; }
+.summaryStrong { color: var(--text-1); }
+.footer { display: flex; align-items: center; gap: 8px; }
+.spacer { flex: 1; }
+.hotkey { margin-left: 6px; }

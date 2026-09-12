@@ -58,3 +58,5 @@ Thumbs.db
 # /public/maps/xplane/
 # /public/maps/lax_experiment/
 tsconfig.tsbuildinfo
+
+!docs/qa/*.png

@@ -1,0 +1,42 @@
+/* 4.5 / A8 vertical floating-range bar chart: orange current vs grey comparison, 2px butt lines */
+.root { position: relative; width: 100%; color: var(--text-1); }
+.svg { display: block; width: 100%; height: auto; overflow: visible; cursor: default; }
+.svg:focus { outline: none; }
+.svg:focus-visible { outline: none; }
+.grid { stroke: var(--chart-grid); stroke-width: 1; stroke-dasharray: 10 8; shape-rendering: crispEdges; }
+.gridFaint { stroke: var(--chart-grid-faint); }
+.yLabel { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); fill: var(--text-3); text-anchor: end; dominant-baseline: middle; font-variant-numeric: tabular-nums; }
+.xLabel { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); fill: var(--text-3); text-anchor: middle; dominant-baseline: hanging; transition: fill var(--t-fast) var(--ease-out); }
+.xLabelSelected { fill: var(--orange); }
+.column { cursor: pointer; }
+.hit { fill: transparent; }
+.band { opacity: 0; transition: opacity var(--t-base) var(--ease-out); pointer-events: none; }
+.bandHover { opacity: 0.5; }
+.bandSelected { opacity: 1; filter: drop-shadow(0 0 12px rgba(245, 147, 63, 0.18)); }
+.bandFocus { opacity: 1; }
+.bar { stroke-width: var(--stroke-bar); stroke-linecap: butt; transform-box: fill-box; transform-origin: center; }
+.barCurrent { stroke: var(--orange); }
+.barCompare { stroke: var(--chart-grey-bar); }
+.animate .bar { animation: global(ds-bar-grow) var(--t-bars) var(--ease-out) both; }
+.tooltip {
+  position: absolute; z-index: 2; pointer-events: none; transform: translateX(-50%);
+  min-width: 84px; height: 32px; padding: 0 12px; border-radius: var(--r-pill);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+  background: linear-gradient(var(--orange-tint-20), var(--orange-tint-20)), var(--bg-1);
+  border: var(--bw) solid var(--orange-border); box-shadow: var(--orange-glow-50);
+  font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--text-1); font-variant-numeric: tabular-nums;
+  animation: global(ds-pop) var(--t-fast) var(--ease-out) both; animation-delay: var(--t-fast);
+}
+.tooltip::before {
+  content: ""; position: absolute; left: 2px; top: 3px; bottom: 3px; width: 14px; border-radius: 50%;
+  border-left: 2px solid var(--orange-deep); filter: blur(3px); opacity: 0.9; pointer-events: none;
+}
+.tooltipDelta { color: var(--text-2); display: inline-flex; align-items: center; gap: 2px; }
+.onGlass .tooltip { background: linear-gradient(var(--orange-tint-20), var(--orange-tint-20)), rgb(40, 40, 42); }
+.legend { display: flex; align-items: center; gap: var(--s-4); margin-top: var(--s-3); font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--text-3); }
+.legendItem { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { width: 2px; height: 10px; }
+.swatchCurrent { background: var(--orange); }
+.swatchCompare { background: var(--chart-grey-bar); }
+.srTable { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .animate .bar { animation: none; } .tooltip { animation: global(ds-fade-in) var(--t-fast) both; } }

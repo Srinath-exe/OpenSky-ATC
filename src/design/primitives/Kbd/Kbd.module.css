@@ -1,0 +1,5 @@
+/* A20 kbd chip: 20 tall, radius 2, .06 fill, padding 0 5, label-xs --text-3 (the only non-pill chip) */
+.kbd { display: inline-flex; align-items: center; justify-content: center; height: 20px; min-width: 20px; padding: 0 5px; border-radius: var(--r-kbd); background: var(--w-06); color: var(--text-3); font: var(--fw-label-xs) var(--fs-label-xs) / 1 var(--font); letter-spacing: var(--ls-label-xs); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.group { display: inline-flex; align-items: center; gap: 3px; }
+.plus { color: var(--text-4); font: var(--fw-label-xs) var(--fs-label-xs) / 1 var(--font); }
+.plain { color: var(--text-3); font: inherit; }

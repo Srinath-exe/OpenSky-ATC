@@ -1,0 +1,11 @@
+.h { border: 0; height: 1px; width: 100%; background: var(--line); margin: var(--s-4) 0; flex-shrink: 0; }
+.v { width: 1px; align-self: stretch; min-height: 16px; background: var(--line); margin: 0 var(--s-4); flex-shrink: 0; }
+.none { margin: 0; }
+.s.h { margin: var(--s-2) 0; }
+.l.h { margin: var(--s-6) 0; }
+.s.v { margin: 0 var(--s-2); }
+.l.v { margin: 0 var(--s-6); }
+.strong { background: var(--line-strong); }
+.labelled { display: flex; align-items: center; gap: var(--s-3); width: 100%; margin: var(--s-4) 0; }
+.labelled::before, .labelled::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.label { font: var(--fw-label-xs) var(--fs-label-xs) / 1 var(--font); letter-spacing: var(--ls-label-xs); color: var(--text-4); white-space: nowrap; }

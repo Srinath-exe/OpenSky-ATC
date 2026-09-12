@@ -1,0 +1,18 @@
+/* Segmented text tabs with sliding underline (4.6) */
+.seg { position: relative; display: inline-flex; align-items: flex-start; gap: var(--s-6); }
+.item {
+  position: relative; padding: 0 0 8px; color: var(--text-2); font: var(--fw-body-m) var(--fs-body-m) / 1.2 var(--font);
+  white-space: nowrap; cursor: pointer; transition: color var(--t-fast) var(--ease-out); border-radius: 2px;
+}
+.item:hover, .item[data-force="hover"] { color: var(--text-1); }
+.item:active { color: var(--text-1); }
+.item:focus-visible { box-shadow: none; }
+.item:focus-visible::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--focus-underline); }
+.active { color: var(--text-1); }
+.disabled { color: var(--text-5); cursor: not-allowed; }
+.disabled:hover { color: var(--text-5); }
+.underline { position: absolute; bottom: 0; left: 0; height: 1px; background: var(--text-1); transition: transform var(--t-base) var(--ease-inout), width var(--t-base) var(--ease-inout), opacity var(--t-fast); opacity: 0; will-change: transform, width; }
+.visible { opacity: 1; }
+.tabular { font-variant-numeric: tabular-nums; }
+.small .item { font-size: var(--fs-body-s); }
+@media (prefers-reduced-motion: reduce) { .underline { transition: opacity var(--t-fast); } }

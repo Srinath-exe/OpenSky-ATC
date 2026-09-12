@@ -1,0 +1,25 @@
+/* Heading dial: compass card with 1px ticks, orange target knob + turn arc, white current marker */
+.root { position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 12px; user-select: none; }
+.svg { display: block; touch-action: none; cursor: grab; border-radius: 50%; outline: none; }
+.svg:active { cursor: grabbing; }
+.svg:focus-visible { box-shadow: var(--focus-ring); }
+.disabled .svg { cursor: not-allowed; opacity: 0.45; }
+.face { fill: var(--bg-2); }
+.faceGlass { fill: var(--w-04); }
+.ring { fill: none; stroke: var(--line-strong); stroke-width: 1; }
+.tick { stroke: var(--w-30); stroke-width: 1; }
+.tickMajor { stroke: var(--w-55); }
+.label { font: var(--fw-label-xs) var(--fs-label-xs) / 1 var(--font); fill: var(--text-3); text-anchor: middle; dominant-baseline: middle; letter-spacing: var(--ls-label-xs); }
+.labelCardinal { fill: var(--text-2); }
+.arc { fill: none; stroke: var(--orange); stroke-width: 2; stroke-linecap: butt; opacity: 0.9; }
+.arcTrack { fill: none; stroke: var(--w-06); stroke-width: 2; }
+.current { fill: none; stroke: var(--text-1); stroke-width: 1.5; }
+.currentLine { stroke: var(--w-35); stroke-width: 1; }
+.knob { fill: var(--orange); stroke: var(--bg-1); stroke-width: 1.5; transition: transform var(--t-fast) var(--ease-out); }
+.knobLine { stroke: var(--orange); stroke-width: 1.5; }
+.centre { pointer-events: none; }
+.centreLabel { font: var(--fw-micro-caps) var(--fs-micro-caps) / 1 var(--font); letter-spacing: var(--ls-micro-caps); text-transform: uppercase; fill: var(--text-3); text-anchor: middle; }
+.centreValue { font: var(--fw-display-l) var(--fs-display-l) / 1 var(--font); letter-spacing: var(--ls-display-l); fill: var(--text-1); text-anchor: middle; dominant-baseline: middle; font-variant-numeric: tabular-nums; }
+.centreHint { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); fill: var(--text-3); text-anchor: middle; font-variant-numeric: tabular-nums; }
+.centreHintOrange { fill: var(--orange); }
+.quick { display: flex; gap: 8px; }

@@ -1,0 +1,16 @@
+/* 4.19 tooltip: --bg-3 pill, body-s white, 8px 12px, shadow; 120ms opacity + scale .96 */
+.anchor { display: inline-flex; position: relative; }
+.block { display: flex; }
+.tip {
+  position: fixed; z-index: var(--z-menu); pointer-events: none; padding: 8px 12px; border-radius: var(--r-pill);
+  background: var(--bg-3); color: var(--text-1); font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); white-space: nowrap;
+  box-shadow: var(--shadow-tooltip); display: inline-flex; align-items: center; gap: 8px;
+  animation: global(ds-pop) var(--t-fast) var(--ease-out) both;
+}
+.kbd { display: inline-flex; gap: 2px; }
+.dim { color: var(--text-3); }
+@media (prefers-reduced-motion: reduce) { .tip { animation: global(ds-fade-in) var(--t-fast) both; } }
+.tipInline { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); animation: none; }
+.tipInlineBottom { bottom: auto; top: calc(100% + 8px); }
+.tipInlineRight { left: calc(100% + 8px); bottom: auto; top: 50%; transform: translateY(-50%); }
+.tipInlineLeft { left: auto; right: calc(100% + 8px); bottom: auto; top: 50%; transform: translateY(-50%); }

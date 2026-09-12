@@ -1,0 +1,42 @@
+/* 4.7 / A8 sparkline with target: jagged 1.5px muted line, dashed target, white highlight segments with Ø7 dots, bands */
+.root { position: relative; width: 100%; color: var(--text-1); }
+.header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--text-3); }
+.svg { display: block; width: 100%; height: auto; overflow: visible; cursor: default; }
+.svg:focus { outline: none; }
+.grid { stroke: var(--chart-grid); stroke-width: 1; stroke-dasharray: 10 8; shape-rendering: crispEdges; }
+.gridFaint { stroke: var(--chart-grid-faint); }
+.yLabel { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); fill: var(--text-3); text-anchor: end; dominant-baseline: middle; font-variant-numeric: tabular-nums; }
+.xLabel { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); fill: var(--text-3); dominant-baseline: hanging; font-variant-numeric: tabular-nums; }
+.xLabelFar { fill: var(--text-5); }
+.targetLabel { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); fill: var(--text-3); text-anchor: end; }
+.band { fill: var(--chart-band); }
+.bandOrange { fill: var(--orange-tint-04); }
+.line { fill: none; stroke: var(--chart-line-muted); stroke-width: var(--stroke-chart); stroke-linejoin: round; stroke-linecap: round; }
+.hi { fill: none; stroke: var(--chart-line-hi); stroke-width: var(--stroke-chart); stroke-linejoin: round; stroke-linecap: round; }
+.lo { fill: none; stroke: var(--orange); stroke-width: var(--stroke-chart); stroke-linejoin: round; stroke-linecap: round; }
+.target { stroke: var(--chart-target); stroke-width: 1; stroke-dasharray: 8 6; shape-rendering: crispEdges; }
+.dot { fill: var(--text-1); stroke: var(--bg-1); stroke-width: 1; transform-box: fill-box; transform-origin: center; }
+.dotOrange { fill: var(--orange); }
+.onGlass .dot { stroke: rgb(40, 40, 42); }
+.cursor { stroke: var(--w-35); stroke-width: 1; shape-rendering: crispEdges; pointer-events: none; }
+.cursorDot { fill: var(--text-1); stroke: var(--bg-1); stroke-width: 1; }
+.current { fill: var(--text-1); }
+.currentHalo { fill: var(--w-25); transform-box: fill-box; transform-origin: center; animation: global(ds-marker-halo) var(--t-marker) var(--ease-inout) infinite; }
+.hit { fill: transparent; }
+.animate .line, .animate .hi, .animate .lo { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: ds-draw var(--t-draw) var(--ease-out) forwards; }
+.animate .dot { animation: global(ds-dot-pop) var(--t-base) var(--ease-out) both; animation-delay: var(--t-draw); }
+.animate .band { animation: global(ds-fade-in) var(--t-fast) both; animation-delay: calc(var(--t-draw) + var(--t-fast)); }
+@keyframes ds-draw { to { stroke-dashoffset: 0; } }
+.tooltip {
+  position: absolute; z-index: 2; pointer-events: none; transform: translate(-50%, 0);
+  height: 24px; padding: 0 10px; border-radius: var(--r-pill); background: var(--bg-3); box-shadow: var(--shadow-tooltip);
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--text-1); font-variant-numeric: tabular-nums;
+}
+.tooltipDim { color: var(--text-3); }
+.srTable { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) {
+  .animate .line, .animate .hi, .animate .lo { animation: none; stroke-dasharray: none; stroke-dashoffset: 0; }
+  .animate .dot, .animate .band { animation: none; }
+  .currentHalo { animation: none; }
+}

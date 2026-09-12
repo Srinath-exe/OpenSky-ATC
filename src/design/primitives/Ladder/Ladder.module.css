@@ -1,0 +1,25 @@
+/* Vertical altitude / speed ladder: ruler ticks (A8), orange value marker, white current marker, A11.4 step pills */
+.root { display: inline-flex; flex-direction: column; gap: 12px; user-select: none; }
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.label { font: var(--fw-micro-caps) var(--fs-micro-caps) / 1 var(--font); letter-spacing: var(--ls-micro-caps); text-transform: uppercase; color: var(--text-3); width: 36px; }
+.body { display: flex; gap: 16px; align-items: stretch; }
+.svg { display: block; touch-action: none; cursor: ns-resize; border-radius: 12px; outline: none; flex-shrink: 0; }
+.svg:focus-visible { box-shadow: var(--focus-ring); }
+.disabled .svg { cursor: not-allowed; opacity: 0.45; }
+.track { fill: var(--bg-2); }
+.trackGlass { fill: var(--w-04); }
+.tick { stroke: var(--tick); stroke-width: 1; shape-rendering: crispEdges; }
+.tickMinor { stroke: var(--w-14); }
+.tickLabel { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); fill: var(--text-3); dominant-baseline: middle; font-variant-numeric: tabular-nums; }
+.tickLabelActive { fill: var(--text-1); }
+.range { fill: var(--orange-tint-08); }
+.valueLine { stroke: var(--orange); stroke-width: 2; shape-rendering: crispEdges; }
+.valueChip { fill: var(--bg-1); stroke: var(--orange-border); stroke-width: 1; }
+.valueChipFill { fill: var(--orange-tint-20); }
+.valueText { font: var(--fw-label-xs) var(--fs-label-xs) / 1 var(--font); fill: var(--text-1); text-anchor: middle; dominant-baseline: middle; font-variant-numeric: tabular-nums; }
+.currentLine { stroke: var(--text-1); stroke-width: 1; shape-rendering: crispEdges; stroke-dasharray: 4 3; }
+.currentTri { fill: var(--text-1); }
+.steps { display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+.stepsRow { flex-direction: row; flex-wrap: wrap; }
+.hit { fill: transparent; }
+.stepBtn { min-width: 56px; }

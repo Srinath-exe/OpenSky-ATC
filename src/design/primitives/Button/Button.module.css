@@ -1,0 +1,79 @@
+.btn {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--pill-m-gap);
+  height: var(--pill-m); padding: 0 var(--pill-m-px);
+  border-radius: var(--r-pill); border: var(--bw) solid transparent;
+  font: var(--fw-body-m) var(--fs-body-m) / 1 var(--font); letter-spacing: 0;
+  white-space: nowrap; cursor: pointer; user-select: none;
+  transition: background-color var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out), transform var(--t-base) var(--ease-out), opacity var(--t-fast);
+}
+.btn:active:not(:disabled) { transition-duration: var(--t-fast); }
+.btn:focus-visible, .btn[data-force="focus"] { box-shadow: var(--focus-ring); }
+.btn:disabled, .btn[aria-disabled="true"] { cursor: not-allowed; }
+.full { width: 100%; }
+
+/* sizes (A3) */
+.sm { height: var(--pill-s); padding: 0 var(--pill-s-px); gap: var(--pill-s-gap); font-size: var(--fs-body-s); }
+.md { height: var(--pill-m); padding: 0 var(--pill-m-px); gap: var(--pill-m-gap); }
+.lg { height: var(--pill-l); padding: 0 var(--pill-l-px); gap: var(--pill-l-gap); }
+.sm.hasLeft { padding-left: calc(var(--pill-s-px) - 2px); }
+.md.hasLeft { padding-left: calc(var(--pill-m-px) - 2px); }
+.lg.hasLeft { padding-left: calc(var(--pill-l-px) - 2px); }
+.sm.hasRight { padding-right: calc(var(--pill-s-px) - 4px); }
+.md.hasRight { padding-right: calc(var(--pill-m-px) - 4px); }
+.lg.hasRight { padding-right: calc(var(--pill-l-px) - 4px); }
+
+/* Primary: white pill, --bg-0 text 500 */
+.primary { background: var(--text-1); color: var(--bg-0); font-weight: var(--fw-medium); }
+.primary:hover:not(:disabled), .primary[data-force="hover"] { background: var(--btn-primary-hover); }
+.primary:active:not(:disabled), .primary[data-force="pressed"] { background: var(--btn-primary-pressed); transform: scale(0.98); }
+.primary:disabled { background: var(--w-12); color: var(--text-4); }
+
+/* Secondary: glass .08 + hairline */
+.secondary { background: var(--w-08); border-color: var(--glass-border); color: var(--text-1); }
+.secondary:hover:not(:disabled), .secondary[data-force="hover"] { background: var(--w-12); }
+.secondary:active:not(:disabled), .secondary[data-force="pressed"] { background: var(--w-16); transform: scale(0.98); }
+.secondary.selected { background: var(--bg-3); border-color: var(--w-16); color: var(--text-1); }
+.secondary:disabled { background: var(--w-04); border-color: var(--w-04); color: var(--text-5); }
+
+/* Ghost */
+.ghost { background: transparent; color: var(--text-2); }
+.ghost:hover:not(:disabled), .ghost[data-force="hover"] { background: var(--w-06); color: var(--text-1); }
+.ghost:active:not(:disabled), .ghost[data-force="pressed"] { background: var(--w-10); color: var(--text-1); }
+.ghost.selected { background: var(--w-10); color: var(--text-1); }
+.ghost:disabled { color: var(--text-5); }
+
+/* Accent: the single orange main action */
+.accent { background: var(--orange-tint-08); border-color: var(--orange-border); color: var(--orange); }
+.accent:hover:not(:disabled), .accent[data-force="hover"] { background: var(--orange-tint-16); }
+.accent:active:not(:disabled), .accent[data-force="pressed"] { background: var(--orange-tint-24); transform: scale(0.98); }
+.accent.selected { background: var(--orange-tint-16); }
+.accent:disabled { background: var(--orange-tint-04); border-color: var(--orange-tint-15); color: var(--orange-40); }
+
+/* Danger */
+.danger { background: var(--red-tint); border-color: var(--red-border); color: var(--red); }
+.danger:hover:not(:disabled), .danger[data-force="hover"] { background: var(--red-tint-16); }
+.danger:active:not(:disabled), .danger[data-force="pressed"] { background: var(--red-tint-24); transform: scale(0.98); }
+.danger:disabled { color: var(--red-40); background: var(--red-tint-08); border-color: var(--red-border-25); }
+
+/* Loading: text hidden, width preserved, 16px 1.5px spinner */
+.loading { pointer-events: none; }
+.loading .label, .loading .icon { visibility: hidden; }
+.spinner {
+  position: absolute; inset: 0; margin: auto; width: 16px; height: 16px;
+  border-radius: 50%; border: 1.5px solid currentColor; border-right-color: transparent;
+  animation: global(ds-spin) 800ms linear infinite;
+}
+.primary .spinner { color: var(--bg-0); }
+.secondary .spinner, .ghost .spinner { color: var(--text-1); }
+.accent .spinner { color: var(--orange); }
+.danger .spinner { color: var(--red); }
+
+.label { display: inline-flex; align-items: center; }
+.icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: "kern", "tnum"; }
+/* A11.4 flash after a command pill press */
+.flash { animation: global(ds-flash-fill) var(--t-slow) var(--ease-out) both; }
+/* 44px touch target for small pills (A3) */
+.sm::before { content: ""; position: absolute; inset: -7px 0; }
+@media (prefers-reduced-motion: reduce) { .btn:active:not(:disabled) { transform: none; } }

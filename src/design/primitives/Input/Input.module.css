@@ -1,0 +1,33 @@
+/* 4.19 / A2 / A11.6 text input: pill 40, glass on map or --bg-2 on shell, 1px --line-strong */
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.label { font: var(--fw-body-s) var(--fs-body-s) / 1.2 var(--font); color: var(--text-3); }
+.wrap {
+  position: relative; display: flex; align-items: center; gap: var(--pill-l-gap);
+  height: var(--input-h); padding: 0 var(--pill-l-px); border-radius: var(--r-pill);
+  background: var(--bg-2); border: var(--bw) solid var(--line-strong); color: var(--text-1);
+  transition: border-color var(--t-fast) var(--ease-out), background-color var(--t-fast) var(--ease-out), width var(--t-base) var(--ease-out), box-shadow var(--t-fast);
+}
+.m { height: var(--pill-m); padding: 0 var(--pill-m-px); gap: var(--pill-m-gap); }
+.glass { background: var(--glass-fill); border-color: var(--glass-border); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)); }
+.transparent { background: transparent; }
+.wrap:hover, .wrap[data-force="hover"] { border-color: var(--w-18); }
+.focused { border-color: var(--w-28) !important; box-shadow: var(--focus-ring); }
+.hasPrefix { padding-left: 14px; }
+.hasSuffix { padding-right: 4px; }
+.prefix { display: inline-flex; align-items: center; color: var(--text-3); flex-shrink: 0; }
+.suffix { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; color: var(--text-3); }
+.input { flex: 1; min-width: 0; height: 100%; background: none; border: 0; outline: none; color: var(--text-1); font: var(--fw-body-m) var(--fs-body-m) / 1 var(--font); padding: 0; }
+.input::placeholder { color: var(--text-3); }
+.input:focus { box-shadow: none; }
+.tabular .input { font-variant-numeric: tabular-nums; }
+.disabled { border-color: var(--w-06); }
+.disabled .input { color: var(--text-5); cursor: not-allowed; }
+.disabled .input::placeholder { color: var(--text-5); }
+.error { border-color: var(--red-border-55) !important; }
+.error.focused { border-color: var(--red-border-70) !important; }
+.helper { font: var(--fw-body-s) var(--fs-body-s) / 1.2 var(--font); color: var(--text-3); }
+.helperError { color: var(--red); }
+.shake { animation: global(ds-shake) var(--t-bump) var(--ease-out); }
+.accepted { animation: ds-accept var(--t-slow) var(--ease-out); }
+@keyframes ds-accept { from { border-color: var(--w-28); } to { border-color: var(--line-strong); } }
+.full { width: 100%; }
