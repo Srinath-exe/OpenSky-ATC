@@ -304,6 +304,15 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     this.emit('info', null, `Runway change: departures ${dep.join('/') || '-'}, arrivals ${arr.join('/') || '-'}`);
   }
   activeEnds(role: 'dep' | 'arr'): RunwayState[] { return this.runways.filter(r => (role === 'dep' ? r.activeDep : r.activeArr)); }
+  /** Ends without a tailwind above 10 kt (when the player left every end active, traffic still uses the into-wind ends). */
+  private windFiltered(ends: RunwayState[]): RunwayState[] {
+    if (ends.length < 2) return ends;
+    const ok = ends.filter(r => this.windFor(r.headingTrue).headKt >= -10);
+    if (!ok.length) return ends;
+    // prefer the best headwind: keep ends within 8 kt of the best
+    const best = Math.max(...ok.map(r => this.windFor(r.headingTrue).headKt));
+    return ok.filter(r => this.windFor(r.headingTrue).headKt >= best - 8);
+  }
   private endActive(name: string, role: 'dep' | 'arr' = 'dep'): boolean {
     const rs = this.runwayState(name); if (!rs) return false;
     return role === 'dep' ? rs.activeDep : rs.activeArr;
@@ -653,7 +662,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
   /** Departure spawned PARKED at a reserved stand (master plan §2.2). `atHold` = sandbox "+DEP at hold". */
   spawnDeparture(opts: { atHold?: boolean; type?: string; callsign?: string; stand?: string; runway?: string } = {}): AircraftState | null {
     if (!this.gates.length || !this.air.runways.length) return null;
-    const active = this.activeEnds('dep').filter(r => r.status === 'open');
+    const active = this.windFiltered(this.activeEnds('dep').filter(r => r.status === 'open'));
     const endName = opts.runway ? upper(opts.runway) : active.length ? rnd(active).name : rnd(this.runways).name;
     const ident = this.newIdentity(opts.type, this.weightsFor(endName), opts.callsign);
     const gate = this.freeStand({ prefer: opts.stand ?? null }); if (!gate) return null;
@@ -743,7 +752,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     const gate = this.freeStand();
     if (gate) this.reserveStand(gate, a); else a.plan.gateRef = rnd(this.gates).ref;
     // expected runway: best active arrival end for the class (nearest to the entry heading)
-    const cands = this.activeEnds('arr').filter(r => r.status === 'open' && this.weightAllowed(r.name, a.perf.weightClass));
+    const cands = this.windFiltered(this.activeEnds('arr').filter(r => r.status === 'open' && this.weightAllowed(r.name, a.perf.weightClass)));
     if (cands.length) a.plan.runway = cands.reduce((best, r) => (Math.abs(angleDelta(heading, r.headingTrue)) < Math.abs(angleDelta(heading, best.headingTrue)) ? r : best)).name;
     this.aircraft.push(a);
     const s = this.sc(a);
@@ -2701,7 +2710,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
               this.addScore('ESTABLISHED', a.callsign, null, a.assignedRunway);
               this.emit('info', a, `${a.callsign} established localizer ${a.assignedRunway}`, undefined, 'PILOT');
             } else if (!s.overshootSaid) { s.overshootSaid = true; this.emit('info', a, `${a.callsign}: unable to capture, above the glideslope`, undefined, 'PILOT'); }
-          } else if (!s.overshootSaid && overshootsLoc(a.pos, a.heading, r, arcade)) { s.overshootSaid = true; this.emit('info', a, `${a.callsign}: we've flown through the localizer`, undefined, 'PILOT'); }
+          } else if (!s.overshootSaid && overshootsLoc(a.pos, a.heading, r, arcade)) { s.overshootSaid = true; this.raiseRequest(a, 'further', null, `${this.telephony(a.callsign)}, we're through the localizer for ${r.name}, request vectors back.`); }
         }
         if (a.ilsCaptured) {
           // Track the localizer: the LOC law gives a desired TRACK; convert to a heading with the wind-correction angle
