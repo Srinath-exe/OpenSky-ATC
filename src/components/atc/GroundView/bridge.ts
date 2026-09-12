@@ -15,6 +15,19 @@ import type { AircraftState, Stage, Vehicle, RunwayState, Alert, Position } from
 import type { CommandAST, CommandResult } from '@/lib/sim/commandAst';
 import type { XY } from '@/lib/sim/projection';
 
+/** Window events the map emits for the shell / panels (documented contract). */
+export const EV_QUICK_MENU = 'atc:quick-menu';
+export const EV_SELECT_VEHICLE = 'atc:select-vehicle';
+/**
+ * Vehicles-panel toggle. The store has no vehicles-panel flag, so the map
+ * mirrors it on `sim.vehiclesPanelOpen` and dispatches `atc:toggle-vehicles`
+ * with `{ open }` (plus the legacy alias `atc:toggle-vehicles-panel` the
+ * GameShell listens to); inside a GameShell the toolbar prefers
+ * `shell.toggle('vehicles')` through the ShellContext and emits nothing.
+ */
+export const EV_TOGGLE_VEHICLES = 'atc:toggle-vehicles';
+export const EV_TOGGLE_VEHICLES_LEGACY = 'atc:toggle-vehicles-panel';
+
 export type PlayerPosition = 'ground' | 'tower' | 'approach';
 export type GroundTheme = 'satellite' | 'chart';
 
@@ -150,7 +163,7 @@ class GroundUiStore {
     this.patch({ selectedVehicleId: id });
     sim.selectedVehicleId = id;
     for (const v of vehicleList()) v.selected = v.id === id;
-    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('atc:select-vehicle', { detail: { id } }));
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(EV_SELECT_VEHICLE, { detail: { id } }));
   }
 }
 export const groundUi = new GroundUiStore();
@@ -163,11 +176,14 @@ export function useGroundUi<T>(selector: (s: GroundUiState) => T): T {
 export function openQuickMenu(at: QuickMenuAt): void {
   if (at.kind === 'aircraft' && typeof at.id === 'number') selectAircraft(at.id);
   sim.quickMenuAt = at;
-  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('atc:quick-menu', { detail: at }));
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(EV_QUICK_MENU, { detail: at }));
 }
 
 /** Vehicles panel toggle (owned by the shell; the map only asks). */
 export function toggleVehiclesPanel(): void {
   sim.vehiclesPanelOpen = !sim.vehiclesPanelOpen;
-  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('atc:toggle-vehicles-panel', { detail: { open: sim.vehiclesPanelOpen } }));
+  if (typeof window === 'undefined') return;
+  const detail = { open: sim.vehiclesPanelOpen };
+  window.dispatchEvent(new CustomEvent(EV_TOGGLE_VEHICLES, { detail }));
+  window.dispatchEvent(new CustomEvent(EV_TOGGLE_VEHICLES_LEGACY, { detail }));
 }

@@ -1,0 +1,2 @@
+/* /play route frame: the shell fills the viewport; nothing else scrolls (A4). */
+.page { position: relative; width: 100%; height: 100vh; height: 100dvh; overflow: hidden; background: var(--bg-0); color: var(--text-1); }

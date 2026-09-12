@@ -60,7 +60,8 @@ export function RoutePicker({ step, params, onChange, onAccept, ctx, a }: Picker
 
   const suggestions = typed ? twys.filter(t => t.startsWith(typed.toUpperCase())).slice(0, 12) : twys
   const hs = route.holdShortOf
-  const hsLabel = hs ? (hs.kind === 'runway' ? `hold short ${hs.runway}` : `hold short ${hs.taxiway}`) : null
+  const hsLabel = hs ? (hs.kind === 'runway' ? `hold short ${hs.runway}` : hs.kind === 'taxiway' ? `hold short ${hs.taxiway}` : `hold at ${hs.label}`) : null
+  const hsNode = hs ? (hs.kind === 'runway' ? hs.runway : hs.kind === 'taxiway' ? hs.taxiway : hs.nodeId) : undefined
   const holdOptions = step.holdShortSuggestions
   const runwayNames = (ctx?.runways ?? []).map(r => r.name)
   const crossOptions = runwayNames.length ? runwayNames : holdOptions
@@ -88,7 +89,7 @@ export function RoutePicker({ step, params, onChange, onAccept, ctx, a }: Picker
         {hsLabel ? (
           <>
             <span className={s.routeSep}><IconChevronRight size={12} /></span>
-            <Pill size="xs" tone="orange" interactive onClick={() => set({ holdShortOf: null })} trailing={<IconX size={12} />} testId="picker-route-pill-0" data-node={hs?.kind === 'runway' ? hs.runway : hs?.taxiway}>{hsLabel}</Pill>
+            <Pill size="xs" tone="orange" interactive onClick={() => set({ holdShortOf: null })} trailing={<IconX size={12} />} testId="picker-route-pill-0" data-node={hsNode}>{hsLabel}</Pill>
           </>
         ) : null}
         {route.cross?.map((c, i) => (

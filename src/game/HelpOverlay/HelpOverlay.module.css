@@ -1,0 +1,65 @@
+/* Help overlay (UX 04 §8, §10 "Help"; design A11.2 modal, A14 table, A20 kbd) + onboarding coach marks. */
+.head { display: flex; align-items: center; gap: var(--s-4); margin-bottom: var(--s-4); flex-wrap: wrap; }
+.headSpacer { flex: 1; min-width: var(--s-4); }
+.search { width: 260px; max-width: 100%; }
+.body { display: flex; flex-direction: column; gap: var(--s-4); min-height: 0; }
+.scroll { min-height: 0; }
+.tableWrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font: var(--fw-regular) var(--fs-body-s) / 1.4 var(--font); color: var(--text-2); }
+.table th {
+  position: sticky; top: 0; z-index: 1; height: 28px; padding: 0 var(--s-2); text-align: left;
+  font: var(--fw-regular) var(--fs-label-xs) / 1 var(--font); color: var(--text-3); letter-spacing: 0.02em;
+  background: var(--bg-1); border-bottom: var(--bw) solid var(--line);
+}
+.table td { padding: var(--s-2); border-bottom: var(--bw) solid var(--line); vertical-align: top; }
+.table tr:hover td { background: var(--w-03); }
+.table td:first-child { white-space: nowrap; }
+.action { color: var(--text-1); }
+.atc { color: var(--text-1); }
+.pilot { color: var(--text-2); }
+.when { color: var(--text-3); }
+.region { font: var(--fw-regular) var(--fs-label-xs) / 1 var(--font); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.group { font: var(--fw-medium) var(--fs-label-xs) / 1 var(--font); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; padding: var(--s-3) var(--s-2) var(--s-1); }
+.empty { padding: var(--s-6); text-align: center; color: var(--text-4); font: var(--fw-regular) var(--fs-body-s) / 1.4 var(--font); }
+
+/* matrix */
+.matrix { border-collapse: collapse; font: var(--fw-regular) var(--fs-label-xs) / 1 var(--font); color: var(--text-2); }
+.matrix th { position: sticky; top: 0; z-index: 1; padding: var(--s-1); background: var(--bg-1); color: var(--text-3); font-weight: var(--fw-regular); white-space: nowrap; border-bottom: var(--bw) solid var(--line); }
+.matrix th.rowHead { position: sticky; left: 0; z-index: 2; text-align: left; padding-right: var(--s-3); color: var(--text-2); }
+.matrix th.corner { left: 0; z-index: 3; }
+.matrix td { padding: 0; border: var(--bw) solid var(--line); height: 22px; min-width: 26px; text-align: center; }
+.matrix td[data-cell="on"] { background: var(--orange-tint-20); color: var(--orange); }
+.matrix td[data-cell="dyn"] { background: var(--orange-tint-08); color: var(--orange-text); }
+.matrix td[data-cell="off"] { background: var(--w-04); color: var(--text-4); }
+.matrix td[data-cell="hidden"] { color: transparent; }
+.matrix .stageHead { writing-mode: vertical-rl; transform: rotate(180deg); height: 88px; text-align: left; }
+.legend { display: flex; gap: var(--s-4); flex-wrap: wrap; font: var(--fw-regular) var(--fs-label-xs) / 1 var(--font); color: var(--text-3); }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: var(--s-1); border-radius: 2px; vertical-align: -1px; border: var(--bw) solid var(--line); }
+.legendOn::before { background: var(--orange-tint-20); }
+.legendDyn::before { background: var(--orange-tint-08); }
+.legendOff::before { background: var(--w-04); }
+
+/* alerts + glossary rows */
+.rows { display: flex; flex-direction: column; }
+.card { display: grid; grid-template-columns: 200px 1fr; gap: var(--s-3); padding: var(--s-3) var(--s-2); border-bottom: var(--bw) solid var(--line); font: var(--fw-regular) var(--fs-body-s) / 1.45 var(--font); }
+.card:hover { background: var(--w-03); }
+.cardTitle { color: var(--text-1); }
+.cardBody { color: var(--text-2); display: flex; flex-direction: column; gap: var(--s-1); }
+.cardFix { color: var(--text-3); }
+.cardFix strong { color: var(--text-2); font-weight: var(--fw-medium); }
+
+/* onboarding coach marks (UX §8) */
+.tips {
+  position: absolute; left: 50%; bottom: calc(var(--s-3) + 60px); transform: translateX(-50%);
+  z-index: calc(var(--z-float) + 4); width: 440px; max-width: calc(100% - 24px);
+  animation: global(ds-rise) var(--t-base) var(--ease-out) both;
+}
+.tipBody { display: flex; flex-direction: column; gap: var(--s-3); }
+.tipText { font: var(--fw-regular) var(--fs-body-m) / 1.45 var(--font); color: var(--text-1); }
+.tipText strong { color: var(--orange); font-weight: var(--fw-medium); }
+.tipFoot { display: flex; align-items: center; gap: var(--s-3); }
+.tipDots { display: inline-flex; gap: 6px; flex: 1; }
+.tipDot { width: 6px; height: 6px; border-radius: 50%; background: var(--w-20); }
+.tipDot[data-on="true"] { background: var(--orange); }
+.tipDot[data-done="true"] { background: var(--w-45); }
+@media (prefers-reduced-motion: reduce) { .tips { animation: none; } }

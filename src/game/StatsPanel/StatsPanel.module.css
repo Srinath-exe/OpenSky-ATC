@@ -1,0 +1,39 @@
+/* Score breakdown popover (UX 04 §10 score-chip, §G11; design 01 §4.5 / §4.7 / §4.13 / A8). Drops under the nav on the right. */
+.panel {
+  position: absolute; top: var(--s-3); right: var(--s-3); z-index: calc(var(--z-float) + 3);
+  width: 520px; max-width: calc(100% - 24px); max-height: calc(100% - 24px);
+  display: flex; flex-direction: column;
+  animation: global(ds-drop) var(--t-fast) var(--ease-out) both;
+}
+.body { display: flex; flex-direction: column; gap: var(--s-5); }
+.scroll { min-height: 0; }
+.head { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-3); }
+.headCell { display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; }
+.headLabel { font: var(--fw-regular) var(--fs-label-xs) / var(--lh-label-xs) var(--font); color: var(--text-3); letter-spacing: 0.01em; }
+.section { display: flex; flex-direction: column; gap: var(--s-3); }
+.sectionTitle { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-3); font: var(--fw-medium) var(--fs-body-m) / 1.3 var(--font); color: var(--text-1); }
+.sectionTitle span:last-child { font: var(--fw-regular) var(--fs-body-s) / 1.3 var(--font); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.chartWrap { min-width: 0; }
+.rows { display: flex; flex-direction: column; }
+.row {
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center; column-gap: var(--s-4);
+  height: 32px; padding: 0 var(--s-2); border-radius: var(--r-chip);
+  font: var(--fw-regular) var(--fs-body-s) / 1 var(--font); color: var(--text-2);
+}
+.row:hover { background: var(--w-03); }
+.rowLabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rowCount { color: var(--text-3); font-variant-numeric: tabular-nums; min-width: 32px; text-align: right; }
+.rowValue { color: var(--text-1); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+.row[data-neg="true"] .rowValue { color: var(--red); }
+.row[data-pos="true"] .rowValue { color: var(--orange); }
+.row[data-info="true"] .rowValue { color: var(--text-3); }
+.incident { display: grid; grid-template-columns: 44px 1fr auto; align-items: baseline; column-gap: var(--s-3); padding: var(--s-1) var(--s-2); border-radius: var(--r-chip); font: var(--fw-regular) var(--fs-body-s) / 1.4 var(--font); color: var(--text-2); }
+.incident:hover { background: var(--w-03); }
+.incidentTime { color: var(--text-4); font-variant-numeric: tabular-nums; font-size: var(--fs-label-xs); }
+.incidentText { min-width: 0; }
+.incidentText strong { color: var(--text-1); font-weight: var(--fw-medium); }
+.incidentPts { color: var(--red); font-variant-numeric: tabular-nums; }
+.empty { padding: var(--s-3) var(--s-2); color: var(--text-4); font: var(--fw-regular) var(--fs-body-s) / 1.3 var(--font); }
+.foot { display: flex; justify-content: space-between; align-items: center; gap: var(--s-3); font: var(--fw-regular) var(--fs-body-s) / 1 var(--font); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.foot strong { color: var(--text-1); font-weight: var(--fw-regular); }
+@media (prefers-reduced-motion: reduce) { .panel { animation: none; } }

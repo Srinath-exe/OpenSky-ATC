@@ -1,0 +1,164 @@
+/* Game shell layout (00-MASTER-PLAN §2.5, UX 04 §2 / §2.1 / §2.3, design 01 §6, A11.9, A21).
+   Grid: nav / main (full-bleed map with floating glass panels) / comm log. Panel widths per UX §2.3. */
+.shell {
+  --bay-w: 320px;
+  --cmd-w: 340px;
+  --log-h: 160px;
+  --log-collapsed-h: 88px; /* header (last line) + command line stay visible */
+  --float-gap: var(--s-3);
+  position: relative;
+  display: grid;
+  grid-template-rows: var(--nav-h) minmax(0, 1fr) auto;
+  height: 100vh;
+  height: 100dvh;
+  min-width: var(--min-width);
+  background: var(--bg-0);
+  color: var(--text-1);
+  overflow: hidden;
+}
+@media (max-width: 1439px) {
+  .shell { --bay-w: 300px; --cmd-w: 320px; --log-h: 140px; }
+}
+@media (min-width: 1920px) {
+  .shell { --bay-w: 340px; --cmd-w: 380px; --log-h: 180px; }
+}
+@media (max-height: 799px) {
+  .shell { --log-h: 100px; }
+}
+.shell[data-bay-collapsed="true"] { --bay-w: 44px; }
+.shell[data-log-collapsed="true"] { --log-h: var(--log-collapsed-h); }
+
+/* ---------- main: the map / radar with floating panels ---------- */
+.main {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-0);
+}
+.view {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-map);
+  transition: filter var(--t-slow) var(--ease-out);
+}
+.view > * { width: 100%; height: 100%; }
+.shell[data-paused="true"] .view { filter: saturate(0.8); }
+.viewPending {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-4);
+  font: var(--fw-regular) var(--fs-body-s) / 1 var(--font);
+}
+
+.paused {
+  position: absolute;
+  top: var(--float-gap);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: calc(var(--z-float) + 1);
+  pointer-events: none;
+  animation: global(ds-drop) var(--t-fast) var(--ease-out) both;
+}
+/* when alerts are stacked the paused pill sits above them; both are centred so keep the pill compact */
+.pausedPill { box-shadow: var(--shadow-glass); }
+
+/* floating columns: pointer events pass through the empty parts so the map stays draggable */
+.bay {
+  position: absolute;
+  top: var(--float-gap);
+  left: var(--float-gap);
+  bottom: var(--float-gap);
+  width: var(--bay-w);
+  z-index: var(--z-float);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  pointer-events: none;
+  transition: width var(--t-base) var(--ease-out);
+}
+.bay > * { pointer-events: auto; }
+.panel {
+  position: absolute;
+  top: var(--float-gap);
+  right: var(--float-gap);
+  bottom: var(--float-gap);
+  width: var(--cmd-w);
+  z-index: var(--z-float);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 0;
+  pointer-events: none;
+}
+.panel > * { pointer-events: auto; }
+
+/* bottom-right cluster (vehicles panel) */
+.vehicles {
+  position: absolute;
+  right: calc(var(--cmd-w) + var(--float-gap) * 2);
+  bottom: var(--float-gap);
+  z-index: calc(var(--z-float) + 2);
+  max-width: calc(100% - var(--bay-w) - var(--cmd-w) - var(--float-gap) * 4);
+  max-height: calc(100% - var(--float-gap) * 2);
+  display: flex;
+  animation: global(ds-rise) var(--t-base) var(--ease-out) both;
+}
+.vehicles > * { pointer-events: auto; }
+
+/* toasts: bottom-centre of the map, above the comm log (A11.3) */
+.toastHost {
+  position: absolute;
+  left: 50%;
+  bottom: var(--float-gap);
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: var(--s-2);
+  width: max-content;
+  max-width: calc(100% - var(--bay-w) - var(--cmd-w) - var(--float-gap) * 4);
+  pointer-events: none;
+}
+.toastHost > * { pointer-events: auto; }
+.toastDelta { font-variant-numeric: tabular-nums; }
+
+/* ---------- comm log row ---------- */
+.logRow {
+  position: relative;
+  z-index: calc(var(--z-float) + 1);
+  height: var(--log-h);
+  min-height: 0;
+  background: var(--bg-1);
+  border-top: var(--bw) solid var(--line);
+  transition: height var(--t-base) var(--ease-out);
+}
+
+/* ---------- loading / error over the map ---------- */
+.loadWrap { position: absolute; inset: 0; z-index: calc(var(--z-modal) - 1); pointer-events: none; }
+.loadWrap > * { pointer-events: auto; }
+.loadError {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--scrim-loading);
+  z-index: calc(var(--z-modal) - 1);
+}
+.loadErrorCard { width: 420px; max-width: calc(100% - 32px); }
+.loadErrorBody { display: flex; flex-direction: column; gap: var(--s-4); }
+.loadErrorText { font: var(--fw-regular) var(--fs-body-s) / var(--lh-multiline) var(--font); color: var(--red); overflow-wrap: anywhere; }
+.loadErrorActions { display: flex; gap: var(--s-2); }
+
+/* ---------- pause menu items ---------- */
+.menuList { display: flex; flex-direction: column; gap: var(--s-1); }
+
+/* reduced motion: no slides */
+@media (prefers-reduced-motion: reduce) {
+  .bay, .logRow, .view { transition: none; }
+  .vehicles, .paused { animation: none; }
+}

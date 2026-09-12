@@ -99,7 +99,6 @@ export function ConfirmStep({ draft, parts, validation, transmission, readback, 
         </div>
       ) : null}
       <div className={s.confirmFooter}>
-        <span className={s.hint}><Kbd>Backspace</Kbd> back · <Kbd>Esc</Kbd> cancel</span>
         <span className={s.spacer} />
         {draft.steps.length > 1 ? <Button variant="ghost" size="sm" onClick={() => onEditStep(draft.index - 1)} testId="step-back">Back</Button> : null}
         {blocked ? null : needsHold ? (
@@ -119,7 +118,9 @@ export function ConfirmStep({ draft, parts, validation, transmission, readback, 
             TRANSMIT ANYWAY <Kbd>Enter</Kbd>
           </Button>
         ) : (
-          <Button variant="accent" iconLeft={<IconSend size={16} />} disabled={cooldown} onClick={onTransmit} testId="confirm-transmit">TRANSMIT <Kbd>Enter</Kbd></Button>
+          <span data-testid="confirm-transmit" aria-disabled={cooldown || undefined} data-state={cooldown ? 'disabled' : 'enabled'} className={s.inlineRow}>
+            <Button variant="accent" iconLeft={<IconSend size={16} />} disabled={cooldown} onClick={onTransmit} testId="btn-transmit">TRANSMIT <Kbd>Enter</Kbd></Button>
+          </span>
         )}
       </div>
     </div>

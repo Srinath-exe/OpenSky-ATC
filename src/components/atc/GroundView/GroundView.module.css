@@ -1,0 +1,185 @@
+/* GroundView — MapLibre base + overlay canvas + floating glass chrome (01 §5, A10, 4.16; UX 04 §2.1, §4). Tokens only. */
+
+.root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg-0);
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.root[data-theme="chart"] { background: var(--chart-ground); }
+.root[data-paused="true"] .map { filter: saturate(0.8); }
+
+.map { position: absolute; inset: 0; z-index: var(--z-map); }
+.map :global(.maplibregl-canvas) { outline: none; }
+.map :global(.maplibregl-ctrl-attrib), .map :global(.maplibregl-ctrl-logo) { display: none; }
+
+.overlay { position: absolute; top: 0; left: 0; pointer-events: none; z-index: var(--z-map-overlay); }
+
+/* vignette over the satellite theme (01 §5) */
+.veil { position: absolute; inset: 0; pointer-events: none; z-index: var(--z-map-overlay); background: var(--map-vignette); }
+
+/* ── toolbar (UX §2.1: bottom-right, vertical) ── */
+.toolbar {
+  position: absolute;
+  right: var(--gutter);
+  bottom: var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  z-index: var(--z-float);
+}
+.toolbarGroup { display: flex; flex-direction: column; gap: var(--s-2); }
+.toolbarGap { height: var(--s-2); }
+
+/* ── popovers (layers / presets) ── */
+.popover {
+  position: absolute;
+  right: calc(var(--gutter) + var(--circle-map) + var(--s-3));
+  bottom: var(--gutter);
+  width: 260px;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  padding: var(--s-3);
+  border-radius: var(--r-inner);
+  z-index: var(--z-menu);
+  animation: global(ds-drop) var(--t-fast) var(--ease-out) both;
+}
+.popTitle {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 0 var(--s-1) var(--s-2);
+  color: var(--text-3);
+  font: var(--fw-medium) var(--fs-micro-caps) / var(--lh-micro-caps) var(--font);
+  letter-spacing: var(--ls-micro-caps);
+  text-transform: uppercase;
+}
+.popSection { margin-top: var(--s-3); }
+.popRow {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-2);
+  min-height: var(--menu-item-h);
+  padding: 0 var(--s-2);
+  border-radius: var(--r-menu-item);
+  color: var(--text-2);
+  font: var(--fw-regular) var(--fs-body-s) / 1 var(--font);
+}
+.popRow:hover { background: var(--w-04); }
+.presetBtn {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-2);
+  width: 100%; min-height: var(--menu-item-h); padding: 0 var(--s-3);
+  border: 0; border-radius: var(--r-menu-item); background: transparent;
+  color: var(--text-2); font: var(--fw-regular) var(--fs-body-m) / 1 var(--font);
+  text-align: left; cursor: pointer;
+  transition: background var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out);
+}
+.presetBtn:hover { background: var(--w-06); color: var(--text-1); }
+.presetBtn:active { background: var(--w-10); }
+.presetBtn:focus-visible { box-shadow: var(--focus-ring-inset); }
+.presetBtn[aria-pressed="true"] { background: var(--bg-3); color: var(--text-1); }
+.presetHint { color: var(--text-4); font: var(--fw-regular) var(--fs-label-xs) / 1 var(--font); }
+.slots { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--s-1); margin-top: var(--s-1); }
+.slot {
+  display: flex; flex-direction: column; align-items: stretch; gap: 2px;
+}
+.slotBtn {
+  height: var(--pill-s); border: var(--bw) solid var(--line-strong); border-radius: var(--r-chip); background: var(--bg-2);
+  color: var(--text-2); font: var(--fw-medium) var(--fs-body-s) / 1 var(--font); cursor: pointer;
+  transition: background var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out);
+}
+.slotBtn[data-filled="true"] { color: var(--text-1); border-color: var(--w-18); }
+.slotBtn:hover { background: var(--bg-3); }
+.slotBtn:disabled { color: var(--text-5); cursor: default; }
+.slotBtn:focus-visible { box-shadow: var(--focus-ring); }
+.slotSave {
+  height: 20px; border: 0; border-radius: var(--r-kbd); background: transparent;
+  color: var(--text-4); font: var(--fw-regular) var(--fs-micro-caps) / 1 var(--font); letter-spacing: var(--ls-micro-caps); text-transform: uppercase; cursor: pointer;
+}
+.slotSave:hover { color: var(--orange); }
+.slotSave:focus-visible { box-shadow: var(--focus-ring); }
+
+/* ── hover tooltip (glass, positioned at the projected point) ── */
+.tooltip {
+  position: absolute; left: 0; top: 0;
+  pointer-events: none;
+  z-index: var(--z-float);
+  min-width: 180px; max-width: 280px;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-inner);
+  box-shadow: var(--shadow-tooltip);
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease-out);
+  will-change: transform;
+}
+.tooltip[data-open="true"] { opacity: 1; }
+.tipHead { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+.tipTitle { color: var(--text-1); font: var(--fw-medium) var(--fs-body-m) / var(--lh-body-m) var(--font); }
+.tipStage {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: var(--r-pill);
+  background: var(--bg-3); color: var(--text-2);
+  font: var(--fw-medium) var(--fs-micro-caps) / 1 var(--font); letter-spacing: var(--ls-micro-caps); text-transform: uppercase;
+}
+.tipStage[data-tone="air"] { color: var(--text-1); }
+.tipStage[data-tone="warn"] { background: var(--orange-tint-16); color: var(--orange); }
+.tipStage[data-tone="danger"], .tipStage[data-tone="emergency"] { background: var(--red-tint-16); color: var(--red); }
+.tipSub { margin-top: 2px; color: var(--text-3); font: var(--fw-regular) var(--fs-body-s) / var(--lh-body-s) var(--font); }
+.tipRows { display: grid; grid-template-columns: auto 1fr; column-gap: var(--s-3); row-gap: 3px; margin-top: var(--s-2); }
+.tipLabel { color: var(--text-3); font: var(--fw-regular) var(--fs-label-xs) / 1.4 var(--font); letter-spacing: var(--ls-label-xs); }
+.tipValue { color: var(--text-1); font: var(--fw-regular) var(--fs-body-s) / 1.4 var(--font); font-variant-numeric: tabular-nums; }
+.tipValue[data-tone="orange"] { color: var(--orange); }
+.tipValue[data-tone="red"] { color: var(--red); }
+.tipValue[data-tone="green"] { color: var(--green); }
+.tipValue[data-tone="dim"] { color: var(--text-3); }
+.tipNote { margin-top: var(--s-2); padding-top: var(--s-2); border-top: var(--bw) solid var(--line); color: var(--text-2); font: var(--fw-regular) var(--fs-body-s) / var(--lh-body-s) var(--font); }
+.tipNote[data-tone="orange"] { color: var(--orange); }
+.tipNote[data-tone="red"] { color: var(--red); }
+
+/* ── quick menu (right-click) ── */
+.menuHost { position: absolute; z-index: var(--z-menu); }
+.menuHead {
+  padding: 6px 12px 4px; color: var(--text-3);
+  font: var(--fw-medium) var(--fs-micro-caps) / 1.2 var(--font); letter-spacing: var(--ls-micro-caps); text-transform: uppercase;
+}
+
+/* ── drag-to-heading confirm bubble ── */
+.bubble {
+  position: absolute; z-index: var(--z-menu);
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  height: var(--pill-l); padding: 0 var(--s-2) 0 var(--s-4);
+  border-radius: var(--r-pill);
+  animation: global(ds-pop) var(--t-fast) var(--ease-out) both;
+}
+.bubbleText { color: var(--text-1); font: var(--fw-medium) var(--fs-body-m) / 1 var(--font); white-space: nowrap; }
+.bubbleText b { font-variant-numeric: tabular-nums; font-weight: var(--fw-medium); }
+.bubbleDir {
+  height: var(--pill-xs); min-width: var(--pill-xs); padding: 0 8px; border: var(--bw) solid var(--line-strong); border-radius: var(--r-pill);
+  background: var(--bg-2); color: var(--text-2); font: var(--fw-medium) var(--fs-label-xs) / 1 var(--font); cursor: pointer;
+}
+.bubbleDir[aria-pressed="true"] { background: var(--orange-tint-16); border-color: var(--orange-border); color: var(--orange); }
+.bubbleDir:focus-visible { box-shadow: var(--focus-ring); }
+
+/* ── off-screen selected aircraft edge arrow ── */
+.edgeArrow {
+  position: absolute; left: 0; top: 0; z-index: var(--z-float);
+  width: 28px; height: 28px; margin: -14px 0 0 -14px;
+  display: flex; align-items: center; justify-content: center;
+  border: var(--bw) solid var(--glass-border); border-radius: 50%;
+  background: var(--glass-map-btn); color: var(--text-1);
+  cursor: pointer; opacity: 0; pointer-events: none;
+  transition: opacity var(--t-fast) var(--ease-out), background var(--t-fast) var(--ease-out);
+}
+.edgeArrow[data-open="true"] { opacity: 1; pointer-events: auto; }
+.edgeArrow:hover { background: var(--glass-map-btn-hover); }
+.edgeArrow:focus-visible { box-shadow: var(--focus-ring); }
+.edgeIcon { display: flex; align-items: center; justify-content: center; transition: transform var(--t-fast) var(--ease-out); }
+
+/* ── status chip (follow / loading) top-left of the map ── */
+.status {
+  position: absolute; left: var(--gutter); bottom: var(--gutter);
+  display: flex; gap: var(--s-2); z-index: var(--z-float); pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popover, .bubble { animation: none; }
+  .tooltip, .edgeArrow { transition: none; }
+}

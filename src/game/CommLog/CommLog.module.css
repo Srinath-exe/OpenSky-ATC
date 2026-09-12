@@ -7,7 +7,8 @@
 .lastLine .text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lastCalled { flex-shrink: 0; }
 
-.list { flex: 1; min-height: 0; }
+.list { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.list > div { flex: 1; min-height: 0; } /* the ScrollArea's scrolling element fills the row so stick-to-bottom works */
 .lines { display: flex; flex-direction: column; gap: var(--s-1); padding: var(--s-2) var(--s-4); }
 
 .line {

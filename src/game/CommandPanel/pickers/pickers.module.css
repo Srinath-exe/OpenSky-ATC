@@ -66,11 +66,12 @@
 .popover { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: var(--r-inner); background: var(--bg-2); border: var(--bw) solid var(--line-strong); box-shadow: var(--shadow-menu); animation: ds-drop var(--t-fast) var(--ease-out) both; }
 
 /* Heading / altitude / speed */
-.dialWrap { display: flex; gap: 16px; align-items: flex-start; }
-.dialSide { display: flex; flex-direction: column; gap: 10px; min-width: 0; flex: 1; }
+/* dial / ladder + side column: the side wraps under the control when the panel is narrow (340px column) */
+.dialWrap { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.dialSide { display: flex; flex-direction: column; gap: 10px; min-width: 0; flex: 1 1 140px; }
 .numInput { width: 88px; }
-.ladderWrap { display: flex; gap: 16px; align-items: flex-start; }
-.ladderSide { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; }
+.ladderWrap { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.ladderSide { display: flex; flex-direction: column; gap: 10px; flex: 1 1 140px; min-width: 0; }
 .bands { display: flex; flex-direction: column; gap: 4px; }
 .band { display: flex; align-items: center; gap: 8px; font: var(--fw-label-xs) var(--fs-label-xs) / var(--lh-label-xs) var(--font); color: var(--text-3); font-variant-numeric: tabular-nums; }
 .bandSwatch { width: 10px; height: 10px; border-radius: 2px; background: var(--w-12); flex-shrink: 0; }
@@ -130,7 +131,8 @@
 .holdBtn { position: relative; overflow: hidden; }
 .holdRing { position: absolute; inset: 0; pointer-events: none; }
 .holdRing::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: var(--hold-progress, 0%); background: var(--orange-tint-24); transition: width 60ms linear; }
-.confirmFooter { display: flex; align-items: center; gap: 8px; }
+.confirmFooter { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.picker:focus-visible { box-shadow: none; }
 .spacer { flex: 1; }
 
 /* Sub-picker (opened from a part chip) */

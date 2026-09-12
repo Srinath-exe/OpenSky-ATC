@@ -10,7 +10,7 @@
 //  typed arrays, and cache projected routes per DrivePath.
 // ============================================================
 import type { SimEngine } from '@/lib/sim/engine';
-import type { AircraftState, DrivePath, GateState, Vehicle, RunwayState } from '@/lib/sim/types';
+import type { AircraftState, DrivePath, GateState, RunwayState } from '@/lib/sim/types';
 import { getShape, drawShape } from '@/lib/sim/aircraftShapes';
 import { isAirborne } from '@/lib/sim/aircraft';
 import { DEG, type XY } from '@/lib/sim/projection';
@@ -149,7 +149,7 @@ export class GroundRenderer {
     if (f.layers.vehicles || f.position === 'ground') this.drawVehicles(ctx, engine, aircraft, f);
     this.drawAircraft(ctx, engine, aircraft, f);
     this.drawConflictLines(ctx, engine, f);
-    this.drawDataBlocks(ctx, engine, aircraft, f);
+    this.drawDataBlocks(ctx, engine, f);
     if (f.drag) this.drawDrag(ctx, engine, f);
   }
 
@@ -487,6 +487,8 @@ export class GroundRenderer {
     const vehicles = engine.fleet.list();
     this.vehHits.length = 0;
     const flash = f.reducedMotion ? true : Math.floor(f.now / 250) % 2 === 0;
+    // vehicles parked at the same station are fanned out around the pin so they never stack
+    const stationSlot = new Map<string, number>();
     for (const v of vehicles) {
       const isSel = v.id === f.selectedVehicleId, isHover = v.id === f.hoveredVehicleId;
       const active = v.state !== 'standby';
@@ -502,6 +504,11 @@ export class GroundRenderer {
       } else {
         mercFromXY(engine.proj, v.pos.x, v.pos.y, scratchM); toScreen(cam, scratchM.x, scratchM.y, scratch);
         ax = scratch.x; ay = scratch.y; rot = v.heading;
+        if (!active) {
+          const slot = stationSlot.get(v.stationNodeId) ?? 0; stationSlot.set(v.stationNodeId, slot + 1);
+          if (slot > 0) { const ang = (slot - 1) * (Math.PI / 3) - Math.PI / 2; const rr = 24; ax += Math.cos(ang) * rr; ay += Math.sin(ang) * rr; }
+          else { ay += 24; }
+        }
       }
       const visible = this.onScreen(cam, ax, ay, 30);
       this.vehHits.push({ id: v.id, x: ax, y: ay, r: 12, visible });
@@ -550,7 +557,7 @@ export class GroundRenderer {
         ctx.beginPath(); ctx.arc(ax, ay, R + 7, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
       }
       // label
-      if (active || isSel || isHover || cam.zoom >= 15.5) {
+      if (active || isSel || isHover) {
         let text = v.callsign.toUpperCase();
         if (v.target && active && v.state !== 'returning') {
           const t = v.target;
@@ -703,7 +710,7 @@ export class GroundRenderer {
     return parts;
   }
 
-  private drawDataBlocks(ctx: CanvasRenderingContext2D, engine: SimEngine, aircraft: AircraftState[], f: FrameInput) {
+  private drawDataBlocks(ctx: CanvasRenderingContext2D, engine: SimEngine, f: FrameInput) {
     const cam = f.cam, p = this.p;
     this.placed.length = 0;
     const order = this.acHits.slice().sort((h1, h2) => (h1.id === f.selectedId ? -1 : h2.id === f.selectedId ? 1 : 0));
