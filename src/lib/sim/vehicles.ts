@@ -327,6 +327,20 @@ export class VehicleFleet {
     return null;
   }
   private runwayByRef(ref: string) { return this.runwayGeom.find(r => r.ref === ref) ?? null; }
+  /** Physical runway currently closed / under inspection per the last engine view (false when unknown). */
+  private runwayClosed(ref: string): boolean {
+    const rs = this.lastCtx?.runways.find(r => r.ref === ref);
+    return !!rs && (rs.status === 'closed' || rs.status === 'inspection');
+  }
+  /** Straight-line inspection drive: hold point -> threshold -> far end -> threshold -> hold point (no smoothing, so the hairpin survives). */
+  private inspectionPath(from: XY, a: XY, b: XY, park: XY): DrivePath {
+    const pts: XY[] = [];
+    for (const leg of [[from, a, b], [b, a, park]]) {
+      for (const p of resample(leg, 15)) if (!pts.length || dist(pts[pts.length - 1], p) > 0.5) pts.push(p);
+    }
+    const { cum, total } = arcLengths(pts);
+    return { pts, cum, total, kind: 'runway' };
+  }
   private endNameForRef(ref: string): string { return this.runwayByRef(ref)?.ends[0].name ?? ref; }
 
   /** Nearest graph node to a point (optionally excluding runway nodes). */
@@ -342,6 +356,22 @@ export class VehicleFleet {
     return best;
   }
 
+  /** Nearest non-runway node to `p` that is at least `minD` m from the centreline of physical runway `ref`. */
+  private nearestNodeClearOf(p: XY, ref: string, minD: number, maxM = Infinity): string | null {
+    const rw = this.runwayByRef(ref);
+    if (!this.air || !rw) return null;
+    let best: string | null = null, bestD = maxM * maxM;
+    for (const id of this.air.nodes.keys()) {
+      if (this.runwayNodes.has(id)) continue;
+      const xy = this.nodeXY(id)!;
+      const d = (xy.x - p.x) ** 2 + (xy.y - p.y) ** 2;
+      if (d >= bestD) continue;
+      if (distToSegment(xy, rw.ends[0].xy, rw.ends[1].xy) < minD) continue;
+      bestD = d; best = id;
+    }
+    return best;
+  }
+
   /** A* over the OSM graph with per-vehicle runway costs (fuel/de-ice never; responding ARFF x6; others x40 like aircraft). */
   private findPath(startId: string, goalId: string, type: VehicleType, responding: boolean, allowRunwayRef: string | null = null): string[] | null {
     const air = this.air; if (!air) return null;
@@ -350,11 +380,13 @@ export class VehicleFleet {
     if (!start || !goal) return null;
     const goalXY = this.nodeXY(goalId)!;
     const h = (id: string) => dist(this.nodeXY(id)!, goalXY);
+    // a target runway is a cheap corridor only when it is already closed (inspection vehicles never use it: their entry is explicit)
+    const corridor = allowRunwayRef && type !== 'ops' && type !== 'sweeper' && this.runwayClosed(allowRunwayRef) ? allowRunwayRef : null;
     const runwayFactor = (edge: OsmNode['edges'][number], from: string): number => {
       const onRw = edge.type === 'runway' || this.runwayNodes.has(edge.to) || this.runwayNodes.has(from);
       if (!onRw) return 1;
       const ref = this.runwayNodes.get(edge.to) ?? this.runwayNodes.get(from) ?? null;
-      if (allowRunwayRef && ref === allowRunwayRef && edge.type === 'runway') return 1.2;
+      if (corridor && ref === corridor && edge.type === 'runway') return 1.2;
       if (type === 'fuel' || type === 'deice') return edge.type === 'runway' ? Infinity : 4;
       if (edge.type === 'runway') return responding ? 6 : 40;
       return responding ? 1.5 : 3; // taxiway edge touching a runway node (a crossing)
@@ -453,9 +485,23 @@ export class VehicleFleet {
         if (!r) return null;
         const hdg = headingTo(r.end.xy, r.other.xy);
         if (type === 'ops' || type === 'sweeper') {
-          // inspection: enter at the threshold end node itself
-          const goalId = this.nearestNodeId(r.end.xy, true, 400) ?? r.end.nodeId;
-          return { goalId, park: r.end.xy, ref: r.rw.ref, targetXY: r.end.xy };
+          // inspection: drive to the taxiway node nearest the threshold and park at the
+          // hold-short place (holdLineM off the centreline) - the runway entry itself is
+          // handled by the inspection logic once the runway is closed / cleared.
+          const goalId = this.nearestNodeClearOf(r.end.xy, r.rw.ref, VEHICLE_CONST.runwayHalfWidthM + 5, 400) ?? this.nearestNodeId(r.end.xy, true, 400) ?? r.end.nodeId;
+          const gxy = this.nodeXY(goalId) ?? r.end.xy;
+          const holdD = VEHICLE_CONST.holdLineM + 5;
+          const dg = distToSegment(gxy, r.end.xy, r.other.xy);
+          let park: XY;
+          if (dg > holdD) {
+            const f = 1 - holdD / dg;
+            park = { x: gxy.x + (r.end.xy.x - gxy.x) * f, y: gxy.y + (r.end.xy.y - gxy.y) * f };
+          } else if (dg > 1) {
+            park = advance(gxy, headingTo(r.end.xy, gxy), holdD - dg);
+          } else {
+            park = advance(r.end.xy, hdg + 180, holdD);
+          }
+          return { goalId, park, ref: r.rw.ref, targetXY: r.end.xy };
         }
         const tdz = advance(r.end.xy, hdg, VEHICLE_CONST.arffStandbyInM);
         const goalId = this.nearestNodeId(tdz, true, 350) ?? this.nearestNodeId(r.end.xy, true, 500) ?? this.nearestNodeId(r.end.xy, false);
@@ -668,9 +714,10 @@ export class VehicleFleet {
         v.holdReleased = true;
         v.trafficHold = false;
         it.waitingSince = null;
-        if (it.inspecting === 'requested') it.inspecting = 'driving';
+        // an inspection car waiting for entry stays 'requested': stepInspection builds the drive path on the next step
+        const entering = it.inspecting === 'requested';
         const endName = want ?? v.holdShortRunway ?? hold?.runway ?? '';
-        this.pendingEvents.push(this.vehicleEvent(v, `${it.inspecting === 'driving' ? 'Entering' : 'Crossing'} ${endName}, ${v.callsign}.`, 'PILOT'));
+        this.pendingEvents.push(this.vehicleEvent(v, `${entering ? 'Entering' : 'Crossing'} ${endName}, ${v.callsign}.`, 'PILOT'));
         return true;
       }
     }
@@ -757,7 +804,12 @@ export class VehicleFleet {
     }
     if (!v.path) return;
     const arrived = this.followPath(v, it, ctx, result);
-    if (arrived) this.arrive(v, it, ctx, result);
+    if (arrived) { this.arrive(v, it, ctx, result); return; }
+    // inspection vehicle stopped at the entry hold of its own runway: that IS the stand-by point
+    if ((v.type === 'ops' || v.type === 'sweeper') && v.target?.kind === 'runway' && v.speed === 0 && v.holdShortRunway && it.holdRef === it.inspectRef) {
+      const hold = v.path.holds?.[it.holdIdx];
+      if (hold && Math.abs(v.distAlong - hold.at) < 2) { it.parkXY = { ...v.pos }; this.arrive(v, it, ctx, result); }
+    }
   }
 
   private stepReturning(v: Vehicle, it: Internal, ctx: VehicleStepCtx, result: VehicleStepResult): void {
@@ -831,7 +883,8 @@ export class VehicleFleet {
   private stepInspection(v: Vehicle, it: Internal, ctx: VehicleStepCtx, result: VehicleStepResult): void {
     const rw = it.inspectRef ? this.runwayByRef(it.inspectRef) : null;
     if (!rw) { this.recall(v.id); return; }
-    const endName = rw.ends[0].name;
+    const targetEnd = v.target?.kind === 'runway' ? v.target.runway.toUpperCase() : null;
+    const endName = targetEnd && rw.ends.some(e => e.name.toUpperCase() === targetEnd) ? targetEnd : rw.ends[0].name;
     const rs = this.runwayStateFor(ctx, rw.ref);
     if (it.inspecting === 'requested') {
       v.speed = 0;
@@ -839,12 +892,15 @@ export class VehicleFleet {
       const closed = rs ? rs.status === 'closed' || rs.status === 'inspection' : false;
       if (closed || v.holdReleased) {
         it.inspecting = 'driving';
+        it.reported = false;
         v.holdReleased = true;
         if (!closed) { /* cleared onto an open runway by the controller: proceed (engine scores if unsafe) */ }
         const near = dist(v.pos, rw.ends[0].xy) <= dist(v.pos, rw.ends[1].xy) ? 0 : 1;
         const a = rw.ends[near].xy, b = rw.ends[1 - near].xy;
-        v.path = this.buildPath([{ ...v.pos }, a, b, a], [], 'runway');
+        v.path = this.inspectionPath({ ...v.pos }, a, b, it.parkXY ?? { ...v.pos });
         v.distAlong = 0;
+        v.holdShortNode = null; v.holdShortRunway = null;
+        it.waitingSince = null;
         result.events.push(this.vehicleEvent(v, `Entering runway ${rw.ends[near].name}, ${v.callsign}, inspection in progress.`, 'PILOT'));
       } else {
         it.waitingSince ??= this.now;
@@ -870,7 +926,8 @@ export class VehicleFleet {
       }
       if (arrived) {
         it.inspecting = 'done';
-        result.events.push(this.vehicleEvent(v, `Ground, ${v.callsign}, runway ${endName} ${v.type === 'sweeper' ? 'sweep' : 'inspection'} complete, no FOD found, vacating.`, 'PILOT'));
+        const job = v.type === 'sweeper' ? 'sweep' : 'inspection';
+        result.events.push(this.vehicleEvent(v, `Ground, ${v.callsign}, runway ${endName} ${job} complete, ${it.fodUntil != null ? 'FOD removed' : 'no FOD found'}, vacated.`, 'PILOT'));
         this.recall(v.id);
       }
     }

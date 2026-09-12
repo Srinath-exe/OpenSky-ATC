@@ -5,9 +5,10 @@ Wave-0 source file disagree, **the source file wins** (it compiles; this is the 
 Where a contract and `00-MASTER-PLAN.md` disagree, the master plan wins and the
 contract owner fixes the file.
 
-All Wave-0 files compile together with the existing engine (`npx tsc --noEmit` clean).
-Stub bodies throw `Error('not implemented')`; pure helpers, data tables and the
-matrix evaluator are implemented and smoke-tested.
+Status after Wave 1b: every `src/lib/sim` module is implemented (no stubs remain except
+`testApi.createTestApi`, owned by W2-STORE); `npx tsc --noEmit` is clean for `src/lib/**` and
+`tests/**`; `bash scripts/test-sim.sh` runs 868 headless tests (parser, tree, dispatch, engine,
+systems, data, integration). §7 is the Wave 2 handbook: the engine API as it really is.
 
 ---
 
@@ -19,16 +20,16 @@ matrix evaluator are implemented and smoke-tested.
 | `rng.ts` | complete | mulberry32, `setSeed/rng/rnd/ri/rf/chance/isSeeded/subStream` | — | — |
 | `stage.ts` | complete | `stage()`, `stageLabel()`, `bayFor()`, classification helpers | — | — |
 | `commandAst.ts` | complete | AST union, `CommandResult`, `EngineOutcome`, `makeAst`, `sequence`, `describe`, guards, kind groups | — | — |
-| `commandTree.ts` | contract + data | `ActionId`, `REASONS`, `ACTION_MATRIX`, `DYNAMIC_RULES`, `stepsFor`, `actionsFor`, `toAst`, `hotkeyFor`, `resolveHotkey` | **W1-COMMANDS** (refine rules / soft warnings / candidates; never rename ids or reason strings) | — |
-| `dispatch.ts` | contract stub | `EngineCommandApi`, `applyToEngine` (AST -> method routing), `guard`, `dispatch` (stub), `composeResult` | **W1-COMMANDS** | — |
-| `phraseology.ts` | contract stub | `PhraseCtx`, telephony + spoken-number helpers (implemented), `transmission/readback/pilotRequestLine/unableLine` (stubs) | **W1-SYSTEMS** | — |
-| `vehicles.ts` | contract stub | `VehicleFleet` class API, `DEFAULT_FLEET`, `VEHICLE_CONST`, `VehicleStepCtx/Result` | **W1-SYSTEMS** | — |
-| `emergencies.ts` | contract stub | `EMERGENCY_CATALOGUE` (13 types, data complete), `createEmergency`, hooks (stubs) | **W1-SYSTEMS** | — |
-| `weather.ts` | contract stub | `WeatherModel` class API, `windComponents/runwayScore/transitionLevel/applyWind` (implemented) | **W1-SYSTEMS** | — |
-| `alerts.ts` | contract stub | `AlertEngine` (raise/ack/resolve/list/stca implemented; `step` stub), `cpa()` (implemented) | **W1-SYSTEMS** | — |
+| `commandTree.ts` | implemented (W1) | `ActionId`, `REASONS`, `ACTION_MATRIX`, `DYNAMIC_RULES`, `stepsFor`, `actionsFor`, `toAst`, `hotkeyFor`, `resolveHotkey` | **W1-COMMANDS** (refine rules / soft warnings / candidates; never rename ids or reason strings) | — |
+| `dispatch.ts` | implemented (W1) | `EngineCommandApi`, `applyToEngine` (AST -> method routing), `guard`, `dispatch` (stub), `composeResult` | **W1-COMMANDS** | — |
+| `phraseology.ts` | implemented (W1) | `PhraseCtx`, telephony + spoken-number helpers (implemented), `transmission/readback/pilotRequestLine/unableLine` (stubs) | **W1-SYSTEMS** | — |
+| `vehicles.ts` | implemented (W1) | `VehicleFleet` class API, `DEFAULT_FLEET`, `VEHICLE_CONST`, `VehicleStepCtx/Result` | **W1-SYSTEMS** | — |
+| `emergencies.ts` | implemented (W1) | `EMERGENCY_CATALOGUE` (13 types, data complete), `createEmergency`, hooks (stubs) | **W1-SYSTEMS** | — |
+| `weather.ts` | implemented (W1) | `WeatherModel` class API, `windComponents/runwayScore/transitionLevel/applyWind` (implemented) | **W1-SYSTEMS** | — |
+| `alerts.ts` | implemented (W1) | `AlertEngine` (raise/ack/resolve/list/stca implemented; `step` stub), `cpa()` (implemented) | **W1-SYSTEMS** | — |
 | `testApi.ts` | types complete | `AtcTestApi`, `SpawnSpec`, `Snapshot`, `AircraftView`, `TestApiHost`, `createTestApi` (stub) | — | **W2-STORE** |
-| `engine.ts` | existing | only `base()` now spreads `newAircraftFields()` (plus the import) | **W1-ENGINE** implements `EngineCommandApi` + `StageCtx` on `SimEngine` | — |
-| `commands.ts` | existing (legacy) | untouched; its `CommandResult{ok,reply}` is legacy | **W1-COMMANDS** rewrites: tokenizer -> `CommandAST` -> `dispatch()` | — |
+| `engine.ts` | implemented (W1; see §7) | only `base()` now spreads `newAircraftFields()` (plus the import) | **W1-ENGINE** implements `EngineCommandApi` + `StageCtx` on `SimEngine` | — |
+| `commands.ts` | implemented (W1) | untouched; its `CommandResult{ok,reply}` is legacy | **W1-COMMANDS** rewrites: tokenizer -> `CommandAST` -> `dispatch()` | — |
 
 Rules: no DOM in `src/lib/sim`; everything the test API exposes is plain JSON; all
 randomness through `rng.ts`.
@@ -261,21 +262,243 @@ engine.onTransmission(ast, result, a) ──▶ events: transmission (now), read
 
 ---
 
-## 7. Engine obligations (for W1-ENGINE, derived from the contracts)
+## 7. Engine API for the store/UI (Wave 2 handbook — matches `src/lib/sim` as of Wave 1b)
 
-1. Implement `EngineCommandApi` and `StageCtx` on `SimEngine`; expose `stageOf(a)`, `runwayStates()`, `gateStates()`, `fleet`, `weather`, `alerts`, `stats: SessionStats`, `centerXY`.
-2. Departures spawn `parked` with `reservedStand`, `needsPushback` (UX §G5.3 rule), `startup/pushback` defaults; arrivals reserve a stand at spawn (`GateState.reservedFor`).
-3. Requests: schedule per UX §G8 (one open request per aircraft; `recallAt`; `REQUEST_ANSWER` is the UI default), emit `request` events, accumulate `delay.requestWaitS`.
-4. Hold-short as a place: `DrivePath.holds` from the route; `holdShortNode/holdShortRunway` set when stopping; `hold_short_dep` vs `hold_short_cross` via `isHoldNodeForRunway`.
-5. Landing clearance: `landingCleared` gates touchdown; no clearance at 1.0 NM / 300 ft AGL -> pilot go-around (`GA_UNHANDLED`); `goAround` flag + phase `go_around`; cleared by handoff or new approach clearance.
-6. Every `cmd*` returns `EngineOutcome`; state changes go through `pendingCmds` with `applyAt = now + pilotDelayS` unless `IMMEDIATE_KINDS`; `condition` honoured; `cmdDisregard` drops the newest cancellable entry.
-7. Wake: `RunwayState.wakeTimer` from `WAKE_DEPARTURE_S` at rotation; final spacing from `WAKE_FINAL_NM`.
-8. Wind: call `weather.applyWindToGroundSpeed` in the airborne integrator; takeoff/landing distance factors per 03 §5.
-9. Vehicles: `fleet.step` each fixed step; `runwayOccupied()` includes vehicles and `status !== 'open'`.
-10. Emergencies: `maybeDeclare` once per sim second per aircraft; `handleLanded` at touchdown; `EMERGENCY_DONE` on resolve.
-11. Scoring: every scored event goes through `SCORE_TABLE` -> `ScoreEvent` -> `SessionStats.ledger` -> `score` event; one incident per (code, primary, secondary) per 60 s.
+Everything below is what `SimEngine` (`src/lib/sim/engine.ts`) and the command layer actually expose today.
+`tests/engine/helpers.ts` (`makeEngine`) and `tests/integration/session.test.ts` are the executable reference:
+the integration test drives a complete 30-minute EGLL session through nothing but this API.
 
----
+### 7.1 Construction and load sequence
+
+```ts
+import { buildOsmAirport } from '@/lib/osmAirport';                       // fetch /maps/osm/{ICAO}.geojson yourself (loadOsmAirport(icao) does the fetch)
+import { loadEndlessAirport, coordToXY } from '@/lib/airspace/eairport'; // /public/airspace/{ICAO}.txt (optional: no file = no radar, arrivals spawn on short final)
+import { SimEngine, AirspaceConfig } from '@/lib/sim/engine';
+import { setSeed } from '@/lib/sim/rng';
+
+setSeed(seed);                                             // BEFORE new SimEngine: the ctor draws sub-streams for weather/emergencies
+const air = buildOsmAirport(icao, geojson, { magVarDeg: ap?.airspace.magVar, quiet: true });
+const e = new SimEngine(air);                              // builds the taxiway grid, RunwayState[] (both ends of every OSM runway), GateState[],
+                                                           // then weather.init (ATIS A) and fleet.init (DEFAULT_FLEET at the OSM stations)
+e.setActiveRunwayEnds(activeEnds ?? null);                 // home-page config: ['27R','27L']; null/[] = every end active for both roles (regenerates ATIS)
+e.setRunwayWeightAllow(weightAllow ?? null);               // home-page config: { '27L': ['M','H'] } per END; null = all classes everywhere
+if (ap) {                                                  // airspace (radar) — projected into engine XY with e.proj
+  const centerXY = coordToXY({ kind: 'll', lat: ap.airspace.center.lat, lng: ap.airspace.center.lng }, e.proj);
+  const radiusM = ap.airspace.radiusNM * NM_TO_M;
+  const cfg: AirspaceConfig = {
+    radiusM, centerXY,                                     // centerXY is REQUIRED for the retire/diversion logic (B3); default {0,0} = airport centre
+    ilsRunways: ap.runways.map(r => ({ name: r.name, thrXY: coordToXY(r.thrCoord ?? r.coord, e.proj), rwdHdg: r.trueHeading, locCourse: r.localizerCourse, gsDeg: r.glideslopeDeg, thrElevFt: 0, estimated: r.derived })),
+    beacons: ap.airspace.beacons.map(b => { const p = coordToXY(b.coord, e.proj); return { id: b.id, x: p.x, y: p.y }; }),
+    entries: ap.entryPoints.map(ep => { const p = advance(centerXY, (ep.heading + 180) % 360, radiusM); return { x: p.x, y: p.y, heading: ep.heading, altFt: ep.altitudeFt, beacon: ep.beacon, weight: ep.weight }; }),
+    magVar: ap.airspace.magVar, transitionAltFt: ap.airspace.transitionAltFt, airportName: ap.name,
+    frequencies: { tower: '118.500' /* Partial<Record<Position,string>>, defaults in engine */ }, missedApproachAltFt: 3000,
+  };
+  e.setAirspaceConfig(cfg);                                // also marks RunwayState.hasIls / ilsEstimated
+}
+e.settings = { ...e.settings, autoTower: false, autoGround: false, autoHandoff: true, emergencyRate: 'normal', pilotErrorRate: 0.02,
+               strictFrequencies: false, arcadeIntercept: false, reducedFinalSep: true, region: 'ICAO' /* 'FAA' for K-airports, set by ctor */, pilotDelayOverride: null, despawnParked: true };
+e.playerPosition = 'tower';                                // 'ground' | 'tower' | 'approach' — strict-frequency policy + ActionCtx.position
+```
+
+- Runway state is built from the OSM runways (`air.runways`, ends oriented by geometry), NOT from `RUNWAY_MANIFEST`.
+  `RUNWAY_MANIFEST` (`src/lib/runwayManifest.ts`) is the home page's picker source; the engine only derives a manifest-shaped
+  `RunwayEnd[]` internally for the weather model (`suggestRunways`). The home config reaches the engine through
+  `setActiveRunwayEnds` / `setRunwayWeightAllow`; `setActiveRunways(dep[], arr[])` is the dep/arr split (runway-change dialog,
+  applying `e.suggestedRunways`) — it clears the suggestion, regenerates ATIS and emits an `info` line.
+- `e.systemsAvailable()` reports which systems are live (`weather fleet alerts emergencies phrase`); a system whose stub throws
+  "not implemented" is disabled for the session instead of crashing (`safe()` wrapper) — all five are implemented now.
+- Data files the store must fetch: `/maps/osm/{ICAO}.geojson` (required), `/airspace/{ICAO}.txt` (optional). Airports with both:
+  EGLL KBOS KJFK KLAX KSFO VIDP.
+
+### 7.2 Time: `update` vs `step`, pause, events
+
+- `e.update(realDt: number): SimEvent[]` — real-time driver. Accumulates `min(realDt, 0.25)` (B18 clamp), runs at most
+  `MAX_SUBSTEPS = 6` fixed substeps of `FIXED = 1/30 s`, then one post pass (separation, incursions, alerts), returns the
+  events produced since the last call. Pass `dt * rate` for the sim-rate control. When `e.paused` it returns the pending
+  events without stepping (pending events are never lost).
+- `e.step(n = 1): SimEvent[]` — deterministic driver: exactly `n` substeps + one post pass (tests, fast-forward).
+- `e.time` (sim seconds), `e.paused`, `e.stats.simTime`. One substep = drain pending commands ▸ nav targets ▸ ground traffic
+  rules ▸ physics (`stepAircraft`) ▸ `fleet.step` + `weather.step` ▸ transitions ▸ readbacks ▸ per-second tasks (requests,
+  emergencies, stage events, despawn, ATIS/runway checks, AI tower).
+- `e.events: SimEvent[]` — ring buffer of the last 500 events (test API / late subscribers). The store should consume the
+  arrays returned by `update()`; every event has `type id callsign message at`, optional `who position data`.
+  Store routing: `ev.who ?? EVENT_WHO[ev.type]` (`types.ts`). `phase` and `stage` are not logged; `request` drives REQ chips;
+  `alert` drives toasts; `readback` closes the UNDO ring; `transmission` is the ATC line (its `data.result` is the CommandResult).
+- Events emitted by the systems between steps (fleet dispatch/recall, weather scripts) are re-stamped with the current
+  `e.time` when they enter the stream, so `at` is non-decreasing.
+
+### 7.3 Every SimEventType (payload = `ev.data`, discriminated by `data.type === ev.type`)
+
+| type | id/callsign | who (default) | data | when |
+|---|---|---|---|---|
+| `spawn` | aircraft | SYS | — | any spawn |
+| `phase` | aircraft | SYS (not logged) | — | `a.phase` changed |
+| `stage` | aircraft | SYS (not logged) | `{from: Stage|null, to: Stage}` | once per second when `stageOf(a)` changed |
+| `reached_hold` | aircraft | PILOT | — | stopped at a PathHold ("holding short runway 27L") |
+| `request` | aircraft (vehicle id for vehicle crossing requests, id -1) | PILOT | `{request: PilotRequest, change: 'raised'|'recalled'|'answered'|'expired'}` | request scheduler |
+| `readback` | aircraft | PILOT | `{status: ReadbackStatus, text, ast: CommandAST|null, refused: string[]}` | at `result.readbackAt`; also pilot replies to report/say again/ack, and "Unable ..." lines |
+| `transmission` | aircraft or -1 | ATC (`who:'AI'` for the AI tower) | `{ast, result: CommandResult, who: 'player'|'ai'}` | `onTransmission` (not for SILENT_CODES) |
+| `startup` / `pushback` | aircraft | SYS | — | engine timers (tug connecting / pushing / complete / engines stable / hot start) |
+| `airborne` / `touchdown` | aircraft | PILOT | — | physics (`aircraft.ts`) |
+| `runway_vacated` | aircraft | PILOT | — | after physically clearing the strip (landing or crossing) |
+| `arrived` / `departed` | aircraft | PILOT | — | on stand / handed off to external or left the TMA |
+| `go_around` | aircraft | PILOT | — | `initiateGoAround` (reason in message) |
+| `landing_clearance` | aircraft | SYS | `{runway, cleared}` | `clearedLand` executed |
+| `handoff` | aircraft | PILOT | `{from: Position, to: Position}` | frequency change completed (5-15 s after `contact`) |
+| `wake` | -1 | SYS | `{runway, leader, expiresAt}` | at rotation |
+| `runway_state` | -1 | SYS | `{runway, status, previous, reason}` | `setRunwayStatus` (also emitted, with `status === previous`, when the weather model suggests a runway change) |
+| `atis` | -1 | SYS | `{atis: Atis, reason}` | ATIS regenerated (wind/QNH change, runway change, hourly) or a runway suggestion |
+| `vehicle` | -1 / callsign = vehicle id | SYS (`who:'PILOT'` for vehicle radio lines) | `{vehicleId, state, target, etaS}` | dispatch / en route / on scene / returning / at station |
+| `emergency` | aircraft | PILOT (declaration, pilot updates) / SYS (checklist, services, stopped, resolved) | `{emergency: Emergency, change: 'declared'|'acknowledged'|'services'|'landed'|'stopped'|'resolved'|'update'}` | emergencies |
+| `alert` | -1 | SYS | `{alert: Alert, change: 'raised'|'updated'|'acked'|'resolved'}` | `AlertEngine.step` |
+| `ground_conflict` / `separation_loss` / `diversion` / `fuel_exhaustion` | aircraft | SYS | — | scored incidents |
+| `score` | aircraft or -1 | SYS | `{score: ScoreEvent}` | every ledger entry ("+10 movement — takeoff") |
+| `removed` | aircraft | SYS | `{reason: 'arrived'|'departed'|'diversion'|'fuel_exhaustion'|'collision'|'test'}` | aircraft left the sim |
+| `info` | any | SYS (`who:'PILOT'`/`'ATC'` when set) | — | free text (pilot remarks, AI lines, all-stations broadcasts) |
+
+### 7.4 Commands: text and click paths
+
+```ts
+import { executeText, dispatch, fromEngine, actionCtxFromEngine, DispatchResult } from '@/lib/sim/dispatch';
+import { parseCommand, suggest, ParseCtx, ParseResult } from '@/lib/sim/commands';
+import { actionsFor, stepsFor, validate, validateAst, toAst, hotkeyFor, resolveHotkey, softWarnings } from '@/lib/sim/commandTree';
+
+// Text line (comm log input / STT):
+const { parse, result } = executeText(e, text, ctx?, { lastCallsign, position, who?, ignoreFrequency?, validate? });
+//   ctx: ParseCtx from fromEngine(e, { lastCallsign, position, withActions? }) (build once per render; cheap without withActions)
+//   parse: ParseResult { ok, ast, callsign, errors: ParseError[], suggestions: string[], tokens, ambiguous?, detachedConditions? }
+//   result: DispatchResult = CommandResult { ok, code: ResultCode, transmission, readback, reason?, applied?, refused?, readbackAt?, applyAt? } + { warnings: string[], appliedParts? }
+//   A parse failure never reaches the engine: result.code is a SILENT code (not_found / unknown_* / invalid_param / not_implemented) and result.reason the parser message.
+// Autocomplete: suggest(prefix, ctx): Suggestion[] { text, kind, label, score } — same ParseCtx.
+// Click tree:
+const actx = actionCtxFromEngine(e, a, { position: e.playerPosition });   // ActionCtx (null only if the engine cannot report a stage)
+const rows = actionsFor(a, actx);                                          // ActionRow[] { id, label, hotkey, group, state, reason, reasonText, soft, steps, primary, order }
+const steps = stepsFor(id, a, actx);                                       // PickerStep[] (runway | taxiway-route | heading | altitude | speed | fix | hold | direction | taxiway | gate | aircraft | vehicle | position | text | confirm)
+const v = validate(id, params, a, actx);                                   // ValidationResult { ok, errors, warnings, ast } — hard errors block, warnings = amber TRANSMIT ANYWAY
+const ast = toAst(id, params, a.callsign, a);                              // throws on a missing mandatory param
+const r = dispatch(e, ast, { ctx: actx });                                 // same DispatchResult as executeText; pass `ctx` to reuse the panel's ActionCtx
+hotkeyFor(id, stage); resolveHotkey(key, rows, after?);                     // §G6 letters / chords ("M,A")
+```
+
+- `dispatch` order: callsign resolve ▸ `guard` (paused, malformed) ▸ strict frequency (R13, skipped for `who:'ai'` /
+  `ignoreFrequency`) ▸ UX §G3 `validateAst` (silent hard code → SYS line; `unable_*` hard code → transmitted with an
+  "Unable ..." readback) ▸ `applyToEngine` per part ▸ phraseology TX/RB ▸ `e.onTransmission` exactly once.
+- Sequences ("descend 3000 then cleared ILS 27L"): parts apply in spoken order and share ONE pilot delay; the first silent
+  refusal rolls the already-queued parts back (`cmdDisregard`) and fails the whole transmission (`appliedParts` says what
+  survived); pilot-side `unable_*` parts are collected in `refused` with code `partial`.
+- Result codes: `ok` (immediate), `ok_queued` (executes at `applyAt`), `ok_conditional` (`PendingCmd.condition`: after
+  pushback / on reaching the hold / behind aircraft / at altitude / after fix / after vacated), `partial`, `queried`
+  (pilot asks back; nothing executes), `unable*` (transmitted, refused by the pilot), and the SILENT codes listed in
+  `SILENT_CODES` (nothing transmitted; show `result.reason` as a SYS line).
+- The engine never needs a CommandAST callsign it cannot `find()`: `e.find(cs)` matches callsign or flight number.
+- Undo: `cmdDisregard` (AST kind `disregard`) drops the newest cancellable pending command; the UNDO ring is open until
+  `result.applyAt`; `commandTree.canUndo/undoAst/inverse/snapshotFor` model it.
+- Legacy: `parseCommand(engine, text)` still works through a `globalThis.__atcDispatch` shim installed by `dispatch.ts`
+  — delete that call site and the overload when the store switches to `executeText`.
+
+### 7.5 Stage, labels, bays
+
+`e.stageOf(a): Stage` (21 stages, UX §G1) — the UI gates on this, never on `a.phase`.
+`stageLabel(stage): { short, long, tone }`, `bayFor(a, stage, position): BayId | null`, `isGroundStage/isAirStage/isArrivalStage/isDepartureStage`
+from `stage.ts`. `stage` events fire once per sim second when it changes.
+
+### 7.6 Spawning and removal
+
+- `e.spawnDeparture({ atHold?, type?, callsign?, stand?, runway? }): AircraftState | null` — parked on a free stand
+  (`needsPushback` from the stand), pushback/startup request 20-90 s later, `plan.runway` = an active open departure end.
+- `e.spawnArrival({ type?, callsign?, entryKey? })` — weighted boundary entry (needs `entries`), spaced behind the previous spawn on
+  the same entry (radar/wake minimum + 1 NM), stand reserved (`GateState.reservedFor`), "with you" 2 s later; without airspace
+  data it falls back to an 11 km final. `e.spawnArrivalAtEntry(pos, heading, altFt, beacon?, opts?)` is the explicit form.
+- `e.spawnAt(spec: SpawnSpec): AircraftState` — deterministic factory (05 §2.2): `{ callsign, type?, kind, phase, gate? | runway? |
+  taxiwayNode? | posRel? | posLL?, heading?, speedKts?, altFt?, targets?, plan?, ils?, hold?, taxiTo?, onFrequency?, landingCleared?, emergency? }`.
+  Note: airborne `spawnAt` aircraft do not raise "with you" (they are `underControl` already).
+- `e.remove(id, reason)`, `e.clear()`; `e.declareEmergency(a, type: EmergencyType): Emergency` (test API `forceEmergency`).
+- Retire: departures are removed at 0.92 R (`departed` when handed to external or above FL90, else `DIVERSION_UNHANDLED`);
+  arrivals outside 1.05 R after entering (or flying away) are diverted; parked arrivals despawn after 120-300 s when
+  `settings.despawnParked`.
+
+### 7.7 Query surface (read-only unless stated)
+
+| Need | Call |
+|---|---|
+| aircraft | `e.aircraft: AircraftState[]`, `e.find(cs)`, `e.byId(id)`, `e.counts()` → `{ total, dep, arr, air, gnd, conf }`, `e.viewOf(a): AircraftView` (plain JSON), `e.snapshotForTest(): AircraftView[]` |
+| per aircraft | `a.requests[0]` (open PilotRequest), `a.pendingCmds`, `a.readback`, `a.emergency`, `a.landingCleared`, `a.holdShortRunway/holdShortNode`, `a.onFrequency`, `a.handedTo`, `a.plan.{runway,gateRef,fix,taxiRoute}`, `a.delay` (DelayStats), `a.wakeCategory`, `a.squawk` |
+| runways | `e.runways` / `e.runwayStates(): RunwayState[]` (per END; both ends of a physical runway share status/occupants/wake timer), `e.runwayState('27L')`, `e.activeEnds('dep'|'arr')`, `e.runwayByEnd(name)` (OSM geometry), `e.thresholdXY(name)`, `e.runwayHeading(name)`, `e.runwayOccupied(name, exceptId?)`, `e.runwayOccupant(name, exceptId?)`, `e.runwayPhysicallyClear(name, exceptId)`, `e.arrivalOnFinal(name, nm)` → `{ callsign, nm, a }`, `e.rollingDeparture(name)`, `e.crossingSafe(name, crossingS = 35)`, `e.parallelRunways(name)`, `e.isOnRunway(a)`, `e.distToNextHold(a)` |
+| runway status (write) | `e.setRunwayStatus(name, 'open'|'closed'|'sterile'|'inspection', reason)`, `e.reopenRunway(name, afterInspection)` (tows a disabled emergency aircraft clear), `e.setActiveRunways(dep, arr)`, `e.setActiveRunwayEnds(ends)`, `e.setRunwayWeightAllow(map)`; all EngineOutcome / regenerate ATIS / emit `runway_state` |
+| wake | `e.wakeTimers(): Record<end, { runway, leader, remainingS }>`, `e.wakeTimerRemainingS(name, followerCategory?)`, `rs.wakeTimer`, `rs.lastDeparture/lastArrival` |
+| stands / gates | `e.gates` / `e.gateStates(): GateState[]` (`{ ref, nodeId, terminal, occupiedBy, reservedFor, needsPushback, closed }`), `e.gateByRef(ref)`, `e.standOccupant(ref)` (callsign occupying or reserving) |
+| geometry | `e.proj` (LocalProjection: `toXY(lat,lng)` / `toLngLat(x,y)`), `e.nodeXY(nodeId)`, `e.nearestNodeId(xy, maxM?)`, `e.distToRunway(xy, ref)`, `e.runwaysAt(xy)`, `e.air` (OsmAirport: nodes, taxiwayNames, taxiwayNodes, stands, holdingPositions, stations), `e.pathFromNodes(ids, holdAtEnd?, from?)` (DrivePath with PathHolds) |
+| airspace | `e.centerXY`, `e.airspaceRadiusM`, `e.beacons` (`{id,x,y}` — the only "fixes"; no SID/STAR database exists, `navMode:'sid'` flies to `plan.fix`), `e.entries` (`{x,y,heading,altFt,weight,beacon?,key}`), `e.ilsRunways: ILSRunway[]`, `e.magVar`, `e.transitionAltFt`, `e.frequencies: Record<Position,string>`, `e.unitName(position)`, `e.telephony(cs)` |
+| weather / ATIS | `e.wx(): WeatherState`, `e.atisLetter()`, `e.weather.atis(): Atis` (full broadcast `text`), `e.weather.state()`, `e.windFor(rwyHdgTrue)` → `{ headKt, crossKt, crossFrom }`, `e.windSpoken()`, `rs.windHeadKt/windCrossKt` (live per end), `e.suggestedRunways` (`{ dep, arr, reason } | null` — the "Change runway" prompt; apply with `e.setActiveRunways`), `e.setWind(dirTrue, kts, gust?)` (scenario / test hook, re-evaluates the suggestion), `e.weather.setState(patch)`, `e.weather.scheduleEvent(ev)` |
+| vehicles | `e.fleet.list(): Vehicle[]` (`{ id, callsign, type, state: standby|enroute|onscene|returning, pos, heading, speed, target, path, holdShortRunway, onRunway, etaAt, ... }`), `e.fleet.byId(id)`, `e.fleet.available(type)`, `e.fleet.onRunway(ref)`, `e.fleet.responding()`, `e.fleet.etaS(id)`, `e.fleet.arffOnScene(refOrEnd)`; commands through the ASTs `dispatchVehicle / recallVehicle / vehicleOp` (or `e.dispatchVehicle(type, ids, count, target)`, `e.recallVehicle(id)`, `e.vehicleOp(id, op, runway)`) |
+| alerts | `e.activeAlerts(): Alert[]`, `e.alerts.list()/active()/byId(id)/forSubject(cs)/escalated(time)`, `e.alerts.ack(id, time)`, `e.alerts.resolve(id, time)`, `e.alerts.stca()` |
+| emergencies | `a.emergency: Emergency` (`{ type, level, status, checklist, runway, sterile, arff, arffOnSceneAt, stopOnRunway, closureMin, requests, pilotLine, ... }`), `e.holdAllActive` (`{ scope, runway } | null`), `e.bestRunwayFor(a, pref)`; commands through the `emergencyAck / priority / stopOnRunway / emergencyCancelAck / holdAll / resumeAll / reopenRunway` ASTs |
+| requests | `a.requests` (at most one open per aircraft; `answeredAt == null` = open), `request` events; answered automatically when a command of an answering kind is dispatched, `standby` pushes the recall by 120 s, `unable` refuses |
+| score / stats | `e.stats: SessionStats` (`points`, `skill` 0-12, `score` = best skill, `movements`, `departures`, `arrivals`, `movementsPerHour`, `movementsHistory` (5-min buckets), `delayAvgS/delayP95S`, `incidents`, `ledger: ScoreEvent[]`, `goAroundsPlayer/Pilot`, `diversions`, `emergenciesDeclared/Resolved`, `arffResponseS`, `transmissions`, `responsivenessMeanS`, `unansweredRequests`, `streakS`), `e.score` / `e.skill` (get/set, legacy), `e.addScore(code, primary, secondary?, runway?, detail?)` (test hook) |
+| settings | `e.settings` (EngineSettings, mutable), `e.autoTower` / `e.autoGround` (legacy get/set), `e.playerPosition`, `e.paused` |
+| phraseology | `e.phraseCtx(a | null): PhraseCtx` (for `transmission()/readback()/pilotRequestLine()` previews), `e.pilotDelayS(a, kind)`, `e.onPlayerFrequency(a)` |
+
+### 7.8 Worked example — the store loop (30 lines)
+
+```ts
+class SimStore {
+  engine!: SimEngine; log: Line[] = []; selectedId: number | null = null; lastCallsign: string | null = null;
+  rate = 1; paused = false; private last = 0; private nextSpawn = 0;
+  async load(icao: string, cfg: { ends: string[]; weightAllow: Record<string, WeightClass[]>; seed: number }) {
+    const [fc, ap] = await Promise.all([fetch(`/maps/osm/${icao}.geojson`).then(r => r.json()), loadEndlessAirport(icao).catch(() => null)]);
+    setSeed(cfg.seed);
+    this.engine = new SimEngine(buildOsmAirport(icao, fc, { magVarDeg: ap?.airspace.magVar, quiet: true }));
+    this.engine.setActiveRunwayEnds(cfg.ends); this.engine.setRunwayWeightAllow(cfg.weightAllow);
+    if (ap) this.engine.setAirspaceConfig(airspaceConfigFrom(ap, this.engine.proj));   // §7.1 (centerXY + entries + ILS + beacons)
+    for (let i = 0; i < 4; i++) this.engine.spawnDeparture();
+    for (let i = 0; i < 3; i++) this.engine.spawnArrival();
+    requestAnimationFrame(this.tick);
+  }
+  tick = (now: number) => {
+    requestAnimationFrame(this.tick);
+    const dt = Math.min((now - this.last) / 1000, 0.1); this.last = now;
+    if (this.paused) return;                                                    // (or engine.paused = true: update() returns pending events)
+    for (const ev of this.engine.update(dt * this.rate)) this.route(ev);         // §7.2 / §7.3
+    const e = this.engine;
+    if (e.time >= this.nextSpawn && e.aircraft.length < Math.ceil(e.skill) + 6) { chance(0.55) ? e.spawnDeparture() : e.spawnArrival(); this.nextSpawn = e.time + rf(40, 90); }
+    this.emit();
+  };
+  route(ev: SimEvent) {
+    if (ev.type === 'phase' || ev.type === 'stage') return;
+    if (ev.type === 'alert' && ev.data?.type === 'alert') this.toast(ev.data.alert);
+    this.log.push({ who: ev.who ?? EVENT_WHO[ev.type], text: ev.message, at: ev.at, callsign: ev.callsign, position: ev.position });
+  }
+  command(text: string) {                                                        // comm-log input (click panel: dispatch(engine, toAst(...), { ctx }))
+    const { parse, result } = executeText(this.engine, text, fromEngine(this.engine, { lastCallsign: this.lastCallsign, position: this.engine.playerPosition }));
+    if (parse.callsign) this.lastCallsign = parse.callsign;
+    if (!result.ok && isSilent(result.code)) this.log.push({ who: 'SYS', text: result.reason ?? result.code, at: this.engine.time });
+    return result;                                                              // transmission + readback lines arrive as events (§7.3)
+  }
+}
+```
+
+### 7.9 Behaviour the UI can rely on (implemented and covered by tests)
+
+- Departures: parked → (pushback request) → `pushback` (tug 20-40 s, ≤ 3 kt, disconnect 20-30 s) → `startup` (engines 90-240 s
+  by type, 4 % hot start +300 s) → taxi request → taxi with hold-short PLACES (`a.path.holds`, one per runway crossed +
+  the departure entry; crossings need `cross`, the entry needs `lineup`/`takeoff`) → HOLD_POINT → auto handoff to tower →
+  "ready" → line-up → takeoff (spool 8-15 s, runway heading to 400 ft, wake timer at rotation) → auto handoff to departure at
+  `clearance.autoHandoffAlt` → `contact <external>` → `departed`.
+- Arrivals: `radarContact` / vectors / `altitude` / `speed` / `direct` / `hold` / `ils` (25-30° intercept, capture from
+  below or within 200 ft above the slope) → auto handoff to tower at 10 NM established → landing clearance mandatory
+  (query at 4 NM, go-around at 2 NM / 300 ft; `continueApproach` moves it to 1 NM) → touchdown 300-450 m → exit (pilot's
+  high-speed exit or `exitAt`) → `runway_vacated` → auto handoff to ground → taxi-in request → `taxi` to stand → `arrived`.
+- Crossings: `cross <rwy>` from the hold; `cross <rwy> behind <cs>` starts once the landing aircraft has rolled past the
+  crossing point (03 D12 "behind the landing traffic"); the R3 tree guard is bypassed by `behind`. Budget ~65-80 s at EGLL S3/N3.
+- A departure that is cleared for an approach (`ils`) is handled as an arrival from then on (emergency returns).
+- Separation: 3 NM / 1000 ft radar, 2.5 NM same final < 10 NM, wake matrix in trail; exemptions for independent parallel
+  ILS, both on final < 1600 ft, diverging departures, 60 s go-around grace and a parallel-runway departure in its initial
+  climb vs an arrival on the other runway (segregated mode).
+- Emergencies: `declareEmergency` / random (`settings.emergencyRate`), `emergencyAck` → `priority <rwy> [sterile]` (sterile
+  runway usable only by that aircraft, in engine and tree) → ARFF `dispatchVehicle` (3 = "full") → landing → stop on the
+  runway (closure) → `emergencyCancelAck` → `reopenRunway <rwy> after inspection` (tows the aircraft, INSPECTION_CLEAN).
+- Weather: `weather.step` random walk + scripted events; ATIS letter advances on significant change; a runway suggestion
+  (`e.suggestedRunways`, `atis` + `runway_state` events) appears within 60 s of a wind reversal.
 
 ## 8. Deviations / decisions to confirm
 

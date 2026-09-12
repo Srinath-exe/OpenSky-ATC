@@ -179,3 +179,112 @@ test('deterministic: identical inputs give identical strings across calls', () =
   assert.equal(a, b);
   assert.equal(a, 'Speedbird one seventeen, number two, traffic Boeing 737 two mile final, runway two seven left, cleared to land, wind two six zero at eight.');
 });
+
+// ──────────────────────────────────────────────────────────────────────────────
+//  Completeness: every CommandAST kind (44 single + 8 system + sequence) and every
+//  PilotRequest kind. The maps below are typed Record<Kind, ...> so adding a kind to
+//  commandAst.ts / types.ts without a representative here is a compile error.
+// ──────────────────────────────────────────────────────────────────────────────
+type Fields = Record<string, unknown>;
+const REPRESENTATIVE: Record<Exclude<CommandKind, 'sequence'>, Fields> = {
+  startup: { expectRunway: '27L' },
+  pushback: { dir: 'N', tailTo: 'A', expectRunway: '27L' },
+  taxi: { dest: { kind: 'runway', runway: '27L', intersection: null }, via: ['A', 'B'], holdShortOf: { kind: 'runway', runway: '27R' } },
+  holdShort: { of: { kind: 'runway', runway: '27R' } },
+  holdPosition: { reason: 'traffic crossing' },
+  continue: { holdShortOf: { kind: 'taxiway', taxiway: 'C' } },
+  cross: { runway: '27R' },
+  giveWay: { to: 'DLH2GK', mode: 'give_way' },
+  lineup: { runway: '27L', intersection: 'A3' },
+  takeoff: { runway: '27L', wind: true, afterDepHdg: 'runway', initialAlt: 4000 },
+  cancelTakeoff: { reason: 'vehicle on the runway' },
+  cancelLineup: { via: 'A3' },
+  exitAt: { exit: { kind: 'taxiway', taxiway: 'A7' }, contactGround: true },
+  expedite: { on: true, scope: 'taxi' },
+  clearedLand: { runway: '27L', wind: true, exit: { kind: 'next', dir: 'L' } },
+  continueApproach: { number: 2 },
+  goAround: { heading: 'runway', alt: 3000, reason: 'traffic on the runway' },
+  windCheck: {},
+  contact: { position: 'tower', when: 'now' },
+  heading: { hdg: 240, dir: 'L' },
+  altitude: { ft: 4000 },
+  speed: { kts: 180, untilNM: 4 },
+  direct: { fix: 'BIG' },
+  hold: { fix: 'LAM', inbound: 270, dir: 'R', legTimeMin: 1, efc: 45 * 60 },
+  ils: { runway: '27L', reportEstablished: true },
+  loc: { runway: '27L', maintainAlt: 3000 },
+  visual: { runway: '27L' },
+  cancelApproach: { hdg: 360, alt: 4000, dir: 'L', reason: 'traffic' },
+  expectRunway: { runway: '27R', approach: 'ILS' },
+  resumeSid: {},
+  squawk: { code: '4217' },
+  ident: {},
+  radarContact: { descendTo: 5000, expectRunway: '27L' },
+  sayAgain: {},
+  correction: { field: 'heading', value: 250 },
+  disregard: {},
+  standby: {},
+  unable: { reason: 'traffic' },
+  report: { items: ['position', 'altitude'] },
+  roger: {},
+  emergencyAck: { ask: ['pob', 'fuel', 'intentions'], squawk: true },
+  priority: { runway: '27L', numberOne: true, straightIn: true, clearIls: true, sterile: true },
+  stopOnRunway: { mode: 'stop', via: null },
+  emergencyCancelAck: {},
+  holdAll: { scope: 'all', runway: null },
+  resumeAll: {},
+  reopenRunway: { runway: '27L', afterInspection: true },
+  dispatchVehicle: { type: 'arff', ids: [], count: 2, target: { kind: 'runway', runway: '27L' } },
+  recallVehicle: { id: 'FIRE1' },
+  vehicleOp: { id: 'OPS1', op: 'cross', runway: '27R' },
+  runwayStatus: { runway: '27L', status: 'closed', reason: 'disabled aircraft' },
+  broadcast: { text: 'stop transmitting, MAYDAY' },
+};
+/** Kinds whose pilot/driver side is silent by design: "all stations" broadcasts have no readback; a pilot does not answer "roger". */
+const NO_READBACK = new Set<CommandKind>(['roger', 'holdAll', 'resumeAll', 'runwayStatus', 'broadcast']);
+
+const REQUEST_PARAM: Record<PilotRequestKind, string | number | null> = {
+  clearance: null, pushback: null, startup: null, taxi: null, cross: '27R', ready: '27L', with_you: 8, higher: 12000, lower: 3000,
+  direct: 'BIG', hold: null, taxi_in: 'A7', say_again: null, radio_check: null, cancel_mayday: 'fire is out', return_to_stand: 'technical problem',
+  wind_check: null, confirm_cleared: 4, further: null, intersection: 'A3', runway_vacated: '27L', going_around: 'unstable approach',
+};
+
+test('completeness: every CommandAST kind has a non-empty transmission and readback (both variants); sequence included', () => {
+  for (const variant of ['ICAO', 'FAA'] as const) {
+    const ctx = variant === 'FAA' ? ctxFAA() : ctxICAO();
+    const a = ctx.aircraft!;
+    a.emergency = { type: 'engine_fire', level: 'MAYDAY', status: 'declared', declaredAt: 0, phase: 'climb', stage: 'dep_climb', soulsOnBoard: 147, fuelMin: 80, squawk: '7700', requests: ['request immediate return'], runway: '27L', priority: false, sterile: false, arff: 'none', arffOnSceneAt: null, stopOnRunway: false, evacuation: false, closureMin: 0, landedAt: null, stoppedAt: null, resolvedAt: null, checklist: { acknowledge: null, souls_fuel: null, priority_runway: null, arff: null, ambulance: null, hold_traffic: null, runway_closed: null, runway_reopened: null, inspection: null }, pilotLine: '' };
+    const cs = variant === 'FAA' ? 'Speedbird one seventeen' : 'Speedbird one one seven';
+    const asts: CommandAST[] = (Object.keys(REPRESENTATIVE) as Array<keyof typeof REPRESENTATIVE>).map(kind => makeAst(kind, 'BAW117', REPRESENTATIVE[kind] as never));
+    asts.push(sequence('BAW117', [makeAst('altitude', 'BAW117', { ft: 3000 }), makeAst('ils', 'BAW117', { runway: '27L', reportEstablished: true })]));
+    assert.equal(asts.length, 53, '44 single + 8 system + sequence');
+    for (const ast of asts) {
+      const tx = transmission(ast, ctx);
+      const rb = readback(ast, ctx);
+      assert.ok(tx.trim().length > 0, `${variant} ${ast.kind}: empty transmission`);
+      assert.ok(/[a-z]/i.test(tx) && tx.endsWith('.'), `${variant} ${ast.kind}: TX is a sentence: ${tx}`);
+      assert.ok(!/undefined|null|NaN|\[object/.test(tx), `${variant} ${ast.kind}: TX leaks a value: ${tx}`);
+      if ('callsign' in ast) assert.ok(tx.startsWith(cs), `${variant} ${ast.kind}: TX addresses the aircraft: ${tx}`);
+      if (NO_READBACK.has(ast.kind)) continue;
+      assert.ok(rb.trim().length > 0, `${variant} ${ast.kind}: empty readback for ${tx}`);
+      assert.ok(rb.endsWith('.'), `${variant} ${ast.kind}: RB terminated: ${rb}`);
+      assert.ok(!/undefined|null|NaN|\[object/.test(rb), `${variant} ${ast.kind}: RB leaks a value: ${rb}`);
+      if ('callsign' in ast) assert.ok(rb.endsWith(`${cs}.`), `${variant} ${ast.kind}: RB ends with the callsign: ${rb}`);
+    }
+  }
+});
+
+test('completeness: every PilotRequest kind has a non-empty spoken line (both variants)', () => {
+  for (const variant of ['ICAO', 'FAA'] as const) {
+    const ctx = variant === 'FAA' ? ctxFAA() : ctxICAO();
+    const cs = variant === 'FAA' ? 'Speedbird one seventeen' : 'Speedbird one one seven';
+    const kinds = Object.keys(REQUEST_PARAM) as PilotRequestKind[];
+    assert.equal(kinds.length, 22);
+    for (const kind of kinds) {
+      const line = pilotRequestLine({ id: 1, kind, callsign: 'BAW117', text: '', param: REQUEST_PARAM[kind], at: 0, recallAt: 0, recalls: 0, expiresAt: null, suggestedAction: null, answeredAt: null, answeredBy: null }, ctx);
+      assert.ok(line.trim().length > 0 && line.endsWith('.'), `${variant} ${kind}: ${line}`);
+      assert.ok(line.includes(cs), `${variant} ${kind}: names the aircraft: ${line}`);
+      assert.ok(!/undefined|null|NaN|\[object/.test(line), `${variant} ${kind}: leaks a value: ${line}`);
+    }
+  }
+});

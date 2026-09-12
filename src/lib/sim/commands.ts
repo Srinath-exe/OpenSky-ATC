@@ -26,12 +26,12 @@
 import type { FlightKind, Position, Stage } from './types';
 import type { PendingCondition } from './types';
 import type {
-  ApproachType, CommandAST, CommandKind, CorrectionField, EmergencyInfoKind, ExitSpec, HoldAllScope, HoldShortTarget,
+  ApproachType, CommandAST, CommandKind, ContactWhen, CorrectionField, EmergencyInfoKind, ExitSpec, HoldAllScope, HoldShortTarget,
   PushDir, ReportKind, SingleAircraftCommand, TaxiDest, TurnDir, UnableReason,
 } from './commandAst';
 import { incompatibleParts, makeAst, sequence, sortParts } from './commandAst';
 import type { ActionId } from './commandTree';
-import { ACTION_DEFS, visibleActionsForStage } from './commandTree';
+import { ACTION_DEFS, enabledActionsForStage, visibleActionsForStage } from './commandTree';
 import { AIRLINE_TELEPHONY, trueHeading } from './phraseology';
 import type { VehicleType, RunwayStatus } from './types';
 
@@ -40,6 +40,8 @@ import type { VehicleType, RunwayStatus } from './types';
 // ──────────────────────────────────────────────────────────────────────────────
 /** AircraftView / AircraftState-compatible slice the parser needs. */
 export interface ParseAircraft {
+  /** Engine id (fills VehicleTarget.id for "dispatch fire to BAW117"). */
+  id?: number;
   callsign: string;
   flightNo?: string;
   airline?: string;
@@ -55,6 +57,8 @@ export interface ParseAircraft {
   ilsArmed?: boolean;
   /** Open pilot request (REQ chip) — ranks the callsign first in suggestions. */
   hasRequest?: boolean;
+  /** Emergency in progress — the emergency verbs are offered only then (unless enabledActions says otherwise). */
+  emergency?: boolean;
   /** Ids from actionsFor(); when present they are the authoritative verb filter for suggestions. */
   enabledActions?: ActionId[];
   /** Minimum clean speed for "reduce to minimum clean speed". */
@@ -141,7 +145,7 @@ export function tokenize(text: string): Token[] {
     .replace(/(\d)-([A-Z])/g, '$1 $2')          // 4-mile, 2-minute
     .replace(/([A-Z])\/([A-Z])/g, '$1 $2')      // pob/fuel/intentions
     .replace(/\s\/\s/g, ' THEN ')               // describe() sequence separator
-    .replace(/[(),;:?!"]/g, ' ')
+    .replace(/[(),;:?!"+]/g, ' ')
     .replace(/\.(?!\d)/g, ' ');                 // keep 118.5, drop sentence periods
   const raw = cleaned.split(/\s+/).filter(Boolean);
   const out: Token[] = [];
@@ -169,8 +173,11 @@ export function tokenize(text: string): Token[] {
       continue;
     }
     if (t === 'FLIGHT' && raw[i + 1] === 'LEVEL' && raw[i + 2] && NUM_RE.test(normDigits(raw[i + 2]))) {
-      out.push({ text: `FL${normDigits(raw[i + 2])}`, raw: raw.slice(i, i + 3).join(' '), index: out.length });
-      i += 2; continue;
+      let j = i + 2; let digits = '';
+      if (/^\d+$/.test(raw[j])) { digits = raw[j]; j++; }
+      else while (j < raw.length && DIGIT_WORDS[raw[j]] !== undefined) { digits += DIGIT_WORDS[raw[j]]; j++; }
+      out.push({ text: `FL${digits}`, raw: raw.slice(i, j).join(' '), index: out.length });
+      i = j - 1; continue;
     }
     if (/^\d+$/.test(t) && raw[i + 1] === 'THOUSAND') {
       let v = parseInt(t, 10) * 1000; let j = i + 2;
@@ -178,7 +185,7 @@ export function tokenize(text: string): Token[] {
       out.push({ text: String(v), raw: raw.slice(i, j).join(' '), index: out.length }); i = j - 1; continue;
     }
     if (t === 'FL' && raw[i + 1] && /^\d{2,3}$/.test(raw[i + 1])) { out.push({ text: `FL${raw[i + 1]}`, raw: `${t} ${raw[i + 1]}`, index: out.length }); i++; continue; }
-    if (t === 'HEAVY' || t === 'SUPER') { if (out.length && CALLSIGN_RE.test(out[out.length - 1].text)) continue; }
+    if (t === 'HEAVY' || t === 'SUPER') { const prev = out[out.length - 1]?.text ?? ''; if (CALLSIGN_RE.test(prev) || /^\d{1,4}[A-Z]{0,2}$/.test(prev)) continue; }
     t = t.replace(/^(\d+)KTS?$/, '$1');
     out.push({ text: t, raw: raw[i], index: out.length });
   }
@@ -307,8 +314,10 @@ class Parser {
   i = 0;
   readonly strict: { runway: boolean; taxiway: boolean; fix: boolean; stand: boolean; aircraft: boolean; vehicle: boolean };
   detached: Array<{ kind: CommandKind; condition: PendingCondition }> = [];
+  /** Original (case-preserved) input, used for free-text broadcasts. */
+  source = '';
   constructor(readonly toks: Token[], readonly ctx: ParseCtx, readonly self: ParseAircraft | null) {
-    const s = (list?: unknown[]) => ctx.strict ?? !!(list && list.length);
+    const s = (list?: unknown[]) => !!list && (ctx.strict ?? list.length > 0);
     this.strict = { runway: s(ctx.runways), taxiway: s(ctx.taxiways), fix: s(ctx.fixes), stand: s(ctx.stands), aircraft: s(ctx.aircraft), vehicle: s(ctx.vehicles) };
   }
   get eof(): boolean { return this.i >= this.toks.length; }
@@ -514,15 +523,17 @@ function parseCondition(p: Parser, self: ParseAircraft | null): Pending {
     return cur != null && cur > ft ? { type: 'at_or_below_alt', ft } : { type: 'at_or_above_alt', ft };
   };
   for (;;) {
+    if (p.accept('AT OR BELOW')) { out.cond = { type: 'at_or_below_alt', ft: p.altitude() }; continue; }
+    if (p.accept('AT OR ABOVE')) { out.cond = { type: 'at_or_above_alt', ft: p.altitude() }; continue; }
     if (p.accept('AFTER PUSHBACK', 'WHEN PUSHBACK COMPLETE', 'AFTER PUSH')) { out.cond = { type: 'after_pushback' }; p.skip(','); continue; }
     if (p.accept('WHEN VACATED', 'AFTER VACATING', 'WHEN CLEAR OF THE RUNWAY', 'WHEN CLEAR', 'AFTER VACATED')) { out.cond = { type: 'after_vacated' }; out.contactWhen = 'when_vacated'; continue; }
     if (p.accept('WHEN READY', 'AT PILOTS DISCRETION', 'PILOTS DISCRETION', 'AT YOUR DISCRETION', 'PD')) { out.cond = { type: 'when_ready' }; continue; }
     if (p.accept('AT THE HOLDING POINT', 'AT THE HOLD', 'AT HOLDING POINT', 'HOLDING POINT')) { out.contactWhen = 'at_hold'; continue; }
     if (p.at('ON REACHING') || p.at('WHEN REACHING') || p.at('REACHING')) {
-      const save = p.i; p.accept('ON REACHING', 'WHEN REACHING', 'REACHING');
-      if (/^(FL)?\d+$/.test(p.peek())) { const ft = p.altitude(); out.cond = altCond(ft); continue; }
+      p.accept('ON REACHING', 'WHEN REACHING', 'REACHING');
+      if (/^(FL)?\d+$/.test(p.peek())) { const ft = p.altitude(); out.cond = altCond(ft); out.contactWhen = 'on_reaching'; continue; }
       out.cond = { type: 'on_reaching_hold' }; out.contactWhen = 'on_reaching';
-      void save; continue;
+      continue;
     }
     if (p.at('WHEN PASSING') || p.at('PASSING') || p.at('LEAVING') || p.at('WHEN LEAVING') || p.at('AT')) {
       const save = p.i;
@@ -588,11 +599,14 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       const save = p.i; p.next();
       const rwy = p.runwayToken();
       if (rwy) {
-        if (p.at('TAXI')) { p.next(); p.skip('VIA'); return done(parseTaxiBody(p, mk, { kind: 'runway', runway: rwy, intersection: null }, self)); }
+        if (p.at('TAXI')) { p.next(); return done(parseTaxiBody(p, mk, { kind: 'runway', runway: rwy, intersection: null }, self)); }
         if (p.at('LINE|LINEUP|LUAW')) return done(parseLineup(p, mk, rwy, pending));
         if (p.at('CLEARED FOR') || p.at('CLEARED TAKEOFF') || p.at('CLEARED IMMEDIATE')) { p.next(); p.skip('FOR'); const imm = !!p.accept('IMMEDIATE'); p.accept('TAKEOFF', 'TAKE OFF', 'DEPARTURE'); return done(mk('takeoff', { runway: rwy, immediate: imm })); }
         if (p.at('CLEARED TO LAND') || p.at('CLEARED LAND')) { p.next(); p.skip('TO'); p.next(); return done(parseLandBody(p, mk, rwy)); }
-        if (p.accept('HEADING')) return done(mk('heading', { hdg: runwayHeading(p, rwy), dir: null }));
+        if (p.accept('HEADING')) return done(runwayHeadingPart(mk, runwayHeading(p, rwy)));
+      } else if (p.accept('HEADING')) {
+        // "runway heading" as its own part (describe() / after-departure / go-around)
+        return done(runwayHeadingPart(mk, runwayHeading(p, plannedRunway)));
       }
       p.i = save;
       p.fail('unknown_verb', 'Expected a clearance after the runway', ['TAXI', 'LINE UP AND WAIT', 'CLEARED FOR TAKEOFF', 'CLEARED TO LAND'], save + 1 + (rwy ? 1 : 0));
@@ -645,7 +659,7 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       const exp = !!p.accept('EXPEDITE', 'EXPD', 'NO DELAY', 'WITHOUT DELAY');
       p.accept('REPORT VACATED', 'REPORT CLEAR');
       let behind = pending.behind;
-      if (p.accept('BEHIND')) { p.skip('THE', 'LANDING', 'DEPARTING'); behind = p.otherAircraft(); p.accept('BEHIND'); }
+      if (p.accept('BEHIND')) { p.skip('THE', 'LANDING', 'DEPARTING'); if (!p.eof) { behind = p.otherAircraft(); p.accept('BEHIND'); } }
       return done(mk('cross', { runway: rwy, expedite: exp, behind }));
     }
     case 'GIVE': case 'GW': {
@@ -671,8 +685,8 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
         return done(mk('takeoff', { runway: rwy, immediate: imm }));
       }
       if (p.accept('TO LAND', 'LAND', 'FOR LANDING', 'LANDING')) { const rwy = p.runway(false, plannedRunway); return done(parseLandBody(p, mk, rwy)); }
-      if (p.accept('TOUCH AND GO', 'LOW APPROACH', 'THE OPTION', 'STOP AND GO')) p.fail('unsupported', 'Pattern operations are not supported yet', []);
       p.skip('FOR', 'THE');
+      if (p.accept('TOUCH AND GO', 'LOW APPROACH', 'THE OPTION', 'OPTION', 'STOP AND GO')) p.fail('unsupported', 'Pattern operations are not supported yet', []);
       if (p.accept('ILS', 'ILS APPROACH', 'THE ILS')) { p.accept('APPROACH'); const rwy = p.runway(false, plannedRunway); p.accept('APPROACH'); return done(parseIlsTail(p, mk('ils', { runway: rwy }), p)); }
       if (p.accept('LOCALIZER', 'LOCALISER', 'LOC', 'LLZ')) { p.accept('APPROACH'); const rwy = p.runway(false, plannedRunway); p.accept('APPROACH'); p.skip(','); let alt: number | null = null; if (p.accept('MAINTAIN', 'MAINTAINING')) alt = p.altitude(); p.accept('UNTIL ESTABLISHED'); return done(mk('loc', { runway: rwy, maintainAlt: alt })); }
       if (p.accept('VISUAL', 'VISUAL APPROACH')) { p.accept('APPROACH'); const rwy = p.runway(false, plannedRunway); p.skip(','); let follow: string | null = null; if (p.accept('FOLLOW', 'FOLLOWING')) { p.skip('THE'); follow = p.otherAircraft(); } return done(mk('visual', { runway: rwy, follow })); }
@@ -694,7 +708,7 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
     }
     case 'CANCEL': {
       p.next();
-      if (p.accept('TAKEOFF', 'TAKE OFF', 'THE TAKEOFF', 'DEPARTURE')) { p.accept('CLEARANCE'); p.skip(','); p.accept('I SAY AGAIN CANCEL TAKEOFF', 'I SAY AGAIN', 'CANCEL TAKEOFF'); p.skip(','); return done(mk('cancelTakeoff', { reason: restText(p) })); }
+      if (p.accept('TAKEOFF', 'TAKE OFF', 'THE TAKEOFF', 'DEPARTURE')) { p.accept('CLEARANCE'); p.skip(','); p.accept('I SAY AGAIN CANCEL TAKEOFF', 'I SAY AGAIN', 'CANCEL TAKEOFF'); p.skip(','); return done(mk('cancelTakeoff', { reason: restAll(p) })); }
       if (p.accept('LINE UP', 'LINEUP', 'LINE UP AND WAIT', 'THE LINE UP', 'LINE UP CLEARANCE')) { p.skip(','); let via: string | null = null; if (p.accept('VACATE', 'VIA', 'VACATE VIA', 'VACATE RUNWAY')) { p.skip('RUNWAY', 'VIA'); if (p.isRunwayAhead()) p.runwayToken(); p.skip('VIA'); if (p.isTaxiwayAhead()) via = p.taxiway(); } return done(mk('cancelLineup', { via })); }
       if (p.accept('APPROACH', 'APPROACH CLEARANCE', 'THE APPROACH', 'ILS', 'ILS CLEARANCE')) { p.accept('CLEARANCE'); p.skip(','); return done(mk('cancelApproach', {})); }
       if (p.accept('MAYDAY', 'EMERGENCY')) return done(mk('emergencyCancelAck', {}));
@@ -709,11 +723,16 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       p.fail('unknown_verb', 'Cancel what?', ['TAKEOFF', 'APPROACH CLEARANCE', 'LINE UP']);
     }
     // eslint-disable-next-line no-fallthrough
-    case 'ABORT': case 'REJECT': { p.next(); p.accept('TAKEOFF', 'TAKE OFF'); p.skip(','); return done(mk('cancelTakeoff', { reason: restText(p) })); }
+    case 'ABORT': case 'REJECT': { p.next(); p.accept('TAKEOFF', 'TAKE OFF'); p.skip(','); return done(mk('cancelTakeoff', { reason: restAll(p) })); }
     case 'VACATE': {
       p.next();
       if (p.accept('IF ABLE', 'IF POSSIBLE', 'WHEN ABLE')) { p.skip(','); let via: string | null = null; if (p.accept('VIA', 'AT')) via = p.taxiway(); return done(mk('stopOnRunway', { mode: 'vacate_if_able', via })); }
-      if (stage === 'lineup') { p.skip('RUNWAY'); if (p.isRunwayAhead()) p.runwayToken(); p.skip(','); let via: string | null = null; if (p.accept('VIA', 'AT')) via = p.taxiway(); p.accept('HOLD SHORT'); return done(mk('cancelLineup', { via })); }
+      const arrival = stage ? ['rollout', 'arr_final', 'arr_short_final', 'arr_established', 'arr_armed', 'arr_inbound', 'taxi_in'].includes(stage) : self?.plan?.kind === 'arrival';
+      if (stage === 'lineup' || (!arrival && p.at('RUNWAY'))) {
+        p.skip('RUNWAY'); if (p.isRunwayAhead()) p.runwayToken(); p.skip(',');
+        let via: string | null = null; if (p.accept('VIA', 'AT')) via = p.taxiway(); p.accept('HOLD SHORT');
+        return done(mk('cancelLineup', { via }));
+      }
       if (p.accept('RUNWAY', 'THE RUNWAY') && p.isRunwayAhead()) p.runwayToken();
       return done(parseExitBody(p, mk, null));
     }
@@ -742,9 +761,17 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       // "CONTACT LONDON CONTROL 127.4" -> external
       if (!POSITION_WORDS[p.peek()] && /^[A-Z]+$/.test(p.peek()) && POSITION_WORDS[p.peek(1)]) p.next();
       const pos = p.position()!;
-      p.accept('FOR RE SEQUENCING', 'FOR RESEQUENCING', 'ON REACHING', 'WHEN VACATED');
+      let when: ContactWhen = pending.contactWhen ?? (pending.cond?.type === 'on_reaching_hold' ? 'on_reaching' : 'now');
+      for (;;) {
+        p.skip(',');
+        if (p.accept('WHEN VACATED', 'AFTER VACATING', 'WHEN CLEAR OF THE RUNWAY', 'WHEN CLEAR')) { when = 'when_vacated'; continue; }
+        if (p.accept('ON REACHING', 'WHEN REACHING')) { if (/^(FL)?\d+$/.test(p.peek())) p.altitude(); when = 'on_reaching'; continue; }
+        if (p.accept('AT THE HOLDING POINT', 'AT THE HOLD', 'AT HOLDING POINT', 'AT THE HOLDING POINT RUNWAY')) { if (p.isRunwayAhead()) p.runwayToken(); when = 'at_hold'; continue; }
+        if (p.accept('FOR RE SEQUENCING', 'FOR RESEQUENCING', 'GOOD DAY', 'GOODBYE', 'BYE')) continue;
+        break;
+      }
       restText(p);
-      return done(mk('contact', { position: pos, when: pending.contactWhen ?? (pending.cond?.type === 'on_reaching_hold' ? 'on_reaching' : 'now') }));
+      return done(mk('contact', { position: pos, when }));
     }
     // ── approach ────────────────────────────────────────────────────────────
     case 'TURN': {
@@ -754,25 +781,30 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       const d: TurnDir = dir === 'LEFT' ? 'L' : 'R';
       if (p.accept('HEADING', 'HDG')) return done(mk('heading', { hdg: p.heading(), dir: d }));
       const tok = p.peek();
-      if (/^\d{1,3}$/.test(tok) && (p.peek(1) === 'DEGREES' || tok.length < 3)) { p.next(); p.accept('DEGREES'); const deg = parseInt(tok, 10); if (deg < 5 || deg > 180) p.fail('invalid_heading', 'Relative turn 5-180 degrees', ['<degrees>'], p.i - 1); return done(mk('heading', { hdg: relativeHeading(self, d, deg), dir: d, relative: { dir: d, deg } })); }
+      if (/^\d{1,3}$/.test(tok) && (p.peek(1) === 'DEGREES' || p.peek(1) === 'DEG' || tok.length < 3)) { p.next(); p.accept('DEGREES', 'DEG'); const deg = parseInt(tok, 10); if (deg < 5 || deg > 180) p.fail('invalid_heading', 'Relative turn 5-180 degrees', ['<degrees>'], p.i - 1); return done(mk('heading', { hdg: relativeHeading(self, d, deg), dir: d, relative: { dir: d, deg } })); }
       if (p.accept('TURNS')) { p.fail('unknown_verb', 'Hold turns belong to a hold command', ['HOLD AT']); }
       return done(mk('heading', { hdg: p.heading(), dir: d }));
     }
     case 'FLY': {
       p.next();
-      if (p.accept('RUNWAY HEADING', 'THE RUNWAY HEADING')) return done(mk('heading', { hdg: runwayHeading(p, plannedRunway), dir: null }));
+      if (p.accept('RUNWAY HEADING', 'THE RUNWAY HEADING')) return done(runwayHeadingPart(mk, runwayHeading(p, plannedRunway)));
       if (p.accept('PRESENT HEADING', 'CURRENT HEADING')) { if (self?.heading == null) p.fail('missing_param', 'Present heading unknown', ['<heading>']); return done(mk('heading', { hdg: Math.round(self.heading) || 360, dir: null })); }
       p.accept('HEADING', 'HDG');
       return done(mk('heading', { hdg: p.heading(), dir: null }));
     }
     case 'HEADING': case 'HDG': case 'VECTOR': case 'H': {
       p.next(); p.accept('HEADING', 'HDG'); p.skip('TO');
-      if (p.accept('RUNWAY HEADING')) return done(mk('heading', { hdg: runwayHeading(p, plannedRunway), dir: null }));
+      if (p.accept('RUNWAY HEADING')) return done(runwayHeadingPart(mk, runwayHeading(p, plannedRunway)));
       const hdg = p.heading();
       const dir = p.accept('LEFT', 'L') ? 'L' : p.accept('RIGHT', 'R') ? 'R' : null;
       return done(mk('heading', { hdg, dir }));
     }
     case 'L': case 'R': { p.next(); p.accept('HEADING', 'HDG'); return done(mk('heading', { hdg: p.heading(), dir: t as TurnDir })); }
+    case 'LEFT': case 'RIGHT': {
+      if (!p.at('LEFT HEADING') && !p.at('RIGHT HEADING') && !p.at('LEFT HDG') && !p.at('RIGHT HDG') && !p.at('LEFT TURN HEADING') && !p.at('RIGHT TURN HEADING')) break;
+      p.next(); p.accept('TURN'); p.accept('HEADING', 'HDG');
+      return done(mk('heading', { hdg: p.heading(), dir: t === 'LEFT' ? 'L' : 'R' }));
+    }
     case 'CLIMB': case 'DESCEND': case 'ALTITUDE': case 'ALT': case 'A': case 'C': case 'D': {
       p.next();
       if (t === 'D' && (p.isFixAhead() || (!/^(FL)?\d+$/.test(p.peek()) && FIX_RE.test(p.peek())))) return done(parseDirectBody(p, mk));
@@ -831,7 +863,13 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       return done(mk('expectRunway', { runway: rwy, approach }));
     }
     case 'CHANGE': {
-      p.next(); p.accept('OF', 'TO'); p.accept('RUNWAY', 'RWY');
+      p.next(); p.accept('OF', 'TO'); p.accept('RUNWAY', 'RWY'); p.skip(',');
+      if (p.at('EXPECT')) {
+        p.next(); p.accept('VECTORS', 'VECTORS FOR', 'THE');
+        const ap = p.accept('ILS', 'VISUAL', 'LOC', 'LOCALIZER', 'LOCALISER', 'RNAV'); p.accept('APPROACH'); p.accept('RUNWAY', 'RWY');
+        const approach: ApproachType = ap === 'VISUAL' ? 'VISUAL' : ap === 'RNAV' ? 'RNAV' : ap === 'ILS' || !ap ? 'ILS' : 'LOC';
+        return done(mk('expectRunway', { runway: p.runway(), approach }));
+      }
       const rwy = p.runway();
       p.skip(','); p.accept('CLEARED ILS', 'EXPECT ILS'); if (p.isRunwayAhead()) p.runwayToken();
       if (air === false) return done(mk('expectRunway', { runway: rwy, approach: 'ILS' }));
@@ -874,6 +912,8 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       const v = p.peek();
       if (!v) p.fail('missing_param', 'Corrected value required', ['<value>']);
       p.next();
+      p.skip('DEGREES', 'FEET', 'KNOTS', ',');
+      if (p.accept('I SAY AGAIN', 'SAY AGAIN', 'AGAIN')) { p.skip(','); if (CORRECTION_WORDS[p.peek()] === field) p.next(); if (p.peek() === v) p.next(); p.skip('DEGREES', 'FEET', 'KNOTS'); }
       restText(p);
       const value: number | string = field === 'runway' || field === 'taxiway' || field === 'squawk' || field === 'frequency' ? v : (field === 'altitude' ? altitudeFromToken(v) : parseInt(v, 10));
       return done(mk('correction', { field, value }));
@@ -942,6 +982,19 @@ function hdgTrue(p: Parser, digits: string): number {
   const tr = Math.round(trueHeading(n, p.ctx.magVar ?? 0));
   return ((tr % 360) + 360) % 360 || 360;
 }
+/** Heading parts produced by "runway heading" (fold() turns them into afterDepHdg / goAround.heading = 'runway'). */
+const RUNWAY_HDG_PARTS = new WeakSet<object>();
+function runwayHeadingPart(mk: Mk, hdg: number): Part {
+  const part = mk('heading', { hdg, dir: null });
+  RUNWAY_HDG_PARTS.add(part);
+  return part;
+}
+/** Free-text tail up to the next THEN separator (reasons that may contain verb words, e.g. "vehicle on runway"). */
+function restAll(p: Parser): string | null {
+  const words: string[] = [];
+  while (!p.eof && p.peek() !== 'THEN') words.push(p.next());
+  return words.length ? words.join(' ').toLowerCase() : null;
+}
 function runwayHeading(p: Parser, rwy: string | null): number {
   if (!rwy) p.fail('missing_param', 'Runway heading unknown — no runway assigned', ['<heading>']);
   const h = p.ctx.runwayHeadingTrue?.(rwy);
@@ -964,19 +1017,37 @@ function altitudeFromToken(v: string): number {
   const n = parseInt(v, 10);
   return n >= 1000 ? n : n < 10 ? n * 1000 : n * 100;
 }
+/** True when the token at the cursor starts a new part ("LEFT HEADING" counts, a bare "LEFT" in a reason does not). */
+function verbAhead(p: Parser): boolean {
+  const t = p.peek();
+  if ((t === 'LEFT' || t === 'RIGHT') && /^(HEADING|HDG)$/.test(p.peek(1))) return true;
+  return VERB_STARTERS.has(t);
+}
 function restText(p: Parser): string | null {
   // free-text tail (reasons) up to the next THEN separator; stops at a verb starter so the next part still parses
   const words: string[] = [];
-  while (!p.eof && p.peek() !== 'THEN' && !(VERB_STARTERS.has(p.peek()) && !['A', 'C', 'D', 'H', 'I', 'L', 'R', 'S', 'T', 'AT', 'ON'].includes(p.peek()) && words.length >= 0 && !['I', 'SAY'].includes(p.peek()))) {
+  while (!p.eof && p.peek() !== 'THEN' && !(verbAhead(p) && !['A', 'C', 'D', 'H', 'I', 'L', 'R', 'S', 'T', 'AT', 'ON'].includes(p.peek()) && words.length >= 0 && !['I', 'SAY'].includes(p.peek()))) {
     const w = p.next();
     if (w === 'I' && p.peek() === 'SAY') { p.next(); p.accept('AGAIN'); continue; }
     words.push(w);
   }
   return words.length ? words.join(' ').toLowerCase() : null;
 }
+const SOFT_STARTERS = new Set(['ON', 'AT', 'A', 'C', 'D', 'H', 'I', 'L', 'R', 'S', 'T', 'NO', 'OWN', 'RUNWAY', 'RWY']);
+/** Like verbAhead but prepositions / single letters only count when they really open a part ("ON REACHING", "AT 4000", "D OCK"). */
+function hardVerbAhead(p: Parser): boolean {
+  const t = p.peek();
+  if (!SOFT_STARTERS.has(t)) return verbAhead(p);
+  if (t === 'ON') return p.at('ON REACHING');
+  if (t === 'AT') return /^(FL)?\d+$/.test(p.peek(1)) || p.at('AT OR') || p.at('AT PILOTS');
+  if (t === 'NO') return p.at('NO SPEED');
+  if (t === 'RUNWAY' || t === 'RWY') return RUNWAY_RE.test(p.peek(1)) || p.peek(1) === 'HEADING';
+  if (t === 'D') return p.isFixAhead(1);
+  return /^(FL)?\d+$/.test(p.peek(1));
+}
 function restTextUntilVerb(p: Parser): string | null {
   const words: string[] = [];
-  while (!p.eof && p.peek() !== 'THEN' && !VERB_STARTERS.has(p.peek())) words.push(p.next());
+  while (!p.eof && p.peek() !== 'THEN' && !hardVerbAhead(p)) words.push(p.next());
   return words.length ? words.join(' ').toLowerCase() : null;
 }
 function parseNumberChip(p: Parser): number | null {
@@ -1025,10 +1096,16 @@ function parseTaxi(p: Parser, mk: Mk, self: ParseAircraft | null): Part {
   if (p.accept('HOLDING POINT', 'HOLD SHORT', 'HOLDING POINT RUNWAY', 'HOLD POINT')) { p.skip('OF'); }
   if (p.accept('DE-ICING PAD', 'DEICING PAD', 'PAD')) p.fail('unsupported', 'De-icing pads are Phase 2', ['<runway>', 'STAND']);
   let intersection: string | null = null;
-  if (p.at('RUNWAY') || p.at('RWY') || p.isRunwayAhead()) {
+  if (p.at('RUNWAY') || p.at('RWY') || p.isRunwayAhead() || (RUNWAY_RE.test(p.peek()) && !(p.strict.stand ? p.ctx.stands!.some(s => s.toUpperCase() === p.peek()) : false))) {
     const rwy = p.runway();
     if (p.accept('AT')) intersection = p.taxiway();
     return parseTaxiBody(p, mk, { kind: 'runway', runway: rwy, intersection }, self);
+  }
+  if (p.isTaxiwayAhead() && p.isTaxiwayAhead(1) && (p.peek(2) === '' || ['VIA', 'HOLD', 'HS', 'EXPEDITE', 'THEN', 'CROSS'].includes(p.peek(2)))) {
+    // "taxi A B" (describe() form of a node destination = intersection of A and B)
+    const a = p.taxiway(); const b = p.taxiway();
+    const node = p.ctx.intersectionNode?.(a, b) ?? { nodeId: `${a}/${b}`, label: `${a}/${b}` };
+    return parseTaxiBody(p, mk, { kind: 'node', nodeId: node.nodeId, label: node.label }, self);
   }
   if (p.isTaxiwayAhead() && p.peek(1) === 'AND' && p.isTaxiwayAhead(2) && !p.at('VIA')) {
     const a = p.taxiway(); p.next(); const b = p.taxiway();
@@ -1061,7 +1138,10 @@ function parseTaxiBody(p: Parser, mk: Mk, dest: TaxiDest | null, self: ParseAirc
     if (p.accept('VIA', 'ROUTE')) {
       p.skip(',');
       while (!p.eof && p.isTaxiwayAhead() && !['HOLD', 'HS', 'CROSS', 'EXPEDITE', 'THEN', 'CONTACT', 'AT', 'REPORT'].includes(p.peek())) { ast.via.push(p.taxiway()); p.skip(',', 'AND', 'THEN'); if (p.peek() === 'THEN') break; }
-      if (!ast.via.length) p.fail('missing_param', 'Taxiway route required after VIA', ['<taxiway>']);
+      if (!ast.via.length) {
+        if (!p.eof && !VERB_STARTERS.has(p.peek()) && !RUNWAY_RE.test(p.peek())) p.taxiway(); // raises unknown_taxiway with the offending token
+        p.fail('missing_param', 'Taxiway route required after VIA', ['<taxiway>']);
+      }
       ast.auto = false;
       continue;
     }
@@ -1240,8 +1320,8 @@ function vehicleId(p: Parser, required = true): string | null {
   const known = (id: string) => (p.strict.vehicle ? p.ctx.vehicles!.some(v => v.toUpperCase() === id) : true);
   // FIRE1 / FIRE 1 / RESCUE 1 / Fire-1
   let m = t.match(/^([A-Z]+)(\d+)$/);
-  if (m && VEHICLE_WORDS[m[1]]) { const id = `${VEHICLE_WORDS[m[1]].prefix}${m[2]}`; if (!known(id)) { if (required) p.fail('unknown_vehicle', `Unknown vehicle ${t}`, ['<vehicle>']); return null; } p.next(); return id; }
-  if (VEHICLE_WORDS[t] && /^\d+$/.test(p.peek(1))) { const id = `${VEHICLE_WORDS[t].prefix}${p.peek(1)}`; if (!known(id)) { if (required) p.fail('unknown_vehicle', `Unknown vehicle ${t} ${p.peek(1)}`, ['<vehicle>']); return null; } p.i += 2; return id; }
+  if (m && VEHICLE_WORDS[m[1]]) { const id = `${VEHICLE_WORDS[m[1]].prefix}${m[2]}`; if (!known(id)) p.fail('unknown_vehicle', `Unknown vehicle ${t}`, ['<vehicle>']); p.next(); return id; }
+  if (VEHICLE_WORDS[t] && /^\d+$/.test(p.peek(1)) && !(p.peek(2) === 'X')) { const id = `${VEHICLE_WORDS[t].prefix}${p.peek(1)}`; if (!known(id)) p.fail('unknown_vehicle', `Unknown vehicle ${t} ${p.peek(1)}`, ['<vehicle>']); p.i += 2; return id; }
   m = t.match(/^([A-Z]+\d+)$/);
   if (m && known(t) && (p.strict.vehicle || /^(FIRE|AMB|FOLLOW|TUG|OPS|SWEEP|BIRD|FUEL|DEICE)\d+$/.test(t))) { p.next(); return t; }
   if (required) p.fail('missing_param', 'Vehicle id required', ['<vehicle>']);
@@ -1254,7 +1334,7 @@ function parseVehicleTarget(p: Parser): Extract<CommandAST, { kind: 'dispatchVeh
   if (p.at('RUNWAY') || p.at('RWY') || p.isRunwayAhead()) return { kind: 'runway', runway: p.runway() };
   if (p.accept('MAP', 'POINT', 'MAP POINT', 'POSITION')) p.fail('unsupported', 'Map-point targets come from the map picker', ['<runway>', '<aircraft>']);
   const r = resolveCallsign(p.toks, p.i, p.ctx);
-  if (r.callsign) { p.i += r.consumed; const a = (p.ctx.aircraft ?? []).find(x => x.callsign === r.callsign); return { kind: 'aircraft', id: (a as { id?: number } | undefined)?.id ?? -1, callsign: r.callsign }; }
+  if (r.callsign) { p.i += r.consumed; const a = (p.ctx.aircraft ?? []).find(x => x.callsign === r.callsign); return { kind: 'aircraft', id: a?.id ?? -1, callsign: r.callsign }; }
   p.fail('missing_param', 'Dispatch where? (runway, aircraft or stand)', ['<runway>', '<aircraft>', 'STAND']);
 }
 function parseSystem(p: Parser): CommandAST | null {
@@ -1318,12 +1398,12 @@ function parseSystem(p: Parser): CommandAST | null {
       p.next(); p.accept('ALL', 'NORMAL'); p.accept('TRAFFIC', 'OPERATIONS', 'MOVEMENT');
       return sys('resumeAll', {});
     }
-    case 'BROADCAST': { p.next(); const text = p.toks.slice(p.i).map(x => x.raw).join(' '); p.i = p.toks.length; if (!text) p.fail('missing_param', 'Broadcast text required', ['<text>']); return sys('broadcast', { text }); }
+    case 'BROADCAST': { p.next(); const text = broadcastText(p); if (!text) p.fail('missing_param', 'Broadcast text required', ['<text>']); return sys('broadcast', { text }); }
     case 'ALL': {
       if (!p.at('ALL STATIONS')) return null;
       p.i += 2; p.skip(',');
       if (p.accept('HOLD POSITION', 'HOLD', 'EMERGENCY IN PROGRESS HOLD POSITION')) { restText(p); return sys('holdAll', { scope: 'all', runway: null }); }
-      const text = p.toks.slice(p.i).map(x => x.raw).join(' '); p.i = p.toks.length;
+      const text = broadcastText(p);
       if (!text) p.fail('missing_param', 'Broadcast text required', ['<text>']);
       return sys('broadcast', { text });
     }
@@ -1339,12 +1419,21 @@ function parseSystem(p: Parser): CommandAST | null {
   p.i = save;
   return null;
 }
+/** Free text after BROADCAST / ALL STATIONS, case preserved from the original input when available. */
+function broadcastText(p: Parser): string {
+  const fromTokens = p.toks.slice(p.i).map(x => x.raw).join(' ');
+  p.i = p.toks.length;
+  const m = p.source.match(/^\s*(?:broadcast|all\s+stations)[\s,:;-]*(?:hold\s+position[\s,]*)?(.*)$/i);
+  const raw = m?.[1]?.trim() ?? '';
+  return raw.replace(/[.]+$/, '') || fromTokens;
+}
 function parseVehicleOp(p: Parser, sys: <K extends CommandAST['kind']>(kind: K, f: Partial<Omit<Extract<CommandAST, { kind: K }>, 'kind'>>) => Extract<CommandAST, { kind: K }>, id: string): CommandAST {
   p.skip(',');
   if (p.accept('HOLD', 'HOLD POSITION', 'HOLD SHORT', 'STOP')) { if (p.isRunwayAhead() || p.at('RUNWAY')) p.runway(); return sys('vehicleOp', { id, op: 'hold', runway: null }); }
   if (p.accept('CONTINUE', 'PROCEED', 'RESUME', 'GO')) { restText(p); return sys('vehicleOp', { id, op: 'continue', runway: null }); }
   if (p.accept('CROSS', 'ENTER')) { const rwy = p.runway(); restText(p); return sys('vehicleOp', { id, op: 'cross', runway: rwy }); }
-  if (p.accept('RTB', 'RETURN TO BASE', 'RETURN TO STATION', 'RETURN', 'RECALL')) { restText(p); return sys('recallVehicle', { id }); }
+  if (p.accept('RTB', 'RETURN TO BASE', 'RETURN TO STATION', 'RETURN')) { restText(p); return sys('vehicleOp', { id, op: 'rtb', runway: null }); }
+  if (p.accept('RECALL', 'RECALLED')) { restText(p); return sys('recallVehicle', { id }); }
   if (p.accept('TO', 'DISPATCH', 'DISPATCH TO', 'PROCEED TO')) { const target = parseVehicleTarget(p); return sys('dispatchVehicle', { type: VEHICLE_WORDS[id.replace(/\d+$/, '')]?.type ?? 'arff', ids: [id], count: 1, target }); }
   p.fail('unknown_verb', `${id}: hold / continue / cross / return to base?`, ['HOLD', 'CONTINUE', 'CROSS', 'RTB']);
 }
@@ -1360,13 +1449,13 @@ function fold(parts: Part[], p: Parser): Part[] {
   };
   const takeoff = parts.find(x => x.kind === 'takeoff') as Extract<Part, { kind: 'takeoff' }> | undefined;
   if (takeoff) {
-    const h = take('heading'); if (h) { if (h.relative) takeoff.turn = h.relative; else takeoff.afterDepHdg = h.hdg; }
+    const h = take('heading'); if (h) { if (h.relative) takeoff.turn = h.relative; else takeoff.afterDepHdg = RUNWAY_HDG_PARTS.has(h) ? 'runway' : h.hdg; }
     const a = take('altitude'); if (a) takeoff.initialAlt = a.ft;
     const c = parts.find(x => x.kind === 'contact' && x.position === 'departure'); if (c) { parts.splice(parts.indexOf(c), 1); takeoff.contactDeparture = true; }
   }
   const ga = parts.find(x => x.kind === 'goAround') as Extract<Part, { kind: 'goAround' }> | undefined;
   if (ga) {
-    const h = take('heading'); if (h) ga.heading = h.hdg;
+    const h = take('heading'); if (h) ga.heading = RUNWAY_HDG_PARTS.has(h) ? 'runway' : h.hdg;
     const a = take('altitude'); if (a) ga.alt = a.ft;
     const c = take('contact'); if (c) ga.contact = c.position;
   }
@@ -1397,7 +1486,11 @@ function fold(parts: Part[], p: Parser): Part[] {
   const cont = parts.find(x => x.kind === 'continue') as Extract<Part, { kind: 'continue' }> | undefined;
   if (cont) { const hs = take('holdShort'); if (hs) cont.holdShortOf = hs.of; }
   const direct = parts.find(x => x.kind === 'direct') as Extract<Part, { kind: 'direct' }> | undefined;
-  if (direct) { const h = take('heading'); if (h) direct.thenHdg = h.hdg; }
+  if (direct) {
+    // only a heading spoken AFTER the fix is the "then heading" clause; a heading before it is an incompatible pair (UX §G13.7)
+    const hi = parts.findIndex(x => x.kind === 'heading');
+    if (hi > parts.indexOf(direct)) { const h = parts.splice(hi, 1)[0] as Extract<Part, { kind: 'heading' }>; direct.thenHdg = h.hdg; }
+  }
   const alt = parts.find(x => x.kind === 'altitude') as Extract<Part, { kind: 'altitude' }> | undefined;
   if (alt) { const ex = parts.find(x => x.kind === 'expedite' && (x.scope === 'climb' || x.scope === 'descent')); if (ex) { parts.splice(parts.indexOf(ex), 1); alt.expedite = true; } }
   const ack = parts.find(x => x.kind === 'emergencyAck') as Extract<Part, { kind: 'emergencyAck' }> | undefined;
@@ -1432,7 +1525,7 @@ function parseText(text: string, ctx: ParseCtx): ParseResult {
   const tokens = tokenize(text);
   const result: ParseResult = { ok: false, ast: null, callsign: null, errors: [], suggestions: [], tokens };
   if (!tokens.length) { result.errors.push({ code: 'empty', message: 'Empty command', at: 0, token: null, expected: ['<callsign>'] }); result.suggestions = ['<callsign>']; return result; }
-  const p = new Parser(tokens, ctx, null);
+  const p = new Parser(tokens, ctx, null); p.source = text;
   try {
     // 1. system commands
     const sys = parseSystem(p);
@@ -1449,7 +1542,7 @@ function parseText(text: string, ctx: ParseCtx): ParseResult {
     else p.fail('unknown_callsign', `No aircraft "${tokens[0].text}" on frequency`, ['<callsign>'], 0);
     result.callsign = cs!;
     const self = (ctx.aircraft ?? []).find(x => x.callsign.toUpperCase() === cs) ?? null;
-    const pp = new Parser(tokens, ctx, self); pp.i = p.i;
+    const pp = new Parser(tokens, ctx, self); pp.i = p.i; pp.source = text;
     if (pp.eof) pp.fail('unknown_verb', 'Instruction required', ['<verb>']);
     // 3. parts
     const parts: Part[] = [];
@@ -1457,9 +1550,21 @@ function parseText(text: string, ctx: ParseCtx): ParseResult {
       pp.skip(',', 'THEN', 'AND');
       if (pp.eof) break;
       const { part, pending } = parsePart(pp, cs!, self);
+      // trailing condition at the end of the line ("turn right heading 090 when passing 4000"); before a further part it binds forward
+      if (!pp.eof && !pending.cond && (part.kind === 'heading' || part.kind === 'altitude' || part.kind === 'contact' || part.kind === 'taxi' || part.kind === 'lineup' || part.kind === 'cross')) {
+        const save = pp.i;
+        pp.skip(',');
+        const trailing = parseCondition(pp, self);
+        if ((trailing.cond || trailing.behind) && pp.eof) { pending.cond = trailing.cond; pending.contactWhen = pending.contactWhen ?? trailing.contactWhen; pending.behind = pending.behind ?? trailing.behind; }
+        else pp.i = save;
+      }
       if (pending.cond) {
         if (part.kind === 'heading' || part.kind === 'altitude') part.when = pending.cond;
-        else if (part.kind === 'contact') { if (pending.cond.type === 'after_vacated') part.when = 'when_vacated'; else if (pending.cond.type === 'on_reaching_hold') part.when = 'on_reaching'; else pp.detached.push({ kind: part.kind, condition: pending.cond }); }
+        else if (part.kind === 'contact') {
+          if (pending.cond.type === 'after_vacated') part.when = 'when_vacated';
+          else if (pending.cond.type === 'on_reaching_hold') part.when = 'on_reaching';
+          else { if (pending.cond.type === 'at_or_above_alt' || pending.cond.type === 'at_or_below_alt') part.when = 'on_reaching'; pp.detached.push({ kind: part.kind, condition: pending.cond }); }
+        }
         else if (part.kind === 'lineup' || part.kind === 'cross') { if (pending.behind) part.behind = pending.behind; else pp.detached.push({ kind: part.kind, condition: pending.cond }); }
         else pp.detached.push({ kind: part.kind, condition: pending.cond });
       } else if (pending.contactWhen && part.kind === 'contact') part.when = pending.contactWhen;
@@ -1520,18 +1625,24 @@ const PLACEHOLDER_NUMBERS: Record<string, string[]> = {
   '<text>': [],
 };
 
+const isEmergencyVerb = (v: VerbDef) => v.actions.length > 0 && v.actions.every(id => id.startsWith('emerg-'));
+
+/** Verbs offered for an aircraft, best first: enabledActions (authoritative) > statically enabled cells > disabled-with-reason cells; emergency verbs only during an emergency. */
 function verbsForAircraft(a: ParseAircraft | null): VerbDef[] {
-  if (!a) return [...VERBS];
+  if (!a) return VERBS.filter(v => !isEmergencyVerb(v));
   if (a.enabledActions?.length) {
     const set = new Set(a.enabledActions);
     return VERBS.filter(v => !v.actions.length ? (v.air == null || isAirStageName(a.stage) === v.air) : v.actions.some(id => set.has(id)));
   }
   if (a.stage) {
     const vis = new Set(visibleActionsForStage(a.stage));
+    const on = new Set(enabledActionsForStage(a.stage));
     const air = isAirStageName(a.stage);
-    return VERBS.filter(v => !v.actions.length ? (v.air == null || air === v.air || air == null) : v.actions.some(id => vis.has(id)));
+    const list = VERBS.filter(v => (!v.actions.length ? (v.air == null || air === v.air || air == null) : v.actions.some(id => vis.has(id))) && (a.emergency || !isEmergencyVerb(v)));
+    const rank = (v: VerbDef) => (!v.actions.length ? 1 : v.actions.some(id => on.has(id)) ? 0 : 2);
+    return list.sort((x, y) => rank(x) - rank(y));
   }
-  return [...VERBS];
+  return VERBS.filter(v => !isEmergencyVerb(v));
 }
 function isAirStageName(s?: Stage): boolean | null {
   if (!s) return null;
@@ -1556,7 +1667,8 @@ export function suggest(prefix: string, ctx: ParseCtx = {}): Suggestion[] {
     const T = text.toUpperCase();
     if (partial && !T.startsWith(partial) && !T.includes(partial)) return;
     if (out.some(s => s.text === T)) return;
-    const score = base + (partial ? (T.startsWith(partial) ? 40 : 10) : 0);
+    const digitsTail = partial && /^\d+$/.test(partial) && kind === 'callsign' && T.replace(/[^0-9]/g, '').endsWith(partial);
+    const score = base + (partial ? (T.startsWith(partial) ? 40 : digitsTail ? 30 : 10) : 0);
     out.push({ text: T, kind, label, score });
   };
   const list = ctx.aircraft ?? [];
@@ -1565,7 +1677,10 @@ export function suggest(prefix: string, ctx: ParseCtx = {}): Suggestion[] {
     sorted.forEach((a, i) => add(a.callsign, 'callsign', a.hasRequest ? `${a.callsign} REQ` : a.callsign, 100 - Math.min(i, 40) + (a.hasRequest ? 20 : 0)));
   };
   const addVerbs = (a: ParseAircraft | null) => {
-    const vs = verbsForAircraft(a).sort((x, y) => actionOrder(x) - actionOrder(y));
+    const vs = verbsForAircraft(a);
+    const on = a?.stage ? new Set(enabledActionsForStage(a.stage)) : null;
+    const tier = (v: VerbDef) => (a?.enabledActions?.length || !on ? 0 : !v.actions.length ? 1 : v.actions.some(id => on.has(id)) ? 0 : 2);
+    vs.sort((x, y) => tier(x) - tier(y) || actionOrder(x) - actionOrder(y));
     vs.forEach((v, i) => add(v.text, 'verb', v.text, 80 - Math.min(i, 60)));
   };
   const addPlaceholder = (ph: string, self: ParseAircraft | null) => {

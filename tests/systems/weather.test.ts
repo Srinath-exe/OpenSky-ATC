@@ -1,8 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { WeatherModel, applyWind, defaultWeather, windComponents, runwayScore, nextAtisLetter, transitionLevel, magneticDir, type WeatherInit } from '../../src/lib/sim/weather';
+import { WeatherModel, applyWind, defaultWeather, windComponents, runwayScore, nextAtisLetter, transitionLevel, magneticDir, type WeatherInit, type RunwayEnd } from '../../src/lib/sim/weather';
 import { subStream, setSeed } from '../../src/lib/sim/rng';
-import type { RunwayEnd } from '../../src/lib/runwayManifest';
 
 const EGLL_ENDS: RunwayEnd[] = [
   { name: '09L', hdg: 90 }, { name: '27R', hdg: 270 },

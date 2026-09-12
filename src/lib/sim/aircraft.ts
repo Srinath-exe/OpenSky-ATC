@@ -16,7 +16,7 @@
 //  Altitude throughout this module is in FEET AGL. Distances in metres.
 //  Speed knots (ground speed on the ground, IAS-ish in the air).
 // ============================================================
-import { dist, headingTo, angleDelta, advance, sampleAlong, KTS_TO_MPS, FT_TO_M } from './projection';
+import { dist, headingTo, angleDelta, advance, sampleAlong, KTS_TO_MPS, FT_TO_M, NM_TO_M } from './projection';
 import type { AircraftState, FlightPhase, PathHold, SimEventData, SimEventType } from './types';
 import { EMERGENCY_CATALOGUE } from './emergencies';
 import { TCH_FT } from './ils';
@@ -124,10 +124,13 @@ function follow(a: AircraftState, dt: number, targetSpeed: number, accel: number
   if (a.speed < 0) a.speed = 0;
 
   const movedM = a.speed * KTS_TO_MPS * dt;
+  const prevAlong = a.distAlong;
   a.distAlong += movedM;
-  if (stopAt != null && a.distAlong > stopAt) { a.distAlong = stopAt; }
+  // Overshoot clamp for the discrete step only: a hold re-armed behind the aircraft must never move it backwards (B5).
+  if (stopAt != null && a.distAlong > stopAt) { a.distAlong = Math.max(stopAt, prevAlong); }
+  // End of path: clamp (never snap forward - end checks tolerate the last 0.6 m).
   const atEnd = a.distAlong >= p.total - 0.5;
-  if (atEnd) a.distAlong = p.total;
+  if (a.distAlong > p.total) a.distAlong = p.total;
 
   const s = sampleAlong(p.pts, p.cum, a.distAlong);
   a.pos = s.pos;
@@ -316,7 +319,16 @@ function stepLanding(a: AircraftState, dt: number, ctx: StepCtx) {
   if (!a.path) { stepAirborneFree(a, dt, ctx); return; }
   const p = a.path;
   const vapp = a.perf.approachSpeed + (a.emergency ? EMERGENCY_CATALOGUE[a.emergency.type].perf.vappPlusKt : 0);
-  const tgt = Math.min(a.targetSpeed || vapp, Math.max(vapp, a.cmdIas ?? 0));
+  // Final speed schedule (03 §8): an assigned speed holds until its "until" distance (default 4 NM), otherwise
+  // <= 200 kt outside 6 NM, 160 kt from 6 NM, Vapp inside 4 NM.
+  const remainNM = Math.max(0, a.thresholdDist - a.distAlong) / NM_TO_M;
+  const untilNM = a.speedUntilNM ?? 4;
+  let tgt: number;
+  if (a.cmdIas != null && remainNM > untilNM) tgt = Math.max(vapp, a.cmdIas);
+  else if (remainNM > 6) tgt = Math.max(vapp, Math.min(a.targetSpeed || vapp, 200));
+  else if (remainNM > 4) tgt = Math.max(vapp, Math.min(a.targetSpeed || 160, 160));
+  else tgt = vapp;
+  a.targetSpeed = tgt;
   a.speed = approachVal(a.speed, tgt, (tgt >= a.speed ? a.perf.accelerationRateAir : a.perf.decelerationRateAir) * dt);
   const tangent = sampleAlong(p.pts, p.cum, a.distAlong).heading;
   const gs = ctx.wind(tangent, a.speed).gsKt;
@@ -332,10 +344,11 @@ function stepLanding(a: AircraftState, dt: number, ctx: StepCtx) {
   const tdzM = TCH_FT / (Math.tan(3 * Math.PI / 180) * FT_PER_M);
   const gsAlt = Math.max(0, (remain + tdzM) * Math.tan(3 * Math.PI / 180) * FT_PER_M);
   if (a.altitude > TCH_FT || remain > 0) {
-    a.altitude = gsAlt;
+    // Follow the slope; if still above it (captured within the tolerance) converge down at the descent rate, never below.
+    a.altitude = a.altitude > gsAlt + 1 ? Math.max(gsAlt, a.altitude - (a.perf.maxDescentRate * 1.4 / 60) * dt) : gsAlt;
   } else {
-    // Flare: sink limited to ~350 fpm below 50 ft -> touchdown ~350-450 m in.
-    a.altitude = Math.max(0, a.altitude - (350 / 60) * dt);
+    // Flare from the 50 ft TCH: ~550 fpm sink -> touchdown 300-450 m past the threshold at jet approach speeds (03 §2.5).
+    a.altitude = Math.max(0, a.altitude - (550 / 60) * dt);
   }
   if (a.altitude <= 0.01 && remain <= 0) {
     a.altitude = 0;
@@ -362,9 +375,12 @@ function stepRollout(a: AircraftState, dt: number, ctx: StepCtx) {
   const remain = Math.max(0, exitAt - a.distAlong);
   // Highest speed we may still carry here and reach exitSpd at the exit with `decel`.
   const vAllowed = Math.sqrt(Math.max(0, (exitSpd * KTS_TO_MPS) ** 2 + 2 * decel * KTS_TO_MPS * remain)) / KTS_TO_MPS;
-  const tgt = Math.min(a.speed, vAllowed);
+  let tgt = Math.min(a.speed, vAllowed);
+  // On the exit path (kind 'taxi') the aircraft taxis at turn speed to the end - also when it left the runway from a
+  // standstill (cancelled line-up / rejected takeoff), where a pure deceleration profile would never move it.
+  if (p.kind === 'taxi') tgt = Math.min(vAllowed, Math.max(a.speed, a.perf.taxiTurnSpeed));
   a.targetSpeed = tgt;
-  a.speed = approachVal(a.speed, tgt, decel * dt);
+  a.speed = approachVal(a.speed, tgt, (tgt > a.speed ? TAXI_ACCEL : decel) * dt);
   if (a.trafficHold) a.speed = approachVal(a.speed, 0, decel * dt);
   const movedM = a.speed * KTS_TO_MPS * dt;
   a.distAlong = Math.min(p.total, a.distAlong + movedM);

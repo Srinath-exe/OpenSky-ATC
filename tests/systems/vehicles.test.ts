@@ -284,6 +284,18 @@ test('ops inspection: enters only a closed/inspection runway, drives full length
   const nowClosed = open.map(x => (x.ref === '09R/27L' ? { ...x, status: 'inspection' as const } : x));
   runUntil(fleet2, air, nowClosed, res2.t, 30, () => v2.onRunway != null, { autoCross: false, safe: false });
   assert.equal(v2.onRunway, '09R/27L');
+  // explicit entry clearance on an OPEN runway (op cross): drives the full inspection before reporting complete
+  setSeed(6);
+  const fleet3 = new VehicleFleet();
+  fleet3.init(air, defaultStations({ x: 0, y: 0 }));
+  fleet3.step(1 / 30, ctxFor(fleet3, air, open, 0, { autoCross: false, safe: false }));
+  const v3 = fleet3.dispatch('ops', { kind: 'runway', runway: '27L' }, [], 1).vehicles[0];
+  const res3 = runUntil(fleet3, air, open, 0, 600, () => v3.state === 'onscene' && v3.speed === 0 && v3.holdShortRunway != null, { autoCross: false, safe: false });
+  assert.equal(fleet3.op('OPS1', 'cross', '27L'), true);
+  let maxD3 = 0;
+  const res4 = runUntil(fleet3, air, open, res3.t, 900, () => { if (v3.onRunway) maxD3 = Math.max(maxD3, dist(v3.pos, projectionFor(air).toXY(air.runways.find(x => x.ref === '09R/27L')!.ends[0].lat, air.runways.find(x => x.ref === '09R/27L')!.ends[0].lng))); return v3.state === 'returning'; }, { autoCross: false, safe: false });
+  assert.ok(maxD3 > 3000, `cleared entry drives the full length before completing (${Math.round(maxD3)} m)`);
+  assert.ok(res4.events.some(m => /Entering 27L, Ops 1/.test(m)) && res4.events.some(m => /inspection complete/.test(m)), res4.events.filter(m => /Ops 1/.test(m)).join(' | '));
 });
 
 test('fuel trucks never route over runways; dispatch failures are reported; dispatchEmergency full = 3 ARFF + ambulance', () => {

@@ -23,7 +23,7 @@
 // ============================================================
 import type { AircraftState, ArffLevel, Emergency, EmergencyChecklistItem, EmergencyLevel, EmergencyType, ScoreEvent, SimEvent, Stage } from './types';
 import { SCORE_TABLE, emptyChecklist } from './types';
-import { chance, rf, ri } from './rng';
+import { chance, rf, ri, rng } from './rng';
 
 // ──────────────────────────────────────────────────────────────────────────────
 //  Catalogue
@@ -326,7 +326,7 @@ export function maybeDeclare(a: AircraftState, rng: () => number, view: Emergenc
 }
 
 /** Build the record for a type (used by maybeDeclare and forceEmergency): souls, fuel, runway from the view. */
-export function buildEmergency(type: EmergencyType, a: AircraftState, stage: Stage, view: EmergencyEngineView, r: () => number = Math.random): Emergency {
+export function buildEmergency(type: EmergencyType, a: AircraftState, stage: Stage, view: EmergencyEngineView, r: () => number = rng): Emergency {
   const spec = EMERGENCY_CATALOGUE[type];
   const souls = drawSouls(a.perf.weightClass, r);
   const fuel = spec.fuelMin ? Math.round(spec.fuelMin[0] + r() * (spec.fuelMin[1] - spec.fuelMin[0])) : a.fuelMin != null ? Math.round(a.fuelMin) : Math.round(45 + r() * 75);

@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { AlertEngine, ALERT_CONST, cpa, timeToInfringement, type AlertStepCtx } from '../../src/lib/sim/alerts';
 import { NM_TO_M } from '../../src/lib/sim/projection';
 import { WAKE_FINAL_NM } from '../../src/lib/sim/types';
-import type { AircraftState } from '../../src/lib/sim/types';
+import type { AircraftState, Vehicle } from '../../src/lib/sim/types';
+import type { XY } from '../../src/lib/sim/projection';
 import { mkAircraft, mkRunway } from './helpers';
 
 const KT = 0.514444;
@@ -139,7 +140,7 @@ test('runway incursion: aircraft on a runway without clearance and a vehicle cro
   const eng = new AlertEngine();
   const a = mkAircraft({ callsign: 'BAW1', phase: 'taxi', altitude: 0, speed: 10 });
   const rwy = mkRunway('27L', '09R', '09R/27L', 270, { occupiedBy: [{ id: 'FIRE1', callsign: 'Fire 1', kind: 'vehicle', since: 0 }] });
-  const veh = { id: 'FIRE1', callsign: 'Fire 1', type: 'arff', state: 'enroute', pos: { x: 0, y: 0 }, heading: 0, speed: 20, station: { x: 0, y: 0 }, stationNodeId: '', target: null, path: null, distAlong: 0, holdShortNode: null, holdShortRunway: null, holdReleased: false, trafficHold: false, onRunway: '09R/27L', dispatchedAt: 0, etaAt: null, arrivedAt: null, onSceneUntil: null, maxSpeedKt: { taxiway: 40, runway: 50, apron: 15 }, safetyRadiusM: 8, trail: [] } as const;
+  const veh = { id: 'FIRE1', callsign: 'Fire 1', type: 'arff', state: 'enroute', pos: { x: 0, y: 0 }, heading: 0, speed: 20, station: { x: 0, y: 0 }, stationNodeId: '', target: null, path: null, distAlong: 0, holdShortNode: null, holdShortRunway: null, holdReleased: false, trafficHold: false, onRunway: '09R/27L', dispatchedAt: 0, etaAt: null, arrivedAt: null, onSceneUntil: null, maxSpeedKt: { taxiway: 40, runway: 50, apron: 15 }, safetyRadiusM: 8, trail: [] as XY[] } as const satisfies Vehicle;
   const r = eng.step([a], [veh], [rwy], 1, ctxFor(0, {
     onRunwayWithoutClearance: (id) => (id === a.id ? '27L' : null),
     arrivalOnFinal: (runway) => (runway === '27L' ? 'DLH2' : null),

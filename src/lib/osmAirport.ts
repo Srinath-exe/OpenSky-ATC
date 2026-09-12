@@ -1375,8 +1375,18 @@ export function routeVia(air: OsmAirport, startId: string, via: string[], goalId
     const name = raw.toUpperCase();
     const onTw = air.taxiwayNodes.get(name); if (!onTw || !onTw.length) return null;
     const here = air.nodes.get(cur)!;
-    let target = onTw[0], bd = Infinity;
-    for (const id of onTw) { const n = air.nodes.get(id)!; const d = meters(here.lng, here.lat, n.lng, n.lat); if (d < bd) { bd = d; target = id; } }
+    // Waypoint = the taxiway's node nearest to the current position (the next named taxiway is normally the
+    // one this leg joins). A node on a runway centreline (a high-speed exit's junction) is never a waypoint:
+    // the raw-nearest node of "N3" from S3 at EGLL is N3's 27L junction, which sent the route across 27L and
+    // back onto it again.
+    const offRunway = onTw.filter(id => !runwayRefsAtNode(air, id).length);
+    const pool = offRunway.length ? offRunway : onTw;
+    let target = pool[0], bd = Infinity;
+    for (const id of pool) {
+      const n = air.nodes.get(id)!;
+      const d = meters(here.lng, here.lat, n.lng, n.lat);
+      if (d < bd) { bd = d; target = id; }
+    }
     if (target === cur) continue;
     const seg = findPath(air, cur, target, { ...opts, prefer: [...(opts.prefer ?? []), name] }); if (!seg) return null;
     out.push(...seg.slice(1)); cur = target;

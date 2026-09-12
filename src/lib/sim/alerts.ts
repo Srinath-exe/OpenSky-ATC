@@ -93,7 +93,7 @@ export interface CpaResult {
 }
 
 /** Linear closest-point-of-approach for two airborne aircraft using current ground vectors and vertical rates (ft/min). */
-export function cpa(a: { pos: XY; heading: number; speedKt: number; altFt: number; vsFpm: number }, b: { pos: XY; heading: number; speedKt: number; altFt: number; vsFpm: number }, maxS = ALERT_CONST.stcaLookaheadS): CpaResult {
+export function cpa(a: { pos: XY; heading: number; speedKt: number; altFt: number; vsFpm: number }, b: { pos: XY; heading: number; speedKt: number; altFt: number; vsFpm: number }, maxS: number = ALERT_CONST.stcaLookaheadS): CpaResult {
   const DEG = Math.PI / 180;
   const va = { x: Math.sin(a.heading * DEG) * a.speedKt * KTS_TO_MPS, y: Math.cos(a.heading * DEG) * a.speedKt * KTS_TO_MPS };
   const vb = { x: Math.sin(b.heading * DEG) * b.speedKt * KTS_TO_MPS, y: Math.cos(b.heading * DEG) * b.speedKt * KTS_TO_MPS };
@@ -112,7 +112,7 @@ export function cpa(a: { pos: XY; heading: number; speedKt: number; altFt: numbe
  * `sepNM` horizontally and `vertFt` vertically, or null when it never does.
  * Unlike cpa() this finds the first infringement, not the closest point.
  */
-export function timeToInfringement(a: { pos: XY; heading: number; speedKt: number; altFt: number; vsFpm: number }, b: { pos: XY; heading: number; speedKt: number; altFt: number; vsFpm: number }, sepNM: number, vertFt: number, maxS = ALERT_CONST.stcaLookaheadS): number | null {
+export function timeToInfringement(a: { pos: XY; heading: number; speedKt: number; altFt: number; vsFpm: number }, b: { pos: XY; heading: number; speedKt: number; altFt: number; vsFpm: number }, sepNM: number, vertFt: number, maxS: number = ALERT_CONST.stcaLookaheadS): number | null {
   const DEG = Math.PI / 180;
   const va = { x: Math.sin(a.heading * DEG) * a.speedKt * KTS_TO_MPS, y: Math.cos(a.heading * DEG) * a.speedKt * KTS_TO_MPS };
   const vb = { x: Math.sin(b.heading * DEG) * b.speedKt * KTS_TO_MPS, y: Math.cos(b.heading * DEG) * b.speedKt * KTS_TO_MPS };

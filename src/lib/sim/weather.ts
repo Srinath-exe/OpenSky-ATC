@@ -24,7 +24,10 @@
 //      on/off, hourly. Letter advances A..Z wrapping.
 //  All randomness comes from the rng passed to init() (rng.ts subStream).
 // ============================================================
-import type { RunwayEnd } from '../runwayManifest';
+import type { RunwayEnd as ManifestRunwayEnd } from '../runwayManifest';
+
+/** What the weather model needs of a runway end: the manifest's RunwayEnd satisfies it; tests may pass `{ name, hdg }`. */
+export type RunwayEnd = Pick<ManifestRunwayEnd, 'name' | 'hdg'> & Partial<ManifestRunwayEnd>;
 import type { WeightClass } from './aircraftDB';
 import type { Atis, Precip, RunwaySurface, SimEvent, WeatherEvent, WeatherState } from './types';
 
@@ -575,9 +578,7 @@ export class WeatherModel {
     if ((a.wind.gust > 0) !== (w.gustKt > 0) && Math.abs(a.wind.gust - Math.round(w.gustKt)) >= WX.atisWindDeltaKt) return w.gustKt ? `gusts ${Math.round(w.gustKt)} kt` : 'gusts ceased';
     if (Math.abs(a.qnh - Math.round(w.qnh)) >= WX.atisQnhDeltaHpa) return `QNH ${a.qnh} to ${Math.round(w.qnh)}`;
     if (visBand(a.visM) !== visBand(w.visM)) return `visibility ${visibilityText(w.visM)}`;
-    const prevCeil = a.cloud === this.wx.cloud ? null : 'x';
     if (ceilingBand(this.atisCeiling) !== ceilingBand(w.ceilingFt)) return `ceiling ${w.ceilingFt == null ? 'none' : Math.round(w.ceilingFt) + ' ft'}`;
-    void prevCeil;
     if (this.atisLvp !== w.lvp) return w.lvp ? 'LVP in operation' : 'LVP cancelled';
     if (this.time - a.issuedAt >= WX.atisHourlyS) return 'hourly';
     return null;

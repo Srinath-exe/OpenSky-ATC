@@ -393,6 +393,10 @@ export function evaluateCell(id: ActionId, a: AircraftState, ctx: ActionCtx): Ce
 export function visibleActionsForStage(stage: Stage): ActionId[] {
   return ALL_ACTION_IDS.filter(id => ACTION_MATRIX[id][stage] !== '-');
 }
+/** Actions that can be ENABLED in a stage without live data (`on` and `dyn` cells; `off:*` and `-` excluded). Used to rank autocomplete verbs. */
+export function enabledActionsForStage(stage: Stage): ActionId[] {
+  return ALL_ACTION_IDS.filter(id => { const c = ACTION_MATRIX[id][stage]; return c === 'on' || c.startsWith('dyn:'); });
+}
 
 // ──────────────────────────────────────────────────────────────────────────────
 //  Picker steps (UX §1.2 / §G4). Each step id doubles as the ActionParams key.
@@ -486,6 +490,11 @@ function altitudeRungs(min: number, max: number, ctx: ActionCtx, floorMsa: numbe
     rungs.push({ ft, label: ft > ta ? `FL${String(Math.round(ft / 100)).padStart(3, '0')}` : String(ft), band });
   }
   return rungs;
+}
+
+/** Stand occupant from the StandInfo list first, then the live callback. */
+function standOccupantOf(ctx: ActionCtx, ref: string): string | null {
+  return ctx.stands?.find(s => s.ref === ref)?.occupant ?? ctx.standOccupant(ref);
 }
 
 function standChips(a: AircraftState, ctx: ActionCtx): StandChip[] {
@@ -830,11 +839,12 @@ export function actionsFor(a: AircraftState, ctx: ActionCtx): ActionRow[] {
     let cell = evaluateCell(id, a, ctx);
     if (cell.state === 'hidden') continue;
     const steps = stepsFor(id, a, ctx);
-    if (cell.state === 'enabled') {
+    // global policy layers override every visible row (§G3 "Any command while paused", strict-frequency R13)
+    if (ctx.paused) cell = disabled('X12');
+    else if (offFreq) cell = disabled('R13');
+    else if (cell.state === 'enabled') {
       const empty = emptyPickerReason(steps);
-      if (ctx.paused) cell = disabled('X12');
-      else if (offFreq) cell = disabled('R13');
-      else if (ctx.holdAllActive && HELD_BY_EMERGENCY.includes(id)) cell = disabled('R24');
+      if (ctx.holdAllActive && HELD_BY_EMERGENCY.includes(id)) cell = disabled('R24');
       else if (empty) cell = disabled(empty);
     }
     const def = ACTION_DEFS[id];
@@ -890,7 +900,7 @@ export function softWarnings(id: ActionId, a: AircraftState, ctx: ActionCtx): st
   }
   if (id === 'action-taxi-stand') {
     const ref = a.plan.gateRef ?? a.reservedStand;
-    const occ = ref ? ctx.standOccupant(ref) : null;
+    const occ = ref ? standOccupantOf(ctx, ref) : null;
     if (ref && occ && occ !== a.callsign) out.push(reasonText('R19', { ref, cs: occ }));
   }
   if (id === 'action-taxi-runway' && ctx.nextCrossingRunway && ctx.stage !== 'hold_short_cross') out.push(`Route crosses runway ${ctx.nextCrossingRunway} — hold short inserted`);
@@ -1198,7 +1208,8 @@ function validatePart(ast: CommandAST, a: AircraftState | null, ctx: ActionCtx):
   const cls = a?.perf.weightClass ?? 'M';
   const runwayKnown = (rwy: string) => !ctx.runways || ctx.runways.some(r => r.name === rwy);
   const checkRunwayExists = (rwy: string) => { if (!rwy) hard('invalid_param', 'Runway required'); else if (!runwayKnown(rwy)) hard('unknown_runway', `Unknown runway ${rwy}`); };
-  const closed = (rwy: string) => ctx.runwayStatus(rwy) !== 'open';
+  // A sterile runway is closed to everybody except the emergency it was sterilised for (03 §4: "runway sterile").
+  const closed = (rwy: string) => { const st = ctx.runwayStatus(rwy); return st !== 'open' && !(st === 'sterile' && !!a?.emergency && a.emergency.status !== 'resolved'); };
   const stage = ctx.stage;
   const floor = Math.max(1000, ctx.msaFt ?? 1000);
   const ceiling = ctx.ceilingFt ?? 20000;
@@ -1279,7 +1290,7 @@ function validatePart(ast: CommandAST, a: AircraftState | null, ctx: ActionCtx):
         if (r && runwayKnown(r) && !ctx.runwayActive(r, 'dep')) soft(reasonText('R22', { rwy: r, role: 'dep' }), 'R22');
       } else if (ast.dest.kind === 'stand') {
         const ref = ast.dest.ref;
-        const occ = ctx.standOccupant(ref);
+        const occ = standOccupantOf(ctx, ref);
         if (occ && occ !== a?.callsign) soft(reasonText('R19', { ref, cs: occ }), 'R19');
         if (ctx.stands?.length && !ctx.stands.some(s => s.ref === ref)) hard('unknown_stand', `Unknown stand ${ref}`);
       }
