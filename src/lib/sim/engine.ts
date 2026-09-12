@@ -704,7 +704,12 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       const gap = Math.max(0, needNM * NM_TO_M - along);
       entry = cand; pos = advance({ x: cand.x, y: cand.y }, (cand.heading + 180) % 360, gap);
     }
-    const a = this.spawnArrivalAtEntry(pos, entry.heading, entry.altFt, entry.beacon, { ident, entryKey: entry.key });
+    // vertical stagger: an arrival entering at an altitude already flown by another inbound gets +1000 ft (up to +2000),
+    // so converging entries stay separated until the controller sequences them (real STARs are level-separated the same way).
+    let altFt = entry.altFt;
+    const inbound = this.aircraft.filter(x => x.plan.kind === 'arrival' && isAirborne(x) && !x.ilsCaptured);
+    for (let k = 0; k < 2 && inbound.some(x => Math.abs(x.altitude - altFt) < 900); k++) altFt += 1000;
+    const a = this.spawnArrivalAtEntry(pos, entry.heading, altFt, entry.beacon, { ident, entryKey: entry.key });
     return a;
   }
   private weightedEntries() {
