@@ -64,3 +64,10 @@ tsconfig.tsbuildinfo
 
 # QA walk evidence (docs/qa/w2) is kept alongside the report
 !docs/qa/**/*.png
+
+# Playwright e2e output (scripts/e2e.sh)
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+.scratch-e2e/

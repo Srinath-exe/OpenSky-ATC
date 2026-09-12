@@ -7,7 +7,13 @@
     "build": "next build",
     "start": "node .next/standalone/server.js",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test --grep @smoke",
+    "test:e2e:trace": "playwright test --trace on",
+    "test:e2e:report": "playwright show-report playwright-report",
+    "test:e2e:ui-less": "bash scripts/e2e.sh",
+    "test:e2e:update": "playwright test --grep @visual --update-snapshots"
   },
   "dependencies": {
     "@types/three": "^0.184.1",

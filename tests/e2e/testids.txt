@@ -1,0 +1,671 @@
+# data-testid values in src/ — generated for tests/e2e (regenerate with the commands below; do not hand-edit)
+#   static:  grep -rhoE 'data-testid="[^"]+"|testId="[^"]+"' src | sort -u
+#   dynamic: grep -rnoE 'data-testid=\{`[^`]+`\}|testId=\{`[^`]+`\}|testId: `[^`]+`' src
+# The CODE wins over 05-TEST-STRATEGY §3.1 where they differ (e.g. mode-tab-*, rate-1x, map-tool-zoom-in, quick-*).
+#
+# ---- 1. static ids (456) ----
+airport-badge
+airport-dialog
+alert-critical
+alert-stack
+alert-warning
+alerts-bell
+alerts-clear-resolved
+alerts-drawer
+alerts-drawer-close
+alerts-empty
+alerts-panel
+atis-broadcast
+atis-chip
+atis-close
+atis-cloud
+atis-letter
+atis-panel
+atis-qnh
+atis-runway-config
+atis-temp
+atis-text
+atis-vis
+atis-wind
+atis-wind-arrow
+badge-kind
+barchart
+bay-collapse
+bay-search
+bay-total
+brand-home
+btn-ambulance-dispatch
+btn-arff-dispatch
+btn-cancel
+btn-transmit
+btn-undo
+card-bars
+card-spark
+cb
+clock
+clock-popover
+clock-utc
+cmd-autocomplete
+cmd-form
+cmd-input
+cmd-parse-error
+cmd-parse-error-token
+cmd-ptt
+cmd-ptt-transcript
+cmd-ptt-unsupported
+cmd-review
+cmd-send
+comm-log
+confirm-add-part
+confirm-hold-ring
+confirm-step
+confirm-summary
+confirm-transmit
+confirm-transmit-anyway
+ctx-aircraft-follow
+ctx-aircraft-more
+ctx-map-centre
+ctx-map-layers
+ctx-map-rings
+ctx-map-save-preset
+ctx-map-theme
+ctx-runway-arff
+ctx-runway-close
+ctx-runway-inspect
+ctx-runway-open
+ctx-stand-ambulance
+ctx-stand-followme
+ctx-vehicle-cross
+ctx-vehicle-recall
+ctx-vehicle-select
+design-page
+desktop-required
+desktop-required-continue
+desktop-required-home
+detail-callsign
+detail-close
+detail-empty
+detail-panel
+detail-sub
+dial
+dial-stepper
+emerg-band-fuel
+emerg-band-pob
+emerg-band-status
+empty-traffic
+game-shell
+ground-map
+ground-overlay
+ground-view
+help-btn
+help-close
+help-matrix
+help-overlay
+help-search
+help-tabs
+home-active-count
+home-change-airport
+home-detail
+home-detail-title
+home-difficulty
+home-highscore
+home-leave-confirm
+home-leave-confirm-no
+home-leave-confirm-yes
+home-position
+home-resume
+home-runways
+home-seed
+home-settings-link
+home-shift
+home-sound
+home-start
+home-start-hint
+home-tip
+home-tts
+home-wind-apply
+home-wind-dir
+home-wind-kts
+ib-rest
+input-cmd
+input-search
+kpi-month
+ladder-alt
+ladder-spd
+layer-chart
+layer-corridor
+layer-holdbars
+layer-labels-stand
+layer-labels-taxiway
+layer-satellite
+layer-trails
+layer-vehicles
+load-overlay
+loading-error
+loading-error-card
+loading-home
+loading-overlay
+loading-retry
+log-collapse
+log-filter
+log-last-called
+log-last-line
+map-context-menu
+map-edge-arrow
+map-hdg-bubble
+map-hdg-bubble-cancel
+map-hdg-bubble-left
+map-hdg-bubble-right
+map-hdg-bubble-send
+map-hdg-readout
+map-layers-close
+map-layers-popover
+map-measure-live
+map-presets-close
+map-presets-popover
+map-tool-follow
+map-tool-layers
+map-tool-presets
+map-tool-rings
+map-tool-theme
+map-tool-vehicles
+map-tool-zoom-in
+map-tool-zoom-out
+map-toolbar
+map-tooltip
+metric-alt
+metric-alt-target
+metric-hdg
+metric-hdg-target
+metric-spd
+metric-spd-target
+modal-inline
+modal-live
+not-found
+notfound-home
+notfound-settings
+open-modal
+page-atc
+page-home
+page-not-found
+page-settings
+panel-actions
+panel-ai-tag
+panel-alert-ack
+panel-alert-banner
+panel-alert-geometry
+panel-close
+panel-draft-resume
+panel-emerg-band
+panel-emerg-checklist
+panel-emerg-toggle
+panel-empty-matrix
+panel-glass
+panel-kind
+panel-locate
+panel-metric-alt
+panel-metric-hdg
+panel-metric-spd
+panel-onfreq-note
+panel-paused-note
+panel-pending
+panel-phase-chip
+panel-pin
+panel-quick-row
+panel-req-age
+panel-req-answer
+panel-req-band
+panel-req-open
+panel-req-standby
+panel-req-unable
+panel-result
+panel-result-dismiss
+panel-result-rb
+panel-result-status
+panel-result-tx
+panel-result-undo-window
+panel-runway
+panel-solid
+panel-stage
+panel-stand
+panel-wake
+pause-confirm-no
+pause-confirm-yes
+pause-menu
+pause-quit
+pause-restart
+pause-resume
+pause-runways
+pause-settings
+pause-tracks
+paused-pill
+picker-aircraft
+picker-alt-band-ceiling
+picker-alt-band-gs
+picker-alt-band-msa
+picker-alt-discretion
+picker-alt-expedite
+picker-alt-half-steps
+picker-alt-input
+picker-alt-ladder
+picker-altitude
+picker-correction-value
+picker-dir-E
+picker-dir-N
+picker-dir-S
+picker-dir-W
+picker-dir-any
+picker-dir-left
+picker-dir-right
+picker-direction
+picker-exit-next-left
+picker-exit-next-right
+picker-gate
+picker-gate-search
+picker-heading
+picker-heading-current
+picker-heading-dial
+picker-heading-input
+picker-heading-left
+picker-heading-minus10
+picker-heading-minus5
+picker-heading-plus10
+picker-heading-plus5
+picker-heading-right
+picker-heading-runway-hdg
+picker-heading-shortest
+picker-hold
+picker-hold-accept
+picker-hold-efc-30
+picker-hold-efc-none
+picker-hold-inbound
+picker-hold-turns-left
+picker-hold-turns-right
+picker-position
+picker-position-when-vacated
+picker-route
+picker-route-auto
+picker-route-chip-auto
+picker-route-clear
+picker-route-contact-tower
+picker-route-cross
+picker-route-dest
+picker-route-holdshort
+picker-route-input
+picker-route-intersection
+picker-route-intersection-chip
+picker-route-pill-0
+picker-runway
+picker-runway-mode-ils
+picker-runway-mode-loc
+picker-runway-mode-visual
+picker-speed
+picker-speed-chip-250-note
+picker-speed-final
+picker-speed-ladder
+picker-speed-rail
+picker-speed-resume
+picker-speed-until-4nm
+picker-taxiroute-map-mode
+picker-text
+picker-vehicle
+position-tabs
+radar-canvas
+radar-chip
+radar-chip-atis
+radar-chip-range
+radar-chip-rwy
+radar-chip-wind
+radar-no-airspace
+radar-tool-centre
+radar-tool-follow
+radar-tool-measure
+radar-tool-rings
+radar-tool-rings-centre-field
+radar-tool-rings-centre-selected
+radar-tool-zoom-in
+radar-tool-zoom-out
+radar-toolbar
+radar-view
+radio-line
+radio-log
+radio-log-empty
+radio-text
+rate-1x
+rate-2x
+rate-4x
+rate-ff
+rate-pause
+row-rest
+rwy-change-apply
+rwy-change-banner
+rwycfg-apply
+rwycfg-apply-when-clear
+rwycfg-blocked-reason
+rwycfg-cancel
+sat-warning
+satellite-stage
+score
+score-best-skill
+score-breakdown
+score-breakdown-close
+score-chip
+score-hi
+score-highscore
+score-incidents
+score-incidents-empty
+score-points
+score-row-frequency_load
+score-row-responsiveness
+score-rows
+score-skill
+scroll-log
+seg-range
+select-runway
+set-auto-handoff
+set-autoground
+set-autotower
+set-back
+set-clear-history
+set-close
+set-datablock
+set-difficulty
+set-emergency-rate
+set-highscore
+set-history
+set-history-empty
+set-hotkey-badges
+set-instant-vectors
+set-open-full
+set-phraseology
+set-pilot-delay
+set-readback-errors
+set-reduced-motion
+set-reset-all
+set-reset-score
+set-reset-tips
+set-resume
+set-section-about
+set-section-audio
+set-section-data
+set-section-display
+set-section-simulation
+set-show-rings
+set-sound
+set-strict-frequencies
+set-theme-chart
+set-theme-satellite
+set-tts
+set-typed-instant
+set-version
+set-volume
+set-volume-master
+set-volume-value
+settings-btn
+settings-modal
+sheet-inline
+sheet-live
+sparkline
+stats-delay
+stats-delay-empty
+stats-movements
+stats-movements-empty
+step-back
+step-cancel
+step-next
+step-title
+stepper
+strip-${a.callsign}
+strip-alt
+strip-bay
+strip-cs
+strip-drag-handle
+strip-hdg
+strip-kind
+strip-phase
+strip-spd
+sub-picker-add
+sub-picker-cancel
+sub-picker-close
+tabs-position
+tile-conflict
+tile-ok
+tip-next
+tip-skip-all
+toast-host
+toast-overflow
+toast-static-info
+toggle-off
+tx-indicator
+veh-back
+veh-cancel
+veh-closure-hint
+veh-confirm
+veh-emergency
+veh-flow
+veh-inspection-hint
+veh-map-point-marker
+veh-new-dispatch
+veh-next
+veh-panel-close
+veh-result
+veh-summary
+veh-target-aircraft
+veh-target-map
+veh-target-runway
+veh-target-stand
+veh-target-stand-input
+veh-target-station
+vehicle-dispatch
+vehicle-list
+vehicle-panel
+wind
+#
+# ---- 2. dynamic ids as written in the source (139; ${expr} = runtime value) ----
+${prefix}-${c.id}                                                        src/game/CommandPanel/pickers/VehiclePicker.tsx
+${root}-cancel                                                           src/components/atc/ApproachView/index.tsx
+${root}-dial                                                             src/components/atc/ApproachView/index.tsx
+${root}-down                                                             src/components/atc/ApproachView/index.tsx
+${root}-left                                                             src/components/atc/ApproachView/index.tsx
+${root}-right                                                            src/components/atc/ApproachView/index.tsx
+${root}-send                                                             src/components/atc/ApproachView/index.tsx
+${root}-up                                                               src/components/atc/ApproachView/index.tsx
+${step.mode === 'break_off' ? 'picker-emerg-break' : 'picker-aircraft'}-${c.callsign} src/game/CommandPanel/pickers/AircraftPicker.tsx
+${testPrefix}-${c.name}                                                  src/game/CommandPanel/pickers/FixPicker.tsx
+${testPrefix}-search                                                     src/game/CommandPanel/pickers/FixPicker.tsx
+airport-card-${airport.icao}                                             src/app/page.tsx
+alert-${a.id}                                                            src/game/AlertStack/AlertStack.tsx
+alert-pill-${a.id}                                                       src/game/AlertStack/AlertStack.tsx
+alert-resolved-${r.id}                                                   src/game/AlertStack/AlertStack.tsx
+alerts-filter-${f}                                                       src/game/AlertStack/AlertStack.tsx
+alerts-row-${a.id}                                                       src/game/AlertStack/AlertStack.tsx
+alerts-row-${a.id}-score                                                 src/game/AlertStack/AlertStack.tsx
+alerts-row-${a.id}-state                                                 src/game/AlertStack/AlertStack.tsx
+arff-vehicle-${v.id}                                                     src/game/VehiclePanel/VehiclePanel.tsx
+atis-arr-${r.name}                                                       src/game/AtisWeather/AtisWeather.tsx
+atis-dep-${r.name}                                                       src/game/AtisWeather/AtisWeather.tsx
+atis-runway-${r.name}-${o.suffix}                                        src/game/AtisWeather/AtisWeather.tsx
+atis-runway-${r.name}-status                                             src/game/AtisWeather/AtisWeather.tsx
+bay-collapse-section-${bay.bay}                                          src/game/StripBay/StripBay.tsx
+bay-count-${bay.bay}                                                     src/game/StripBay/StripBay.tsx
+bay-empty-${bay.bay}                                                     src/game/StripBay/StripBay.tsx
+bay-filter-${f.id}                                                       src/game/StripBay/StripBay.tsx
+bay-rail-count-${r.bay}                                                  src/game/StripBay/StripBay.tsx
+bay-section-${bay.bay}                                                   src/game/StripBay/StripBay.tsx
+bay-sort-${bay.bay}                                                      src/game/StripBay/StripBay.tsx
+bay-sort-opt-${bay.bay}-${s.id}                                          src/game/StripBay/StripBay.tsx
+btn-${v}                                                                 src/app/design/page.tsx
+cmd-autocomplete-${i}                                                    src/game/CommLog/CommLog.tsx
+confirm-add-${p.replace(/_/g, '-')}                                      src/game/CommandPanel/pickers/ConfirmStep.tsx
+confirm-part-${i}                                                        src/game/CommandPanel/pickers/ConfirmStep.tsx
+confirm-part-${i}-remove                                                 src/game/CommandPanel/pickers/ConfirmStep.tsx
+confirm-warning-${i}                                                     src/game/CommandPanel/pickers/ConfirmStep.tsx
+ctx-aircraft-${r.id.replace(/^action-|^emerg-/, '')}                     src/components/atc/GroundView/index.tsx
+emerg-check-${k.replace(/_/g, '-')}                                      src/game/CommandPanel/CommandPanel.tsx
+help-alert-${a.kind}                                                     src/game/HelpOverlay/HelpOverlay.tsx
+help-glossary-${g.term.toLowerCase().replace(/[^a-z0-9]+/g, '-')}        src/game/HelpOverlay/HelpOverlay.tsx
+help-hotkey-row-${h.id}                                                  src/game/HelpOverlay/HelpOverlay.tsx
+help-matrix-cell-${s}-${id}                                              src/game/HelpOverlay/HelpOverlay.tsx
+help-phrase-${p.id}                                                      src/game/HelpOverlay/HelpOverlay.tsx
+help-tab-${t.id}                                                         src/game/HelpOverlay/HelpOverlay.tsx
+log-filter-${f.id}                                                       src/game/CommLog/CommLog.tsx
+log-line-${line.key}-correct                                             src/game/CommLog/CommLog.tsx
+log-line-${line.key}-repeat                                              src/game/CommLog/CommLog.tsx
+log-line-${line.key}-undo                                                src/game/CommLog/CommLog.tsx
+map-context-${at.kind}                                                   src/components/atc/GroundView/chrome.tsx
+map-measure-${i}                                                         src/components/atc/ApproachView/index.tsx
+mode-tab-${p}                                                            src/game/NavBar/NavBar.tsx
+panel-alert-pair-${s}                                                    src/game/CommandPanel/CommandPanel.tsx
+panel-empty-matrix-${s}                                                  src/game/CommandPanel/CommandPanel.tsx
+panel-view-in-${viewIn}                                                  src/game/CommandPanel/CommandPanel.tsx
+pause-confirm-${confirm}                                                 src/game/PauseMenu/PauseMenu.tsx
+picker-dir-twy-${t}                                                      src/game/CommandPanel/pickers/DirectionPicker.tsx
+picker-gate-${c.ref}                                                     src/game/CommandPanel/pickers/GatePicker.tsx
+picker-hold-efc-${m}                                                     src/game/CommandPanel/pickers/HoldPicker.tsx
+picker-hold-leg-${key}                                                   src/game/CommandPanel/pickers/HoldPicker.tsx
+picker-holdshort-runway-${r.name}                                        src/game/CommandPanel/pickers/TextPicker.tsx
+picker-holdshort-taxiway-${t}                                            src/game/CommandPanel/pickers/TextPicker.tsx
+picker-position-${c.position}                                            src/game/CommandPanel/pickers/PositionPicker.tsx
+picker-route-chip-${i}                                                   src/game/CommandPanel/pickers/RoutePicker.tsx
+picker-route-cross-${r}                                                  src/game/CommandPanel/pickers/RoutePicker.tsx
+picker-route-holdshort-${r}                                              src/game/CommandPanel/pickers/RoutePicker.tsx
+picker-route-holdshort-twy-${t}                                          src/game/CommandPanel/pickers/RoutePicker.tsx
+picker-route-intersection-${n.label}                                     src/game/CommandPanel/pickers/RoutePicker.tsx
+picker-route-pill-${i + 1}                                               src/game/CommandPanel/pickers/RoutePicker.tsx
+picker-route-twy-${t}                                                    src/game/CommandPanel/pickers/RoutePicker.tsx
+picker-runway-${c.name}                                                  src/game/CommandPanel/pickers/RunwayPicker.tsx
+picker-speed-chip-${k}                                                   src/game/CommandPanel/pickers/SpeedPicker.tsx
+picker-takeoff-turn-deg-${d}                                             src/game/CommandPanel/CommandPanel.tsx
+picker-taxiway${isSecond ? '-2' : ''}                                    src/game/CommandPanel/pickers/TaxiwayPicker.tsx
+picker-taxiway${isSecond ? '-2' : ''}-search                             src/game/CommandPanel/pickers/TaxiwayPicker.tsx
+picker-taxiway-${e.taxiway}                                              src/game/CommandPanel/pickers/TaxiwayPicker.tsx
+picker-taxiway-${n}                                                      src/game/CommandPanel/pickers/TaxiwayPicker.tsx
+pill-${id}                                                               src/app/design/page.tsx
+preset-auto-${a.id}                                                      src/components/atc/GroundView/chrome.tsx
+preset-save-${i + 1}                                                     src/components/atc/GroundView/chrome.tsx
+preset-user-${i + 1}                                                     src/components/atc/GroundView/chrome.tsx
+quick-${r.id}                                                            src/game/CommandPanel/CommandPanel.tsx
+radar-tool-range-${p.id}                                                 src/components/atc/ApproachView/index.tsx
+rwy-end-${end.name}                                                      src/app/page.tsx
+rwy-row-${ref}                                                           src/app/page.tsx
+rwy-weight-${end.name}-${w}                                              src/app/page.tsx
+rwy-wind-${end.name}                                                     src/app/page.tsx
+rwycfg-end-${r.name}                                                     src/game/AtisWeather/RunwayConfigDialog.tsx
+rwycfg-end-${r.name}-arr                                                 src/game/AtisWeather/RunwayConfigDialog.tsx
+rwycfg-end-${r.name}-dep                                                 src/game/AtisWeather/RunwayConfigDialog.tsx
+rwycfg-end-${r.name}-weight-${wc.cls}                                    src/game/AtisWeather/RunwayConfigDialog.tsx
+score-incident-${i}                                                      src/game/StatsPanel/StatsPanel.tsx
+score-row-${r.key}                                                       src/game/StatsPanel/StatsPanel.tsx
+set-credit-${c.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}          src/app/settings/page.tsx
+set-history-${i}                                                         src/app/settings/page.tsx
+stats-bar-${Math.round(at)}                                              src/game/StatsPanel/StatsPanel.tsx
+step-${i}                                                                src/game/CommandPanel/CommandPanel.tsx
+stepper-${draft.actionId}                                                src/game/CommandPanel/CommandPanel.tsx
+strip-${a.callsign}                                                      src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-alert                                                src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-archive                                              src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-arrow                                                src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-box-${b.key}                                         src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-dist                                                 src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-draft                                                src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-emerg                                                src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-ghost                                                src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-held                                                 src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-pending                                              src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-req                                                  src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-runway                                               src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-seq                                                  src/game/StripBay/StripCard.tsx
+strip-${a.callsign}-timer                                                src/game/StripBay/StripCard.tsx
+strip-bay-${bay.bay}                                                     src/game/StripBay/StripBay.tsx
+strip-vehicle-${v.id}                                                    src/game/StripBay/StripBay.tsx
+strip-vehicle-${v.id}-cross                                              src/game/StripBay/StripBay.tsx
+strip-vehicle-${v.id}-recall                                             src/game/StripBay/StripBay.tsx
+strip-vehicle-${v.id}-state                                              src/game/StripBay/StripBay.tsx
+sub-picker-${draft.sub.part.replace(/_/g, '-')}                          src/game/CommandPanel/CommandPanel.tsx
+tip-${step + 1}                                                          src/game/HelpOverlay/OnboardingTips.tsx
+tip-progress-${i + 1}                                                    src/game/HelpOverlay/OnboardingTips.tsx
+toast-${a.id}                                                            src/game/AlertStack/AlertStack.tsx
+toast-${a.id}-ack                                                        src/game/AlertStack/AlertStack.tsx
+toast-${a.id}-locate                                                     src/game/AlertStack/AlertStack.tsx
+toast-${a.id}-mute                                                       src/game/AlertStack/AlertStack.tsx
+toast-${a.id}-pair-${s}                                                  src/game/AlertStack/AlertStack.tsx
+toast-${a.id}-select                                                     src/game/AlertStack/AlertStack.tsx
+toast-${t.kind}                                                          src/game/GameShell/ToastHost.tsx
+veh-card-${v.id}-continue                                                src/game/VehiclePanel/VehiclePanel.tsx
+veh-card-${v.id}-cross                                                   src/game/VehiclePanel/VehiclePanel.tsx
+veh-card-${v.id}-dispatch                                                src/game/VehiclePanel/VehiclePanel.tsx
+veh-card-${v.id}-hold                                                    src/game/VehiclePanel/VehiclePanel.tsx
+veh-card-${v.id}-recall                                                  src/game/VehiclePanel/VehiclePanel.tsx
+veh-card-${v.id}-retask                                                  src/game/VehiclePanel/VehiclePanel.tsx
+veh-runway-${r.name}-status                                              src/game/VehiclePanel/VehiclePanel.tsx
+veh-target-runway-${r.name}                                              src/game/VehiclePanel/VehiclePanel.tsx
+vehicle-recall-${v.id}                                                   src/game/VehiclePanel/VehiclePanel.tsx
+view-${view}                                                             src/game/GameShell/GameShell.tsx
+#
+# ---- 3. derived families (ids built by primitives or from domain enums) ----
+home-position-{ground|tower|approach}                                    src/app/page.tsx (Segmented testId=home-position)
+home-difficulty-{low|normal|high}                                        src/app/page.tsx (Segmented testId=home-difficulty)
+set-difficulty-{low|normal|high}                                         src/app/settings/page.tsx (Segmented testId=set-difficulty)
+set-datablock-{compact|normal|full}                                      src/app/settings/page.tsx (Segmented testId=set-datablock)
+log-filter-{gnd|twr|app|all}                                             src/game/CommLog/CommLog.tsx
+mode-tab-{ground|tower|approach}                                         src/game/NavBar/NavBar.tsx (Tabs; aria-selected + aria-pressed)
+rate-{1x|2x|4x}                                                          src/game/NavBar/NavBar.tsx (Segmented; aria-pressed, data-state=on|off)
+{ActionId}  e.g. action-heading, action-taxi-runway, emerg-ack           src/game/CommandPanel/CommandPanel.tsx ActionButton (data-state=enabled|disabled, data-reason, data-hotkey, data-primary, data-group)
+quick-{ActionId}                                                         src/game/CommandPanel/CommandPanel.tsx quick row pills
+stepper-{ActionId}                                                       src/game/CommandPanel/CommandPanel.tsx (data-step, data-step-type)
+ctx-aircraft-{ActionId minus action-/emerg- prefix}                      src/components/atc/GroundView/index.tsx right-click menu
+picker-fix-{FIX} / picker-fix-search                                     src/game/CommandPanel/pickers/FixPicker.tsx (default testPrefix picker-fix; sub-pickers use picker-{part})
+picker-{part}-{FIX}  (sub-picker prefix = picker-<part with _ -> ->)     src/game/CommandPanel/CommandPanel.tsx sub-picker
+{testId}-wrap  (Input wrapper; the id itself is on the <input>)          src/design/primitives/Input/Input.tsx
+{ladderId}-svg / -value / -step-{q}  e.g. picker-alt-ladder-svg          src/design/primitives/Ladder/Ladder.tsx (svg role=slider aria-valuenow/min/max)
+{dialId}-svg / -step-{q}  e.g. picker-heading-dial-svg                   src/design/primitives/Dial/Dial.tsx
+radar-tool-range-{30|15|10|final}                                        src/components/atc/ApproachView/index.tsx
+#
+# ---- 4. ActionId values (47; src/lib/sim/commandTree.ts ALL_ACTION_IDS) ----
+action-pushback
+action-startup
+action-taxi-runway
+action-taxi-stand
+action-taxi-point
+action-amend-route
+action-hold-short
+action-hold-position
+action-hold-fix
+action-continue
+action-cross
+action-lineup
+action-takeoff
+action-cancel-takeoff
+action-cancel-lineup
+action-land
+action-goaround
+action-cancel-approach
+action-exit
+action-plan-exit
+action-heading
+action-altitude
+action-speed
+action-direct
+action-resume-sid
+action-ils
+action-expect-runway
+action-change-runway
+action-expedite
+action-handoff
+action-report
+action-say-again
+action-correction
+action-standby
+action-unable
+action-giveway
+action-wind-check
+action-turnaround
+emerg-ack
+emerg-priority
+emerg-dispatch
+emerg-hold-all
+emerg-breakoff
+emerg-stop-runway
+emerg-reopen
+emerg-cancel-ack
+emerg-resume-all
