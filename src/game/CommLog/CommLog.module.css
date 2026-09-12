@@ -1,0 +1,76 @@
+/* Comm log + command line (UX 04 §2.1 "Comm log", §7.2, §10 "Comm log & command line"; design A11.6 / A11.7). */
+.log { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: hidden; }
+.header { display: flex; align-items: center; gap: var(--s-3); height: 36px; padding: 0 var(--s-2) 0 var(--s-4); flex-shrink: 0; border-bottom: var(--bw) solid var(--line); }
+.headerSpacer { flex: 1; min-width: 0; }
+.lastLine { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--s-2); font: var(--fw-regular) var(--fs-body-s) / 1 var(--font); color: var(--text-2); overflow: hidden; }
+.lastLine .who { width: auto; }
+.lastLine .text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lastCalled { flex-shrink: 0; }
+
+.list { flex: 1; min-height: 0; }
+.lines { display: flex; flex-direction: column; gap: var(--s-1); padding: var(--s-2) var(--s-4); }
+
+.line {
+  display: grid; grid-template-columns: 40px 40px 1fr auto; align-items: baseline; column-gap: var(--s-2);
+  padding: 2px 0; border-radius: var(--r-chip);
+  font: var(--fw-regular) var(--fs-body-s) / 1.5 var(--font); color: var(--text-2);
+  animation: global(ds-fade-in) var(--t-fast) var(--ease-out) both;
+}
+.line[data-clickable="true"] { cursor: pointer; }
+.line[data-clickable="true"]:hover { background: var(--w-03); }
+.line[data-selected="true"] { background: var(--w-04); }
+.who { font: var(--fw-medium) var(--fs-label-xs) / 1.5 var(--font); letter-spacing: 0.04em; color: var(--text-3); }
+.line[data-who="ATC"] .who, .line[data-who="ATC"] .text { color: var(--text-1); }
+.line[data-who="PILOT"] .who { color: var(--text-2); }
+.line[data-who="SYS"] .who, .line[data-who="SYS"] .text { color: var(--text-3); }
+.line[data-who="AI"] .who, .line[data-who="AI"] .text { color: var(--text-4); }
+.time { font: var(--fw-regular) var(--fs-label-xs) / 1.5 var(--font); color: var(--text-4); font-variant-numeric: tabular-nums; font-feature-settings: "kern", "tnum"; }
+.text { min-width: 0; overflow-wrap: anywhere; }
+.line[data-status="unable"] .text, .line[data-status="partial"] .text, .line[data-status="mismatch"] .text, .line[data-status="error"] .text { color: var(--orange); }
+.line[data-status="undone"] .text { text-decoration: line-through; color: var(--text-4); }
+.line[data-emergency="true"] .text { color: var(--red); }
+.caret { display: inline-block; width: 1px; height: 0.9em; margin-left: 1px; vertical-align: -0.1em; background: var(--text-2); animation: global(ds-pulse-opacity) 800ms linear infinite; }
+.chips { display: inline-flex; align-items: center; gap: var(--s-1); flex-shrink: 0; }
+.chip {
+  display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 var(--s-2) 0 6px; border-radius: var(--r-pill);
+  border: var(--bw) solid var(--line-strong); background: var(--w-06); color: var(--text-2);
+  font: var(--fw-medium) var(--fs-label-xs) / 1 var(--font); letter-spacing: 0.02em; font-variant-numeric: tabular-nums;
+  transition: background-color var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out);
+}
+.chip:hover { background: var(--w-12); color: var(--text-1); }
+.chip:active { background: var(--w-16); }
+.chip:focus-visible { box-shadow: var(--focus-ring); }
+.chipUndo { color: var(--orange); border-color: var(--orange-border); background: var(--orange-tint-08); }
+.chipUndo:hover { background: var(--orange-tint-16); color: var(--orange); }
+.ring { width: 14px; height: 14px; transform: rotate(-90deg); }
+.ringTrack { fill: none; stroke: var(--orange-tint-30); stroke-width: 2; }
+.ringFill { fill: none; stroke: var(--orange); stroke-width: 2; stroke-linecap: round; transition: stroke-dashoffset 100ms linear; }
+.superseded { font: var(--fw-regular) var(--fs-label-xs) / 1 var(--font); color: var(--text-4); }
+
+.footer { position: relative; flex-shrink: 0; display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2) var(--s-3); border-top: var(--bw) solid var(--line); }
+.form { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--s-2); }
+.inputWrap { flex: 1; min-width: 0; }
+.suffix { display: inline-flex; align-items: center; gap: 2px; }
+.menu { position: absolute; left: var(--s-3); right: var(--s-3); bottom: calc(100% - 2px); }
+.pttWrap { position: relative; flex-shrink: 0; }
+.ptt {
+  display: inline-flex; align-items: center; gap: var(--s-2); height: 36px; padding: 0 var(--s-3);
+  border-radius: var(--r-pill); border: var(--bw) solid var(--line-strong); color: var(--text-2);
+  font: var(--fw-medium) var(--fs-label-xs) / 1 var(--font); letter-spacing: 0.04em; user-select: none; touch-action: none;
+  transition: background-color var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out);
+}
+.ptt:hover { background: var(--w-06); color: var(--text-1); }
+.ptt:focus-visible { box-shadow: var(--focus-ring); }
+.ptt[data-state="on"] { background: var(--red-tint-12); border-color: var(--red-border-45); color: var(--red); }
+.pttDot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-5); }
+.ptt[data-state="on"] .pttDot { background: var(--red); box-shadow: var(--red-glow); }
+.pttHint { color: var(--text-4); font-weight: var(--fw-regular); letter-spacing: 0; }
+.transcript {
+  position: absolute; right: 0; bottom: calc(100% + 6px); white-space: nowrap;
+  padding: var(--s-2) var(--s-3); border-radius: var(--r-chip); background: var(--bg-2); border: var(--bw) solid var(--line-strong); box-shadow: var(--shadow-menu);
+  font: var(--fw-regular) var(--fs-body-s) / 1.3 var(--font); color: var(--text-2);
+  animation: global(ds-rise) var(--t-fast) var(--ease-out) both;
+}
+.error { position: absolute; left: var(--s-4); bottom: calc(100% + 4px); font: var(--fw-regular) var(--fs-body-s) / 1 var(--font); color: var(--red); pointer-events: none; }
+.empty { padding: var(--s-4); color: var(--text-3); font-size: var(--fs-body-s); }
+@media (prefers-reduced-motion: reduce) { .caret { animation: none; } }

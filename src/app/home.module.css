@@ -1,0 +1,151 @@
+/* Home: hero wordmark + airport picker + runway configuration (01 A22, 04 §10 home). Tokens only. */
+
+/* ---------- hero ---------- */
+.hero {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: var(--s-10) 0 var(--s-8);
+  gap: var(--s-4);
+}
+.wordmark { color: var(--text-1); letter-spacing: 0.04em; }
+.heroSub { color: var(--text-2); max-width: 52ch; line-height: var(--lh-multiline); }
+
+/* ---------- airport grid (A22: 400 x 176 cards, 3 per row) ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--card-gap);
+  max-width: calc(3 * 400px + 2 * var(--card-gap));
+  margin: 0 auto;
+}
+.gridItem { min-width: 0; }
+@media (max-width: 1023px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.card {
+  display: block; width: 100%; height: 176px;
+  overflow: hidden; isolation: isolate;
+  text-align: left;
+}
+.card:hover .cardSat, .card:focus-visible .cardSat { transform: scale(1.03); filter: var(--map-filter) brightness(1.15); }
+.card:hover .cardArrow { transform: translate(2px, -2px); }
+.card:active .cardArrow { transform: translate(3px, -3px); }
+.cardSat {
+  position: absolute; inset: 0; z-index: -2;
+  background-size: cover; background-position: center;
+  filter: var(--map-filter);
+  transform: scale(1);
+  transition: transform var(--t-slow) var(--ease-out), filter var(--t-slow) var(--ease-out);
+}
+.cardVeil {
+  position: absolute; inset: 0; z-index: -1;
+  background:
+    linear-gradient(180deg, transparent 0%, var(--map-veil) 40%, var(--scrim) 100%),
+    var(--map-vignette);
+}
+.cardBody {
+  position: relative; display: flex; flex-direction: column; justify-content: space-between;
+  height: 100%; padding: var(--tile-pad);
+}
+.cardTop { display: flex; align-items: center; justify-content: space-between; }
+.cardArrow {
+  display: inline-flex; color: var(--text-1);
+  transition: transform var(--t-fast) var(--ease-out);
+}
+.cardBottom { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cardName { color: var(--text-1); }
+.cardCity { color: var(--text-2); }
+.cardMeta { color: var(--text-3); margin-top: var(--s-1); }
+
+/* ---------- detail ---------- */
+.detail { display: flex; flex-direction: column; gap: var(--card-gap); }
+
+.banner {
+  position: relative; isolation: isolate;
+  min-height: 240px;
+  border-radius: var(--r-card-lg);
+  overflow: hidden;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: var(--card-pad);
+  border: var(--bw) solid var(--glass-border);
+}
+.bannerSat {
+  position: absolute; inset: 0; z-index: -2;
+  background-size: cover; background-position: center;
+  filter: var(--map-filter);
+}
+.bannerVeil {
+  position: absolute; inset: 0; z-index: -1;
+  background:
+    linear-gradient(180deg, var(--map-veil) 0%, transparent 30%, var(--map-veil-lost) 60%, var(--scrim) 100%),
+    var(--map-vignette);
+}
+.bannerTop { display: flex; justify-content: flex-start; }
+.bannerBottom { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s-4); flex-wrap: wrap; }
+.bannerTitleBlock { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; }
+.bannerTitle { color: var(--text-1); }
+.bannerSub { color: var(--text-2); }
+.bannerPills { display: flex; gap: var(--pill-gap); flex-wrap: wrap; }
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: var(--card-gap);
+  align-items: start;
+}
+@media (max-width: 1023px) { .columns { grid-template-columns: minmax(0, 1fr); } }
+
+.runwayPanel { min-width: 0; }
+.hint { color: var(--text-3); line-height: var(--lh-multiline); margin-bottom: var(--s-4); max-width: var(--max-line); }
+.rwyList { display: flex; flex-direction: column; gap: var(--s-2); }
+
+.rwyRow {
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-4);
+  align-items: center;
+  padding: var(--tile-pad);
+  border-radius: var(--r-inner);
+  background: var(--bg-2);
+  transition: background-color var(--t-fast) var(--ease-out), opacity var(--t-base) var(--ease-out);
+}
+.rwyRowOff { background: var(--bg-1-hover); }
+.rwyRowOff .rwyRef, .rwyRowOff .rwyLen { color: var(--text-3); }
+@media (max-width: 767px) {
+  .rwyRow { grid-template-columns: minmax(0, 1fr); }
+}
+.rwyId { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rwyRef { color: var(--text-1); }
+.rwySlash { color: var(--text-4); }
+.rwyLen { color: var(--text-3); }
+
+.end { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; }
+.endHead { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.windPreview { color: var(--text-3); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.windPart { white-space: nowrap; }
+.windDot { color: var(--text-4); }
+.windBad { color: var(--orange); }
+.endOff .windPreview { color: var(--text-5); }
+.weights { display: flex; gap: var(--s-1); }
+.weightChip { min-width: 30px; justify-content: center; }
+.endOff .weights { opacity: 0.55; }
+
+/* ---------- wind control (card header right) ---------- */
+.wind { display: inline-flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.windIcon { display: inline-flex; color: var(--text-3); }
+.windLabel { color: var(--text-3); margin-right: 2px; }
+.windInput { width: 72px; }
+.windInputS { width: 60px; }
+.windSep { color: var(--text-4); }
+.windUnit { color: var(--text-3); }
+
+/* ---------- side column ---------- */
+.side { display: flex; flex-direction: column; gap: var(--card-gap); min-width: 0; }
+.field { display: flex; flex-direction: column; gap: var(--s-2); }
+.field + .field { margin-top: var(--s-5); }
+.fieldLabel { color: var(--text-3); }
+.toggles { display: flex; flex-direction: column; gap: var(--s-3); margin-top: var(--s-5); padding-top: var(--s-5); border-top: var(--bw) solid var(--line); }
+.toggleRow { width: 100%; justify-content: space-between; }
+.startWrap { margin-top: var(--s-6); display: flex; flex-direction: column; gap: var(--s-3); }
+.startHint { color: var(--text-3); text-align: center; min-height: calc(var(--fs-body-s) * var(--lh-body-s)); }
+.tip { color: var(--text-2); }
+.tipText { color: var(--text-2); line-height: var(--lh-multiline); }

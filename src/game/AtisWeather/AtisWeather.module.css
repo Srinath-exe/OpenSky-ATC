@@ -1,0 +1,51 @@
+/* ATIS / weather dropdown (UX 04 §2.1 "ATIS / weather panel", §10 "ATIS"; design 01 §8 "ATIS chip"). */
+.panel {
+  position: absolute; top: var(--s-3); left: 50%; transform: translateX(-50%);
+  z-index: calc(var(--z-float) + 3);
+  width: 460px; max-width: calc(100% - 24px);
+  animation: global(ds-drop) var(--t-fast) var(--ease-out) both;
+}
+.body { display: flex; flex-direction: column; gap: var(--s-4); }
+.letterBtn { display: inline-flex; align-items: baseline; gap: var(--s-2); border-radius: var(--r-chip); padding: 2px var(--s-1); margin: -2px calc(-1 * var(--s-1)); color: var(--text-1); }
+.letterBtn:hover { background: var(--w-06); }
+.letterBtn:focus-visible { box-shadow: var(--focus-ring); }
+.letter { font: var(--fw-light) var(--fs-display-m) / 1 var(--font); letter-spacing: -0.01em; }
+.letterWord { font: var(--fw-regular) var(--fs-body-s) / 1 var(--font); color: var(--text-3); }
+.kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--s-3); animation: global(ds-fade-in) var(--t-slow) var(--ease-out) both; }
+.kpi { display: flex; flex-direction: column; gap: var(--s-1); min-width: 0; }
+.kpiLabel { font: var(--fw-regular) var(--fs-label-xs) / var(--lh-label-xs) var(--font); color: var(--text-3); letter-spacing: 0.01em; }
+.kpiValue { display: inline-flex; align-items: baseline; gap: 3px; font: var(--fw-light) var(--fs-title-l) / 1.1 var(--font); color: var(--text-1); font-variant-numeric: tabular-nums; font-feature-settings: "kern", "tnum"; white-space: nowrap; }
+.kpiUnit { font: var(--fw-regular) var(--fs-body-s) / 1 var(--font); color: var(--text-3); }
+.kpiDim { color: var(--text-4); }
+.windArrow { display: inline-flex; align-items: center; color: var(--orange); transition: transform var(--t-slow) var(--ease-inout); }
+.section { display: flex; flex-direction: column; gap: var(--s-2); }
+.sectionTitle { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); font: var(--fw-regular) var(--fs-label-xs) / var(--lh-label-xs) var(--font); color: var(--text-3); letter-spacing: 0.01em; }
+.row { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.roleLabel { width: 72px; flex-shrink: 0; font: var(--fw-regular) var(--fs-body-s) / 1 var(--font); color: var(--text-2); }
+.rwyGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--s-2); }
+.rwyCell { position: relative; }
+.rwyMenu { position: absolute; left: 0; top: 100%; min-width: 160px; }
+.text { font: var(--fw-regular) var(--fs-body-s) / var(--lh-multiline) var(--font); color: var(--text-2); max-width: var(--max-line); }
+.banner {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-3) var(--s-4); border-radius: var(--r-inner);
+  background: var(--orange-tint-08); border: var(--bw) solid var(--orange-border);
+  animation: global(ds-rise) var(--t-base) var(--ease-out) both;
+}
+.bannerText { flex: 1; min-width: 0; font: var(--fw-regular) var(--fs-body-s) / var(--lh-body-s) var(--font); color: var(--text-1); }
+.bannerText small { display: block; color: var(--text-3); font-size: var(--fs-label-xs); margin-top: 2px; }
+.bannerIcon { color: var(--orange); display: inline-flex; }
+.footer { display: flex; justify-content: flex-end; gap: var(--s-2); }
+
+/* Runway config dialog */
+.cfgRows { display: flex; flex-direction: column; gap: var(--s-2); }
+.cfgRow { display: grid; grid-template-columns: 56px 1fr auto; align-items: center; gap: var(--s-3); padding: var(--s-2) var(--s-3); border-radius: var(--r-row); background: var(--bg-2); }
+.cfgName { font: var(--fw-medium) var(--fs-title-m) / 1 var(--font); color: var(--text-1); font-variant-numeric: tabular-nums; }
+.cfgMeta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cfgSub { font: var(--fw-regular) var(--fs-label-xs) / var(--lh-label-xs) var(--font); color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cfgSub[data-tail="true"] { color: var(--orange); }
+.cfgWeights { display: inline-flex; gap: var(--s-1); }
+.cfgRoles { display: inline-flex; gap: var(--s-1); }
+.cfgControls { display: inline-flex; align-items: center; gap: var(--s-3); }
+.blocked { font: var(--fw-regular) var(--fs-body-s) / var(--lh-body-s) var(--font); color: var(--red); }
+.cfgFooterLeft { display: inline-flex; align-items: center; gap: var(--s-3); }

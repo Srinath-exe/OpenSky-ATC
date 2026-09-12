@@ -1,0 +1,37 @@
+/* Alert stack (UX 04 §2.1, §5.2-5.3; design A13). Top-centre over the map, below the top bar. */
+.stack {
+  position: absolute; top: var(--s-3); left: 50%; transform: translateX(-50%);
+  z-index: calc(var(--z-float) + 2);
+  width: 480px; max-width: calc(100% - 24px);
+  display: flex; flex-direction: column; gap: var(--s-2);
+  pointer-events: none;
+}
+.stack > * { pointer-events: auto; }
+.item { animation: global(ds-enter) var(--t-base) var(--ease-out) both; outline: none; border-radius: var(--r-inner); }
+.item:focus-visible { box-shadow: var(--focus-ring); }
+.card { padding: var(--s-1); }
+.actions { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
+.pills { display: flex; flex-wrap: wrap; gap: var(--s-2); justify-content: center; }
+.overflow { align-self: center; }
+
+/* Drawer (bell) */
+.drawer {
+  position: absolute; top: var(--s-3); right: var(--s-3); z-index: calc(var(--z-float) + 3);
+  width: 400px; max-width: calc(100% - 24px); max-height: calc(100% - 24px);
+  display: flex; flex-direction: column;
+  animation: global(ds-drop) var(--t-fast) var(--ease-out) both;
+}
+.drawerBody { display: flex; flex-direction: column; gap: var(--s-4); }
+.filters { display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: center; }
+.filterSpacer { flex: 1; }
+.rows { display: flex; flex-direction: column; gap: var(--s-1); }
+.rowMeta { display: inline-flex; align-items: center; gap: var(--s-2); font-variant-numeric: tabular-nums; }
+.state { font: var(--fw-regular) var(--fs-label-xs) / 1 var(--font); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.state[data-state="active"] { color: var(--red); }
+.state[data-state="acked"] { color: var(--orange); }
+.state[data-state="resolved"] { color: var(--green); }
+.scoreDelta { font: var(--fw-regular) var(--fs-label-xs) / 1 var(--font); color: var(--text-3); }
+.scoreDelta[data-neg="true"] { color: var(--red); }
+.scoreDelta[data-pos="true"] { color: var(--green); }
+.scroll { flex: 1; min-height: 0; }
+.empty { padding: var(--s-6) 0; }

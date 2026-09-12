@@ -15,8 +15,17 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'SKYCONTROL',
-  description: 'Ground, Tower and Approach ATC simulation',
+  title: { default: 'SKYCONTROL', template: '%s · SKYCONTROL' },
+  description: 'Ground, tower and approach air traffic control at six real airports: push back, taxi, line up, vector, clear to land and handle emergencies.',
+  applicationName: 'SKYCONTROL',
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '16x16 32x32 48x48' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
 }
 
 export const viewport: Viewport = {

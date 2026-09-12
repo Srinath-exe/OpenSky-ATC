@@ -1,0 +1,83 @@
+/* Top bar (UX 04 §2.1, design 01 §4.9 / A15). Sits on the shell colour; the map starts below it. */
+.nav {
+  position: relative;
+  z-index: var(--z-nav);
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: var(--s-4);
+  height: var(--nav-h);
+  padding: 0 var(--s-5) 0 var(--s-6);
+  background: var(--bg-0);
+  border-bottom: var(--bw) solid var(--line);
+  color: var(--text-1);
+  transition: box-shadow var(--t-slow) var(--ease-out);
+}
+.nav[data-escalated="true"] { box-shadow: inset 0 -1px 0 var(--red-border-55), inset 0 0 40px var(--red-tint-08); }
+
+.brand { display: inline-flex; align-items: center; gap: var(--s-3); height: 40px; padding-right: var(--s-2); border-radius: var(--r-pill); color: var(--text-1); }
+.brand:focus-visible { box-shadow: var(--focus-ring); }
+.brandMark { display: inline-flex; color: var(--text-1); }
+.brandWord { font: var(--fw-medium) var(--fs-body-s) / 1 var(--font); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-1); }
+.brandSub { font: var(--fw-regular) var(--fs-label-xs) / 1 var(--font); color: var(--text-3); margin-top: 3px; white-space: nowrap; }
+.brandText { display: flex; flex-direction: column; }
+
+.left { display: inline-flex; align-items: center; gap: var(--s-3); }
+.tabs { display: inline-flex; align-items: center; }
+.center { display: flex; align-items: center; justify-content: center; gap: var(--s-3); min-width: 0; }
+.right { display: inline-flex; align-items: center; gap: var(--s-2); }
+
+.atisChip { max-width: 100%; }
+.atisPart { color: var(--text-2); }
+.atisWide { display: none; }
+@media (min-width: 1440px) { .atisWide { display: inline; } }
+.atisSep { color: var(--text-4); padding: 0 var(--s-1); }
+.atisLetter { color: var(--text-1); font-weight: var(--fw-medium); }
+
+.clock { display: inline-flex; align-items: baseline; gap: var(--s-2); height: 36px; padding: 0 var(--s-3); border-radius: var(--r-pill); color: var(--text-1); font-variant-numeric: tabular-nums; font-feature-settings: "kern", "tnum"; transition: background-color var(--t-fast) var(--ease-out); }
+.clock:hover { background: var(--w-06); }
+.clock:active { background: var(--w-10); }
+.clock:focus-visible { box-shadow: var(--focus-ring); }
+.clockZ { color: var(--text-3); font-size: var(--fs-body-s); }
+.clockSim { color: var(--text-3); font-size: var(--fs-body-s); }
+.clockSim::before { content: "·"; color: var(--text-4); padding-right: var(--s-2); }
+
+.rateGroup { display: inline-flex; align-items: center; gap: var(--s-1); }
+.ff { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--r-pill); color: var(--text-2); transition: background-color var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out); }
+.ff:hover { background: var(--w-06); color: var(--text-1); }
+.ff[data-state="on"] { background: var(--bg-3); color: var(--orange); }
+.ff:focus-visible { box-shadow: var(--focus-ring); }
+
+.score { position: relative; display: inline-flex; align-items: baseline; gap: var(--s-2); height: 36px; padding: 0 var(--s-4); border-radius: var(--r-pill); background: var(--bg-2); color: var(--text-1); font-variant-numeric: tabular-nums; font-feature-settings: "kern", "tnum"; transition: background-color var(--t-fast) var(--ease-out); }
+.score:hover { background: var(--bg-3); }
+.score:active { background: var(--bg-4); }
+.score[data-open="true"] { background: var(--bg-3); }
+.score:focus-visible { box-shadow: var(--focus-ring); }
+.scoreLabel { color: var(--text-3); font-size: var(--fs-body-s); }
+.scoreValue { font-size: var(--fs-title-m); font-weight: var(--fw-light); letter-spacing: -0.01em; }
+.scoreHi { display: none; color: var(--text-3); font-size: var(--fs-body-s); }
+@media (min-width: 1440px) { .scoreHi { display: inline; } }
+.scoreDelta {
+  position: absolute; right: var(--s-3); top: -14px; pointer-events: none;
+  font: var(--fw-medium) var(--fs-label-xs) / 1 var(--font); font-variant-numeric: tabular-nums;
+  color: var(--orange);
+  animation: scoreFloat var(--t-pulse) var(--ease-out) both;
+}
+.scoreDelta[data-neg="true"] { color: var(--red); animation: scoreShake var(--t-bump) var(--ease-out) both; top: 4px; }
+@keyframes scoreFloat { from { opacity: 0; transform: translateY(6px); } 20% { opacity: 1; } to { opacity: 0; transform: translateY(-14px); } }
+@keyframes scoreShake { 0%, 100% { transform: translateX(0); opacity: 1; } 25% { transform: translateX(-3px); } 50% { transform: translateX(3px); } 75% { transform: translateX(-3px); } }
+.scoreBump { animation: global(ds-bump) var(--t-bump) var(--ease-out) both; display: inline-block; }
+
+.popover {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: var(--z-menu);
+  min-width: 220px; padding: var(--s-3) var(--s-4);
+  background: var(--bg-2); border: var(--bw) solid var(--line-strong); border-radius: var(--r-menu); box-shadow: var(--shadow-menu);
+  animation: global(ds-drop) var(--t-fast) var(--ease-out) both;
+  color: var(--text-2); font-size: var(--fs-body-s);
+}
+.popRow { display: flex; justify-content: space-between; gap: var(--s-4); height: 28px; align-items: center; }
+.popRow strong { color: var(--text-1); font-weight: var(--fw-regular); font-variant-numeric: tabular-nums; }
+.clockWrap { position: relative; }
+
+.divider { width: 1px; height: 20px; background: var(--line-strong); margin: 0 var(--s-1); }
+

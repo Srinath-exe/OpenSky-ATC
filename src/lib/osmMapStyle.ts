@@ -1,126 +1,157 @@
 // ============================================================
-//  Shared MapLibre style — AirNav Radar look from OSM aeroway data.
-//  Dark navy + desaturated satellite + black taxiway/runway ribbons.
-//  Used by both the OsmRadar demo and the SkyControl ground view.
+//  Ground map style (MapLibre) — SKYCONTROL design 01 §5 / A10 / A21.
+//
+//  Two themes over the same OSM aeroway GeoJSON:
+//    • satellite — the pre-baked static image (no tile refetch) pulled toward a
+//      monochrome grey-green terrain (raster-saturation -0.55, brightness-max .62,
+//      contrast .15) under a dark veil; only hairline pavement outlines remain so
+//      the imagery reads through.
+//    • chart     — vector "chart" theme: --chart-ground, runways --gnd-runway with a
+//      1px --gnd-runway-edge, taxiways --gnd-taxiway, aprons / terminals / hangars
+//      as flat blocks, no strokes. Labels are drawn by the overlay canvas (DM Sans),
+//      so no glyph server is needed.
+//
+//  Every colour comes from the design tokens (read once from :root with
+//  readMapPalette()); no literal colour appears in this file.
 // ============================================================
+import type { StyleSpecification, LayerSpecification, ExpressionSpecification } from 'maplibre-gl';
 import { SATELLITE_BOUNDS } from './satelliteBounds';
 
-export function buildOsmStyle(icao: string, theme: 'chart' | 'satellite' = 'chart') {
+export type GroundTheme = 'chart' | 'satellite';
+
+/** Token values the style needs (all resolved from CSS custom properties on :root). */
+export interface MapPalette {
+  bg0: string;
+  chartGround: string;
+  chartBlock: string;
+  chartBlock2: string;
+  chartStreet: string;
+  gndRunway: string;
+  gndRunwayEdge: string;
+  gndTaxiway: string;
+  gndApron: string;
+  gndTerminal: string;
+  limeMarker: string;
+  lime50: string;
+  w14: string;
+  w35: string;
+  mapVeil: string;
+}
+
+const TOKEN_KEYS: Record<keyof MapPalette, string> = {
+  bg0: '--bg-0',
+  chartGround: '--chart-ground',
+  chartBlock: '--chart-block',
+  chartBlock2: '--chart-block-2',
+  chartStreet: '--chart-street',
+  gndRunway: '--gnd-runway',
+  gndRunwayEdge: '--gnd-runway-edge',
+  gndTaxiway: '--gnd-taxiway',
+  gndApron: '--gnd-apron',
+  gndTerminal: '--gnd-terminal',
+  limeMarker: '--lime-marker',
+  lime50: '--lime-50',
+  w14: '--w-14',
+  w35: '--w-35',
+  mapVeil: '--map-veil',
+};
+
+/** Read the palette from the document tokens. Browser only (the map itself is browser only). */
+export function readMapPalette(root: HTMLElement | null = typeof document !== 'undefined' ? document.documentElement : null): MapPalette {
+  const cs = root ? getComputedStyle(root) : null;
+  const out = {} as MapPalette;
+  for (const k of Object.keys(TOKEN_KEYS) as Array<keyof MapPalette>) {
+    const v = cs ? cs.getPropertyValue(TOKEN_KEYS[k]).trim() : '';
+    out[k] = v || 'transparent';
+  }
+  return out;
+}
+
+/** Metres per CSS pixel at zoom 15 for a latitude (Web Mercator, 512px tiles). */
+function metresPerPxAtZ15(latDeg: number): number {
+  return (2 * Math.PI * 6378137 * Math.cos((latDeg * Math.PI) / 180)) / (512 * 2 ** 15);
+}
+
+/** True-scale line width: `metres` wide on the ground at every zoom (exponential base 2 around z15). */
+function trueScaleWidth(metres: number, latDeg: number, minPx = 0.5): ExpressionSpecification {
+  const pxAt15 = Math.max(minPx, metres / metresPerPxAtZ15(latDeg));
+  return ['interpolate', ['exponential', 2], ['zoom'], 7, Math.max(minPx, pxAt15 / 256), 15, pxAt15, 23, pxAt15 * 256];
+}
+
+const RUNWAY_WIDTH_M = 46;
+const TAXIWAY_WIDTH_M = 23;
+const LEAD_IN_WIDTH_M = 6;
+
+const aeroway = (kind: string): ExpressionSpecification => ['==', ['get', 'aeroway'], kind];
+const aerowayIn = (kinds: string[]): ExpressionSpecification => ['in', ['get', 'aeroway'], ['literal', kinds]];
+const isPolygon: ExpressionSpecification = ['any', ['==', ['geometry-type'], 'Polygon'], ['==', ['geometry-type'], 'MultiPolygon']];
+const isLine: ExpressionSpecification = ['==', ['geometry-type'], 'LineString'];
+
+/**
+ * Build the MapLibre style for one airport.
+ * @param icao     airport (data + satellite bounds lookup)
+ * @param theme    'satellite' | 'chart'
+ * @param palette  token values from readMapPalette()
+ * @param latDeg   airport latitude (true-scale pavement widths); defaults to the satellite bounds centre
+ */
+export function buildOsmStyle(icao: string, theme: GroundTheme, palette: MapPalette, latDeg?: number): StyleSpecification {
   const src = `/maps/osm/${icao}.geojson`;
   const sat = theme === 'satellite';
   const bounds = SATELLITE_BOUNDS[icao];
-  // Prefer a pre-baked static image (no per-zoom tile refetch, no reload flicker)
-  // over live XYZ tiles. Falls back to tiles only for airports without one yet.
+  const lat = latDeg ?? (bounds ? (bounds.minLat + bounds.maxLat) / 2 : 45);
+
   const imageSource = (url: string, minLng: number, minLat: number, maxLng: number, maxLat: number) => ({
     type: 'image' as const,
     url,
-    coordinates: [
-      [minLng, maxLat], [maxLng, maxLat], [maxLng, minLat], [minLng, minLat],
-    ] as [number, number][],
+    coordinates: [[minLng, maxLat], [maxLng, maxLat], [maxLng, minLat], [minLng, minLat]] as [[number, number], [number, number], [number, number], [number, number]],
   });
-  const satSource = bounds
-    ? imageSource(`/maps/satellite/${icao}.jpg`, bounds.minLng, bounds.minLat, bounds.maxLng, bounds.maxLat)
-    : { type: 'raster' as const, tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, maxzoom: 19, attribution: '© Esri' };
-  // Soft far-padded backdrop so panning past the detail image shows terrain, not void.
-  const wideSource = bounds ? imageSource(`/maps/satellite/${icao}_wide.jpg`, bounds.wideMinLng, bounds.wideMinLat, bounds.wideMaxLng, bounds.wideMaxLat) : null;
-  const taxiW      = ['interpolate', ['linear'], ['zoom'], 11, 1.5, 13, 4,   14, 7,    15, 11,   16, 17,   17, 26,   18, 40] as any;
-  const taxiCasing = ['interpolate', ['linear'], ['zoom'], 11, 4,   13, 6.5, 14, 9.5,  15, 13.5, 16, 19.5, 17, 28.5, 18, 42.5] as any;
-  const rwyW       = ['interpolate', ['linear'], ['zoom'], 11, 4,   13, 11,  14, 19,   15, 32,   16, 52,   17, 80,   18, 124] as any;
-  const rwyCasing  = ['interpolate', ['linear'], ['zoom'], 11, 6,   13, 13,  14, 21,   15, 34,   16, 54,   17, 82,   18, 126] as any;
 
-  // Photoreal satellite mode: raster shown at true color/opacity; synthetic
-  // pavement fills fade way down so the imagery itself reads through (like
-  // a real aerial view), keeping only faint outlines + labels for wayfinding.
-  // (Blur/contrast to melt parked aircraft is already baked into the static
-  // image by scripts/fetch_satellite.py, so paint stays near-neutral here.)
-  const satPaint = sat
-    ? { 'raster-opacity': 1, 'raster-saturation': 0, 'raster-brightness-max': 1, 'raster-brightness-min': 0, 'raster-hue-rotate': 0, 'raster-contrast': 0.02 }
-    : { 'raster-opacity': 0.46, 'raster-saturation': -0.82, 'raster-brightness-max': 0.4, 'raster-brightness-min': 0.015, 'raster-hue-rotate': 198, 'raster-contrast': 0.06 };
-
-  return {
-    version: 8 as const,
-    glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
-    sources: {
-      ...(wideSource ? { satWide: wideSource } : {}),
-      sat: satSource,
-      osm: { type: 'geojson' as const, data: src },
-    },
-    layers: [
-      { id: 'bg', type: 'background' as const, paint: { 'background-color': sat ? '#05070a' : '#070d18' } },
-      ...(wideSource ? [{ id: 'sat-wide', type: 'raster' as const, source: 'satWide', paint: satPaint }] : []),
-      { id: 'sat', type: 'raster' as const, source: 'sat', paint: satPaint },
-      { id: 'apron', type: 'fill' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'apron'] as any, paint: { 'fill-color': '#0d1726', 'fill-opacity': sat ? 0.06 : 0.84 } },
-      { id: 'hangar', type: 'fill' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'hangar'] as any, paint: { 'fill-color': '#131e30', 'fill-opacity': sat ? 0.06 : 0.7 } },
-      { id: 'terminal', type: 'fill' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'terminal'] as any, paint: { 'fill-color': '#1a2c47', 'fill-opacity': sat ? 0.08 : 0.94 } },
-      { id: 'terminal-line', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'terminal'] as any, paint: { 'line-color': sat ? 'rgba(255,255,255,0.55)' : '#2a4466', 'line-width': 1 } },
-      { id: 'taxiway-casing', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'taxiway'] as any, layout: { 'line-cap': 'round' as const, 'line-join': 'round' as const }, paint: { 'line-color': '#1b2b43', 'line-width': taxiCasing, 'line-opacity': sat ? 0.12 : 1 } },
-      { id: 'taxiway', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'taxiway'] as any, layout: { 'line-cap': 'round' as const, 'line-join': 'round' as const }, paint: { 'line-color': '#04070e', 'line-width': taxiW, 'line-opacity': sat ? 0.10 : 1 } },
-      { id: 'taxiway-cl', type: 'line' as const, source: 'osm', minzoom: 13.5, filter: ['==', ['get', 'aeroway'], 'taxiway'] as any, layout: { 'line-cap': 'round' as const, 'line-join': 'round' as const }, paint: { 'line-color': sat ? 'rgba(250,215,90,0.85)' : 'rgba(240,200,70,0.32)', 'line-width': ['interpolate', ['linear'], ['zoom'], 13.5, 0.4, 16, 1, 18, 1.6] as any } },
-      // taxiway designator labels (A, B, K …) repeated along each taxiway, in a
-      // black "sign" pill like real airport diagrams
-      {
-        id: 'taxiway-label', type: 'symbol' as const, source: 'osm', minzoom: 13.5,
-        // only real taxiway designators (e.g. A, B1, N2E) — hide verbose OSM refs
-        // like "Link 11" by requiring a short, space-free code.
-        filter: ['all',
-          ['==', ['get', 'aeroway'], 'taxiway'],
-          ['!=', ['to-string', ['get', 'ref']], ''],
-          ['<=', ['length', ['to-string', ['get', 'ref']]], 4],
-          ['==', ['index-of', ' ', ['to-string', ['get', 'ref']]], -1],
-        ] as any,
-        layout: {
-          'symbol-placement': 'line' as const,
-          'symbol-spacing': 220,
-          'text-field': ['get', 'ref'] as any,
-          'text-size': ['interpolate', ['linear'], ['zoom'], 13.5, 9, 16, 12, 18, 15] as any,
-          'text-font': ['Open Sans Bold', 'Open Sans Regular'],
-          'text-rotation-alignment': 'viewport' as const,
-          'text-keep-upright': true,
-        },
-        paint: { 'text-color': '#0a0e16', 'text-halo-color': '#f6c43a', 'text-halo-width': 2.2 },
-      },
-      { id: 'runway-casing', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'runway'] as any, layout: { 'line-cap': 'butt' as const }, paint: { 'line-color': '#21354e', 'line-width': rwyCasing, 'line-opacity': sat ? 0.12 : 1 } },
-      { id: 'runway', type: 'line' as const, source: 'osm', filter: ['==', ['get', 'aeroway'], 'runway'] as any, layout: { 'line-cap': 'butt' as const }, paint: { 'line-color': '#03050b', 'line-width': rwyW, 'line-opacity': sat ? 0.08 : 1 } },
-      { id: 'runway-cl', type: 'line' as const, source: 'osm', minzoom: 12.5, filter: ['==', ['get', 'aeroway'], 'runway'] as any, paint: { 'line-color': sat ? 'rgba(255,255,255,0.85)' : 'rgba(220,230,245,0.5)', 'line-width': 1, 'line-dasharray': [4, 6] } },
-      { id: 'runway-label', type: 'symbol' as const, source: 'osm', minzoom: 12, filter: ['==', ['get', 'aeroway'], 'runway'] as any, layout: { 'symbol-placement': 'line-center' as const, 'text-field': ['get', 'ref'] as any, 'text-size': 11, 'text-font': ['Open Sans Bold', 'Open Sans Regular'], 'text-letter-spacing': 0.1 }, paint: { 'text-color': 'rgba(210,225,245,0.85)', 'text-halo-color': '#04060c', 'text-halo-width': 1.4 } },
-      { id: 'gate-dot', type: 'circle' as const, source: 'osm', minzoom: 13, filter: ['in', ['get', 'aeroway'], ['literal', ['gate', 'stand']]] as any, paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 1.2, 16, 2.6, 18, 4.2] as any, 'circle-color': 'rgba(96,160,235,0.6)', 'circle-stroke-color': 'rgba(140,190,255,0.82)', 'circle-stroke-width': 0.6 } },
-      { id: 'gate-label', type: 'symbol' as const, source: 'osm', minzoom: 14.5, filter: ['all', ['in', ['get', 'aeroway'], ['literal', ['gate', 'stand']]], ['!=', ['to-string', ['get', 'ref']], '']] as any, layout: { 'text-field': ['get', 'ref'] as any, 'text-size': ['interpolate', ['linear'], ['zoom'], 14.5, 7.5, 17, 10.5, 19, 13] as any, 'text-font': ['Open Sans Bold', 'Open Sans Regular'], 'text-offset': [0, 0.85] as any, 'text-anchor': 'top' as const, 'text-allow-overlap': false, 'text-optional': true }, paint: { 'text-color': ['case', ['==', ['get', 'aeroway'], 'gate'], 'rgba(180,210,250,0.95)', 'rgba(150,185,228,0.8)'] as any, 'text-halo-color': 'rgba(4,8,16,0.95)', 'text-halo-width': 1.4 } },
-    ],
+  const sources: StyleSpecification['sources'] = {
+    osm: { type: 'geojson', data: src },
   };
-}
-
-// Shared aircraft silhouette painter (realistic top-down airliner).
-// `ctx` is expected to already be translated+rotated to the aircraft; draws at origin.
-export function paintAirframe(ctx: CanvasRenderingContext2D, s: number, fill: string, selected: boolean) {
-  ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.lineWidth = 0.8; ctx.lineJoin = 'round'; ctx.fillStyle = fill;
-  if (selected) { ctx.shadowColor = 'rgba(251,191,36,0.8)'; ctx.shadowBlur = 12; }
-  // wings
-  ctx.beginPath();
-  ctx.moveTo(s * 0.13, -s * 0.18); ctx.lineTo(s * 1.62, s * 0.70); ctx.lineTo(s * 1.60, s * 0.84);
-  ctx.lineTo(s * 0.12, s * 0.40); ctx.lineTo(-s * 0.12, s * 0.40); ctx.lineTo(-s * 1.60, s * 0.84);
-  ctx.lineTo(-s * 1.62, s * 0.70); ctx.lineTo(-s * 0.13, -s * 0.18); ctx.closePath(); ctx.fill();
-  // tailplane
-  ctx.beginPath();
-  ctx.moveTo(s * 0.10, s * 1.16); ctx.lineTo(s * 0.66, s * 1.52); ctx.lineTo(s * 0.64, s * 1.62);
-  ctx.lineTo(s * 0.08, s * 1.42); ctx.lineTo(-s * 0.08, s * 1.42); ctx.lineTo(-s * 0.64, s * 1.62);
-  ctx.lineTo(-s * 0.66, s * 1.52); ctx.lineTo(-s * 0.10, s * 1.16); ctx.closePath(); ctx.fill();
-  // fuselage
-  ctx.beginPath();
-  ctx.moveTo(0, -s * 1.62);
-  ctx.bezierCurveTo(s * 0.17, -s * 1.42, s * 0.185, -s * 0.85, s * 0.185, -s * 0.15);
-  ctx.lineTo(s * 0.165, s * 0.95);
-  ctx.bezierCurveTo(s * 0.15, s * 1.32, s * 0.08, s * 1.55, 0, s * 1.72);
-  ctx.bezierCurveTo(-s * 0.08, s * 1.55, -s * 0.15, s * 1.32, -s * 0.165, s * 0.95);
-  ctx.lineTo(-s * 0.185, -s * 0.15);
-  ctx.bezierCurveTo(-s * 0.185, -s * 0.85, -s * 0.17, -s * 1.42, 0, -s * 1.62);
-  ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.shadowBlur = 0;
-  // engines
-  ctx.fillStyle = selected ? 'rgba(60,40,2,0.92)' : 'rgba(38,26,2,0.9)';
-  for (const ex of [s * 0.82, -s * 0.82]) {
-    const x = ex - s * 0.11, y = s * 0.16, w = s * 0.22, h = s * 0.5, r = s * 0.08;
-    ctx.beginPath();
-    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); ctx.fill();
+  if (sat && bounds) {
+    sources.satWide = imageSource(`/maps/satellite/${icao}_wide.jpg`, bounds.wideMinLng, bounds.wideMinLat, bounds.wideMaxLng, bounds.wideMaxLat);
+    sources.sat = imageSource(`/maps/satellite/${icao}.jpg`, bounds.minLng, bounds.minLat, bounds.maxLng, bounds.maxLat);
   }
+
+  // 01 §5: raster-saturation -0.55, raster-brightness-max 0.62, raster-contrast 0.15
+  const rasterPaint = { 'raster-opacity': 1, 'raster-saturation': -0.55, 'raster-brightness-max': 0.62, 'raster-brightness-min': 0, 'raster-contrast': 0.15, 'raster-fade-duration': 0 };
+
+  const runwayW = trueScaleWidth(RUNWAY_WIDTH_M, lat, 2);
+  const runwayCasingW = trueScaleWidth(RUNWAY_WIDTH_M + 2 * metresPerPxAtZ15(lat), lat, 3);
+  const taxiW = trueScaleWidth(TAXIWAY_WIDTH_M, lat, 1);
+  const leadInW = trueScaleWidth(LEAD_IN_WIDTH_M, lat, 0.5);
+
+  const layers: LayerSpecification[] = [];
+  layers.push({ id: 'bg', type: 'background', paint: { 'background-color': sat ? palette.bg0 : palette.chartGround } });
+  if (sat && bounds) {
+    layers.push({ id: 'sat-wide', type: 'raster', source: 'satWide', paint: rasterPaint });
+    layers.push({ id: 'sat', type: 'raster', source: 'sat', paint: rasterPaint });
+  }
+
+  if (!sat) {
+    // ── chart theme: flat blocks, no strokes ──
+    layers.push({ id: 'apron', type: 'fill', source: 'osm', filter: ['all', aeroway('apron'), isPolygon], paint: { 'fill-color': palette.gndApron, 'fill-opacity': 1 } });
+    layers.push({ id: 'hangar', type: 'fill', source: 'osm', filter: ['all', aeroway('hangar'), isPolygon], paint: { 'fill-color': palette.chartBlock2, 'fill-opacity': 1 } });
+    layers.push({ id: 'terminal', type: 'fill', source: 'osm', filter: ['all', aeroway('terminal'), isPolygon], paint: { 'fill-color': palette.gndTerminal, 'fill-opacity': 1 } });
+    layers.push({ id: 'lead-in', type: 'line', source: 'osm', minzoom: 14, filter: ['all', aeroway('parking_position'), isLine], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': palette.chartBlock2, 'line-width': leadInW, 'line-opacity': 0.9 } });
+    layers.push({ id: 'taxiway', type: 'line', source: 'osm', filter: ['all', aeroway('taxiway'), isLine], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': palette.gndTaxiway, 'line-width': taxiW } });
+    layers.push({ id: 'runway-casing', type: 'line', source: 'osm', filter: ['all', aeroway('runway'), isLine], layout: { 'line-cap': 'butt' }, paint: { 'line-color': palette.gndRunwayEdge, 'line-width': runwayCasingW } });
+    layers.push({ id: 'runway', type: 'line', source: 'osm', filter: ['all', aeroway('runway'), isLine], layout: { 'line-cap': 'butt' }, paint: { 'line-color': palette.gndRunway, 'line-width': runwayW } });
+  } else {
+    // ── satellite theme: veil + hairline outlines only ──
+    layers.push({ id: 'veil', type: 'background', paint: { 'background-color': palette.mapVeil } });
+    layers.push({ id: 'terminal-line', type: 'line', source: 'osm', minzoom: 13, filter: ['all', aeroway('terminal'), isPolygon], paint: { 'line-color': palette.w14, 'line-width': 1 } });
+    layers.push({ id: 'taxiway-edge', type: 'line', source: 'osm', minzoom: 15, filter: ['all', aeroway('taxiway'), isLine], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': palette.chartStreet, 'line-width': taxiW, 'line-opacity': 0.5 } });
+    layers.push({ id: 'runway-casing', type: 'line', source: 'osm', filter: ['all', aeroway('runway'), isLine], layout: { 'line-cap': 'butt' }, paint: { 'line-color': palette.gndRunwayEdge, 'line-width': runwayCasingW, 'line-opacity': 0.9 } });
+    layers.push({ id: 'runway', type: 'line', source: 'osm', filter: ['all', aeroway('runway'), isLine], layout: { 'line-cap': 'butt' }, paint: { 'line-color': palette.bg0, 'line-width': runwayW, 'line-opacity': 0.18 } });
+  }
+
+  // Shared: taxiway centreline (lime @ .5, never yellow) and runway centreline (white .35 dashed 12 8)
+  layers.push({ id: 'taxiway-cl', type: 'line', source: 'osm', minzoom: 13.5, filter: ['all', aeroway('taxiway'), isLine], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': palette.lime50, 'line-width': ['interpolate', ['linear'], ['zoom'], 13.5, 0.5, 16, 1, 19, 1.4] } });
+  layers.push({ id: 'runway-cl', type: 'line', source: 'osm', minzoom: 13, filter: ['all', aeroway('runway'), isLine], paint: { 'line-color': palette.w35, 'line-width': 1, 'line-dasharray': [12, 8] } });
+  // Stand / gate points are drawn by the overlay (occupancy + reserved tint); keep a faint anchor so the base map is not empty at mid zoom.
+  layers.push({ id: 'stand-anchor', type: 'circle', source: 'osm', minzoom: 14, maxzoom: 16, filter: aerowayIn(['gate', 'stand', 'parking_position']), paint: { 'circle-radius': 1, 'circle-color': palette.w14, 'circle-opacity': 0.6 } });
+
+  return { version: 8, sources, layers };
 }

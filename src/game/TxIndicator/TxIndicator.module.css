@@ -1,0 +1,22 @@
+/* TX indicator (UX 04 §7.2): lights while a transmission goes out or PTT is held; click toggles the ATC voice. */
+.tx {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  height: 36px; padding: 0 var(--s-3) 0 var(--s-3);
+  border-radius: var(--r-pill); border: var(--bw) solid var(--line-strong);
+  color: var(--text-3); font: var(--fw-medium) var(--fs-label-xs) / 1 var(--font); letter-spacing: 0.06em;
+  transition: color var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out), background-color var(--t-fast) var(--ease-out);
+}
+.tx:hover { background: var(--w-06); color: var(--text-2); }
+.tx:focus-visible { box-shadow: var(--focus-ring); }
+.tx[data-state="tx"] { color: var(--orange); border-color: var(--orange-border); background: var(--orange-tint-08); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-5); transition: background-color var(--t-fast) var(--ease-out), box-shadow var(--t-fast) var(--ease-out); }
+.tx[data-state="tx"] .dot { background: var(--orange); box-shadow: var(--orange-glow); }
+.wave { display: inline-flex; align-items: center; gap: 2px; height: 12px; }
+.bar { width: 2px; height: 4px; border-radius: 1px; background: currentColor; opacity: 0.5; }
+.tx[data-state="tx"] .bar { animation: wave var(--t-bars) var(--ease-inout) infinite alternate; opacity: 1; }
+.tx[data-state="tx"] .bar:nth-child(2) { animation-delay: 80ms; }
+.tx[data-state="tx"] .bar:nth-child(3) { animation-delay: 160ms; }
+@keyframes wave { from { height: 3px; } to { height: 12px; } }
+.voice { display: inline-flex; color: var(--text-3); }
+.tx[data-voice="on"] .voice { color: var(--green); }
+@media (prefers-reduced-motion: reduce) { .tx[data-state="tx"] .bar { animation: none; height: 8px; } }

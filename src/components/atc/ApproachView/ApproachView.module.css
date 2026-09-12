@@ -1,0 +1,146 @@
+/* Approach scope chrome (01 A10, A21; 04 §2.1 map toolbar). Tokens only. */
+
+.wrap {
+  position: absolute; inset: 0; overflow: hidden;
+  background: var(--bg-0);
+  color: var(--text-1);
+  font-family: var(--font);
+  user-select: none; -webkit-user-select: none;
+  --radar-inset-top: 12px; --radar-inset-right: 12px; --radar-inset-bottom: 12px; --radar-inset-left: 12px;
+}
+.canvas { display: block; touch-action: none; outline: none; }
+.canvas:focus-visible { box-shadow: var(--focus-ring-inset); }
+.wrap[data-cursor="pointer"] .canvas { cursor: pointer; }
+.wrap[data-cursor="grabbing"] .canvas { cursor: grabbing; }
+.wrap[data-cursor="crosshair"] .canvas { cursor: crosshair; }
+.wrap[data-cursor="vector"] .canvas { cursor: crosshair; }
+
+/* ---- wind / ATIS corner chip (glass pill 40) ---- */
+.chip {
+  position: absolute; top: var(--radar-inset-top); left: var(--radar-inset-left); z-index: var(--z-float);
+  display: inline-flex; align-items: center; gap: var(--pill-l-gap); height: var(--pill-l); padding: 0 var(--pill-l-px) 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--glass-fill-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: var(--bw) solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+  font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  animation: global(ds-enter) var(--t-slow) var(--ease-out) both;
+}
+.chipLetter {
+  display: inline-flex; align-items: center; justify-content: center; width: var(--plate-circle); height: var(--plate-circle); border-radius: 50%;
+  background: var(--chip-on-glass); color: var(--text-1); font: var(--fw-medium) var(--fs-body-s) / 1 var(--font);
+  transition: background-color var(--t-base) var(--ease-out);
+}
+.chipLetter[data-bump="1"] { animation: global(ds-bump) var(--t-bump) var(--ease-out) 1; }
+.chipArrow { display: inline-flex; color: var(--text-1); transition: transform var(--t-bars) var(--ease-inout); }
+.chipCalm { color: var(--text-3); }
+.chipSep { color: var(--text-4); }
+.chipRwy { color: var(--text-1); }
+.chipGust { color: var(--orange); }
+
+/* ---- toolbar: vertical circle cluster + range presets (bottom-right) ---- */
+.toolbar {
+  position: absolute; right: var(--radar-inset-right); bottom: var(--radar-inset-bottom); z-index: var(--z-float);
+  display: flex; flex-direction: column; align-items: flex-end; gap: var(--pill-gap);
+}
+.tools { display: flex; flex-direction: column; gap: var(--pill-gap); }
+.presets {
+  display: flex; flex-direction: column; gap: 4px; padding: 4px; border-radius: var(--r-pill);
+  background: var(--glass-fill); border: var(--bw) solid var(--glass-border);
+  -webkit-backdrop-filter: blur(var(--glass-blur)); backdrop-filter: blur(var(--glass-blur));
+}
+.presetBtn {
+  display: inline-flex; align-items: center; justify-content: center; width: 36px; height: var(--pill-s); border-radius: var(--r-pill);
+  font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--text-2); font-variant-numeric: tabular-nums;
+  transition: background-color var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out);
+}
+.presetBtn:hover { background: var(--glass-btn-hover); color: var(--text-1); }
+.presetBtn:active { background: var(--glass-btn-pressed); }
+.presetBtn[aria-pressed="true"] { background: var(--bg-3); color: var(--text-1); font-weight: var(--fw-medium); }
+.presetBtn:focus-visible { box-shadow: var(--focus-ring); }
+.ringsCentre { display: flex; gap: 4px; }
+
+/* ---- draft bubble (heading / direct / ILS / altitude) ---- */
+.bubble {
+  position: absolute; z-index: var(--z-menu); width: 236px; padding: var(--s-4);
+  border-radius: var(--r-inner);
+  background: var(--glass-fill-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: var(--bw) solid var(--glass-border-lit);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+  --text-3: var(--text-3-on-glass);
+  animation: global(ds-pop) var(--t-fast) var(--ease-out) both;
+  display: flex; flex-direction: column; gap: var(--s-3);
+}
+.bubbleCompact { width: 220px; }
+.bubbleHead { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+.bubbleTitle { font: var(--fw-label-xs) var(--fs-label-xs) / var(--lh-label-xs) var(--font); letter-spacing: var(--ls-label-xs); color: var(--text-3); }
+.bubbleCs { font: var(--fw-medium) var(--fs-body-s) / 1 var(--font); color: var(--text-1); }
+.bubbleBody { display: flex; align-items: center; gap: var(--s-3); }
+.bubbleReadout { display: flex; flex-direction: column; gap: var(--s-2); min-width: 0; flex: 1; }
+.bubblePhrase { font: var(--fw-body-s) var(--fs-body-s) / var(--lh-body-s) var(--font); color: var(--text-2); }
+.bubblePhrase strong { color: var(--text-1); font-weight: var(--fw-medium); }
+.bubbleTurn { display: flex; gap: 4px; }
+.bubbleFoot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+.bubbleNote { font: var(--fw-label-xs) var(--fs-label-xs) / var(--lh-label-xs) var(--font); color: var(--text-3); }
+.bubbleWarn { color: var(--orange); }
+.bubbleErr { color: var(--red); }
+.bubbleSteps { display: flex; gap: 4px; }
+.bubbleRing { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--w-12); overflow: hidden; border-radius: 0 0 var(--r-inner) var(--r-inner); }
+.bubbleRing > span { display: block; height: 100%; background: var(--orange-60); transform-origin: left; animation: bubbleDrain var(--bubble-ttl, 8000ms) linear both; }
+@keyframes bubbleDrain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* ---- hover tooltip (glass, 04 §4) ---- */
+.tooltip {
+  position: absolute; z-index: var(--z-menu); pointer-events: none; padding: 8px 12px; border-radius: var(--r-inner);
+  background: var(--glass-fill-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur)); backdrop-filter: blur(var(--glass-blur));
+  border: var(--bw) solid var(--glass-border); box-shadow: var(--shadow-tooltip);
+  font: var(--fw-body-s) var(--fs-body-s) / var(--lh-body-s) var(--font); color: var(--text-2); white-space: nowrap;
+  --text-3: var(--text-3-on-glass);
+  animation: global(ds-pop) var(--t-fast) var(--ease-out) both;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.tipTitle { display: flex; align-items: center; gap: var(--s-2); color: var(--text-1); font-weight: var(--fw-medium); }
+.tipDim { color: var(--text-3); }
+.tipNum { font-variant-numeric: tabular-nums; }
+.tipReq { color: var(--orange); }
+.tipEm { color: var(--red); }
+
+/* ---- measure readouts, drag readout, edge arrow (positioned by the frame loop) ---- */
+.pill {
+  position: absolute; left: 0; top: 0; z-index: var(--z-float); transform: translate(-50%, -50%);
+  display: inline-flex; align-items: center; height: var(--pill-xs); padding: 0 var(--pill-xs-px); border-radius: var(--r-pill);
+  background: var(--bg-3); color: var(--text-1); font: var(--fw-label-xs) var(--fs-label-xs) / 1 var(--font); letter-spacing: var(--ls-label-xs);
+  font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: auto;
+}
+.measurePill { cursor: pointer; }
+.measurePill:hover { background: var(--bg-4); }
+.measurePill:focus-visible { box-shadow: var(--focus-ring); }
+.dragPill { pointer-events: none; background: var(--data-block); transform: translate(14px, 14px); }
+.dragPill[data-snap="1"] { color: var(--lime-marker); }
+.dragPill b { font-weight: var(--fw-medium); color: var(--orange); margin-left: 4px; }
+.edgeArrow {
+  position: absolute; left: 0; top: 0; z-index: var(--z-float); width: var(--circle-xs); height: var(--circle-xs); border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center; color: var(--orange);
+  background: var(--glass-map-btn); border: var(--bw) solid var(--w-10); cursor: pointer;
+  transition: background-color var(--t-fast) var(--ease-out);
+}
+.edgeArrow:hover { background: var(--glass-map-btn-hover); }
+.edgeArrow:focus-visible { box-shadow: var(--focus-ring); }
+.edgeArrow > svg { transition: transform var(--t-base) var(--ease-out); }
+
+/* ---- empty / no-airspace note ---- */
+.note {
+  position: absolute; left: 50%; top: var(--radar-inset-top); transform: translateX(-50%); z-index: var(--z-float);
+  display: inline-flex; align-items: center; gap: var(--pill-s-gap); height: var(--pill-s); padding: 0 var(--pill-s-px); border-radius: var(--r-pill);
+  background: var(--glass-fill); border: var(--bw) solid var(--glass-border); color: var(--text-3);
+  font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip, .bubble, .tooltip { animation: global(ds-fade-in) var(--t-fast) both; }
+  .chipArrow, .edgeArrow > svg { transition: none; }
+}

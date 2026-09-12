@@ -1,0 +1,2 @@
+.wrap { min-height: 60vh; display: flex; align-items: center; justify-content: center; }
+.actions { display: inline-flex; gap: var(--s-2); flex-wrap: wrap; justify-content: center; }

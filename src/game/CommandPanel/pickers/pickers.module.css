@@ -1,0 +1,147 @@
+/* Picker surfaces inside the command panel stepper (04 §1.2, 01 A11.4/A11.5). Tokens only. */
+.picker { display: flex; flex-direction: column; gap: 12px; min-width: 0; outline: none; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.rowTight { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.label { font: var(--fw-label-xs) var(--fs-label-xs) / var(--lh-label-xs) var(--font); letter-spacing: var(--ls-label-xs); color: var(--text-3); text-transform: uppercase; }
+.hint { font: var(--fw-body-s) var(--fs-body-s) / var(--lh-body-s) var(--font); color: var(--text-3); }
+.hintOrange { color: var(--orange); }
+.hintRed { color: var(--red); }
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: "kern", "tnum"; }
+
+/* Chip grid (runways, stands, taxiways, positions) */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+
+/* Rich chip: title + sub-label + badges (runway / exit / stand / vehicle / fix) */
+.chip {
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0;
+  padding: 10px 12px; border-radius: var(--r-row); background: var(--w-06); border: var(--bw) solid transparent;
+  color: var(--text-2); cursor: pointer; text-align: left;
+  transition: background var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out);
+}
+.chip:hover { background: var(--w-10); color: var(--text-1); }
+.chip:active { background: var(--w-14); transform: scale(0.98); }
+.chip[aria-pressed="true"], .chipSelected { background: var(--orange-tint-16); border-color: var(--orange-border); color: var(--text-1); }
+.chip:disabled { background: var(--w-04); color: var(--text-5); cursor: not-allowed; }
+.chip:disabled .chipSub { color: var(--text-5); }
+.chipRow { display: flex; align-items: center; gap: 6px; width: 100%; min-width: 0; }
+.chipTitle { font: var(--fw-title-m) var(--fs-title-m) / var(--lh-title-m) var(--font); color: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chipSub { font: var(--fw-label-xs) var(--fs-label-xs) / var(--lh-label-xs) var(--font); color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.chipSubOrange { color: var(--orange); }
+.chipReason { font: var(--fw-label-xs) var(--fs-label-xs) / var(--lh-label-xs) var(--font); color: var(--text-4); white-space: normal; }
+.chipBadges { display: flex; gap: 4px; margin-left: auto; flex-shrink: 0; }
+.badge { font: var(--fw-micro-caps) var(--fs-micro-caps) / var(--lh-micro-caps) var(--font); letter-spacing: var(--ls-micro-caps); text-transform: uppercase; padding: 1px 5px; border-radius: var(--r-kbd); background: var(--w-08); color: var(--text-3); }
+.badgeOrange { color: var(--orange); background: var(--orange-tint-15); }
+.badgeRed { color: var(--red); background: var(--red-tint); }
+.badgeGreen { color: var(--green); background: var(--w-06); }
+.kbdIdx { position: absolute; top: 6px; right: 8px; font: var(--fw-label-xs) var(--fs-label-xs) / 1 var(--font); color: var(--text-4); }
+
+/* List rows (fixes, aircraft, stands) */
+.list { display: flex; flex-direction: column; gap: 2px; max-height: 240px; overflow-y: auto; overscroll-behavior: contain; -webkit-mask-image: var(--fade-mask); mask-image: var(--fade-mask); padding-block: 6px; }
+.listRow {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px; border-radius: var(--r-chip);
+  color: var(--text-2); cursor: pointer; text-align: left; transition: background var(--t-fast) var(--ease-out);
+}
+.listRow:hover { background: var(--w-06); color: var(--text-1); }
+.listRow[aria-pressed="true"] { background: var(--orange-tint-16); color: var(--text-1); }
+.listRow:disabled { color: var(--text-5); cursor: not-allowed; }
+.listRowDim { opacity: 0.55; }
+.listTitle { font: var(--fw-body-m) var(--fs-body-m) / var(--lh-body-m) var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.listMeta { font: var(--fw-body-s) var(--fs-body-s) / var(--lh-body-s) var(--font); color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.section { font: var(--fw-label-xs) var(--fs-label-xs) / var(--lh-label-xs) var(--font); color: var(--text-4); padding: 8px 12px 2px; text-transform: uppercase; letter-spacing: var(--ls-label-xs); }
+
+/* Route builder */
+.routeBar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 40px; padding: 6px 8px; border-radius: var(--r-inner); background: var(--w-04); border: var(--bw) solid var(--line); }
+.routeBarActive { border-color: var(--glass-border-hover); }
+.routeEmpty { font: var(--fw-body-s) var(--fs-body-s) / var(--lh-body-s) var(--font); color: var(--text-3); padding: 0 4px; }
+.routeSep { color: var(--text-4); display: inline-flex; }
+.routeInput { flex: 1; min-width: 48px; height: 26px; background: transparent; color: var(--text-1); font: var(--fw-body-m) var(--fs-body-m) / 1 var(--font); text-transform: uppercase; }
+.twyRail { display: flex; flex-wrap: wrap; gap: 6px; max-height: 96px; overflow-y: auto; padding-block: 2px; }
+.twy { min-width: 32px; height: 30px; padding: 0 10px; border-radius: var(--r-pill); background: var(--w-06); color: var(--text-2); font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); font-variant-numeric: tabular-nums; transition: background var(--t-fast) var(--ease-out); }
+.twy:hover { background: var(--w-12); color: var(--text-1); }
+.twy:active { background: var(--w-16); }
+.twy:disabled { color: var(--text-5); background: var(--w-04); }
+.popover { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: var(--r-inner); background: var(--bg-2); border: var(--bw) solid var(--line-strong); box-shadow: var(--shadow-menu); animation: ds-drop var(--t-fast) var(--ease-out) both; }
+
+/* Heading / altitude / speed */
+.dialWrap { display: flex; gap: 16px; align-items: flex-start; }
+.dialSide { display: flex; flex-direction: column; gap: 10px; min-width: 0; flex: 1; }
+.numInput { width: 88px; }
+.ladderWrap { display: flex; gap: 16px; align-items: flex-start; }
+.ladderSide { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; }
+.bands { display: flex; flex-direction: column; gap: 4px; }
+.band { display: flex; align-items: center; gap: 8px; font: var(--fw-label-xs) var(--fs-label-xs) / var(--lh-label-xs) var(--font); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.bandSwatch { width: 10px; height: 10px; border-radius: 2px; background: var(--w-12); flex-shrink: 0; }
+.bandMsa { background: var(--red-40); }
+.bandCeil { background: var(--w-20); }
+.bandGs { background: var(--lime-50); }
+.rail { display: flex; flex-wrap: wrap; gap: 6px; }
+.speedChip { position: relative; height: 36px; min-width: 56px; padding: 0 12px; border-radius: var(--r-pill); background: var(--w-08); color: var(--text-2); font: var(--fw-body-m) var(--fs-body-m) / 1 var(--font); font-variant-numeric: tabular-nums; transition: background var(--t-fast) var(--ease-out); }
+.speedChip:hover { background: var(--w-12); color: var(--text-1); }
+.speedChip[aria-pressed="true"] { background: var(--orange-tint-16); color: var(--text-1); box-shadow: inset 0 0 0 1px var(--orange-border); }
+.speedChip:disabled { color: var(--text-5); background: var(--w-04); }
+.speedNote { position: absolute; top: -6px; right: -4px; font: var(--fw-micro-caps) 9px / 1 var(--font); color: var(--orange); background: var(--bg-2); padding: 1px 4px; border-radius: var(--r-kbd); }
+
+/* Direction picker */
+.dirBig { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dirBtn { display: flex; align-items: center; justify-content: center; gap: 8px; height: 56px; border-radius: var(--r-row); background: var(--w-06); color: var(--text-2); font: var(--fw-title-m) var(--fs-title-m) / 1 var(--font); transition: background var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out); }
+.dirBtn:hover { background: var(--w-10); color: var(--text-1); }
+.dirBtn:active { transform: scale(0.98); }
+.dirBtn[aria-pressed="true"] { background: var(--orange-tint-16); color: var(--text-1); box-shadow: inset 0 0 0 1px var(--orange-border); }
+.dirBtn:disabled { color: var(--text-5); background: var(--w-04); }
+.compass { display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px); gap: 4px; justify-content: center; }
+.compassBtn { border-radius: var(--r-chip); background: var(--w-06); color: var(--text-2); font: var(--fw-body-m) var(--fs-body-m) / 1 var(--font); transition: background var(--t-fast) var(--ease-out); }
+.compassBtn:hover { background: var(--w-10); color: var(--text-1); }
+.compassBtn[aria-pressed="true"] { background: var(--orange-tint-16); color: var(--text-1); box-shadow: inset 0 0 0 1px var(--orange-border); }
+.compassBtn:disabled { color: var(--text-5); background: var(--w-04); }
+.compassCentre { display: flex; align-items: center; justify-content: center; color: var(--text-4); }
+
+/* Vehicle cards */
+.vehCard { display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; border-radius: var(--r-row); background: var(--w-04); color: var(--text-2); cursor: pointer; text-align: left; transition: background var(--t-fast) var(--ease-out); }
+.vehCard:hover { background: var(--w-08); color: var(--text-1); }
+.vehCard[aria-pressed="true"] { background: var(--orange-tint-16); color: var(--text-1); box-shadow: inset 0 0 0 1px var(--orange-border); }
+.vehCard:disabled { color: var(--text-5); cursor: not-allowed; }
+.vehGlyph { display: inline-flex; color: var(--text-2); }
+.vehName { font: var(--fw-body-m) var(--fs-body-m) / var(--lh-body-m) var(--font); }
+.vehState { font: var(--fw-label-xs) var(--fs-label-xs) / var(--lh-label-xs) var(--font); color: var(--text-3); text-transform: uppercase; letter-spacing: var(--ls-label-xs); }
+
+/* Hold builder */
+.holdGrid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.efc { display: flex; align-items: baseline; gap: 8px; }
+.efcTime { font: var(--fw-display-m) var(--fs-display-m) / var(--lh-display-m) var(--font); letter-spacing: var(--ls-display-m); color: var(--text-1); font-variant-numeric: tabular-nums; }
+
+/* Confirm step */
+.summary { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: var(--r-inner); background: var(--w-04); border: var(--bw) solid var(--line); }
+.summaryWho { font: var(--fw-label-xs) var(--fs-label-xs) / var(--lh-label-xs) var(--font); color: var(--text-3); letter-spacing: var(--ls-label-xs); text-transform: uppercase; }
+.summaryText { font: var(--fw-body-m) var(--fs-body-m) / var(--lh-multiline) var(--font); color: var(--text-1); font-variant-numeric: tabular-nums; }
+.summaryRb { font: var(--fw-body-s) var(--fs-body-s) / var(--lh-multiline) var(--font); color: var(--text-2); }
+.partChips { display: flex; flex-wrap: wrap; gap: 6px; }
+.partChip { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 6px 0 10px; border-radius: var(--r-pill); background: var(--bg-3); color: var(--text-1); font: var(--fw-label-xs) var(--fs-label-xs) / 1 var(--font); }
+.partRemove { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; color: var(--text-3); }
+.partRemove:hover { color: var(--text-1); background: var(--w-12); }
+.addParts { display: flex; flex-wrap: wrap; gap: 6px; }
+.issues { display: flex; flex-direction: column; gap: 6px; }
+.issue { display: flex; align-items: flex-start; gap: 8px; font: var(--fw-body-s) var(--fs-body-s) / var(--lh-body-s) var(--font); padding: 8px 10px; border-radius: var(--r-chip); }
+.issueWarn { color: var(--orange); background: var(--orange-tint-08); border: var(--bw) solid var(--orange-tint-20); }
+.issueHard { color: var(--red); background: var(--red-tint-08); border: var(--bw) solid var(--red-border-25); }
+.issueIcon { flex-shrink: 0; margin-top: 1px; }
+.holdBtn { position: relative; overflow: hidden; }
+.holdRing { position: absolute; inset: 0; pointer-events: none; }
+.holdRing::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: var(--hold-progress, 0%); background: var(--orange-tint-24); transition: width 60ms linear; }
+.confirmFooter { display: flex; align-items: center; gap: 8px; }
+.spacer { flex: 1; }
+
+/* Sub-picker (opened from a part chip) */
+.sub { display: flex; flex-direction: column; gap: 12px; padding: 12px; border-radius: var(--r-inner); background: var(--w-04); border: var(--bw) solid var(--glass-border-hover); animation: ds-drop var(--t-fast) var(--ease-out) both; }
+.subHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.subTitle { font: var(--fw-body-m) var(--fs-body-m) / var(--lh-body-m) var(--font); color: var(--text-1); }
+
+/* Search */
+.search { width: 100%; }
+.empty { padding: 20px 12px; text-align: center; font: var(--fw-body-s) var(--fs-body-s) / var(--lh-body-s) var(--font); color: var(--text-3); }
+.toggleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
+.mapMode { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--r-chip); background: var(--orange-tint-08); color: var(--orange); font: var(--fw-body-s) var(--fs-body-s) / 1.3 var(--font); }
+
+.inlineRow { display: inline-flex; align-items: center; gap: 4px; }
