@@ -58,7 +58,9 @@ const TERRAIN_FRAG = /* glsl */ `
   uniform sampler2D uLand;
   uniform vec2 uTexel;       // 1/grid
   uniform vec2 uMetersPerTexel;
-  uniform vec3 uLight;       // normalized, world space
+  uniform vec3 uLight;       // normalized, world space (toward the sun / moon)
+  uniform vec3 uSunColor;
+  uniform float uSunI, uHemiI, uDay, uWet;
   uniform vec3 uCam;
   uniform float uFogNear, uFogFar;
   uniform vec3 uFog;
@@ -86,6 +88,7 @@ const TERRAIN_FRAG = /* glsl */ `
     vec3 n = normalize(vec3((hl - hr) / (2.0 * uMetersPerTexel.x), 1.0, (hu - hd) / (2.0 * uMetersPerTexel.y)));
     float slope = 1.0 - n.y;
 
+    float night = 1.0 - uDay;
     vec4 land = texture2D(uLand, vUv);
     float veg = land.r, bright = land.g, water = land.b, grain = land.a;
     float h = vWorld.y;
@@ -106,17 +109,26 @@ const TERRAIN_FRAG = /* glsl */ `
     // lighting: sun + hemisphere, slopes toward the light lit, away in cool shadow
     float ndl = clamp(dot(n, uLight), 0.0, 1.0);
     float hemi = 0.55 + 0.45 * n.y;
-    float lit = 0.4 * hemi + 1.0 * ndl;
+    vec3 lit = vec3(0.4 * hemi * uHemiI) + uSunColor * (ndl * uSunI);
     col *= lit;
     // shadow-side tint (cooler)
-    col = mix(col, col * vec3(0.85, 0.9, 1.05), (1.0 - ndl) * 0.35);
+    col = mix(col, col * vec3(0.85, 0.9, 1.05), (1.0 - ndl) * 0.35 * uDay);
+    // rain: darker, slightly glossy ground
+    col *= 1.0 - 0.22 * uWet;
+    // night: the city switches on — sparse warm lights on built-up texels plus a faint sodium haze
+    float urban = (1.0 - smoothstep(0.08, 0.4, veg)) * (1.0 - water) * (1.0 - field) * smoothstep(0.12, 0.35, bright);
+    vec2 cell = floor(vWorld.xz / 28.0);
+    float lamp = step(0.955, hash(cell)) * (0.6 + 0.4 * hash(cell + 3.1));
+    vec2 cellUv = fract(vWorld.xz / 28.0) - 0.5; float dot2 = 1.0 - smoothstep(0.0, 0.32, length(cellUv));
+    col += vec3(1.0, 0.72, 0.42) * lamp * dot2 * urban * night * 1.4;
+    col += vec3(0.32, 0.22, 0.12) * urban * night * 0.16;
 
     // water: dark, slightly deeper further from shore, faint moving sheen
     vec3 viewDir = normalize(uCam - vWorld);
     vec3 hv = normalize(viewDir + uLight);
     float spec = pow(clamp(dot(vec3(0.0, 1.0, 0.0), hv), 0.0, 1.0), 180.0);
     float ripple = noise(vWorld.xz * 0.004 + vec2(uTime * 0.02, 0.0)) * 0.5 + noise(vWorld.xz * 0.015 - vec2(0.0, uTime * 0.03)) * 0.5;
-    vec3 waterCol = mix(cWater, cWaterDeep, 0.5 + 0.5 * ripple) + spec * 0.25 + ripple * 0.006;
+    vec3 waterCol = (mix(cWater, cWaterDeep, 0.5 + 0.5 * ripple) + ripple * 0.006) * (0.35 + 0.65 * uDay) + uSunColor * spec * (0.25 + 0.2 * night);
     // soft shoreline: the mask is bilinear so the edge blends over ~1 texel
     float shore = smoothstep(0.2, 0.5, water) * (1.0 - smoothstep(0.5, 0.8, water));
     col = mix(col, waterCol, smoothstep(0.35, 0.65, water));
@@ -144,7 +156,8 @@ export function buildTerrain(world: World, segments = 512): TerrainHandle {
     uExtent: { value: new THREE.Vector4(extent.minX, extent.minY, w, hgt) },
     uTexel: { value: new THREE.Vector2(1 / world.meta.grid, 1 / world.meta.grid) },
     uMetersPerTexel: { value: new THREE.Vector2(w / world.meta.grid, hgt / world.meta.grid) },
-    uLight: { value: new THREE.Vector3(-0.55, 0.62, 0.55).normalize() },   // sun from the north-west, mid elevation (long relief shadows)
+    uLight: { value: new THREE.Vector3(-0.55, 0.62, 0.55).normalize() },
+    uSunColor: { value: new THREE.Color('#fff3e0') }, uSunI: { value: 1.0 }, uHemiI: { value: 1.0 }, uDay: { value: 1 }, uWet: { value: 0 },
     uCam: { value: new THREE.Vector3() },
     uFogNear: { value: 9000 }, uFogFar: { value: 32000 }, uFog: { value: new THREE.Color(PALETTE.bg) },
     uEdge: { value: new THREE.Vector4(extent.minX, -extent.maxY, extent.maxX, -extent.minY) },
@@ -295,7 +308,16 @@ function polygonGeo(pts: { x: number; y: number }[], h: number): THREE.BufferGeo
   return geo;
 }
 
-export function buildAirport(world: World, air: OsmAirport, fades: Fade[]): THREE.Group {
+export interface NightHandle { setNight(n: number): void }
+
+function glowTexture(): THREE.CanvasTexture {
+  const c = document.createElement('canvas'); c.width = c.height = 128; const ctx = c.getContext('2d')!;
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,214,150,0.55)'); g.addColorStop(0.35, 'rgba(255,190,110,0.18)'); g.addColorStop(1, 'rgba(255,170,90,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+
+export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night: NightHandle[] = []): THREE.Group {
   const g = new THREE.Group(); g.name = 'airport';
   const c = world.toLocal(air.center.lng, air.center.lat);
   const base = world.heightAt(c.x, c.y);
@@ -380,7 +402,34 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[]): THRE
   }
   const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lightPos, 3)); lg.setAttribute('color', new THREE.Float32BufferAttribute(lightCol, 3));
   const lm = new THREE.PointsMaterial({ size: 2.2, vertexColors: true, transparent: true, opacity: 0.95, sizeAttenuation: true, depthWrite: false });
-  g.add(new THREE.Points(lg, lm)); fades.push({ mat: lm, base: 0.95, near: 2500, far: 7000 });
+  g.add(new THREE.Points(lg, lm)); const rwFade: Fade = { mat: lm, base: 0.95, near: 2500, far: 7000 }; fades.push(rwFade);
+  // night: taxiway edge lights (blue) + centreline lights (green) along the taxi graph, apron floodlight glows at the terminals
+  const tPos: number[] = []; const tCol: number[] = []; const blue = new THREE.Color('#4f8cff'), grn = new THREE.Color('#38e07a');
+  const seenN = new Set<string>();
+  for (const n of air.nodes.values()) for (const e of n.edges) {
+    if (e.type !== 'taxiway') continue;
+    const key = n.id < e.to ? `${n.id}|${e.to}` : `${e.to}|${n.id}`; if (seenN.has(key)) continue; seenN.add(key);
+    const a = xy(n.id), b = xy(e.to); const va = toV3(a.x, a.y, base + 0.9), vb = toV3(b.x, b.y, base + 0.9);
+    const d = new THREE.Vector3().subVectors(vb, va); const L = d.length(); if (L < 8) continue; d.normalize(); const sd = new THREE.Vector3(-d.z, 0, d.x);
+    for (let t = 15; t < L - 5; t += 30) { const c = va.clone().addScaledVector(d, t); tCol.push(grn.r, grn.g, grn.b); tPos.push(c.x, c.y, c.z); }
+    for (let t = 10; t < L - 5; t += 45) for (const sgn of [-1, 1]) { const c = va.clone().addScaledVector(d, t).addScaledVector(sd, sgn * (TAXIWAY_WIDTH / 2 + 1)); tCol.push(blue.r, blue.g, blue.b); tPos.push(c.x, c.y, c.z); }
+  }
+  const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(tPos, 3)); tg.setAttribute('color', new THREE.Float32BufferAttribute(tCol, 3));
+  const tm = new THREE.PointsMaterial({ size: 1.7, vertexColors: true, transparent: true, opacity: 0, sizeAttenuation: true, depthWrite: false });
+  const tp = new THREE.Points(tg, tm); tp.visible = false; g.add(tp);
+  const glowMat = new THREE.SpriteMaterial({ map: glowTexture(), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+  const glows: THREE.Sprite[] = [];
+  for (const b of air.buildings) {
+    if (b.kind !== 'terminal' && b.kind !== 'apron') continue;
+    const c = world.toLocal(b.centroid.lng, b.centroid.lat); const r = Math.sqrt(b.areaM2) * (b.kind === 'apron' ? 0.9 : 1.4);
+    const sp = new THREE.Sprite(glowMat); sp.position.copy(toV3(c.x, c.y, base + 2)); sp.scale.set(r, r, 1); sp.visible = false; g.add(sp); glows.push(sp);
+  }
+  let curNight = 0;
+  night.push({ setNight: (n) => {
+    curNight = n; tm.opacity = 0.95 * n; tp.visible = n > 0.03; glowMat.opacity = 0.75 * n; for (const sp of glows) sp.visible = n > 0.03;
+    lm.size = 2.2 + 1.6 * n; rwFade.base = 0.95; rwFade.far = 7000 + 9000 * n;   // runway lights carry further at night
+  } });
+  void curNight;
 
   // holding position bars (double yellow across the taxiway)
   const holdGeos: THREE.BufferGeometry[] = [];

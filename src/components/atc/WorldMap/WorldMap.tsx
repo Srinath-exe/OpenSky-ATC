@@ -21,7 +21,11 @@ import type { AircraftState } from '@/lib/sim/types';
 import { isAirborne } from '@/lib/sim/aircraft';
 import { loadWorld, type World } from './world';
 import { instantiate, loadAircraftModel, tint } from './models';
-import { PALETTE, applyFades, buildAirport, buildBuildings, buildRoads, buildTerrain, toV3, type Fade } from './terrain';
+import { PALETTE, applyFades, buildAirport, buildBuildings, buildRoads, buildTerrain, toV3, type Fade, type NightHandle } from './terrain';
+import { applySky, buildClouds, buildRain, buildSky, lightingFor, sunPosition, weatherLook, type TimeMode } from './sky';
+import { IconButton, Segmented, Icon, Tooltip } from '@/design';
+import { requestOpenAction } from '@/game/CommandPanel/bus';
+import { stageLabel } from '@/lib/sim/stage';
 
 const FT = 0.3048;
 const GRADE = {
@@ -59,7 +63,17 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
   const icao = useSim((s) => s.icao);
   const hasEngine = useSim((s) => !!s.engine);
   const [status, setStatus] = React.useState<'loading' | 'ready' | 'error'>('loading');
-  const [tip, setTip] = React.useState<{ x: number; y: number; text: string } | null>(null);
+  const [tip, setTip] = React.useState<{ x: number; y: number; lines: string[] } | null>(null);
+  const [timeMode, setTimeMode] = React.useState<TimeMode>(() => { try { return (localStorage.getItem('skycontrol_world_time') as TimeMode) || 'auto'; } catch { return 'auto'; } });
+  const [showLabels, setShowLabels] = React.useState(true);
+  const [following, setFollowing] = React.useState(false);
+  const [menu, setMenu] = React.useState<{ x: number; y: number; id: number; callsign: string; rows: { id: string; label: string; hotkey: string | null }[] } | null>(null);
+  const selectedId = useSim((s) => s.selectedId);
+  const ctl = React.useRef<{ zoom: (f: number) => void; reset: () => void; follow: (on: boolean) => void; centre: () => void } | null>(null);
+  const timeRef = React.useRef<TimeMode>(timeMode); timeRef.current = timeMode;
+  const labelsRef = React.useRef(true); labelsRef.current = showLabels;
+  const setFollowRef = React.useRef(setFollowing); setFollowRef.current = setFollowing;
+  const pickTime = (m: string) => { setTimeMode(m as TimeMode); try { localStorage.setItem('skycontrol_world_time', m); } catch { /* private mode */ } };
 
   React.useEffect(() => {
     const el = host.current; const e = sim.engine;
@@ -77,7 +91,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     scene.fog = new THREE.Fog(PALETTE.bg, 9000, 32000);   // rescaled with the camera distance every frame (terrain shader mirrors it)
     const camera = new THREE.PerspectiveCamera(48, 1, 20, 80000);
     const cam: Cam = { target: new THREE.Vector3(0, 0, 0), dist: 5200, yaw: -0.35, pitch: 0.95 };
-    scene.add(new THREE.HemisphereLight(0xbfc7d1, 0x1a1c1a, 0.9));
+    const hemiLight = new THREE.HemisphereLight(0xbfc7d1, 0x1a1c1a, 0.9); scene.add(hemiLight);
     const sun = new THREE.DirectionalLight(0xfff1dc, 1.2); sun.position.set(-5000, 6000, 5000); scene.add(sun);
 
     const composer = new EffectComposer(renderer);
@@ -93,6 +107,11 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const matSel = new THREE.MeshLambertMaterial({ color: PALETTE.orange, emissive: 0x3a2008 });
     const matGhost = new THREE.MeshLambertMaterial({ color: 0x9a9c9a, emissive: 0x151515 });
     const traffic = new THREE.Group(); scene.add(traffic);
+    const sky = buildSky(); scene.add(sky.mesh);
+    const clouds = buildClouds(60000); clouds.mesh.visible = false; scene.add(clouds.mesh);
+    const rain = buildRain(); scene.add(rain.points);
+    const nightHandles: NightHandle[] = [];
+    let buildingMat: THREE.MeshLambertMaterial | null = null;
     const shadowGeo = new THREE.CircleGeometry(0.5, 24); shadowGeo.rotateX(-Math.PI / 2);
     const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false });
     const stemMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 });
@@ -126,8 +145,8 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       w.flatten(field, 120);
       const t = buildTerrain(w, lite ? 192 : 512); terrainUniforms = t.uniforms; scene.add(t.mesh);
       scene.add(buildRoads(w, fades));
-      scene.add(buildBuildings(w));
-      scene.add(buildAirport(w, e.air, fades));
+      const bl = buildBuildings(w); buildingMat = bl.material as THREE.MeshLambertMaterial; scene.add(bl);
+      scene.add(buildAirport(w, e.air, fades, nightHandles));
       cam.target.set(0, w.heightAt(0, 0), 0);
       setStatus('ready');
     }).catch((err) => { console.error(err); setStatus('error'); });
@@ -193,19 +212,33 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         if (Math.hypot(dx, dy) > 3) drag.moved = true;
         if (drag.mode === 'orbit') { cam.yaw -= dx * 0.005; cam.pitch = Math.min(1.45, Math.max(0.3, cam.pitch + dy * 0.004)); drag.x = ev.clientX; drag.y = ev.clientY; }
         else if (drag.start) { const g = groundAt(ev.clientX, ev.clientY); if (g) { cam.target.x += drag.start.x - g.x; cam.target.z += drag.start.z - g.z; } }
-        follow = false; camGoal = null;
+        if (follow) setFollowRef.current(false); follow = false; camGoal = null;
         return;
       }
       const id = pick(ev.clientX, ev.clientY);
       sim.hover(id);
       if (id != null) {
         const a = e.byId(id); const r = el.getBoundingClientRect();
-        if (a) setTip({ x: ev.clientX - r.left, y: ev.clientY - r.top, text: `${a.callsign} · ${a.perf.icaoCode}${isAirborne(a) ? ` · ${Math.round(a.altitude / 100) * 100} ft` : ` · ${Math.round(a.speed)} kt`}` });
+        if (a) {
+          const st = (() => { try { return stageLabel(sim.stageOf(a)).long; } catch { return ''; } })();
+          const rwy = a.plan.runway ?? a.assignedRunway; const l2 = isAirborne(a) ? `${Math.round(a.altitude / 100) * 100} ft · ${Math.round(a.speed)} kt · hdg ${String(Math.round(a.heading)).padStart(3, '0')}` : `${Math.round(a.speed)} kt · hdg ${String(Math.round(a.heading)).padStart(3, '0')}`;
+          setTip({ x: ev.clientX - r.left, y: ev.clientY - r.top, lines: [`${a.callsign} · ${a.perf.icaoCode}/${a.perf.weightClass}`, `${st}${rwy ? ` · RWY ${rwy}` : ''}${a.plan.gateRef ? ` · stand ${a.plan.gateRef}` : ''}`, l2] });
+        }
         el.style.cursor = 'pointer';
       } else { setTip(null); el.style.cursor = drag ? 'grabbing' : 'grab'; }
     };
     const onUp = (ev: PointerEvent) => {
-      if (drag && !drag.moved && ev.button === 0) { const id = pick(ev.clientX, ev.clientY); sim.select(id); if (id != null) follow = false; }
+      if (drag && !drag.moved && ev.button === 0) { const id = pick(ev.clientX, ev.clientY); sim.select(id); setMenu(null); if (id != null && follow) { follow = false; setFollowRef.current(false); } }
+      if (drag && !drag.moved && ev.button === 2) {
+        const id = pick(ev.clientX, ev.clientY); const a = id != null ? e.byId(id) : null;
+        if (a) {
+          sim.select(a.id);
+          let rows: { id: string; label: string; hotkey: string | null }[] = [];
+          try { rows = sim.actionsFor(a).filter(x => x.state === 'enabled').slice(0, 7).map(x => ({ id: x.id, label: x.label, hotkey: x.hotkey })); } catch { rows = []; }
+          const r = el.getBoundingClientRect();
+          setMenu({ x: ev.clientX - r.left, y: ev.clientY - r.top, id: a.id, callsign: a.callsign, rows });
+        } else setMenu(null);
+      }
       drag = null;
     };
     const onWheel = (ev: WheelEvent) => {
@@ -224,7 +257,12 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     el.addEventListener('wheel', onWheel, { passive: false }); el.addEventListener('contextmenu', (ev) => ev.preventDefault());
     window.addEventListener('keydown', onKey);
     let follow = false;
-
+    ctl.current = {
+      zoom: (f) => { cam.dist = Math.min(38000, Math.max(250, cam.dist * f)); },
+      reset: () => { cam.target.set(0, world?.heightAt(0, 0) ?? 0, 0); cam.dist = 5200; cam.yaw = -0.35; cam.pitch = 0.95; camGoal = null; follow = false; setFollowRef.current(false); },
+      follow: (on) => { follow = on && sim.selectedId != null; setFollowRef.current(follow); },
+      centre: () => { const a = sim.selectedId != null ? sim.engine?.byId(sim.selectedId) : null; if (a) camGoal = new THREE.Vector3(a.pos.x, world?.heightAt(a.pos.x, a.pos.y) ?? 0, -a.pos.y); },
+    };
     // projector for the test API / centre-on
     const unregister = sim.registerProjector('ground',
       (xy) => { const v = toV3(xy.x, xy.y, world?.heightAt(xy.x, xy.y) ?? 0).project(camera); const r = el.getBoundingClientRect(); return v.z > 1 ? null : { x: (v.x + 1) / 2 * r.width, y: (1 - v.y) / 2 * r.height }; },
@@ -286,9 +324,10 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         else {
           m.label.style.display = '';
           m.label.style.transform = `translate(${((tmp.x + 1) / 2 * r.width + 14).toFixed(1)}px, ${((1 - tmp.y) / 2 * r.height - 10).toFixed(1)}px)`;
-          const alt = air ? `${Math.round(a.altitude / 100)}` : `${Math.round(a.speed)}kt`;
-          const txt = `${a.callsign} · ${a.perf.icaoCode} · ${alt}`;
-          if (m.label.textContent !== txt) m.label.textContent = txt;
+          const alt = air ? `${String(Math.round(a.altitude / 100)).padStart(3, '0')} ${Math.round(a.speed)}` : `${Math.round(a.speed)} kt`;
+          const txt = `${a.callsign} ${a.perf.icaoCode}\n${alt}`;
+          if (m.label.dataset.txt !== txt) { m.label.dataset.txt = txt; m.label.innerHTML = `<b>${a.callsign}</b> <span>${a.perf.icaoCode}</span><br><em>${alt}</em>`; }
+          if (!labelsRef.current && a.id !== sim.selectedId) m.label.style.display = 'none';
           m.label.dataset.selected = a.id === sim.selectedId ? 'true' : 'false';
           m.label.dataset.hover = a.id === sim.hoveredId ? 'true' : 'false';
         }
@@ -332,7 +371,35 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       } else { ring.visible = false; if (route) { scene.remove(route); route.geometry.dispose(); route = null; } }
       const fogNear = cam.dist * 1.6, fogFar = cam.dist * 5.5;
       (scene.fog as THREE.Fog).near = fogNear; (scene.fog as THREE.Fog).far = fogFar;
-      if (terrainUniforms) { terrainUniforms.uTime.value += dt; terrainUniforms.uCam.value.copy(camera.position); terrainUniforms.uFogNear.value = fogNear; terrainUniforms.uFogFar.value = fogFar; }
+      // ── sun, sky, weather ──
+      const wx = weatherLook((() => { try { return eng.wx(); } catch { return null; } })());
+      const epoch = (sim.sessionStartedAt || Date.now()) + eng.time * 1000;
+      const sp = sunPosition(epoch, airCenter.lat, airCenter.lng);
+      const mode = timeRef.current;
+      const elev = mode === 'day' ? 38 : mode === 'dusk' ? 1.5 : mode === 'night' ? -20 : sp.elevation;
+      const L = lightingFor(elev, mode === 'auto' ? sp.azimuth : mode === 'dusk' ? 265 : 150);
+      const cloudDim = 1 - wx.cloudCover * 0.45;
+      sun.color.copy(L.sunColor); sun.intensity = L.sunIntensity * cloudDim; sun.position.copy(L.sunDir).multiplyScalar(8000);
+      hemiLight.color.copy(L.hemiSky); hemiLight.groundColor.copy(L.hemiGround); hemiLight.intensity = L.hemiIntensity;
+      applySky(sky.uniforms, L, wx.cloudCover); sky.mesh.position.copy(camera.position); sky.mesh.scale.setScalar(camera.far * 0.9);
+      scene.background = null; (scene.fog as THREE.Fog).color.copy(L.fog);
+      const fogFar2 = Math.min(fogFar, wx.visM * 3.2 + cam.dist * 0.5);   // poor visibility pulls the fog in
+      (scene.fog as THREE.Fog).near = Math.min(fogNear, fogFar2 * 0.4); (scene.fog as THREE.Fog).far = fogFar2;
+      // the deck is only drawn while the camera is under it (from above it would veil the whole map); overcast still dims the sun
+      const deckY = (world?.heightAt(0, 0) ?? 0) + wx.cloudBaseM;
+      const under = 1 - THREE.MathUtils.smoothstep(camera.position.y, deckY - 400, deckY - 50);
+      clouds.mesh.visible = wx.cloudCover > 0.05 && under > 0.01; clouds.mesh.position.set(cam.target.x, deckY, cam.target.z);
+      clouds.uniforms.uTime.value += dt; clouds.uniforms.uCover.value = wx.cloudCover * under; clouds.uniforms.uDay.value = L.day; (clouds.uniforms.uTint.value as THREE.Color).copy(L.hemiSky).lerp(new THREE.Color('#d8dbe0'), 0.5);
+      rain.update(clock.elapsedTime, cam.target, Math.min(2500, cam.dist * 0.6), wx.precip === 'none' ? 0 : wx.precip === 'drizzle' ? 0.5 : 1);
+      const nightAmt = 1 - L.day;
+      for (const nh of nightHandles) nh.setNight(nightAmt);
+      if (buildingMat) buildingMat.emissive.setRGB(0.14 * nightAmt, 0.105 * nightAmt, 0.05 * nightAmt);
+      if (terrainUniforms) {
+        terrainUniforms.uTime.value += dt; terrainUniforms.uCam.value.copy(camera.position);
+        terrainUniforms.uFogNear.value = (scene.fog as THREE.Fog).near; terrainUniforms.uFogFar.value = (scene.fog as THREE.Fog).far; (terrainUniforms.uFog.value as THREE.Color).copy(L.fog);
+        (terrainUniforms.uLight.value as THREE.Vector3).copy(L.sunDir); (terrainUniforms.uSunColor.value as THREE.Color).copy(L.sunColor);
+        terrainUniforms.uSunI.value = L.sunIntensity * cloudDim; terrainUniforms.uHemiI.value = L.hemiIntensity; terrainUniforms.uDay.value = L.day; terrainUniforms.uWet.value = wx.wet;
+      }
       if (camGoal) { cam.target.lerp(camGoal, Math.min(1, dt * 5)); if (cam.target.distanceTo(camGoal) < 2) camGoal = null; }
       clampTarget();
       applyCamera(); applyFades(fades, cam.dist);
@@ -348,7 +415,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       window.removeEventListener('keydown', onKey);
       for (const m of markers.values()) m.label.remove();
       for (const m of vehicles.values()) m.label.remove();
-      renderer.dispose(); composer.dispose(); if (renderer.domElement.parentNode === el) el.removeChild(renderer.domElement);
+      ctl.current = null; renderer.dispose(); composer.dispose(); if (renderer.domElement.parentNode === el) el.removeChild(renderer.domElement);
       world?.heightTex.dispose(); world?.landTex.dispose();
     };
   }, [icao, hasEngine]);
@@ -357,7 +424,28 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     <div className={styles.root} data-testid="world-map" data-status={status} data-standalone={standalone ? 'true' : 'false'}>
       <div ref={host} className={styles.canvasHost} data-testid="world-canvas" />
       <div ref={labels} className={styles.labels} aria-hidden="true" />
-      {tip ? <div className={styles.tip} style={{ transform: `translate(${tip.x + 14}px, ${tip.y + 16}px)` }} data-testid="map-tooltip">{tip.text}</div> : null}
+      {tip ? <div className={styles.tip} style={{ transform: `translate(${tip.x + 14}px, ${tip.y + 16}px)` }} data-testid="map-tooltip">{tip.lines.map((l, i) => <div key={i} className={i === 0 ? styles.tipHead : styles.tipLine}>{l}</div>)}</div> : null}
+      {menu ? (
+        <div className={styles.menu} style={{ left: Math.min(menu.x, (host.current?.clientWidth ?? 800) - 240), top: Math.min(menu.y, (host.current?.clientHeight ?? 600) - 40 * (menu.rows.length + 1)) }} data-testid="world-quick-menu" role="menu" onPointerDown={(ev) => ev.stopPropagation()}>
+          <div className={styles.menuHead}>{menu.callsign}</div>
+          {menu.rows.length ? menu.rows.map((r) => (
+            <button key={r.id} type="button" role="menuitem" className={styles.menuRow} data-testid={`ctx-${r.id}`} onClick={() => { requestOpenAction({ aircraftId: menu.id, actionId: r.id as never }); setMenu(null); }}>
+              <span>{r.label}</span>{r.hotkey ? <kbd>{r.hotkey}</kbd> : null}
+            </button>
+          )) : <div className={styles.menuEmpty}>No actions available</div>}
+        </div>
+      ) : null}
+      <div className={styles.toolbar} data-testid="world-toolbar" onPointerDown={(ev) => ev.stopPropagation()}>
+        <Segmented ariaLabel="Time of day" small value={timeMode} onChange={pickTime} items={[{ id: 'auto', label: 'Auto', testId: 'world-time-auto' }, { id: 'day', label: 'Day', testId: 'world-time-day' }, { id: 'dusk', label: 'Dusk', testId: 'world-time-dusk' }, { id: 'night', label: 'Night', testId: 'world-time-night' }]} testId="world-time" />
+        <div className={styles.toolCol}>
+          <Tooltip content="Zoom in" placement="left"><IconButton size={44} variant="map" label="Zoom in" icon={<Icon name="plus" />} onClick={() => ctl.current?.zoom(0.6)} testId="world-zoom-in" /></Tooltip>
+          <Tooltip content="Zoom out" placement="left"><IconButton size={44} variant="map" label="Zoom out" icon={<Icon name="minus" />} onClick={() => ctl.current?.zoom(1.6)} testId="world-zoom-out" /></Tooltip>
+          <Tooltip content={following ? 'Follow off' : 'Follow selected aircraft'} placement="left"><IconButton size={44} variant="map" label="Follow selected" icon={<Icon name="locate-fixed" />} active={following} accentIcon={following} disabled={selectedId == null && !following} onClick={() => ctl.current?.follow(!following)} testId="world-follow" data-state={following ? 'on' : 'off'} /></Tooltip>
+          <Tooltip content="Centre on selected" placement="left"><IconButton size={44} variant="map" label="Centre on selected" icon={<Icon name="crosshair" />} disabled={selectedId == null} onClick={() => ctl.current?.centre()} testId="world-centre" /></Tooltip>
+          <Tooltip content={showLabels ? 'Hide labels' : 'Show labels'} placement="left"><IconButton size={44} variant="map" label="Labels" icon={<Icon name={showLabels ? 'eye' : 'eye-off'} />} active={showLabels} onClick={() => setShowLabels((v) => !v)} testId="world-labels" /></Tooltip>
+          <Tooltip content="Reset view" placement="left"><IconButton size={44} variant="map" label="Reset view" icon={<Icon name="house" />} onClick={() => ctl.current?.reset()} testId="world-reset" /></Tooltip>
+        </div>
+      </div>
       {status !== 'ready' ? <div className={styles.status} data-testid="world-status">{status === 'error' ? 'World data unavailable' : 'Building the world…'}</div> : null}
       {standalone ? <div className={styles.hint}>drag · pan &nbsp; right-drag · orbit &nbsp; wheel · zoom &nbsp; Home · reset view</div> : null}
     </div>

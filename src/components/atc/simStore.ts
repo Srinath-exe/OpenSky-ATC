@@ -288,7 +288,8 @@ class SimStore implements TestApiHost {
   private lineKey = 0;
   private toastKey = 0;
   private loadToken = 0;
-  private sessionStartedAt = 0;
+  /** Wall-clock epoch (ms) when the shift started; the 3D world derives the sun from it + sim time. */
+  sessionStartedAt = 0;
   private lastHighScoreWriteAt = -Infinity;
   private listeners = new Set<() => void>();
   private batchDepth = 0;

@@ -27,3 +27,29 @@
 }
 .root[data-standalone="false"] .hint { bottom: 52px; }
 .label[data-vehicle="true"] { font-size: 11px; color: rgba(255, 255, 255, 0.7); padding: 3px 7px; }
+.label b { font-weight: 500; color: rgba(255, 255, 255, 0.92); }
+.label span { color: rgba(255, 255, 255, 0.55); margin-left: 4px; }
+.label em { font-style: normal; color: rgba(255, 255, 255, 0.6); font-size: 11px; }
+.label[data-selected="true"] b { color: #f5933f; }
+.tipHead { font-weight: 500; }
+.tipLine { color: rgba(255, 255, 255, 0.65); font-size: 11px; }
+.toolbar {
+  position: absolute; right: var(--ground-inset-right, 16px); bottom: var(--ground-inset-bottom, 16px);
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px; z-index: 5;
+}
+.toolCol { display: flex; flex-direction: column; gap: 8px; }
+.menu {
+  position: absolute; z-index: 6; min-width: 220px; padding: 6px; border-radius: 16px;
+  background: rgba(24, 24, 26, 0.78); border: 1px solid rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  animation: worldMenuIn 120ms ease-out both;
+}
+@keyframes worldMenuIn { from { opacity: 0; transform: translateY(4px) scale(0.98); } to { opacity: 1; transform: none; } }
+.menuHead { padding: 6px 10px 4px; font: 500 12px / 1 var(--font, "DM Sans", system-ui); color: #f5933f; letter-spacing: 0.04em; }
+.menuRow {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 8px 10px; border: 0; border-radius: 10px;
+  background: transparent; color: rgba(255, 255, 255, 0.88); font: 400 13px / 1.2 var(--font, "DM Sans", system-ui); text-align: left; cursor: pointer;
+}
+.menuRow:hover { background: rgba(255, 255, 255, 0.08); }
+.menuRow kbd { font: 400 11px / 1 var(--font, "DM Sans", system-ui); color: rgba(255, 255, 255, 0.45); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 6px; padding: 2px 6px; }
+.menuEmpty { padding: 8px 10px; color: rgba(255, 255, 255, 0.5); font: 400 12px / 1 var(--font, "DM Sans", system-ui); }
