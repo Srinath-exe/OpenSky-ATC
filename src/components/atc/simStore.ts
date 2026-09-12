@@ -419,6 +419,17 @@ class SimStore implements TestApiHost {
     else this.start();
   }
 
+  /**
+   * Resume the live session on the singleton without reloading (home "Resume shift", settings "Back to shift"):
+   * restarts the RAF loop when an engine exists. Returns false when there is nothing to resume.
+   */
+  resume(): boolean {
+    if (!this.engine || this.loading) return false;
+    if (!this.testMode) this.start();
+    this.emit();
+    return true;
+  }
+
   /** Reload the current config (new seed outside test mode); records the finished session first. */
   restart(): Promise<void> {
     const cfg = this.lastConfig ?? { icao: this.icao || 'EGLL' };
@@ -1087,6 +1098,16 @@ class SimStore implements TestApiHost {
       if ('lng' in cam) { if (this.engine) p.centerOn(this.engine.proj.toXY(cam.lat, cam.lng)); }
       else p.centerOn({ x: cam.x, y: cam.y });
     } catch { /* view not ready */ }
+  }
+  /** True when a CSS point relative to the active canvas actually hits the canvas (not a floating panel / toolbar) — emptySpot(). */
+  spotFree(x: number, y: number): boolean {
+    if (!isBrowser() || typeof document === 'undefined' || typeof document.elementFromPoint !== 'function') return true;
+    const kind = this.activeView();
+    const el = document.querySelector<HTMLElement>(kind === 'radar' ? '[data-testid="radar-canvas"]' : '[data-testid="ground-map"]');
+    if (!el) return true;
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + x, r.top + y);
+    return !!hit && hit.tagName === 'CANVAS';
   }
   /** CSS size of the active canvas (registered getter, else DOM lookup by testid). */
   viewSize(): { w: number; h: number } | null {

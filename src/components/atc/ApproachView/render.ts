@@ -139,7 +139,8 @@ function drawChart(fr: Frame, hit: HitGeometry): void {
       a.points.forEach((p, i) => { const s = cam.toScreen(p); if (i) ctx.lineTo(s.x, s.y); else ctx.moveTo(s.x, s.y); lx += s.x; ly += s.y; n++; });
       ctx.closePath();
     } else continue;
-    ctx.fillStyle = t.redTint08; ctx.fill();
+    // Half the .08 tint per polygon: CTR/TMA areas overlap several deep at EGLL and the fills stack.
+    ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = t.redTint08; ctx.fill(); ctx.restore();
     ctx.strokeStyle = t.redBorder25; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
     if (cam.pxPerNM > 5) {
       ctx.fillStyle = t.text4; ctx.font = font(t, 11); ctx.textAlign = 'center';

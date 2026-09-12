@@ -8,7 +8,7 @@ import type { WeightClass } from '@/lib/sim/aircraftDB'
 import { sim, useSim } from '../hooks/useSimSelector'
 
 const WEIGHTS: Array<{ cls: WeightClass; label: string }> = [
-  { cls: 'L', label: 'L' }, { cls: 'M', label: 'M' }, { cls: 'H', label: 'H' }, { cls: 'S', label: 'J' },
+  { cls: 'L', label: 'L' }, { cls: 'M', label: 'M' }, { cls: 'H', label: 'H' }, { cls: 'S', label: 'S' },
 ]
 const ALL_WEIGHTS: WeightClass[] = ['L', 'M', 'H', 'S']
 
@@ -115,7 +115,7 @@ export function RunwayConfigDialog({ open, onClose }: { open: boolean; onClose: 
                 </span>
                 <span className={styles.cfgWeights} role="group" aria-label={`Allowed weight classes ${r.name}`}>
                   {WEIGHTS.map((wc) => (
-                    <Pill key={wc.cls} size="xs" tone={d.weights.includes(wc.cls) ? 'solid' : 'dim'} interactive selected={d.weights.includes(wc.cls)} aria-pressed={d.weights.includes(wc.cls)} onClick={() => toggleWeight(r.name, wc.cls)} testId={`rwycfg-end-${r.name}-weight-${wc.label}`}>{wc.label}</Pill>
+                    <Pill key={wc.cls} size="xs" tone={d.weights.includes(wc.cls) ? 'solid' : 'dim'} interactive selected={d.weights.includes(wc.cls)} aria-pressed={d.weights.includes(wc.cls)} onClick={() => toggleWeight(r.name, wc.cls)} testId={`rwycfg-end-${r.name}-weight-${wc.cls}`}>{wc.label}</Pill>
                   ))}
                 </span>
               </span>

@@ -49,8 +49,9 @@
 .cardFix strong { color: var(--text-2); font-weight: var(--fw-medium); }
 
 /* onboarding coach marks (UX §8) */
-.tips {
-  position: absolute; left: 50%; bottom: calc(var(--s-3) + 60px); transform: translateX(-50%);
+/* doubled selector: beats GlassPanel's own `position: relative` whatever the CSS chunk order; no transform (ds-rise owns it) */
+.tips.tips {
+  position: absolute; left: calc(50% - 220px); bottom: calc(var(--s-3) + 60px);
   z-index: calc(var(--z-float) + 4); width: 440px; max-width: calc(100% - 24px);
   animation: global(ds-rise) var(--t-base) var(--ease-out) both;
 }

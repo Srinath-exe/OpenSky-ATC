@@ -52,8 +52,8 @@ export function Segmented({ items, value, onChange, tabular = false, small = fal
       {items.map((it) => {
         const active = it.id === value
         return (
-          <button key={it.id} ref={(n) => { refs.current[it.id] = n }} type="button" role="tab" aria-selected={active} aria-disabled={it.disabled || undefined} tabIndex={active ? 0 : -1}
-            data-testid={it.testId ?? (testId ? `${testId}-${it.id}` : undefined)}
+          <button key={it.id} ref={(n) => { refs.current[it.id] = n }} type="button" role="tab" aria-selected={active} aria-pressed={active} aria-disabled={it.disabled || undefined} tabIndex={active ? 0 : -1}
+            data-state={active ? 'on' : 'off'} data-testid={it.testId ?? (testId ? `${testId}-${it.id}` : undefined)}
             className={cx(styles.item, active && styles.active, it.disabled && styles.disabled)} onClick={() => { if (!it.disabled) onChange(it.id) }}>
             {it.label}
           </button>

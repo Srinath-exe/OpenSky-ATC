@@ -21,7 +21,7 @@ import {
   PilotRequest, PilotRequestKind, Position, PlayerPosition, POSITION_OWNER, NEXT_POSITION, RunwayState, RunwayStatus, RunwayOccupant,
   RunwayOccupantKind, GateState, SessionStats, ScoreCode, ScoreEvent, SCORE_TABLE, emptySessionStats, Stage, WakeCategory,
   WAKE_DEPARTURE_S, WAKE_FINAL_NM, WAKE_CATEGORY_BY_CLASS, newAircraftFields, Emergency, EmergencyType, ReadbackStatus,
-  VehicleTarget, VehicleType, WeatherState, Vehicle, Alert, defaultPushback, defaultStartup,
+  VehicleTarget, VehicleType, WeatherState, Vehicle, Alert, defaultPushback, defaultStartup, EVENT_WHO,
 } from './types';
 import { stepAircraft, isAirborne, StepCtx, HOLD_BUFFER_M, DEP_TURN_FT, TAXI_DECEL, EMERG_DECEL, takeoffAccelKts, approachVal } from './aircraft';
 import { ILSRunway, canCaptureLoc, overshootsLoc, locTargetHdg, gsAltFt, gsDistM, distAlongFwd, aboveGlideslope, ilsFromGeometry, ILS_CONST } from './ils';
@@ -523,8 +523,8 @@ export class SimEngine implements EngineCommandApi, StageCtx {
   atisLetter(): string | null { return this.safe('weather', () => this.weather.atis().letter, null); }
   private regenAtis(reason: string) {
     this.safe('weather', () => {
-      const atis = this.weather.regenerateAtis(reason, this.activeEnds('dep').map(r => r.name), this.activeEnds('arr').map(r => r.name), this.atisRemarks());
-      this.emit('atis', null, `ATIS ${atis.letter}: ${reason}`, { type: 'atis', atis, reason });
+      // weather.regenerateAtis queues the `atis` SimEvent itself ("ATIS X — reason"); emitting a second one here doubled the comm-log line.
+      this.weather.regenerateAtis(reason, this.activeEnds('dep').map(r => r.name), this.activeEnds('arr').map(r => r.name), this.atisRemarks());
     }, undefined);
   }
   private atisRemarks(): string[] {
@@ -543,6 +543,9 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     const ev: SimEvent = { type, id: ac?.id ?? -1, callsign: ac?.callsign ?? 'SYSTEM', message, at: this.time, data };
     if (who) ev.who = who;
     if (ac) ev.position = ac.onFrequency;
+    // Position reports the pilot makes on his own (holding short, airborne, touchdown, vacated, going around) count as
+    // pilot calls for the strip timer, exactly like requests and readbacks do.
+    if (ac && (who ?? EVENT_WHO[type]) === 'PILOT' && type !== 'request' && type !== 'readback') ac.lastTransmissionAt = this.time;
     this.pushEvent(ev);
     return ev;
   }

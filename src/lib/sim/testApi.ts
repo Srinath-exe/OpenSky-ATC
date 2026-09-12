@@ -305,6 +305,8 @@ export interface TestApiHost {
   centerOnXY(xy: XY): void;
   /** CSS size of the active canvas, null when unknown. */
   viewSize(): { w: number; h: number } | null;
+  /** Optional: true when the CSS point (relative to the active canvas) is not covered by floating chrome (strip bay, panels, toolbars). */
+  spotFree?(x: number, y: number): boolean;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -501,6 +503,7 @@ export function createTestApi(host: TestApiHost): AtcTestApi {
       const cols = 16, rows = 10;
       for (let i = 0; i <= cols; i++) for (let j = 0; j <= rows; j++) {
         const x = margin + ((size.w - 2 * margin) * i) / cols, y = margin + ((size.h - 2 * margin) * j) / rows;
+        if (host.spotFree && !host.spotFree(x, y)) continue;          // under the strip bay / command panel / toolbar
         let d = Infinity;
         for (const p of pts) d = Math.min(d, Math.hypot(p.x - x, p.y - y));
         if (d > bestD) { bestD = d; best = { x, y }; }

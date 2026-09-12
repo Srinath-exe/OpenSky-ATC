@@ -2,8 +2,10 @@
 /*
   /play — the game (00-MASTER-PLAN §1, §2.5; 05-TEST-STRATEGY §3.1 page root).
   On mount: consume the one-shot start config written by the home page (or the
-  URL: ?icao=&seed=&spawn=&test=&position=), then ALWAYS `sim.load(cfg)` — even
-  when an engine already exists — so the start config is applied (audit B-fix).
+  URL: ?icao=&seed=&spawn=&test=&position=) and `sim.load(cfg)` — also when an
+  engine already exists — so a new start config is always applied (audit B-fix).
+  With nothing new requested (plain /play from "Resume shift" or the settings
+  page) the live engine on the singleton is resumed instead of rebuilt.
 */
 import * as React from 'react';
 import s from './play.module.css';
@@ -37,15 +39,28 @@ function readUrl(): Partial<StartConfig> {
   }
 }
 
-/** Start config for this mount: URL overrides > one-shot home config > the last session's config > defaults. */
-function buildConfig(): StartConfig {
+/**
+ * Start config for this mount: URL overrides > one-shot home config > the last session's config > defaults.
+ * `fresh` is false when nothing new was asked for (no home config, no URL params): a live engine is then resumed,
+ * not rebuilt ("Resume shift" / settings "Back to shift" keep the session; a new start config always applies).
+ */
+function buildConfig(): { cfg: StartConfig; fresh: boolean } {
   const url = readUrl();
-  const stored = persist.consumeStartConfig<StartConfig>() ?? sim.lastConfig;
+  const oneShot = persist.consumeStartConfig<StartConfig>();
+  const stored = oneShot ?? sim.lastConfig;
+  // The app router can restore a cached route's search string on a plain push('/play'); URL params therefore only count
+  // as a new request when they differ from the session already running on the singleton.
+  const last = sim.lastConfig;
+  const urlDiffers = (Object.keys(url) as Array<keyof StartConfig>).some((k) => !last || url[k] !== last[k]);
+  const fresh = !!oneShot || urlDiffers;
   return {
-    ...(stored ?? {}),
-    ...url,
-    icao: url.icao ?? stored?.icao ?? FALLBACK_ICAO,
-    test: url.test || !!stored?.test,
+    fresh,
+    cfg: {
+      ...(stored ?? {}),
+      ...url,
+      icao: url.icao ?? stored?.icao ?? FALLBACK_ICAO,
+      test: url.test || !!stored?.test,
+    },
   };
 }
 
@@ -69,7 +84,9 @@ export default function PlayPage() {
     setHydrated(true);
     if (booted.current) return;               // StrictMode double-invoke: one boot per mount
     booted.current = true;
-    load(buildConfig());
+    const { cfg, fresh } = buildConfig();
+    if (!fresh && sim.resume()) { cfgRef.current = sim.lastConfig ?? cfg; setSettled(true); return }
+    load(cfg);
   }, [load]);
 
   // Leaving the page stops the RAF loop; the engine stays on the singleton for "Back to shift".

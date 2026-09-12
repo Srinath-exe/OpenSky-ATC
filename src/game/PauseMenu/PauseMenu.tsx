@@ -18,22 +18,32 @@ export function PauseMenu() {
   const score = useSim((s) => s.score())
   const counts = useSim((s) => s.counts())
   const [confirm, setConfirm] = React.useState<Confirm>(null)
-  const wasRunning = React.useRef(false)
+  /** The menu paused a running sim (so closing it resumes). */
+  const pausedByMenu = React.useRef(false)
+  /** A sub-overlay (settings / runway config / stats) was opened from the menu: keep the pause and come back afterwards. */
+  const detour = React.useRef(false)
 
-  // Pause on open; resume on close only if the sim was running before.
+  // Pause on open; resume on close only if the menu itself paused the sim and we are not detouring into a sub-overlay.
   React.useEffect(() => {
     if (!open) return
-    wasRunning.current = !sim.paused
+    if (!detour.current) pausedByMenu.current = !sim.paused
+    detour.current = false
     if (!sim.paused) sim.setPaused(true)
     setConfirm(null)
-    return () => { if (wasRunning.current && sim.paused) sim.setPaused(false) }
+    return () => { if (!detour.current && pausedByMenu.current && sim.paused) { sim.setPaused(false); pausedByMenu.current = false } }
   }, [open])
 
+  const subOpen = !!(shell.open.settings || shell.open.runwayConfig || shell.open.stats)
+  // Back from a sub-overlay: reopen the menu (still paused) instead of leaving the player on a silently paused shift.
+  React.useEffect(() => {
+    if (open || !detour.current || subOpen) return
+    shell.show('pause')
+  }, [open, subOpen, shell])
+
   const close = React.useCallback(() => shell.hide('pause'), [shell])
-  /** Open another overlay from here: the menu closes, the sim stays paused (Space or the pause button resumes). */
-  const openFromMenu = (o: 'runwayConfig' | 'settings' | 'stats') => { wasRunning.current = false; close(); shell.show(o) }
-  const restart = () => { close(); void sim.restart() }
-  const quit = () => { close(); sim.stop(); router.push('/') }
+  const openFromMenu = (o: 'runwayConfig' | 'settings' | 'stats') => { detour.current = true; close(); shell.show(o) }
+  const restart = () => { pausedByMenu.current = false; close(); void sim.restart() }
+  const quit = () => { pausedByMenu.current = false; close(); sim.stop(); router.push('/') }
 
   return (
     <Modal open={open} onClose={close} title="Paused" testId="pause-menu" cancelLabel="">

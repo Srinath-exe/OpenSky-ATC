@@ -11,6 +11,16 @@ const MAX_VISIBLE = 3
 export function ToastHost() {
   const toasts = useSim((s) => s.toasts)
   const visible = React.useMemo(() => toasts.filter((t) => !t.alertId && !t.severity).slice(-MAX_VISIBLE), [toasts])
+  // The store prunes expired toasts from its RAF tick; in test mode (no RAF) and while paused nothing would ever expire, so
+  // expire the visible ones on a wall-clock timer here as well.
+  React.useEffect(() => {
+    const timed = visible.filter((t) => t.duration > 0)
+    if (!timed.length) return
+    const now = Date.now()
+    const next = Math.max(50, Math.min(...timed.map((t) => t.at + t.duration - now)))
+    const id = window.setTimeout(() => { for (const t of timed) if (Date.now() - t.at >= t.duration) sim.dismissToast(t.key) }, next)
+    return () => window.clearTimeout(id)
+  }, [visible])
   return (
     <div className={styles.toastHost} data-testid="toast-host" aria-live="polite">
       {visible.map((t) => (

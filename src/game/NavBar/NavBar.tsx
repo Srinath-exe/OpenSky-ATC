@@ -26,7 +26,7 @@ function PositionTabs() {
       b.setAttribute('aria-pressed', b.getAttribute('aria-selected') === 'true' ? 'true' : 'false')
     })
   }, [position])
-  const items = POSITIONS.map((p) => ({ id: p, label: p.toUpperCase(), testId: `position-${p}`, disabled: p === 'approach' && !hasRadar }))
+  const items = POSITIONS.map((p) => ({ id: p, label: p.toUpperCase(), testId: `mode-tab-${p}`, disabled: p === 'approach' && !hasRadar }))
   const tabs = (
     <div ref={ref} className={styles.tabs} data-testid="position-tabs">
       <Tabs ariaLabel="Position" items={items} value={position} onChange={(id) => sim.setPosition(id as PlayerPosition)} />
@@ -65,10 +65,10 @@ function AtisChip() {
       <span className={cx(styles.atisPart, styles.atisWide)}>{dep === arr ? dep : `${dep} / ${arr}`}</span>
       <span className={styles.atisSep}>·</span>
       <span className={styles.atisPart} data-testid="wind">{wind}</span>
-      <span className={cx(styles.atisSep, styles.atisWide)}>·</span>
-      <span className={cx(styles.atisPart, styles.atisWide)}>Q{atis?.qnh ?? '—'}</span>
-      <span className={cx(styles.atisSep, styles.atisWide)}>·</span>
-      <span className={cx(styles.atisPart, styles.atisWide)}>{atis?.cloud ?? ''}</span>
+      <span className={cx(styles.atisSep, styles.atisWideQnh)}>·</span>
+      <span className={cx(styles.atisPart, styles.atisWideQnh)}>Q{atis?.qnh ?? '—'}</span>
+      {atis?.cloud ? <span className={cx(styles.atisSep, styles.atisWideCloud)}>·</span> : null}
+      {atis?.cloud ? <span className={cx(styles.atisPart, styles.atisWideCloud)}>{atis.cloud}</span> : null}
     </Pill>
   )
 }
@@ -226,7 +226,7 @@ export function NavBar() {
   return (
     <nav className={styles.nav} data-escalated={escalated} aria-label="Top bar">
       <div className={styles.left}>
-        <Link href="/" className={styles.brand} data-testid="brand-home" onClick={(e) => { if (sim.engine) { e.preventDefault(); shell.show('leaveConfirm') } }} title="Home">
+        <Link href="/" prefetch={false} className={styles.brand} data-testid="brand-home" onClick={(e) => { if (sim.engine) { e.preventDefault(); shell.show('leaveConfirm') } }} title="Home">
           <span className={styles.brandMark}><LogoMark size={28} /></span>
           <span className={styles.brandText}>
             <span className={styles.brandWord}>Skycontrol</span>
@@ -240,7 +240,6 @@ export function NavBar() {
       <div className={styles.center}>
         <AtisChip />
       </div>
-      <div />
       <div className={styles.right}>
         <Clock />
         <RateControl />

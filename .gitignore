@@ -61,3 +61,6 @@ tsconfig.tsbuildinfo
 
 !docs/qa/*.png
 .tmp/
+
+# QA walk evidence (docs/qa/w2) is kept alongside the report
+!docs/qa/**/*.png

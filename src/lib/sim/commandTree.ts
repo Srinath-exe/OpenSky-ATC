@@ -257,7 +257,7 @@ export interface ActionCtx {
 // ──────────────────────────────────────────────────────────────────────────────
 export type DynRule =
   | 'pushback' | 'startup' | 'hold_position_startup' | 'hold_fix_alt' | 'continue_pushback' | 'continue'
-  | 'cross_next' | 'lineup_near' | 'cancel_takeoff_speed' | 'cancel_approach_dist' | 'exit_agl'
+  | 'cross_next' | 'lineup_near' | 'takeoff_near' | 'cancel_takeoff_speed' | 'cancel_approach_dist' | 'exit_agl'
   | 'resume_sid' | 'ils_positioned' | 'ils_available' | 'change_runway' | 'handoff_ground' | 'handoff_taxi_out'
   | 'handoff_rollout' | 'recent_pilot_line' | 'req_pending' | 'standby' | 'sandbox' | 'rollout_dep'
   | 'emerg' | 'emerg_air' | 'emerg_stop' | 'emerg_reopen' | 'emerg_cancel' | 'emerg_resume' | 'emerg_breakoff';
@@ -294,7 +294,7 @@ export const ACTION_MATRIX: Record<ActionId, MatrixRow> = {
   'action-continue': row('-', { pushback: 'dyn:continue_pushback', taxi_out: 'dyn:continue', taxi_in: 'dyn:continue' }),
   'action-cross': row('-', { taxi_out: 'dyn:cross_next', taxi_in: 'dyn:cross_next', hold_short_cross: 'on' }),
   'action-lineup': row('-', { taxi_out: 'dyn:lineup_near', hold_short_dep: 'on', hold_short_cross: 'off:X5', lineup: 'off:R18' }),
-  'action-takeoff': row('-', { taxi_out: 'on', hold_short_dep: 'on', lineup: 'on', takeoff_roll: 'off:R18' }),
+  'action-takeoff': row('-', { taxi_out: 'dyn:takeoff_near', hold_short_dep: 'on', lineup: 'on', takeoff_roll: 'off:R18' }),
   'action-cancel-takeoff': row('-', { takeoff_roll: 'dyn:cancel_takeoff_speed', takeoff_air: 'off:R16' }),
   'action-cancel-lineup': row('-', { lineup: 'on' }),
   'action-land': row('-', { go_around: 'off:R10', arr_inbound: 'off:X6', arr_armed: 'off:R9', arr_established: 'on', arr_final: 'on', arr_short_final: 'on', rollout: 'off:R18' }),
@@ -350,9 +350,13 @@ export const DYNAMIC_RULES: Record<DynRule, (a: AircraftState, ctx: ActionCtx) =
   hold_fix_alt: (_a, ctx) => (ctx.aglFt >= 1000 ? enabled : disabled('X3')),
   // §G2: "● (resume push)" — meaningful only while the push is paused (Hold position); otherwise R12.
   continue_pushback: a => (a.pushback.stage === 'paused' ? enabled : disabled('R12')),
-  continue: (a, ctx) => (a.trafficHold || a.holdShortTaxiway != null || (a.path?.holdAt != null && !a.holdReleased && !ctx.nextHoldIsCrossing && ctx.stage !== 'hold_short_dep') ? enabled : hidden),
+  // Mirrors engine.cmdContinue: a manual / traffic hold, or stopped at a taxiway (non-runway) hold-short place. A taxi path that
+  // merely ends at the runway hold is not an active hold (the engine answers "No hold active").
+  continue: a => (a.trafficHold || a.holdShortTaxiway != null || (a.phase === 'hold_short' && a.holdShortNode != null && !a.holdShortRunway) ? enabled : hidden),
   cross_next: (_a, ctx) => (ctx.nextHoldIsCrossing && ctx.nextCrossingRunway ? enabled : hidden),
   lineup_near: (_a, ctx) => (ctx.distToNextHoldM != null && ctx.distToNextHoldM < 200 && !ctx.nextHoldIsCrossing ? enabled : disabled('R1')),
+  // §G2 "● (on reaching)": the engine accepts a conditional takeoff within 250 m of the departure hold (cmdTakeoff), never earlier.
+  takeoff_near: (_a, ctx) => (ctx.distToNextHoldM != null && ctx.distToNextHoldM < 250 && !ctx.nextHoldIsCrossing ? enabled : disabled('R1')),
   cancel_takeoff_speed: (_a, ctx) => (ctx.groundSpeedKt < 80 ? enabled : disabled('R5')),
   cancel_approach_dist: (_a, ctx) => (ctx.distToThresholdNM != null && ctx.distToThresholdNM > 2 ? enabled : disabled('X7')),
   exit_agl: (_a, ctx) => (ctx.aglFt >= 500 ? enabled : disabled('R6')),
@@ -1080,7 +1084,10 @@ export function toAst(id: ActionId, params: ActionParams, callsign: string, a?: 
     case 'action-hold-short': {
       if (chipsHave(params, 'here')) return makeAst('holdPosition', cs, {});
       if (chipsHave(params, 'taxiway')) return makeAst('holdShort', cs, { of: { kind: 'taxiway', taxiway: up(req(params.taxiway, 'taxiway')) } });
-      return makeAst('holdShort', cs, { of: { kind: 'runway', runway: up(req(params.runway ?? a?.holdShortRunway ?? undefined, 'runway')) } });
+      // "Next runway on route" = the first hold-short place still ahead on the taxi path (crossing or the departure entry),
+      // falling back to the runway already held short of and finally the planned runway.
+      const ahead = a?.path?.holds?.find(h => h.at > a.distAlong - 1)?.runway ?? null;
+      return makeAst('holdShort', cs, { of: { kind: 'runway', runway: up(req(params.runway ?? a?.holdShortRunway ?? ahead ?? a?.plan.runway ?? undefined, 'runway')) } });
     }
     case 'action-hold-position': return makeAst('holdPosition', cs, { reason: params.chips?.[0] ?? params.reason ?? null });
     case 'action-hold-fix': { const h = req(params.hold, 'hold'); return makeAst('hold', cs, { fix: up(h.fix), inbound: h.inbound ?? null, dir: h.dir ?? null, legTimeMin: h.legTimeMin ?? (h.legNM ? null : 1), legNM: h.legNM ?? null, efc: h.efc ?? null }); }

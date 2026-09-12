@@ -1,13 +1,21 @@
 /* Alert stack (UX 04 §2.1, §5.2-5.3; design A13). Top-centre over the map, below the top bar. */
 .stack {
-  position: absolute; top: var(--s-3); left: 50%; transform: translateX(-50%);
+  position: absolute; top: var(--alerts-top, var(--s-3)); left: 50%; transform: translateX(-50%);
   z-index: calc(var(--z-float) + 2);
   width: 480px; max-width: calc(100% - 24px);
   display: flex; flex-direction: column; gap: var(--s-2);
   pointer-events: none;
 }
 .stack > * { pointer-events: auto; }
-.item { animation: global(ds-enter) var(--t-base) var(--ease-out) both; outline: none; border-radius: var(--r-inner); }
+/* Each stacked alert floats over the map, so it carries its own glass-strong backing (A13 tints sit on top of it). */
+.item {
+  animation: global(ds-enter) var(--t-base) var(--ease-out) both; outline: none; border-radius: var(--r-inner);
+  background: var(--glass-fill-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: var(--bw) solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+  --text-3: var(--text-3-on-glass);
+}
 .item:focus-visible { box-shadow: var(--focus-ring); }
 .card { padding: var(--s-1); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
@@ -15,7 +23,7 @@
 .overflow { align-self: center; }
 
 /* Drawer (bell) */
-.drawer {
+.drawer.drawer {
   position: absolute; top: var(--s-3); right: var(--s-3); z-index: calc(var(--z-float) + 3);
   width: 400px; max-width: calc(100% - 24px); max-height: calc(100% - 24px);
   display: flex; flex-direction: column;

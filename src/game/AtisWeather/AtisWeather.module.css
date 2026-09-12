@@ -1,6 +1,6 @@
 /* ATIS / weather dropdown (UX 04 §2.1 "ATIS / weather panel", §10 "ATIS"; design 01 §8 "ATIS chip"). */
-.panel {
-  position: absolute; top: var(--s-3); left: 50%; transform: translateX(-50%);
+.panel.panel {
+  position: absolute; top: var(--s-3); left: calc(50% - 230px);
   z-index: calc(var(--z-float) + 3);
   width: 460px; max-width: calc(100% - 24px);
   animation: global(ds-drop) var(--t-fast) var(--ease-out) both;
@@ -22,7 +22,7 @@
 .sectionTitle { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); font: var(--fw-regular) var(--fs-label-xs) / var(--lh-label-xs) var(--font); color: var(--text-3); letter-spacing: 0.01em; }
 .row { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
 .roleLabel { width: 72px; flex-shrink: 0; font: var(--fw-regular) var(--fs-body-s) / 1 var(--font); color: var(--text-2); }
-.rwyGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--s-2); }
+.rwyGrid { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .rwyCell { position: relative; }
 .rwyMenu { position: absolute; left: 0; top: 100%; min-width: 160px; }
 .text { font: var(--fw-regular) var(--fs-body-s) / var(--lh-multiline) var(--font); color: var(--text-2); max-width: var(--max-line); }

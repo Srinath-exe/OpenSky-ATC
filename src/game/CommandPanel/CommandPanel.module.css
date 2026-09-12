@@ -55,7 +55,7 @@
 .checklist { display: flex; flex-wrap: wrap; gap: 4px; }
 .check { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: var(--r-pill); font: var(--fw-label-xs) var(--fs-label-xs) / 1 var(--font); color: var(--text-3); background: var(--w-06); }
 .check[data-done="true"] { color: var(--green); background: var(--w-08); }
-.emergGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); }
+.emergGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-2); }
 
 /* Metrics (A12 metrics grid) */
 .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-3); }
@@ -84,7 +84,7 @@
 .chordHint { display: inline-flex; align-items: center; gap: var(--s-1); font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--orange); }
 
 /* Stepper */
-.stepper { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-3); border-radius: var(--r-inner); background: var(--w-04); border: var(--bw) solid var(--line-strong); animation: global(ds-drop) var(--t-fast) var(--ease-out) both; }
+.stepper { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-3); border-radius: var(--r-inner); background: var(--w-04); border: var(--bw) solid var(--line-strong); scroll-margin-top: var(--s-2); animation: global(ds-drop) var(--t-fast) var(--ease-out) both; }
 .stepFooter { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
 .spacer { flex: 1; }
 .hint { font: var(--fw-body-s) var(--fs-body-s) / var(--lh-body-s) var(--font); color: var(--text-3); }

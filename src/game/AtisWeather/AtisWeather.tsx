@@ -133,7 +133,7 @@ export function AtisWeather() {
           </Kpi>
           <Kpi label="Visibility" value={visText} unit={visUnit} testId="atis-vis" />
           <Kpi label="Cloud" value={wx?.cloud ?? atis?.cloud ?? '—'} testId="atis-cloud" />
-          <Kpi label="QNH" value={wx?.qnh ?? atis?.qnh ?? '—'} unit="hPa" testId="atis-qnh" />
+          <Kpi label="QNH" value={wx?.qnh != null ? Math.round(wx.qnh) : atis?.qnh != null ? Math.round(atis.qnh) : '—'} unit="hPa" testId="atis-qnh" />
           <Kpi label="Temp / dew" value={`${Math.round(wx?.tempC ?? atis?.tempC ?? 0)}/${Math.round(wx?.dewC ?? atis?.dewC ?? 0)}`} unit="°C" testId="atis-temp" />
         </div>
 

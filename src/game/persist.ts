@@ -5,7 +5,7 @@ export const LS = {
   highScore: 'skycontrol_high_score',
   settings: 'skycontrol_settings',
   panels: 'skycontrol_panels',
-  tipsSeen: 'skycontrol_tips_seen',
+  /** Onboarding: the store's persist module owns `skycontrol_onboarding_seen` (PERSIST_KEYS.onboardingSeen); no second key. */
   allowNarrow: 'skycontrol_allow_narrow',
   hotkeyBadges: 'skycontrol_hotkey_badges',
   logFilter: 'skycontrol_log_filter',

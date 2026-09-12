@@ -1,5 +1,5 @@
 /* Score breakdown popover (UX 04 §10 score-chip, §G11; design 01 §4.5 / §4.7 / §4.13 / A8). Drops under the nav on the right. */
-.panel {
+.panel.panel {
   position: absolute; top: var(--s-3); right: var(--s-3); z-index: calc(var(--z-float) + 3);
   width: 520px; max-width: calc(100% - 24px); max-height: calc(100% - 24px);
   display: flex; flex-direction: column;

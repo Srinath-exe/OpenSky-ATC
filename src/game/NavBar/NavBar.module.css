@@ -3,7 +3,7 @@
   position: relative;
   z-index: var(--z-nav);
   display: grid;
-  grid-template-columns: auto auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--s-4);
   height: var(--nav-h);
@@ -24,13 +24,17 @@
 
 .left { display: inline-flex; align-items: center; gap: var(--s-3); }
 .tabs { display: inline-flex; align-items: center; }
-.center { display: flex; align-items: center; justify-content: center; gap: var(--s-3); min-width: 0; }
+.center { display: flex; align-items: center; justify-content: center; gap: var(--s-3); min-width: 0; overflow: hidden; }
 .right { display: inline-flex; align-items: center; gap: var(--s-2); }
 
-.atisChip { max-width: 100%; }
-.atisPart { color: var(--text-2); }
-.atisWide { display: none; }
+.atisChip { max-width: 100%; min-width: 0; overflow: hidden; flex: 0 1 auto; }
+.atisChip > :global(*) { min-width: 0; }
+.atisPart { color: var(--text-2); white-space: nowrap; }
+/* Progressive disclosure so the chip never overlaps the tabs or the clock: runways from 1440, QNH from 1700, cloud from 1800. */
+.atisWide, .atisWideQnh, .atisWideCloud { display: none; }
 @media (min-width: 1440px) { .atisWide { display: inline; } }
+@media (min-width: 1700px) { .atisWideQnh { display: inline; } }
+@media (min-width: 1800px) { .atisWideCloud { display: inline; } }
 .atisSep { color: var(--text-4); padding: 0 var(--s-1); }
 .atisLetter { color: var(--text-1); font-weight: var(--fw-medium); }
 

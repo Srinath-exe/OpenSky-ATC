@@ -1,5 +1,6 @@
 /* Comm log + command line (UX 04 §2.1 "Comm log", §7.2, §10 "Comm log & command line"; design A11.6 / A11.7). */
-.log { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: hidden; }
+/* overflow stays visible so the autocomplete menu (anchored above the footer) can rise over the map instead of being clipped to the log height */
+.log { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: visible; }
 .header { display: flex; align-items: center; gap: var(--s-3); height: 36px; padding: 0 var(--s-2) 0 var(--s-4); flex-shrink: 0; border-bottom: var(--bw) solid var(--line); }
 .headerSpacer { flex: 1; min-width: 0; }
 .lastLine { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--s-2); font: var(--fw-regular) var(--fs-body-s) / 1 var(--font); color: var(--text-2); overflow: hidden; }
@@ -52,7 +53,7 @@
 .form { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--s-2); }
 .inputWrap { flex: 1; min-width: 0; }
 .suffix { display: inline-flex; align-items: center; gap: 2px; }
-.menu { position: absolute; left: var(--s-3); right: var(--s-3); bottom: calc(100% - 2px); }
+.menu { position: absolute; left: var(--s-3); bottom: calc(100% - 2px); min-width: 280px; max-width: var(--menu-max-w); z-index: var(--z-menu); }
 .pttWrap { position: relative; flex-shrink: 0; }
 .ptt {
   display: inline-flex; align-items: center; gap: var(--s-2); height: 36px; padding: 0 var(--s-3);
@@ -72,6 +73,7 @@
   font: var(--fw-regular) var(--fs-body-s) / 1.3 var(--font); color: var(--text-2);
   animation: global(ds-rise) var(--t-fast) var(--ease-out) both;
 }
-.error { position: absolute; left: var(--s-4); bottom: calc(100% + 4px); font: var(--fw-regular) var(--fs-body-s) / 1 var(--font); color: var(--red); pointer-events: none; }
+/* helper sits on the footer's top edge as a small plate so it never collides with the last log line */
+.error { position: absolute; left: var(--s-4); bottom: calc(100% - 4px); padding: 4px 8px; border-radius: var(--r-chip); background: var(--bg-2); border: var(--bw) solid var(--red-border-25); font: var(--fw-regular) var(--fs-body-s) / 1 var(--font); color: var(--red); pointer-events: none; z-index: var(--z-menu); }
 .empty { padding: var(--s-4); color: var(--text-3); font-size: var(--fs-body-s); }
 @media (prefers-reduced-motion: reduce) { .caret { animation: none; } }

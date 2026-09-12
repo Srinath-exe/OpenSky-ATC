@@ -375,8 +375,9 @@ export class GroundRenderer {
   // ── range rings (ground 250/500 m from selected; tower 1/2/4 NM from thresholds) ──
   private drawRings(ctx: CanvasRenderingContext2D, engine: SimEngine, geom: GroundGeometry, f: FrameInput) {
     const cam = f.cam, p = this.p;
-    const crawl = f.reducedMotion ? 0 : -((f.now / 1000) * 4) % 8;
-    ctx.strokeStyle = p.w45; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.lineDashOffset = crawl;
+    // Design 01 A21 lists no radius ring for Ground / Tower: when the player turns rings on they are drawn as faint
+    // A10-style guides (1 px, --chart-grid, static 2/6 dash) so they never compete with the corridor ticks or the traffic.
+    ctx.strokeStyle = p.chartGrid; ctx.lineWidth = 1; ctx.setLineDash([2, 6]); ctx.lineDashOffset = 0;
     ctx.font = fontOf(p, 400, 11); ctx.fillStyle = p.text5; ctx.textAlign = 'left';
     const ring = (x: number, y: number, rm: number, label: string) => {
       const r = rm * cam.pxPerM; if (r < 8 || r > 6000) return;

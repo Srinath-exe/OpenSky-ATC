@@ -26,6 +26,9 @@
   .shell { --log-h: 100px; }
 }
 .shell[data-bay-collapsed="true"] { --bay-w: 44px; }
+/* Right-hand inset for map chrome (toolbars, vehicles panel): clears the command panel while one is open (UX §2.3: panels never overlap). */
+.shell { --right-inset: var(--float-gap); }
+.shell[data-has-panel="true"] { --right-inset: calc(var(--cmd-w) + 2 * var(--float-gap)); }
 .shell[data-log-collapsed="true"] { --log-h: var(--log-collapsed-h); }
 
 /* ---------- main: the map / radar with floating panels ---------- */
@@ -42,7 +45,13 @@
   transition: filter var(--t-slow) var(--ease-out);
 }
 .view > * { width: 100%; height: 100%; }
+/* The radar's corner chip / toolbar (ApproachView --radar-inset-*) must clear the floating strip bay and command panel. */
+.view[data-view="radar"] > * { --radar-inset-left: calc(var(--bay-w) + 2 * var(--float-gap)); --radar-inset-top: var(--float-gap); --radar-inset-right: var(--right-inset); --radar-inset-bottom: var(--float-gap); }
+.view[data-view="ground"] > * { --ground-inset-right: var(--right-inset); --ground-inset-bottom: var(--float-gap); }
 .shell[data-paused="true"] .view { filter: saturate(0.8); }
+/* the "Paused" pill and the alert stack share the top-centre: push the stack below the pill while paused */
+.shell { --alerts-top: var(--float-gap); }
+.shell[data-paused="true"] { --alerts-top: calc(var(--float-gap) + var(--pill-s) + var(--s-2)); }
 .viewPending {
   position: absolute;
   inset: 0;
@@ -98,11 +107,12 @@
 /* bottom-right cluster (vehicles panel) */
 .vehicles {
   position: absolute;
-  right: calc(var(--cmd-w) + var(--float-gap) * 2);
+  right: calc(var(--right-inset) + var(--circle-map) + var(--float-gap));
   bottom: var(--float-gap);
   z-index: calc(var(--z-float) + 2);
   max-width: calc(100% - var(--bay-w) - var(--cmd-w) - var(--float-gap) * 4);
-  max-height: calc(100% - var(--float-gap) * 2);
+  /* leave the top strip free for the alert stack (UX §2.3: panels never overlap) */
+  max-height: calc(100% - var(--float-gap) * 2 - 240px);
   display: flex;
   animation: global(ds-rise) var(--t-base) var(--ease-out) both;
 }

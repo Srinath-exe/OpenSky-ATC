@@ -30,7 +30,9 @@
 .name { display: flex; align-items: center; gap: var(--s-2); font: var(--fw-medium) var(--fs-body-m) / 1 var(--font); color: var(--text-1); white-space: nowrap; }
 .typeTag { font: var(--fw-regular) var(--fs-micro-caps) / 1 var(--font); letter-spacing: var(--ls-micro-caps); text-transform: uppercase; color: var(--text-3); background: var(--w-08); padding: 2px 5px; border-radius: var(--r-kbd); }
 .sub { font: var(--fw-body-s) var(--fs-body-s) / 1 var(--font); color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+/* Active vehicles carry a state pill + up to three buttons: give them their own row under the name so the name never gets squeezed. */
 .actions { display: flex; align-items: center; gap: var(--s-1); flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.card[data-state="enroute"] .actions, .card[data-state="onscene"] .actions, .card[data-state="returning"] .actions { grid-column: 2 / -1; justify-content: flex-start; }
 .check { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--r-kbd); border: var(--bw) solid var(--w-20); color: var(--text-4); }
 .check[data-on="true"] { background: var(--orange); border-color: var(--orange); color: var(--bg-0); }
 

@@ -149,6 +149,7 @@ export function GameShell({ loading = false, loadError = null, onRetry }: GameSh
         data-paused={paused}
         data-bay-collapsed={panels.bay}
         data-log-collapsed={panels.log}
+        data-has-panel={selectedId != null}
       >
         <NavBar />
 

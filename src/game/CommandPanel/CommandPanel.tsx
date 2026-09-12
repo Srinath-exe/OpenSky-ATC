@@ -420,7 +420,7 @@ function PanelBody({ a, position, pinned, onPin, className }: { a: AircraftState
             {emergency ? (
               <EmergencyBand a={a} time={time} open={emergOpen} onToggle={() => setEmergOpen((v) => !v)} rows={emergencyRows} onOpen={openRow} chord={chord} />
             ) : null}
-            {reqVisible ? <RequestBand req={reqVisible} time={time} primary={primary} rows={rows} onOpen={openRow} onOpenById={openById} /> : null}
+            {reqVisible && !draft ? <RequestBand req={reqVisible} time={time} primary={primary} rows={rows} onOpen={openRow} onOpenById={openById} /> : null}
 
             <Metrics a={a} ctx={ctx} stage={stage} rows={rows} onOpenById={openById} />
 
@@ -674,9 +674,18 @@ function DraftStepper(p: DraftStepperProps) {
   const isConfirm = step.type === 'confirm'
   const satisfied = stepSatisfied(step, draft.params)
   const def = ACTION_DEFS[draft.actionId]
+  const rootRef = React.useRef<HTMLDivElement>(null)
+  // The stepper lives below the bands + KPI row inside the panel's scroll region: bring the active step (and its
+  // TRANSMIT / Next footer) into view whenever the step changes, otherwise the confirm bar can sit below the fold.
+  React.useEffect(() => {
+    const el = rootRef.current
+    if (!el || typeof el.scrollIntoView !== 'function') return
+    const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    try { el.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' }) } catch { /* jsdom */ }
+  }, [draft.actionId, draft.index, draft.sub?.part])
   return (
-    <div className={styles.stepper} data-testid={`stepper-${draft.actionId}`} data-step={draft.index} data-step-type={step.type}>
-      <Stepper steps={crumbs} activeIndex={draft.index} onStepClick={onStepClick} title={<span data-testid="step-title">{def.label}</span>} subtitle={isConfirm ? undefined : `${step.label}${step.optional ? ' · optional' : ''}`} keyboard={false} testId="stepper">
+    <div ref={rootRef} className={styles.stepper} data-testid={`stepper-${draft.actionId}`} data-step={draft.index} data-step-type={step.type}>
+      <Stepper steps={crumbs} activeIndex={draft.index} onStepClick={onStepClick} title={<span data-testid="step-title">{def.label}</span>} subtitle={isConfirm || (step.label === def.label && !step.optional) ? undefined : `${step.label}${step.optional ? ' · optional' : ''}`} keyboard={false} testId="stepper">
         {isConfirm ? (
           <ConfirmStep
             draft={draft}

@@ -1001,6 +1001,8 @@ function withYouLine(req: PilotRequest, a: AircraftState | null, cs: string, uni
   // departure
   if (a.phase === 'hold_short' || a.holdShortNode) return v === 'FAA' ? `${unit}, ${cs}, holding short runway ${spokenRunway(a.holdShortRunway ?? a.plan.runway ?? '', v)}` : `${unit}, ${cs}, holding point runway ${spokenRunway(a.holdShortRunway ?? a.plan.runway ?? '', v)}`;
   if (a.phase === 'taxi') return `${unit}, ${cs}, taxiing to runway ${spokenRunway(a.plan.runway ?? '', v)}`;
+  // still on the runway (lined up / cleared, not yet airborne): never "passing zero climbing zero"
+  if (a.phase === 'lineup' || (a.phase === 'takeoff' && a.altitude < 50)) return `${unit}, ${cs}, ${a.speed > 30 ? 'rolling' : 'lined up'} runway ${spokenRunway(a.plan.runway ?? '', v)}`;
   if (a.phase === 'takeoff' || a.phase === 'climb' || a.phase === 'cruise') return `${unit}, ${cs}, passing ${spokenAltitude(Math.round(a.altitude / 100) * 100, v, ctx.transitionAltFt)} climbing ${spokenAltitude(a.targetAltitude, v, ctx.transitionAltFt)}`;
   return `${unit}, ${cs}, with you${info}`;
 }
