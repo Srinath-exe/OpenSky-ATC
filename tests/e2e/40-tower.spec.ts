@@ -7,7 +7,10 @@
     cancel takeoff (RTO < 80 kt; R5 past abort speed) · landing clearance mandatory (no clearance -> pilot query
     at 4 NM, go-around at 2 NM with the reason logged) · cleared to land -> touchdown -> rollout -> exit picker ->
     vacate -> taxi-in request · go around by click · wind check · runway config dialog (active runways + ATIS
-    letter) · runway closed via the ATIS panel -> takeoff refused (R14) · wake timer after a heavy rotates.
+    letter) · runway closed via the ATIS panel -> takeoff refused (R14) · wake timer after a heavy rotates ·
+    takeoff straight from the hold (GC14) · forced go-around with the runway blocked (T6/T10) · handoff to ground by
+    clicks (X11 on the runway) · runway config "apply when clear" · fixmes: exit during the rollout, strip E box,
+    wake-timer chip, "behind landing" picker, cancel line-up exit choice, exit picker candidates.
 
   Every test boots `/play?icao=EGLL&seed=7&spawn=none&test=1&position=tower` (no traffic, no RAF) and builds its
   own scenario with `sim.spawnAt`; sim time only moves through `sim.advance*`. Engine state is asserted through
@@ -439,14 +442,8 @@ test.describe('tower', () => {
     await expect(game.page.getByTestId('strip-DAL6-box-F')).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test.fixme('exit picker during the rollout: "next exit right" makes the aircraft vacate @full', async ({ openGame, sim }) => {
-    // BUG (engine): an exit instruction given DURING the rollout never vacates. src/lib/sim/engine.ts execExitAt
-    // (~1947-1951) replaces `scratch.exitPlan` with chooseExit(...) but leaves `a.path.holdAt` / `a.cmdIas` at the
-    // touchdown plan's values (onTouchdown ~3092-3095 sets both), so a 90-degree exit chosen for "next exit L/R"
-    // (exit speed 15 kt) is passed at the old 30 kt target; the aircraft rolls to the end of the runway and sits
-    // there in `rollout` at 30 kt forever (never < 0.3 kt, so no "stopped on the runway" request either).
-    // Related: cmdExitAt (~1932-1935) re-checks reachability with the current speed and the 40 m margin, which
-    // refuses the pilot's OWN just-in-time exit: "VACATE VIA N10" -> unable_exit "Unable N10, we'll take N10".
+  test('exit picker during the rollout: "next exit right" makes the aircraft vacate @full', async ({ openGame, sim }) => {
+    test.fixme(true, 'BUG: src/lib/sim/engine.ts:1944 execExitAt (rollout branch) only replaces scratch.exitPlan and leaves a.path.holdAt / a.cmdIas at the touchdown plan values set by onTouchdown (src/lib/sim/engine.ts:3092-3095), and trRollout (src/lib/sim/engine.ts:3039-3042) only turns off at `speed <= plan.speedKt + 3` ; expected: after "take the next available exit on the right" during the rollout the aircraft vacates at the next right-hand exit, PILOT "runway 27L vacated", runway free, taxi-in request ; actual: readback "Next available right" then the aircraft rolls to the end of the path (distAlong == pathTotal) and sits there in phase rollout at 30 kt forever (no vacated line, runway stays occupied, no request) ; repro: land DAL9 on 27L, in rollout click Exit / vacate -> next exit RIGHT -> Transmit, advance 120 s');
     const game = await openTower(openGame);
     await spawnOnFinal(sim, 'DAL9', 7, { landingCleared: true });
     await sim.advanceUntilPhase('DAL9', 'rollout', 300);
@@ -461,11 +458,13 @@ test.describe('tower', () => {
     expect(ex.status).toBe('ok');
     await sim.advance(3.5);
     expect((await sim.state('DAL9'))?.exitDir).toBe('R');
+    await game.waitRadio(/next available right/i, { who: 'PILOT', callsign: 'DAL9' });
     await sim.advanceUntilOk(`s => s.radio.some(l => l.callsign === 'DAL9' && /runway ${RWY} vacated/.test(l.text))`, 150);
+    await game.waitRadio(/exiting via N/, { who: 'PILOT', callsign: 'DAL9' });
     expect((await sim.runways()).find((r) => r.name === RWY)?.occupied).toBe(false);
     await sim.advanceUntilOk(`s => { const a = ${findSrc('DAL9')}; return !!a && a.requests.some(r => r.kind === 'taxi_in'); }`, 120);
+    await expect(game.strip('DAL9')).toHaveAttribute('data-bay', 'TO_GROUND');
   });
-
 
   // ───────────────────────────────────────────────────────────────────────────
   test('go around by click: TOGA to the missed-approach altitude, ILS and landing clearance dropped @smoke @full', async ({ openGame, sim }) => {
@@ -667,10 +666,8 @@ test.describe('tower', () => {
     expect((await game.confirmWarnings()).some((w) => /Wake turbulence/.test(w))).toBe(false);
   });
 
-  test.fixme('strip E box ticks after a "next exit left/right" instruction @full', async ({ openGame, sim }) => {
-    // BUG: src/game/StripBay/StripCard.tsx:38 ARR_BOXES "E" (UX 04 §3.1 "E exit given") is `done` only when
-    // `a.exitTaxiway != null`; a directional exit ("take the next available exit on the right", `a.exitDir = 'R'`,
-    // engine execExitAt) leaves the box unticked although the exit instruction was given and read back.
+  test('strip E box ticks after a "next exit left/right" instruction @full', async ({ openGame, sim }) => {
+    test.fixme(true, 'BUG: src/game/StripBay/StripCard.tsx:38 ARR_BOXES "E" (UX 04 §3.1 "E exit given") is done only when a.exitTaxiway != null, so a directional exit instruction ("take the next available exit on the right", engine execExitAt src/lib/sim/engine.ts:1940 sets a.exitDir = "R" and exitTaxiway = null) leaves the box unticked ; expected: strip-{cs}-box-E aria-pressed=true once the exit instruction is read back ; actual: stays false ; repro: DAL8 in rollout on 27L, "DAL8 TAKE NEXT EXIT RIGHT", advance 3.5 s');
     const game = await openTower(openGame);
     await sim.spawnAt({ callsign: 'DAL8', type: 'A320', kind: 'arrival', phase: 'rollout', runway: RWY, onFrequency: 'tower' });
     await expect(game.page.getByTestId('strip-DAL8-box-E')).toHaveAttribute('aria-pressed', 'false');
@@ -678,14 +675,12 @@ test.describe('tower', () => {
     expect(r.code).toBe('ok_queued');
     await sim.advance(3.5);
     expect((await sim.state('DAL8'))?.exitDir).toBe('R');
+    await game.waitRadio(/next available right/i, { who: 'PILOT', callsign: 'DAL8' });
     await expect(game.page.getByTestId('strip-DAL8-box-E')).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test.fixme('wake timer chip is visible on the tower view after a heavy rotates @full', async ({ openGame, sim }) => {
-    // BUG: no DOM wake-timer indicator exists. 03-ATC-FEATURE-SPEC §2.7 "UI: countdown ring on the runway entry marker;
-    // strip badge WT 1:23" and 05-TEST-STRATEGY §3.1 reserve `wake-timer-{rwy}` (T11), but src/game/StripBay/StripCard.tsx
-    // renders no wake badge and src/components/atc/GroundView/render.ts:171-209 only labels closed/sterile/inspection
-    // runways (the W2 report lists the tower runway-occupancy bars as not implemented). Engine + SYS line are covered above.
+  test('wake timer chip is visible on the tower view after a heavy rotates @full', async ({ openGame, sim }) => {
+    test.fixme(true, 'BUG: no DOM wake-timer indicator exists — 03-ATC-FEATURE-SPEC §2.7 asks for a countdown on the runway entry marker / strip badge "WT 1:23" and 05-TEST-STRATEGY §3.1 reserves wake-timer-{rwy} (T11); src/components/atc/GroundView/runwayStatus.ts:55 computes wakeRemainingS but runwayOccupancy() has no consumer in src/game or src/components, src/game/StripBay/StripCard.tsx renders no wake badge, src/components/atc/GroundView/render.ts only labels closed/sterile/inspection runways ; expected: wake-timer-27L[data-value=remainingS] visible and counting down after the heavy rotates ; actual: only the engine timer + the SYS radio line exist (covered by the test above) ; repro: HVY3 (B77W) cleared for takeoff 27L, advance until airborne');
     const game = await openTower(openGame);
     await spawnLinedUp(sim, 'HVY3', RWY, 'B77W');
     expect((await sim.command(`HVY3 CLEARED FOR TAKEOFF ${RWY}`)).code).toBe('ok_queued');
@@ -699,5 +694,246 @@ test.describe('tower', () => {
     await expect(chip).toHaveAttribute('data-value', String((await sim.wakeTimers())[RWY].remainingS));
     await sim.advance(t.remainingS);
     await expect(chip).toHaveCount(0);
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  //  Wave-3 audit additions (05 §4.4 GC14, §4.5 T6 / T10, §G2 handoff column, §G3 runway-config guard, §G4 pickers)
+  // ───────────────────────────────────────────────────────────────────────────
+  test('takeoff clearance straight from the holding point: the departure enters and rolls in one clearance (GC14) @full', async ({ openGame, sim }) => {
+    const game = await openTower(openGame);
+    await spawnAtHold(sim, 'BAW12', RWY_OTHER);
+    await sim.advance(3.5);                                // "ready for departure" on the tower frequency
+    await game.waitRadio(/holding point runway two seven right, ready for departure/i, { who: 'PILOT', callsign: 'BAW12' });
+    await expect(game.stripReq('BAW12')).toHaveAttribute('data-kind', 'ready');
+    await game.openPanelFor('BAW12');
+    // §G8: runway free -> the "ready" request pre-highlights Take off (not Line up)
+    await expect(game.reqBand()).toHaveAttribute('data-request', 'ready');
+    await expect(game.actionBtn('action-takeoff')).toHaveAttribute('data-primary', 'true');
+    expect(await game.actionState('action-takeoff')).toEqual({ state: 'enabled', reason: '' });
+    expect(await game.actionState('action-lineup')).toEqual({ state: 'enabled', reason: '' });
+    await expect(game.page.getByTestId('strip-BAW12-box-W')).toHaveAttribute('aria-pressed', 'false');
+    await expect(game.page.getByTestId('strip-BAW12-box-O')).toHaveAttribute('aria-pressed', 'false');
+
+    await game.reqAnswer().click();                        // one-tap answer: confirm step of Take off
+    await expect(game.stepperFor('action-takeoff')).toHaveAttribute('data-step-type', 'confirm');
+    await expect(game.confirmSummary()).toContainText(/runway two seven right, cleared for takeoff/i);
+    expect(await game.blockedReasonText()).toBeNull();
+    const tx = await game.transmit();
+    expect(tx.code).toBe('ok_queued');
+    expect(tx.tx).toMatch(/wind .* runway two seven right, cleared for takeoff/i);
+    await expect(game.stripReq('BAW12')).toHaveCount(0);
+    expect((await sim.runwayStates()).find((r) => r.name === RWY_OTHER)?.takeoffClearance).toBe('BAW12');
+    // both boxes tick at once: the clearance covers the line-up
+    await sim.advance(3.5);
+    const rb = await game.waitRadio(/cleared for takeoff runway two seven right/i, { who: 'PILOT', callsign: 'BAW12' });
+    expect(rb.status).toBe('executed');
+    let a = await sim.aircraftOrFail('BAW12');
+    expect(a.phase).toBe('takeoff');
+    expect(a.takeoffCleared).toBe(true);
+    expect(a.stage).toBe('takeoff_roll');
+    await expect(game.strip('BAW12')).toHaveAttribute('data-bay', 'ROLLING_AIRBORNE');
+    await expect(game.page.getByTestId('strip-BAW12-box-W')).toHaveAttribute('aria-pressed', 'true');
+    await expect(game.page.getByTestId('strip-BAW12-box-O')).toHaveAttribute('aria-pressed', 'true');
+    await expect(game.panelStage()).toHaveAttribute('data-stage', 'takeoff_roll');
+    expect(await game.actionState('action-takeoff')).toEqual({ state: 'disabled', reason: 'Already cleared' });
+    expect((await sim.runwayStates()).find((r) => r.name === RWY_OTHER)?.occupiedBy.map((o) => o.callsign)).toEqual(['BAW12']);
+    // it enters the runway (taxi speed), lines up on the runway heading and accelerates
+    const hdg = (await sim.runwayStates()).find((r) => r.name === RWY_OTHER)!.headingTrue;
+    await sim.advanceUntilOk(`s => { const a = ${findSrc('BAW12')}; return !!a && a.phase === 'takeoff' && a.speed > 60; }`, 90);
+    a = await sim.aircraftOrFail('BAW12');
+    expect(angleDiff(a.heading, hdg)).toBeLessThanOrEqual(3);
+    await game.waitRadio(/rolling runway 27R/i, { who: 'PILOT', callsign: 'BAW12' });
+    await sim.advanceUntilOk(`s => { const a = ${findSrc('BAW12')}; return !!a && a.altitude > 50; }`, 90);
+    await expect(game.strip('BAW12')).toHaveAttribute('data-stage', 'takeoff_air');
+  });
+
+  test('automatic go-around when the runway is blocked by a lined-up departure (T6): incursion alert, score, reason in the log @full', async ({ openGame, sim }) => {
+    const game = await openTower(openGame);
+    await spawnOnFinal(sim, 'DAL5', 3, { landingCleared: true });
+    await spawnLinedUp(sim, 'OCC1', RWY);
+    await sim.advance(1);
+    const score0 = (await sim.snapshot()).score;
+    await expect(game.strip('DAL5')).toHaveAttribute('data-bay', 'FINAL');
+    await expect(game.strip('OCC1')).toHaveAttribute('data-bay', 'LINED_UP');
+    expect((await sim.runwayStates()).find((r) => r.name === RWY)?.occupiedBy.map((o) => o.callsign)).toEqual(['OCC1']);
+
+    // the pilot goes around by himself at 1 NM with the runway still occupied
+    const ga = await sim.advanceUntil(`s => ${findSrc('DAL5')}?.phase === 'go_around'`, 120, 0.5);
+    expect(ga.ok).toBe(true);
+    const ev = ga.events.find((e) => e.type === 'go_around' && e.callsign === 'DAL5');
+    expect(ev?.message).toBe('DAL5 going around — runway occupied by OCC1');
+    expect(ga.events.some((e) => e.type === 'score' && e.data?.type === 'score' && e.data.score.code === 'RWY_INCURSION')).toBe(true);
+    expect((await sim.snapshot()).score).toBeLessThan(score0);
+    const a = await sim.aircraftOrFail('DAL5');
+    expect(a.goAround).toBe(true);
+    expect(a.stage).toBe('go_around');
+    expect(a.landingCleared).toBe(false);
+    expect(a.ilsCaptured).toBe(false);
+    expect(a.targetAltitude).toBe(MISSED_APPROACH_ALT);
+    expect((await sim.runwayStates()).find((r) => r.name === RWY)?.landingClearances).toEqual([]);
+    // the intruder keeps the runway; the arrival's strip flips to go_around and the alert channels fire
+    expect((await sim.runwayStates()).find((r) => r.name === RWY)?.occupiedBy.map((o) => o.callsign)).toEqual(['OCC1']);
+    await expect(game.strip('DAL5')).toHaveAttribute('data-stage', 'go_around');
+    await game.waitRadio(/going around — runway occupied by OCC1/, { who: 'PILOT', callsign: 'DAL5' });
+    await game.waitRadio(/going around, runway occupied by OCC1/i, { who: 'PILOT', callsign: 'DAL5' });
+    const alerts = await sim.alerts();
+    expect(alerts.some((al) => al.kind === 'runway_incursion' && al.subjects.includes('OCC1') && al.subjects.includes('DAL5'))).toBe(true);
+    expect(alerts.some((al) => al.kind === 'go_around' && al.subjects.includes('DAL5'))).toBe(true);
+    await expect(game.alertsBell()).toHaveAttribute('data-count', /^[1-9]\d*$/);
+    const toast = await game.waitToast(/rwy incursion/i);
+    expect(toast.kind).toBe('error');
+    expect(toast.text).toMatch(/-500/);
+    expect(toast.text).toMatch(/OCC1/);
+    await game.openPanelFor('DAL5');
+    await expect(game.panelStage()).toHaveAttribute('data-stage', 'go_around');
+    expect(await game.actionState('action-goaround')).toEqual({ state: 'disabled', reason: 'Already cleared' });
+    expect(await game.actionState('action-land')).toEqual({ state: 'disabled', reason: 'Not positioned — vector first' });
+    // the runway is not locked for the departure: it can still be cleared for takeoff (T10)
+    await game.openPanelFor('OCC1');
+    expect(await game.actionState('action-takeoff')).toEqual({ state: 'enabled', reason: '' });
+  });
+
+  test('hand off to ground by clicks after vacating (auto handoff off): blocked on the runway (X11), position picker, strip ghosts to TO_GROUND @full', async ({ openGame, sim }) => {
+    const game = await openGame({ icao: ICAO, spawn: 'none', position: 'tower', settings: { autoHandoff: false } });
+    await sim.spawnAt({ callsign: 'DAL9', type: 'A320', kind: 'arrival', phase: 'rollout', runway: RWY, onFrequency: 'tower' });
+    await sim.advance(1);
+    await game.openPanelFor('DAL9');
+    await expect(game.panelStage()).toHaveAttribute('data-stage', 'rollout');
+    expect(await game.actionState('action-handoff')).toEqual({ state: 'disabled', reason: 'Vacate first' });
+    await expect(game.actionBtn('action-handoff')).toBeDisabled();
+
+    // vacated and stopped clear of the runway: still on tower (no auto handoff), the pilot asks tower for taxi
+    await sim.advanceUntilOk(`s => s.radio.some(l => l.callsign === 'DAL9' && /runway ${RWY} vacated/.test(l.text))`, 200);
+    await sim.advanceUntilOk(`s => { const a = ${findSrc('DAL9')}; return !!a && a.phase === 'taxi' && a.requests.some(r => r.kind === 'taxi_in'); }`, 120);
+    let a = await sim.aircraftOrFail('DAL9');
+    expect(a.onFrequency).toBe('tower');
+    expect(a.handedTo).toBeNull();
+    expect(a.stage).toBe('taxi_in');
+    await game.waitRadio(/Heathrow Tower, .*runway vacated, request taxi/i, { who: 'PILOT', callsign: 'DAL9' });
+    await expect(game.strip('DAL9')).toHaveAttribute('data-bay', 'TO_GROUND');
+    await expect(game.strip('DAL9')).toHaveAttribute('data-onfreq', 'tower');
+    await expect(game.page.getByTestId('strip-DAL9-box-F')).toHaveAttribute('aria-pressed', 'false');
+    expect(await game.actionState('action-handoff')).toEqual({ state: 'enabled', reason: '' });
+
+    await game.action('action-handoff');
+    await expect(game.stepperFor('action-handoff')).toHaveAttribute('data-step-type', 'position');
+    await expect(game.page.getByTestId('picker-position-ground')).toHaveAttribute('aria-pressed', 'true');    // next position for taxi_in
+    await expect(game.page.getByTestId('picker-position-tower')).toHaveAttribute('data-state', 'disabled');   // never "contact yourself"
+    await game.next();
+    await expect(game.confirmSummary()).toContainText(/contact ground one two one decimal niner zero zero/i);
+    const tx = await game.transmit();
+    expect(tx.code).toBe('ok_queued');
+    await sim.advance(3.5);
+    a = await sim.aircraftOrFail('DAL9');
+    expect(a.handedTo).toBe('ground');
+    await game.waitRadio(/Ground one two one decimal niner zero zero/i, { who: 'PILOT', callsign: 'DAL9' });
+    await expect(game.page.getByTestId('strip-DAL9-box-F')).toHaveAttribute('aria-pressed', 'true');
+    await sim.advanceUntilOk(`s => ${findSrc('DAL9')}?.onFrequency === 'ground'`, 30);
+    a = await sim.aircraftOrFail('DAL9');
+    expect(a.handedTo).toBeNull();
+    expect(a.requests.some((r) => r.kind === 'taxi_in' && r.answeredAt == null)).toBe(true);   // the taxi request is ground's now
+    // tower keeps a ghost in TO_GROUND; the SYS line is stamped on the new frequency
+    await expect(game.strip('DAL9')).toHaveAttribute('data-onfreq', 'ground');
+    await expect(game.strip('DAL9')).toHaveAttribute('data-bay', 'TO_GROUND');
+    await expect(game.page.getByTestId('strip-DAL9-ghost')).toBeVisible();
+    await game.showAllFrequencies();
+    await game.waitRadio(/DAL9 contact Heathrow Ground 121\.900/, { who: 'SYS', callsign: 'DAL9' });
+    await game.setPosition('ground');
+    await expect(game.strip('DAL9')).toHaveAttribute('data-bay', 'TAXI_IN');
+    await expect(game.stripReq('DAL9')).toHaveAttribute('data-kind', 'taxi_in');
+  });
+
+  test('runway config "Apply when runways are clear" waits for the lined-up departure to leave the runway @full', async ({ openGame, sim }) => {
+    const game = await openTower(openGame);
+    await spawnLinedUp(sim, 'OCC1', RWY);
+    const before = (await sim.runwayStates()).filter((r) => r.activeDep).map((r) => r.name).sort();
+    expect(before).toContain(RWY);
+    const letter0 = (await sim.atis()).letter;
+
+    await game.openRunwayConfig();
+    await game.rwycfgEnd(RWY, 'dep').click();
+    await expect(game.rwycfgEnd(RWY, 'dep')).toHaveAttribute('aria-pressed', 'false');
+    const whenClear = game.page.getByTestId('rwycfg-apply-when-clear');
+    await whenClear.click();
+    await expect(whenClear).toHaveAttribute('aria-checked', 'true');
+    await game.rwycfgApply().click();
+    // queued: the dialog stays open with the button in its waiting state; nothing changed in the engine
+    await expect(game.rwycfgApply()).toHaveText(/waiting for clear/i);
+    await expect(game.runwayConfigDialog()).toBeVisible();
+    await sim.advance(5);
+    expect((await sim.runwayStates()).filter((r) => r.activeDep).map((r) => r.name).sort()).toEqual(before);
+    expect((await sim.atis()).letter).toBe(letter0);
+    await expect(game.runwayConfigDialog()).toBeVisible();
+
+    // the departure rolls and gets airborne: the runway is clear, the config applies by itself
+    expect((await sim.command(`OCC1 CLEARED FOR TAKEOFF ${RWY}`)).code).toBe('ok_queued');
+    await sim.advanceUntilOk(`s => { const a = ${findSrc('OCC1')}; return !!a && a.altitude > 50; }`, 120);
+    expect((await sim.runways()).find((r) => r.name === RWY)?.occupied).toBe(false);
+    await expect(game.runwayConfigDialog()).toHaveCount(0);
+    expect((await sim.runwayStates()).filter((r) => r.activeDep).map((r) => r.name)).not.toContain(RWY);
+    expect((await sim.runwayStates()).find((r) => r.name === RWY)?.activeArr).toBe(true);
+    expect((await sim.atis()).letter).toBe(String.fromCharCode(letter0.charCodeAt(0) + 1));
+    await expect(game.atisChip()).toContainText(`ATIS ${(await sim.atis()).letter}`);
+    await game.waitRadio(/Runway change: departures/, { who: 'SYS' });
+  });
+
+  test('line up "behind landing aircraft": the aircraft picker lists the arrival on final @full', async ({ openGame, sim }) => {
+    test.fixme(true, 'BUG: src/lib/sim/dispatch.ts:378 actionCtxFromEngine hard-codes ActionCtx.nearbyAircraft = [], so aircraftChips() (src/lib/sim/commandTree.ts:552-556, mode behind_landing) never has a candidate ; expected: the optional "Behind landing aircraft" step of Line up lists DAL5 (A320, 5.x NM final) as picker-aircraft-DAL5 and the confirm summary reads "behind the landing Delta fife" ; actual: "No other traffic on final", no chip ; repro: DAL5 on a 5 NM final to 27L, BAW1 at the 27L hold, Line up -> Next');
+    const game = await openTower(openGame);
+    await spawnAtHold(sim, 'BAW1');
+    await spawnOnFinal(sim, 'DAL5', 5, { landingCleared: true });
+    await sim.advance(1);
+    await game.openPanelFor('BAW1');
+    await game.action('action-lineup');
+    await game.next();
+    expect(await game.stepType()).toBe('aircraft');
+    await expect(game.page.getByTestId('picker-aircraft-DAL5')).toBeVisible();
+    await expect(game.page.getByTestId('picker-aircraft-DAL5')).toContainText(/DAL5 A320 \d\.\d NM final/);
+    await game.pickAircraft('DAL5');
+    await game.next();
+    await expect(game.confirmSummary()).toContainText(/behind the landing/i);
+    const tx = await game.transmit();
+    expect(tx.code).toBe('ok_queued');
+    expect(tx.tx).toMatch(/behind the landing .*Delta fife/i);
+  });
+
+  test('cancel line-up (vacate runway) by clicks: the departure leaves via the nearest exit and the runway is free again @full', async ({ openGame, sim }) => {
+    test.fixme(true, 'BUG: src/lib/sim/engine.ts:3147 chooseExit prefers the first HIGH-SPEED exit (`cands.find(c => c.hs) ?? cands[0]`) even when called fromStandstill by execCancelLineup (src/lib/sim/engine.ts:1921-1926), and the vacate picker offers every airport taxiway because actionCtxFromEngine (src/lib/sim/dispatch.ts) never fills ActionCtx.exits (src/lib/sim/commandTree.ts:211-212, fallback at :609) ; expected (04 §1.4 "Cancel line-up / vacate runway": picker-taxiway = exits ahead, exit reachable; 03 §845 "next available exit = nearest exit ahead"): the picker lists only the exits ahead of the line-up point and the aircraft vacates at the nearest one within ~60 s ; actual: picker lists A1…S11 with no exit metadata, the aircraft crawls 3.5 km down 27L at 10 kt towards N10 (runway occupied for ~12 min) ; repro: BAW6 lined up on 27L, Cancel line-up -> Next -> Transmit, advance 120 s');
+    const game = await openTower(openGame);
+    await spawnLinedUp(sim, 'BAW6', RWY);
+    await game.openPanelFor('BAW6');
+    expect(await game.actionState('action-cancel-lineup')).toEqual({ state: 'enabled', reason: '' });
+    await game.action('action-cancel-lineup');
+    expect(await game.stepType()).toBe('taxiway');
+    // only exits ahead of the aircraft, nearest first, each with a distance
+    const chips = await game.page.locator('[data-testid^="picker-taxiway-"]:not([data-testid="picker-taxiway-search"]):not([data-testid="picker-taxiway-search-wrap"])').evaluateAll((els) => els.map((e) => (e.getAttribute('data-testid') ?? '').slice('picker-taxiway-'.length)));
+    expect(chips.length).toBeGreaterThan(0);
+    expect(chips.length).toBeLessThan(10);
+    await game.next();
+    await expect(game.confirmSummary()).toContainText(/vacate runway/i);
+    const tx = await game.transmit();
+    expect(tx.code).toBe('ok_queued');
+    await sim.advance(3.5);
+    await game.waitRadio(/vacating/i, { who: 'PILOT', callsign: 'BAW6' });
+    const off = await sim.advanceUntil(`s => !(s.aircraft.find(a => a.callsign === 'BAW6')?.phase === 'lineup') && ${findSrc('BAW6')}?.phase !== 'rollout'`, 120);
+    expect(off.ok).toBe(true);
+    expect((await sim.runways()).find((r) => r.name === RWY)?.occupied).toBe(false);
+    await expect(game.strip('BAW6')).not.toHaveAttribute('data-bay', 'LINED_UP');
+  });
+
+  test('exit picker on final lists only the exits ahead with their distance, the engine default pre-selected @full', async ({ openGame, sim }) => {
+    test.fixme(true, 'BUG: ActionCtx.exits (src/lib/sim/commandTree.ts:211-212 "Runway exits ahead of the aircraft") is never provided by actionCtxFromEngine (src/lib/sim/dispatch.ts:300-390 has no `exits:` key), so S.taxiway (src/lib/sim/commandTree.ts:608-611) falls back to ctx.taxiways ; expected (04 §1.4 "Exit at [E]": exit chips with distance / L-R / high-speed, engine default pre-selected): a short list such as N8, N10, N11 with data-state and the default pressed ; actual: all 36 EGLL taxiways (A1 … S11) as plain chips with no data-state, nothing pre-selected, taxiways behind the aircraft included ; repro: DAL6 on a 7 NM final to 27L, Exit / vacate');
+    const game = await openTower(openGame);
+    await spawnOnFinal(sim, 'DAL6', 7, { landingCleared: true });
+    await sim.advance(1);
+    await game.openPanelFor('DAL6');
+    await game.action('action-exit');
+    expect(await game.stepType()).toBe('taxiway');
+    const chips = await game.page.locator('[data-testid^="picker-taxiway-"]:not([data-testid="picker-taxiway-search"]):not([data-testid="picker-taxiway-search-wrap"])').evaluateAll((els) => els.map((e) => ({ id: (e.getAttribute('data-testid') ?? '').slice('picker-taxiway-'.length), state: e.getAttribute('data-state'), pressed: e.getAttribute('aria-pressed') })));
+    expect(chips.length).toBeGreaterThan(0);
+    expect(chips.length).toBeLessThan(12);                                    // exits ahead on 27L only, not the whole airport
+    expect(chips.every((c) => /^N\d+/.test(c.id) || /^A\d+/.test(c.id) || /^S\d+/.test(c.id))).toBe(true);
+    expect(chips.every((c) => c.state === 'enabled' || c.state === 'disabled')).toBe(true);
+    expect(chips.some((c) => c.pressed === 'true')).toBe(true);
   });
 });

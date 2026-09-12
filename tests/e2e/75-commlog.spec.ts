@@ -412,4 +412,277 @@ test.describe('comm log', () => {
     await expect(game.logNewPill()).toHaveCount(0);
     await expect.poll(() => game.radioLog().evaluate((el) => el.scrollHeight - el.scrollTop - el.clientHeight < 8)).toBe(true);
   });
+  test('SEND button and Enter both transmit; an empty line is ignored; "last plane called" wakes up after the first call; Ctrl+Z undoes @full', async ({ openGame, sim, page }) => {
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'approach' });
+    await spawnArrival(sim);
+    const n0 = (await sim.radio()).length;
+    await expect(game.cmdSend()).toBeDisabled();                                                   // nothing to send
+    await expect(game.logLastCalled()).toBeDisabled();                                             // nobody called yet
+    expect((await sim.storeView()).lastCallsign).toBeNull();
+    await game.cmdInput().click();
+    await page.keyboard.press('Enter');
+    await sim.flush();
+    expect((await sim.radio()).length).toBe(n0);                                                   // G23: empty Enter is a no-op
+    await expect(game.cmdInput()).toHaveValue('');
+    await game.cmdInput().fill('   ');
+    await expect(game.cmdSend()).toBeDisabled();                                                   // whitespace only
+    await page.keyboard.press('Enter');
+    await sim.flush();
+    expect((await sim.radio()).length).toBe(n0);
+
+    // SEND button (G22)
+    await game.cmdInput().fill('UAL9 HEADING 180');
+    await expect(game.cmdSend()).toBeEnabled();
+    await game.cmdSend().click();
+    await expect(game.cmdInput()).toHaveValue('');
+    const first = await game.waitRadio(/one eight zero/i, { who: 'ATC', callsign: 'UAL9' });
+    expect((await sim.radio()).length).toBe(n0 + 1);
+    expect((await sim.aircraftOrFail('UAL9')).pendingCmds.map((c) => c.kind)).toEqual(['heading']);
+    await expect(game.logLastCalled()).toBeEnabled();
+    expect((await sim.storeView()).lastCallsign).toBe('UAL9');
+    await expect(game.cmdInput()).toHaveAttribute('placeholder', /^UAL9 /);                       // the placeholder follows the last callsign
+
+    // Ctrl+Z undoes the newest transmission inside its window (like U / the chip)
+    await game.hotkey('Control+z');
+    await expect(game.radioLineByKey(first.key)).toHaveAttribute('data-status', 'undone');
+    expect((await sim.aircraftOrFail('UAL9')).pendingCmds).toEqual([]);
+    await game.waitRadio(/disregard/i, { who: 'ATC', callsign: 'UAL9' });
+
+    // Enter transmits as well; the input keeps focus for the next command
+    await game.cmdInput().fill('UAL9 DESCEND 5000');
+    await page.keyboard.press('Enter');
+    await expect(game.cmdInput()).toHaveValue('');
+    await expect(game.cmdInput()).toBeFocused();
+    await game.waitRadio(/fife thousand|five thousand|5000/i, { who: 'ATC', callsign: 'UAL9' });   // ICAO "fife"
+    await sim.advance(3.1);
+    expect((await sim.aircraftOrFail('UAL9')).cmdAltitude).toBe(5000);
+    await game.waitRadio(/fife thousand|five thousand|5000/i, { who: 'PILOT', callsign: 'UAL9' });
+  });
+
+  test('review mode (typed commands not instant): Enter shows the parsed command, Esc edits, a second Enter transmits; parse errors point at the token @full', async ({ openGame, sim, page }) => {
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'approach', settings: { typedInstant: false } });
+    await spawnArrival(sim);
+    expect((await sim.storeSettings()).typedInstant).toBe(false);
+    const n0 = (await sim.radio()).length;
+
+    // first Enter = review plate with the parsed instruction, nothing transmitted yet
+    await game.cmdInput().fill('UAL9 HEADING 180');
+    await page.keyboard.press('Enter');
+    await expect(game.cmdReview()).toBeVisible();
+    await expect(game.cmdReview()).toHaveAttribute('role', 'status');
+    await expect(game.cmdReview()).toContainText(/180/);
+    await expect(game.cmdReview()).toContainText(/Enter to transmit/i);
+    await expect(game.cmdInput()).toHaveValue('UAL9 HEADING 180');
+    expect((await sim.radio()).length).toBe(n0);
+    expect((await sim.aircraftOrFail('UAL9')).pendingCmds).toEqual([]);
+    await expect(game.cmdAutocomplete()).toHaveCount(0);                                            // the menu stays closed while reviewing
+
+    // Esc drops the plate and keeps the text for editing; a second Enter (after review) transmits
+    await page.keyboard.press('Escape');
+    await expect(game.cmdReview()).toHaveCount(0);
+    await expect(game.cmdInput()).toHaveValue('UAL9 HEADING 180');
+    await page.keyboard.press('Enter');
+    await expect(game.cmdReview()).toBeVisible();
+    await page.keyboard.press('Enter');
+    await expect(game.cmdReview()).toHaveCount(0);
+    await expect(game.cmdInput()).toHaveValue('');
+    await game.waitRadio(/one eight zero/i, { who: 'ATC', callsign: 'UAL9' });
+    expect((await sim.radio()).length).toBe(n0 + 1);
+    expect((await sim.aircraftOrFail('UAL9')).pendingCmds.map((c) => c.kind)).toEqual(['heading']);
+
+    // a parse error in review mode names the offending token; nothing is logged
+    const r = await game.send('UAL9 HEADING BANANA');
+    expect(r.accepted).toBe(false);
+    await expect(game.cmdParseError()).toBeVisible();
+    await expect(game.cmdParseErrorToken()).toBeVisible();
+    await expect(game.cmdParseErrorToken()).toHaveText(/BANANA|HEADING/);
+    await expect(game.cmdInput()).toHaveValue('UAL9 HEADING BANANA');
+    expect((await sim.radio()).length).toBe(n0 + 1);
+    // editing clears the plate; the SEND button follows the same review flow
+    await game.cmdInput().fill('UAL9 SPEED 210');
+    await expect(game.cmdParseError()).toHaveCount(0);
+    await game.cmdSend().click();
+    await expect(game.cmdReview()).toContainText(/210/);
+    await game.cmdSend().click();
+    await expect(game.cmdInput()).toHaveValue('');
+    await game.waitRadio(/two one zero|210/i, { who: 'ATC', callsign: 'UAL9' });
+  });
+
+  test('every line carries the sim clock (MM:SS) and the speaker column; SYS lines are not clickable @full', async ({ openGame, sim }) => {
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'approach' });
+    await spawnArrival(sim);
+    const timeOf = (key: number) => game.radioLineByKey(key).locator('span').first();
+    const whoOf = (key: number) => game.radioLineByKey(key).locator('span').nth(1);
+    const boot = (await sim.radio())[0];
+    expect(boot.who).toBe('SYS');
+    await expect(timeOf(boot.key)).toHaveText('00:00');
+    await expect(whoOf(boot.key)).toHaveText('SYS');
+    await expect(game.radioLineByKey(boot.key)).toHaveAttribute('data-clickable', 'false');
+    await expect(game.radioLineByKey(boot.key)).not.toHaveAttribute('role', 'button');
+
+    await sim.advance(65.5);                                                                    // the line clock is floor(at)
+    const atc = await game.sendOk('UAL9 HEADING 180');
+    expect(atc.who).toBe('ATC');
+    await expect(timeOf(atc.key)).toHaveText('01:05');
+    await expect(whoOf(atc.key)).toHaveText('ATC');
+    await expect(game.radioLineByKey(atc.key)).toHaveAttribute('role', 'button');
+    expect(Math.floor((await sim.radio()).find((l) => l.key === atc.key)!.at!)).toBe(65);
+    await sim.advance(3.1);
+    const rb = await game.waitRadio(/one eight zero|180/i, { who: 'PILOT', callsign: 'UAL9' });
+    await expect(timeOf(rb.key)).toHaveText('01:08');                                             // 3 s pilot delay
+    await expect(whoOf(rb.key)).toHaveText('PILOT');
+    // the DOM order is the store order (chronological)
+    const keys = (await game.radioRows()).map((r) => r.key);
+    expect(keys).toEqual([...keys].sort((a, b) => a - b));
+  });
+
+  /** Test mode fixes the pilot error rate at 0; force every readback wrong (engine setting, seeded rng) for the mismatch scenarios. */
+  async function forceWrongReadbacks(page: import('@playwright/test').Page): Promise<void> {
+    await page.evaluate(() => { (window as unknown as { __atcSim: { engine: { settings: { pilotErrorRate: number } } } }).__atcSim.engine.settings.pilotErrorRate = 1; });
+  }
+
+  test('wrong readback: the ATC line turns "mismatch" with a CORRECT chip, the correction fixes it; an ignored one executes the wrong value and costs points @full', async ({ openGame, sim, page, browserConsole }) => {
+    // the log grows past the fold here; the known ScrollArea bug (see the "n new" fixme below: ScrollArea.tsx:30) logs a React
+    // setState-in-render console.error on scroll — tolerated in this test only so the readback scenario stays deterministic
+    browserConsole.allow(/Cannot update a component \(`%s`\) while rendering a different component/);
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'approach' });
+    await spawnArrival(sim);
+    await forceWrongReadbacks(page);
+    expect((await sim.engineSettings()).pilotErrorRate).toBe(1);
+
+    const atc = await game.sendOk('UAL9 HEADING 180');
+    await sim.advance(3.1);
+    const rb = await game.waitRadio(/heading/i, { who: 'PILOT', callsign: 'UAL9' });
+    const st = (await sim.state('UAL9'))!;
+    expect(st.readback.status).toBe('mismatch');
+    expect(st.readback.mismatch?.field).toBe('heading');
+    expect(st.readback.mismatch?.expected).toBe('180');
+    expect(['170', '190']).toContain(st.readback.mismatch?.read);
+    await expect(game.radioLineByKey(atc.key)).toHaveAttribute('data-status', 'mismatch');
+    await expect(game.radioLineByKey(rb.key)).toHaveAttribute('data-status', 'mismatch');
+    await expect(game.lineCorrect(atc.key)).toBeVisible();
+    await expect(game.lineUndo(atc.key)).toHaveCount(0);                                            // the undo ring is closed after the readback
+
+    // CORRECT prefills "UAL9 correction " in the command line; the typed correction clears the mismatch and the pilot reads back the right value
+    await game.lineCorrect(atc.key).click();
+    await expect(game.cmdInput()).toHaveValue('UAL9 correction ');
+    await expect(game.cmdInput()).toBeFocused();
+    await game.cmdInput().fill('UAL9 CORRECTION HEADING 180');
+    await page.keyboard.press('Enter');
+    await game.waitRadio(/negative|correction/i, { who: 'ATC', callsign: 'UAL9' });                   // "United niner, negative..."
+    expect((await sim.state('UAL9'))!.readback.mismatch).toBeNull();
+    expect((await sim.state('UAL9'))!.readback.status).toBe('pending');                             // a new readback is due
+    await expect(game.lineCorrect(atc.key)).toBeVisible();                                          // the history line keeps its chip (like REPEAT)
+    await sim.advance(3.1);
+    const fixed = (await sim.radio()).filter((l) => l.who === 'PILOT' && l.callsign === 'UAL9').pop()!;
+    expect(fixed.text).toMatch(/one eight zero/i);
+    await sim.advance(20);
+    expect(Math.round((await sim.aircraftOrFail('UAL9')).targetHeading)).toBeCloseTo(180, -1);
+
+    // an uncorrected wrong readback executes the wrong value after 15 s and scores READBACK_ERROR_MISSED
+    const score0 = (await sim.snapshot()).score;
+    await sim.clearEvents();
+    const second = await game.sendOk('UAL9 DESCEND 5000');
+    await sim.advance(3.1);
+    await expect(game.radioLineByKey(second.key)).toHaveAttribute('data-status', 'mismatch');
+    const wrong = (await sim.state('UAL9'))!.readback.mismatch!;
+    expect(wrong.field).toBe('altitude');
+    expect(['4000', '6000']).toContain(wrong.read);
+    await sim.advance(16);
+    expect((await sim.state('UAL9'))!.readback.mismatch).toBeNull();
+    const missed = (await sim.scoreEvents()).find((e) => e.code === 'READBACK_ERROR_MISSED');
+    expect(missed).toBeTruthy();
+    expect(missed!.points).toBeLessThan(0);
+    expect((await sim.snapshot()).score).toBeLessThan(score0);
+    await expect(game.score()).toHaveAttribute('data-value', String((await sim.snapshot()).score));
+    expect((await sim.aircraftOrFail('UAL9')).cmdAltitude).toBe(Number(wrong.read));                // the wrong value executed (G4)
+  });
+
+  test('a wrong readback is audible: the PILOT line carries the wrong value so the player can catch it @full', async ({ openGame, sim, page }) => {
+    test.fixme(true, 'BUG: src/lib/sim/engine.ts:1397-1399 wrongReadback() perturbs a DIGIT token (text.replace(/\\b\\d{3}\\b/, ...) / String(ast.ft)) but the phraseology renders spoken numbers ("Heading one eight zero", "descend to fife thousand"), so the readback text is unchanged while readback.mismatch is set ; expected the PILOT line to read "one seven zero" / "one niner zero" ; actual "Heading one eight zero, United niner." flagged data-status=mismatch, READBACK_ERROR_MISSED scored 15 s later for an error the player could not hear ; repro pilotErrorRate=1, send "UAL9 HEADING 180", advance 3.1');
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'approach' });
+    await spawnArrival(sim);
+    await forceWrongReadbacks(page);
+    const atc = await game.sendOk('UAL9 HEADING 180');
+    await sim.advance(3.1);
+    const rb = await game.waitRadio(/heading/i, { who: 'PILOT', callsign: 'UAL9' });
+    const m = (await sim.state('UAL9'))!.readback.mismatch!;
+    expect(m.field).toBe('heading');
+    await expect(game.radioLineByKey(atc.key)).toHaveAttribute('data-status', 'mismatch');
+    expect(rb.text).not.toMatch(/one eight zero/i);
+    expect(rb.text).toMatch(m.read === '170' ? /one seven zero/i : /one (niner|nine) zero/i);
+    await expect(game.radioLineByKey(rb.key).getByTestId('radio-text')).not.toContainText(/one eight zero/i);
+  });
+
+  test('push-to-talk: the PTT button and Ctrl+Space light the TX lamp while held and show the "type instead" transcript @full', async ({ openGame, page }) => {
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'tower' });
+    const ptt = page.getByTestId('cmd-ptt');
+    await expect(ptt).toHaveAttribute('data-state', 'off');
+    await expect(ptt).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.getByTestId('cmd-ptt-transcript')).toHaveCount(0);
+    await expect(game.txIndicator()).toHaveAttribute('data-state', 'idle');
+    await expect(page.locator('body')).toHaveAttribute('data-ptt', 'false');
+
+    // pointer hold
+    const box = (await ptt.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await expect(ptt).toHaveAttribute('data-state', 'on');
+    await expect(ptt).toHaveAttribute('aria-pressed', 'true');
+    await expect(game.txIndicator()).toHaveAttribute('data-state', 'tx');
+    await expect(page.locator('body')).toHaveAttribute('data-ptt', 'true');
+    await expect(page.getByTestId('cmd-ptt-transcript')).toBeVisible();
+    await expect(page.getByTestId('cmd-ptt-unsupported')).toContainText(/type the command/i);
+    await page.mouse.up();
+    await expect(ptt).toHaveAttribute('data-state', 'off');
+    await expect(game.txIndicator()).toHaveAttribute('data-state', 'idle');
+    await expect(page.getByTestId('cmd-ptt-transcript')).toHaveCount(0);
+
+    // Ctrl+Space hotkey (hold): down lights it, releasing the key clears it
+    await page.evaluate(() => { (document.activeElement as HTMLElement | null)?.blur?.(); });
+    await page.keyboard.down('Control');
+    await page.keyboard.down('Space');
+    await expect(ptt).toHaveAttribute('data-state', 'on');
+    await expect(game.txIndicator()).toHaveAttribute('data-state', 'tx');
+    await page.keyboard.up('Space');
+    await page.keyboard.up('Control');
+    await expect(ptt).toHaveAttribute('data-state', 'off');
+    await expect(game.txIndicator()).toHaveAttribute('data-state', 'idle');
+    await expect(game.pauseBtn()).toHaveAttribute('data-state', 'running');                        // Space inside the chord did not pause
+  });
+
+  test('a MAYDAY call is flagged on its PILOT line; request lines carry the callsign and select on click; autocomplete accepts with the mouse @full', async ({ openGame, sim, page }) => {
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'approach' });
+    await spawnArrival(sim, 'UAL9');
+    await spawnArrival(sim, 'DAL5');
+    await sim.forceEmergency('UAL9', 'engine_fire');
+    const mayday = await game.waitRadio(/mayday/i, { who: 'PILOT', callsign: 'UAL9' });
+    await expect(game.radioLineByKey(mayday.key)).toHaveAttribute('data-emergency', 'true');
+    await expect(game.radioLineByKey(mayday.key)).toHaveAttribute('data-callsign', 'UAL9');
+    await expect(game.radioLines('PILOT').filter({ hasText: /mayday/i })).toHaveCount(1);
+    // an ordinary request line is not flagged; clicking it selects the caller and highlights every line of that aircraft
+    await sim.request('DAL5', 'lower');
+    const req = await game.waitRadio(/request/i, { who: 'PILOT', callsign: 'DAL5' });
+    await expect(game.radioLineByKey(req.key)).not.toHaveAttribute('data-emergency', 'true');
+    await expect(game.radioLineByKey(req.key)).toHaveAttribute('data-selected', 'false');
+    await game.radioLineByKey(req.key).click();
+    await expect(game.panel()).toHaveAttribute('data-callsign', 'DAL5');
+    await expect(game.radioLineByKey(req.key)).toHaveAttribute('data-selected', 'true');
+    await expect(game.radioLineByKey(mayday.key)).toHaveAttribute('data-selected', 'false');
+    expect((await sim.snapshot()).selectedId).toBe((await sim.aircraftOrFail('DAL5')).id);
+    // keyboard on a line: Enter selects too
+    await game.radioLineByKey(mayday.key).focus();
+    await page.keyboard.press('Enter');
+    await expect(game.panel()).toHaveAttribute('data-callsign', 'UAL9');
+
+    // autocomplete by mouse: clicking an option accepts it and keeps the input focused
+    await game.cmdInput().click();
+    await game.cmdInput().pressSequentially('DA');
+    await expect(game.cmdAutocompleteItem(0)).toContainText('DAL5');
+    await game.cmdAutocompleteItem(0).click();
+    await expect(game.cmdInput()).toHaveValue('DAL5 ');
+    await expect(game.cmdInput()).toBeFocused();
+    await expect(game.cmdAutocomplete()).toBeVisible();                                             // verbs for DAL5 follow
+    expect((await game.autocompleteLabels()).length).toBeGreaterThan(0);
+  });
 });

@@ -226,6 +226,8 @@ export interface AtcTestApi {
   stca(): { pairs: [string, string][]; active: boolean };
   atis(): { letter: string; wind: { dir: number; kts: number }; activeRunways: string[]; issuedAt: number };
   wakeTimers(): Record<string, { runway: string; leader: string; remainingS: number }>;
+  /** Threshold of a runway end in engine XY metres (read-only geometry for vehicle / final-approach assertions), null when unknown. */
+  thresholdXY(runway: string): XY | null;
 
   // ── G12 extras ──
   /** Pilot delay override in sim seconds (1-8). */
@@ -528,6 +530,7 @@ export function createTestApi(host: TestApiHost): AtcTestApi {
     stca: () => eng().alerts.stca(),
     atis: () => { const a = eng().weather.atis(); return { letter: a.letter, wind: { dir: a.wind.dir, kts: a.wind.kts }, activeRunways: [...new Set([...a.activeDep, ...a.activeArr])], issuedAt: a.issuedAt }; },
     wakeTimers: () => eng().wakeTimers(),
+    thresholdXY: (runway) => { const p = eng().thresholdXY(runway); return p ? { x: p.x, y: p.y } : null; },
 
     // ── G12 extras ──
     setPilotDelay: (s) => { const v = Math.max(1, Math.min(8, s)); eng().settings.pilotDelayOverride = v; host.updateSettings({ pilotDelayS: v }); host.emit(); },

@@ -5,7 +5,9 @@
     pattern flown, ILS picker -> armed -> established -> automatic handoff to tower at 10 NM, LOC-only clearance,
     cancel approach (heading + altitude), expect runway / change runway, drag-to-heading on the radar canvas,
     wheel zoom / drag pan / range presets / measure tool / empty click, separation loss -> conflict tint + STCA,
-    reduced minima for parallel established arrivals.
+    reduced minima for parallel established arrivals, plus (Wave-3 audit) vectors-to-final end to end by clicks only,
+    handoff to tower by clicks, two arrivals in trail with speed control, STCA resolved from the alert card, and the
+    soft "Cancels ILS clearance" warning on a vector while the ILS is armed.
 
   Every scenario boots `/play?icao=EGLL&seed=7&spawn=none&test=1&position=approach`, builds its own traffic with
   `sim.spawnAt` and moves time only through `sim.advance*`. Engine state is asserted through `sim`, visibility
@@ -943,5 +945,309 @@ test.describe('approach: separation', () => {
     expect(ev3.filter((e) => e.type === 'separation_loss')).toHaveLength(1);
     expect((await sim.aircraftOrFail('BAW12')).conflict).toBe(true);
     await expect(game.strip('AFR3')).toHaveAttribute('data-conflict', 'true');
+  });
+});
+
+test.describe('approach: end-to-end, handoff, sequencing (Wave-3 audit additions)', () => {
+  /** Arrival on a downwind-ish leg 3 NM south of the 27L centreline, 20 NM out, flying west — the §4.6 A20 start point. */
+  function base(cs: string, extra: Partial<SpawnSpec> = {}): SpawnSpec {
+    return { callsign: cs, type: 'A320', kind: 'arrival', phase: 'descent', posRel: { fromRunway: '27L', alongNM: -20, offsetNM: -3, altFt: 4000 }, heading: 270, speedKts: 220, plan: { runway: '27L' }, ...extra };
+  }
+
+  test('vectors to final by clicks only: heading -> altitude -> speed -> ILS -> established -> handoff at 10 NM -> tower lands it @smoke', async ({ openGame, sim }) => {
+    const game = await openGame({ icao: ICAO, spawn: 'none', position: 'approach' });
+    const radar = new RadarPage(game.page, game);
+    await sim.spawnAt(base('UAL9'));
+    await game.openPanelFor('UAL9');
+    await expect(game.strip('UAL9')).toHaveAttribute('data-bay', 'INBOUND');
+    const stages: string[] = [];
+    const note = async () => { const st = (await game.strip('UAL9').getAttribute('data-stage')) ?? ''; if (stages[stages.length - 1] !== st) stages.push(st); };
+    await note();
+
+    // 1. intercept heading 295 (right turn, 25 deg to the localizer)
+    await game.action('action-heading');
+    await game.dial(295, 'R');
+    await game.next();
+    expect(await game.confirmWarnings()).toEqual([]);
+    expect((await game.transmit()).code).toBe('ok_queued');
+    await sim.advance(PD);
+    expect(angDiff((await sim.aircraftOrFail('UAL9')).targetHeading, 295)).toBeLessThanOrEqual(1);
+    await expect(game.metricTarget('hdg')).toHaveAttribute('data-value', '295');
+    await game.waitRadio(/Right heading two niner fife/i, { who: 'PILOT', callsign: 'UAL9' });
+
+    // 2. descend to the platform altitude (below the glideslope at the intercept point)
+    await game.action('action-altitude');
+    await game.ladderAlt(3000);
+    await game.next();
+    expect((await game.transmit()).code).toBe('ok_queued');
+    await sim.advance(PD);
+    expect((await sim.aircraftOrFail('UAL9')).cmdAltitude).toBe(3000);
+    await expect(game.metricTarget('alt')).toHaveAttribute('data-value', '3000');
+    await game.waitRadio(/Descend tree thousand/i, { who: 'PILOT', callsign: 'UAL9' });
+
+    // 3. speed 180 via the quick chip
+    await game.action('action-speed');
+    await game.ladderSpd(180);
+    await game.next();
+    expect((await game.transmit()).code).toBe('ok_queued');
+    await sim.advance(PD);
+    expect((await sim.aircraftOrFail('UAL9')).cmdIas).toBe(180);
+    await expect(game.metricTarget('spd')).toHaveAttribute('data-value', '180');
+
+    // 4. ILS clearance (planned runway preselected, no warnings)
+    await game.action('action-ils');
+    await expect(game.page.getByTestId('picker-runway-27L')).toHaveAttribute('aria-pressed', 'true');
+    await game.next();
+    expect(await game.confirmWarnings()).toEqual([]);
+    expect((await game.transmit()).code).toBe('ok_queued');
+    await sim.advance(PD);
+    let v = await sim.aircraftOrFail('UAL9');
+    expect(v.ilsArmed).toBe(true);
+    expect(v.stage).toBe('arr_armed');
+    await note();
+    await expect(game.strip('UAL9')).toHaveAttribute('data-bay', 'SEQUENCE');
+    await expect(game.page.getByTestId('strip-UAL9-box-I')).toHaveAttribute('aria-pressed', 'true');
+
+    // 5. the localizer is captured on the intercept, still outside 10 NM, level at 3000 below the slope
+    await sim.advanceUntilOk(pred('UAL9', 'a.ilsCaptured'), 300);
+    v = await sim.aircraftOrFail('UAL9');
+    expect(v.stage).toBe('arr_established');
+    expect(v.altitude).toBeLessThanOrEqual(3100);
+    expect((await radar.distToThresholdNM('UAL9', '27L'))!).toBeGreaterThan(10);
+    expect((await sim.radio()).some((l) => l.callsign === 'UAL9' && /flown through the localizer/.test(l.text))).toBe(false);
+    await note();
+    await expect(game.strip('UAL9')).toHaveAttribute('data-bay', 'ESTABLISHED');
+    await expect(game.panelStage()).toHaveAttribute('data-stage', 'arr_established');
+    await game.waitRadio(/established localizer 27L/i, { who: 'PILOT', callsign: 'UAL9' });
+    // the panel now blocks vectors and altitudes (X4 / X8), only speed + land-side actions remain
+    await expect(game.actionBtn('action-heading')).toHaveAttribute('data-reason', 'Use Cancel approach (C)');
+    await expect(game.actionBtn('action-altitude')).toHaveAttribute('data-reason', 'On glideslope — use Cancel approach');
+    await expect(game.actionBtn('action-speed')).toHaveAttribute('data-state', 'enabled');
+
+    // 6. automatic handoff inside 10 NM; the glideslope is captured on the way down
+    await sim.advanceUntilOk(pred('UAL9', "a.onFrequency === 'tower'"), 400);
+    v = await sim.aircraftOrFail('UAL9');
+    expect(v.gsCaptured).toBe(true);
+    expect((await radar.distToThresholdNM('UAL9', '27L'))!).toBeLessThanOrEqual(10);
+    await note();
+    await expect(game.strip('UAL9')).toHaveAttribute('data-bay', 'TO_TOWER');
+    await expect(game.page.getByTestId('strip-UAL9-ghost')).toHaveText('TWR');
+    await expect(game.page.getByTestId('panel-onfreq-note')).toBeVisible();
+    await game.showAllFrequencies();
+    await game.waitRadio(/UAL9 contact Heathrow Tower 118\.505/, { who: 'SYS', callsign: 'UAL9' });
+
+    // 7. TOWER: FINAL bay, cleared to land, touchdown, rollout, vacated
+    await game.setPosition('tower');
+    await expect(game.strip('UAL9')).toHaveAttribute('data-bay', 'FINAL');
+    await game.openPanelFor('UAL9');
+    await game.action('action-land');
+    await game.next();
+    const land = await game.transmit();
+    expect(land.code).toBe('ok_queued');
+    expect(land.tx).toMatch(/runway two seven left, cleared to land/i);
+    await sim.advance(PD);
+    expect((await sim.aircraftOrFail('UAL9')).landingCleared).toBe(true);
+    await expect(game.page.getByTestId('strip-UAL9-box-L')).toHaveAttribute('aria-pressed', 'true');
+    await sim.advanceUntilPhase('UAL9', 'landing', 300);
+    await note();
+    await expect(game.strip('UAL9')).toHaveAttribute('data-stage', /^arr_(final|short_final)$/);
+    await sim.advanceUntilPhase('UAL9', 'rollout', 300);
+    await note();
+    await expect(game.strip('UAL9')).toHaveAttribute('data-bay', 'LANDED_ROLLOUT');
+    await game.waitRadio(/touchdown runway 27L/, { who: 'PILOT', callsign: 'UAL9' });
+    await sim.advanceUntilOk(`s => s.radio.some(l => l.callsign === 'UAL9' && /runway 27L vacated/.test(l.text))`, 200);
+    expect((await sim.runways()).find((r) => r.name === '27L')?.occupied).toBe(false);
+    expect((await sim.events()).some((e) => e.type === 'score' && e.data?.type === 'score' && e.data.score.code === 'LANDED' && e.data.score.primary === 'UAL9')).toBe(true);
+    expect(stages.filter((x) => x !== 'arr_short_final')).toEqual(['arr_inbound', 'arr_armed', 'arr_established', 'arr_final', 'rollout']);
+  });
+
+  test('hand off to tower by clicks (auto handoff off): position picker, readback, TO_TOWER ghost, no late-handoff penalty at 12 NM @full', async ({ openGame, sim }) => {
+    const game = await openGame({ icao: ICAO, spawn: 'none', position: 'approach', settings: { autoHandoff: false } });
+    const radar = new RadarPage(game.page, game);
+    await sim.spawnAt(intercept('BAW12', { ils: '27L' }));
+    await sim.advanceUntilOk(pred('BAW12', 'a.ilsCaptured'), 300);
+    // no auto handoff: still on approach well inside the usual 10 NM handoff point later on
+    await sim.advanceUntilOk(pred('BAW12', 'true'), 1);
+    let v = await sim.aircraftOrFail('BAW12');
+    expect(v.onFrequency).toBe('approach');
+    expect(v.handedTo).toBeNull();
+    const d0 = (await radar.distToThresholdNM('BAW12', '27L'))!;
+    expect(d0).toBeGreaterThan(11);
+    await game.openPanelFor('BAW12');
+    await expect(game.strip('BAW12')).toHaveAttribute('data-bay', 'ESTABLISHED');
+    await expect(game.page.getByTestId('strip-BAW12-box-F')).toHaveAttribute('aria-pressed', 'false');
+    await sim.clearEvents();
+
+    await game.action('action-handoff');
+    await expect(game.stepperFor('action-handoff')).toHaveAttribute('data-step-type', 'position');
+    await expect(game.page.getByTestId('picker-position-tower')).toHaveAttribute('aria-pressed', 'true');      // next position for an established arrival
+    await expect(game.page.getByTestId('picker-position-approach')).toHaveAttribute('data-state', 'disabled');
+    await expect(game.page.getByTestId('picker-position-ground')).toHaveAttribute('data-state', 'enabled');
+    await game.next();
+    await expect(game.confirmSummary()).toContainText(/contact tower one one eight decimal fife zero fife/i);
+    expect(await game.confirmWarnings()).toEqual([]);
+    const tx = await game.transmit();
+    expect(tx.code).toBe('ok_queued');
+    expect(tx.tx).toMatch(/contact tower one one eight decimal fife zero fife/i);
+    v = await sim.aircraftOrFail('BAW12');
+    expect(v.pendingCmds.map((c) => c.kind)).toEqual(['contact']);
+    await sim.advance(PD);
+    v = await sim.aircraftOrFail('BAW12');
+    expect(v.handedTo).toBe('tower');
+    expect(v.onFrequency).toBe('approach');                                 // the frequency change takes a couple of seconds
+    await game.waitRadio(/Tower one one eight decimal fife zero fife, Speedbird one two/i, { who: 'PILOT', callsign: 'BAW12' });
+    await expect(game.page.getByTestId('strip-BAW12-box-F')).toHaveAttribute('aria-pressed', 'true');
+    await sim.advanceUntilOk(pred('BAW12', "a.onFrequency === 'tower'"), 30);
+    v = await sim.aircraftOrFail('BAW12');
+    expect(v.handedTo).toBeNull();
+    expect(v.ilsCaptured).toBe(true);
+    const ho = (await sim.events()).find((e) => e.type === 'handoff' && e.callsign === 'BAW12');
+    expect(ho?.data).toMatchObject({ type: 'handoff', from: 'approach', to: 'tower' });
+    expect((await sim.scoreEvents()).some((s) => s.code === 'HANDOFF_LATE')).toBe(false);   // > 4 NM: no penalty
+    await expect(game.strip('BAW12')).toHaveAttribute('data-bay', 'TO_TOWER');
+    await expect(game.strip('BAW12')).toHaveAttribute('data-onfreq', 'tower');
+    await expect(game.page.getByTestId('strip-BAW12-ghost')).toHaveText('TWR');
+    await expect(game.page.getByTestId('panel-onfreq-note')).toBeVisible();
+    // under the default filter the SYS line is on the tower frequency; ALL shows it
+    expect((await game.radioRows()).some((l) => /contact Heathrow Tower/.test(l.text))).toBe(false);
+    await game.showAllFrequencies();
+    await game.waitRadio(/BAW12 contact Heathrow Tower 118\.505/, { who: 'SYS', callsign: 'BAW12' });
+    await game.setPosition('tower');
+    await expect(game.strip('BAW12')).toHaveAttribute('data-bay', 'FINAL');
+  });
+
+  test('two arrivals in trail on the localizer: a speed reduction keeps 3 NM, no STCA, handoffs in order @full', async ({ openGame, sim }) => {
+    const game = await openGame({ icao: ICAO, spawn: 'none', position: 'approach' });
+    const radar = new RadarPage(game.page, game);
+    // leader 14 NM out, trailer 19 NM out, both on the 27L centreline with the ILS armed; the trailer is 50 kt faster
+    await sim.spawnAt({ callsign: 'BAW12', type: 'A320', kind: 'arrival', phase: 'descent', posRel: { fromRunway: '27L', alongNM: -14, offsetNM: 0, altFt: 3000 }, heading: 270, speedKts: 170, plan: { runway: '27L' }, ils: '27L' });
+    await sim.spawnAt({ callsign: 'AFR3', type: 'A320', kind: 'arrival', phase: 'descent', posRel: { fromRunway: '27L', alongNM: -19, offsetNM: 0, altFt: 3000 }, heading: 270, speedKts: 220, plan: { runway: '27L' }, ils: '27L' });
+    await sim.advance(2);
+    const gap0 = await radar.distBetweenNM('BAW12', 'AFR3');
+    expect(gap0).toBeCloseTo(5, 0);
+    for (const cs of ['BAW12', 'AFR3']) await expect(game.strip(cs)).toHaveAttribute('data-conflict', 'false');
+
+    // slow the trailer to 160 with the speed picker (arr_armed: full TMA rail, 160 quick chip)
+    await game.openPanelFor('AFR3');
+    await game.action('action-speed');
+    await game.ladderSpd(160);
+    await game.next();
+    await expect(game.confirmSummary()).toContainText(/reduce speed to one six zero knots/i);
+    expect((await game.transmit()).code).toBe('ok_queued');
+    await sim.advance(PD);
+    expect((await sim.aircraftOrFail('AFR3')).cmdIas).toBe(160);
+    await expect(game.metricTarget('spd')).toHaveAttribute('data-value', '160');
+    await game.waitRadio(/one six zero knots/i, { who: 'PILOT', callsign: 'AFR3' });
+
+    // 2.5 minutes: the pair stays separated (>= 3 NM), never a loss, never a STCA card
+    let minGap = 99;
+    const losses: string[] = [];
+    for (let i = 0; i < 15; i++) {
+      const ev = await sim.advance(10);
+      for (const e of ev) if (e.type === 'separation_loss') losses.push(e.message);
+      minGap = Math.min(minGap, await radar.distBetweenNM('BAW12', 'AFR3'));
+    }
+    expect(losses).toEqual([]);
+    expect(minGap).toBeGreaterThanOrEqual(3);
+    expect((await sim.stca()).active).toBe(false);
+    await expect(game.alertStack().getByTestId('stca-alert')).toHaveCount(0);
+    for (const cs of ['BAW12', 'AFR3']) {
+      expect((await sim.aircraftOrFail(cs)).conflict).toBe(false);
+      await expect(game.strip(cs)).toHaveAttribute('data-conflict', 'false');
+    }
+    // the trailer slowed down to its assignment, the leader was handed to tower first (10 NM), the trailer later
+    expect((await sim.aircraftOrFail('AFR3')).speed).toBeLessThanOrEqual(165);
+    const lead = await sim.aircraftOrFail('BAW12');
+    expect(lead.ilsCaptured).toBe(true);
+    expect(lead.onFrequency).toBe('tower');
+    await expect(game.strip('BAW12')).toHaveAttribute('data-bay', 'TO_TOWER');
+    const trail = await sim.aircraftOrFail('AFR3');
+    expect(trail.ilsCaptured).toBe(true);
+    expect(trail.onFrequency).toBe('approach');
+    await expect(game.strip('AFR3')).toHaveAttribute('data-bay', 'ESTABLISHED');
+    await sim.advanceUntilOk(pred('AFR3', "a.onFrequency === 'tower'"), 300);
+    const hos = (await sim.events()).filter((e) => e.type === 'handoff' && (e.data as { to?: string } | undefined)?.to === 'tower').map((e) => e.callsign);
+    expect(hos).toEqual(['BAW12', 'AFR3']);
+    expect(await radar.distBetweenNM('BAW12', 'AFR3')).toBeGreaterThanOrEqual(3);
+  });
+
+  test('STCA resolved from the alert card: Select opens the subject, a vector from the dial restores separation @full', async ({ openGame, sim }) => {
+    const game = await openGame({ icao: ICAO, spawn: 'none', position: 'approach' });
+    await sim.spawnAt(inbound('UAL9'));
+    await sim.spawnAt(inbound('DLH4', { posRel: { fromRunway: '27L', alongNM: -20, offsetNM: -3.5, altFt: 8000 } }));
+    await sim.advance(0.2);
+    const al = (await sim.alerts()).find((x) => x.kind === 'stca');
+    expect(al).toBeDefined();
+    expect([...al!.subjects].sort()).toEqual(['DLH4', 'UAL9']);
+    await expect(game.alertCard(al!.id)).toBeVisible();
+    await expect(game.alertCard(al!.id)).toHaveAttribute('data-severity', 'critical');
+    await expect(game.shell()).toHaveAttribute('data-has-panel', 'false');
+
+    // Select on the card opens the panel on a subject; a second click cycles to the other one
+    await game.alertCardSelect(al!.id).click();
+    await expect(game.panel()).toHaveAttribute('data-callsign', /^(UAL9|DLH4)$/);
+    const first = (await game.panelCallsign().textContent()) ?? '';
+    await game.alertCardSelect(al!.id).click();
+    await expect(game.panelCallsign()).not.toHaveText(first);
+    const subject = (await game.panelCallsign().textContent()) ?? '';
+    const other = subject === 'UAL9' ? 'DLH4' : 'UAL9';
+    await expect(game.panel()).toHaveAttribute('data-conflict', 'true');
+    await expect(game.page.getByTestId(`panel-alert-pair-${other}`)).toBeVisible();
+
+    // vector the selected one away with the dial (right turn, away from the other): the loss ends, the card resolves
+    await game.action('action-heading');
+    await game.dial(subject === 'UAL9' ? 180 : 360, subject === 'UAL9' ? 'R' : 'L');
+    await game.next();
+    const tx = await game.transmit();
+    expect(tx.code).toBe('ok_queued');
+    await sim.advance(PD);
+    expect((await sim.aircraftOrFail(subject)).navMode).toBe('heading');
+    await sim.advanceUntilOk('s => s.aircraft.every(a => !a.conflict)', 180);
+    await sim.advance(6);
+    expect((await sim.stca()).active).toBe(false);
+    expect((await sim.alertById(al!.id))?.resolvedAt).not.toBeNull();
+    await expect(game.alertCard(al!.id)).toHaveCount(0);
+    for (const c of ['UAL9', 'DLH4']) {
+      await expect(game.strip(c)).toHaveAttribute('data-conflict', 'false');
+      await expect(game.page.getByTestId(`strip-${c}-alert`)).toHaveCount(0);
+    }
+    await expect(game.panel()).not.toHaveAttribute('data-conflict', 'true');
+    await expect(game.page.getByTestId(`panel-alert-pair-${other}`)).toHaveCount(0);
+  });
+
+  test('vector while the ILS is armed: soft "Cancels ILS clearance" warning, hold-to-transmit disarms the ILS @full', async ({ openGame, sim }) => {
+    const game = await openGame({ icao: ICAO, spawn: 'none', position: 'approach' });
+    await sim.spawnAt(intercept('BAW12', { ils: '27L' }));
+    await game.openPanelFor('BAW12');
+    await expect(game.panelStage()).toHaveAttribute('data-stage', 'arr_armed');
+    const atcBefore = (await sim.radio()).filter((l) => l.who === 'ATC').length;
+
+    await game.action('action-heading');
+    await game.dial(320, 'R');
+    await game.next();
+    expect(await game.confirmWarnings()).toContain('Cancels ILS clearance');
+    await expect(game.transmitAnyway()).toBeVisible();
+    await expect(game.page.getByTestId('confirm-transmit')).toHaveCount(0);
+    // a plain click on the amber button does not transmit (600 ms hold required)
+    await game.transmitAnyway().click();
+    await expect(game.stepperFor('action-heading')).toBeVisible();
+    expect((await sim.radio()).filter((l) => l.who === 'ATC')).toHaveLength(atcBefore);
+    expect((await sim.aircraftOrFail('BAW12')).pendingCmds).toEqual([]);
+
+    const tx = await game.holdTransmitAnyway();
+    expect(tx.status).toBe('ok');
+    expect(tx.code).toBe('ok_queued');
+    expect(tx.tx).toMatch(/turn right heading tree two zero/i);
+    await sim.advance(PD);
+    const v = await sim.aircraftOrFail('BAW12');
+    expect(v.ilsArmed).toBe(false);
+    expect(v.ilsCaptured).toBe(false);
+    expect(v.navMode).toBe('heading');
+    expect(angDiff(v.targetHeading, 320)).toBeLessThanOrEqual(1);
+    expect(v.stage).toBe('arr_inbound');
+    await expect(game.panelStage()).toHaveAttribute('data-stage', 'arr_inbound');
+    await expect(game.strip('BAW12')).toHaveAttribute('data-bay', 'INBOUND');
+    await expect(game.page.getByTestId('strip-BAW12-box-I')).toHaveAttribute('aria-pressed', 'false');
+    await game.waitRadio(/right heading tree two zero/i, { who: 'PILOT', callsign: 'BAW12' });
   });
 });

@@ -25,7 +25,7 @@ const pad = (n: number, w: number) => String(Math.round(n)).padStart(w, '0');
 
 test.describe('nav bar and shell chrome', () => {
   test('position tabs: click, F1 / F2 / F3 and [ ] switch the position (aria-pressed, data-mode, view) @smoke', async ({ openGame, sim, page }) => {
-    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'ground' });
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'ground', settings: { strictFrequencies: true } });
     let changed = false;                                                                   // aria-pressed is asserted after the first change (see the fixme below for boot)
     const expectPos = async (p: 'ground' | 'tower' | 'approach') => {
       await expect(game.modeTab(p)).toHaveAttribute('aria-selected', 'true');
@@ -69,12 +69,21 @@ test.describe('nav bar and shell chrome', () => {
     await expectPos('approach');
     await game.hotkey('[');
     await expectPos('tower');
-    // the engine follows: the action context of a parked departure is evaluated for the TOWER position
+    // the engine follows: under strict frequencies a parked departure (ground frequency) is off-frequency for TOWER (R13)
     const gates = await sim.gates();
     await sim.spawnAt({ callsign: 'BAW1', type: A320, kind: 'departure', phase: 'parked', gate: gates[0], plan: { runway: '27L' } });
-    expect((await sim.actions('BAW1')).find((r) => r.id === 'action-pushback')?.state).toBe('disabled');
+    const push = async () => (await sim.actions('BAW1')).find((r) => r.id === 'action-pushback')!;
+    expect((await push()).state).toBe('disabled');
+    expect((await push()).reason).toBe('R13');
     await game.hotkey('F1');
-    expect((await sim.actions('BAW1')).find((r) => r.id === 'action-pushback')?.state).toBe('enabled');
+    expect((await push()).state).toBe('enabled');
+    await game.selectStrip('BAW1');
+    await expect(game.actionBtn('action-pushback')).toHaveAttribute('data-state', 'enabled');
+    await game.hotkey('F2');
+    await expectPos('tower');
+    await expect(game.strip('BAW1')).toHaveCount(0);                                             // not in a TOWER bay
+    await game.hotkey('F1');
+    await expect(game.actionBtn('action-pushback')).toHaveAttribute('data-state', 'enabled');
   });
 
   test('position tabs mirror aria-pressed already at boot @full', async ({ openGame }) => {
@@ -226,6 +235,7 @@ test.describe('nav bar and shell chrome', () => {
 
     // a significant wind change regenerates the ATIS: next letter, new wind on the chip and in the log
     await sim.setWind(90, 15);
+    await sim.advance(0.1);                                                                       // the weather model queues the ATIS event for the next step
     const next = await sim.atis();
     expect(next.letter).toBe(String.fromCharCode(atis.letter.charCodeAt(0) + 1));
     expect(next.wind).toEqual({ dir: 90, kts: 15 });
@@ -430,7 +440,7 @@ test.describe('nav bar and shell chrome', () => {
     await expect(game.helpBtn()).toHaveAttribute('aria-pressed', 'true');                   // the nav button mirrors the open state
     await game.hotkey('?');                                                                // the hotkey toggles it closed again
     await expect(game.helpOverlay()).toHaveCount(0);
-    await expect(game.helpBtn()).toHaveAttribute('aria-pressed', 'false');
+    await expect(game.helpBtn()).not.toHaveAttribute('aria-pressed', 'true');              // IconButton drops the attribute when inactive
   });
 
   test('pause menu (Esc): opens paused, Resume resumes, Restart reloads the same seed, Quit goes home @full', async ({ openGame, sim, page }) => {
@@ -595,4 +605,286 @@ test.describe('nav bar and shell chrome', () => {
     await page.keyboard.press('Control+k');
     await expect(game.cmdInput()).toBeFocused();
   });
+  test('runway configuration dialog: airport badge / ATIS "Change" / pause menu open it; Apply flips the active ends and bumps the ATIS; Cancel and Esc discard @full', async ({ openGame, sim, page }) => {
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'tower' });
+    const atis0 = (await sim.storeAtis())!;
+    const before = { dep: [...atis0.activeDep].sort(), arr: [...atis0.activeArr].sort() };
+    expect(before.dep.length).toBeGreaterThan(0);
+    expect(before.arr.length).toBeGreaterThan(0);
+    expect([...new Set([...before.dep, ...before.arr])].sort()).toEqual((await sim.runways()).filter((r) => r.active).map((r) => r.name).sort());
+    const letter0 = atis0.letter;
+    const ends = (await sim.runways()).map((r) => r.name);
+    expect(ends.sort()).toEqual(['09L', '09R', '27L', '27R']);
+    const target = { dep: ['09R'], arr: ['09L'] };
+    expect(before).not.toEqual(target);
+    await expect(game.runwayConfigDialog()).toHaveCount(0);
+
+    // airport badge opens it with the live config as the draft
+    await game.airportBadge().click();
+    await expect(game.runwayConfigDialog()).toBeVisible();
+    await expect(game.runwayConfigDialog()).toHaveAttribute('role', 'dialog');
+    for (const r of ends) {
+      await expect(game.rwycfgEnd(r, 'dep')).toHaveAttribute('aria-pressed', String(before.dep.includes(r)));
+      await expect(game.rwycfgEnd(r, 'arr')).toHaveAttribute('aria-pressed', String(before.arr.includes(r)));
+      await expect(page.getByTestId(`rwycfg-end-${r}`)).toContainText(/Head|Tail/);              // wind components per end
+    }
+    // Cancel discards a draft change
+    const flip = ends.find((r) => !before.dep.includes(r)) ?? ends[0];
+    const was = before.dep.includes(flip);
+    await game.rwycfgEnd(flip, 'dep').click();
+    await expect(game.rwycfgEnd(flip, 'dep')).toHaveAttribute('aria-pressed', String(!was));
+    await game.rwycfgCancel().click();
+    await expect(game.runwayConfigDialog()).toHaveCount(0);
+    expect({ dep: [...(await sim.storeAtis())!.activeDep].sort(), arr: [...(await sim.storeAtis())!.activeArr].sort() }).toEqual(before);
+    await game.airportBadge().click();
+    await expect(game.rwycfgEnd(flip, 'dep')).toHaveAttribute('aria-pressed', String(was));        // fresh draft
+    await game.hotkey('Escape');
+    await expect(game.runwayConfigDialog()).toHaveCount(0);
+    await expect(game.pauseMenu()).toHaveCount(0);
+
+    // from the ATIS panel: swap to the 09s and apply -> engine runways, nav chip, ATIS letter + SYS line, both end chips
+    await game.openRunwayConfig();
+    for (const r of before.dep) await game.rwycfgEnd(r, 'dep').click();                              // no departure runway left
+    await expect(game.rwycfgBlockedReason()).toBeVisible();
+    await expect(game.rwycfgApply()).toBeDisabled();
+    for (const r of before.arr) await game.rwycfgEnd(r, 'arr').click();
+    await game.rwycfgEnd('09L', 'arr').click();
+    await game.rwycfgEnd('09R', 'dep').click();
+    await expect(game.rwycfgBlockedReason()).toHaveCount(0);
+    await game.rwycfgApply().click();
+    await expect(game.runwayConfigDialog()).toHaveCount(0);
+    const rows = await sim.runways();
+    expect(rows.filter((r) => r.active).map((r) => r.name).sort()).toEqual(['09L', '09R']);
+    const st = (await sim.storeState()).runways!;
+    expect(st.find((r) => r.name === '09R')!.active).toBe(true);
+    expect(st.find((r) => r.name === '27L')!.active).toBe(false);
+    expect(st.find((r) => r.name === '27R')!.active).toBe(false);
+    const atis = await sim.storeAtis();
+    expect(atis!.activeDep).toEqual(['09R']);
+    expect(atis!.activeArr).toEqual(['09L']);
+    expect(atis!.letter).toBe(String.fromCharCode(letter0.charCodeAt(0) + 1));
+    await expect(game.atisChip()).toContainText(`ATIS ${atis!.letter}`);
+    await expect(game.atisChip()).toContainText('09R / 09L');
+    await sim.advance(0.1);
+    await game.showAllFrequencies();
+    await game.waitRadio(new RegExp(`ATIS ${atis!.letter}`), { who: 'SYS' });
+    await game.openAtis();
+    await expect(game.atisDep('09R')).toBeVisible();
+    await expect(game.atisArr('09L')).toBeVisible();
+    await expect(game.atisDep('27L')).toHaveCount(0);
+    await expect(game.atisArr('27R')).toHaveCount(0);
+    await game.closeAtis();
+
+    // reachable from the pause menu; closing it returns to the (still paused) menu
+    await game.hotkey('Escape');
+    await expect(game.pauseMenu()).toBeVisible();
+    await game.pauseItem('runways').click();
+    await expect(game.runwayConfigDialog()).toBeVisible();
+    await expect(game.pauseMenu()).toHaveCount(0);
+    await game.rwycfgCancel().click();
+    await expect(game.pauseMenu()).toBeVisible();
+    await expect(game.pauseBtn()).toHaveAttribute('data-state', 'paused');
+    await game.pauseItem('resume').click();
+    await expect(game.pauseBtn()).toHaveAttribute('data-state', 'running');
+  });
+
+  test('brand link asks before leaving the shift (Stay keeps it, Leave goes home); the fast-forward button holds 4x and restores the rate @full', async ({ openGame, sim, page }) => {
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'tower' });
+    await expect(page.getByTestId('home-leave-confirm')).toHaveCount(0);
+    await game.brand().click();
+    await expect(page.getByTestId('home-leave-confirm')).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe('/play');
+    await page.getByTestId('home-leave-confirm-no').click();
+    await expect(page.getByTestId('home-leave-confirm')).toHaveCount(0);
+    expect((await sim.storeState()).hasEngine).toBe(true);
+    await expect(game.pauseBtn()).toHaveAttribute('data-state', 'running');                        // leaving is not a pause
+
+    // fast-forward: 4x while the pointer is down, previous rate back on release; it also un-pauses
+    await game.setRate(2);
+    const ff = page.getByTestId('rate-ff');
+    await expect(ff).toHaveAttribute('data-state', 'off');
+    const box = (await ff.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await expect(ff).toHaveAttribute('data-state', 'on');
+    await expect(game.rateBtn(4)).toHaveAttribute('aria-pressed', 'true');
+    expect((await sim.snapshot()).rate).toBe(4);
+    await page.mouse.up();
+    await expect(ff).toHaveAttribute('data-state', 'off');
+    await expect(game.rateBtn(2)).toHaveAttribute('aria-pressed', 'true');
+    expect((await sim.snapshot()).rate).toBe(2);
+    await game.togglePause();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await expect(game.pauseBtn()).toHaveAttribute('data-state', 'running');
+    await page.mouse.up();
+    await expect(game.rateBtn(2)).toHaveAttribute('aria-pressed', 'true');
+
+    // Leave -> home page, the store engine is stopped
+    await game.brand().click();
+    await page.getByTestId('home-leave-confirm-yes').click();
+    await expect(page.getByTestId('page-home')).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe('/');
+  });
+
+  test('onboarding tips: "Replay" in the settings modal shows tip 1; Next / Enter advance, selecting an aircraft auto-advances, Skip persists the dismissal @full', async ({ openGame, sim, page }) => {
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'ground' });
+    const gates = await sim.gates();
+    await sim.spawnAt({ callsign: 'BAW1', type: A320, kind: 'departure', phase: 'parked', gate: gates[0], plan: { runway: '27L' } });
+    await expect(page.getByTestId('tip-1')).toHaveCount(0);                                        // seeded as already seen
+    expect(await page.evaluate(() => localStorage.getItem('skycontrol_onboarding_seen'))).toBe('1');
+
+    await game.settingsBtn().click();
+    await page.getByTestId('set-reset-tips').click();
+    await expect(game.settingsModal()).toHaveCount(0);
+    await expect(page.getByTestId('tip-1')).toBeVisible();
+    await expect(page.getByTestId('tip-1')).toHaveAttribute('data-step', '0');
+    await expect(page.getByTestId('tip-1')).toContainText('BAW1');                                 // names the first departure
+    await expect(page.getByTestId('tip-progress-1')).toHaveAttribute('data-on', 'true');
+    await expect(page.getByTestId('tip-progress-2')).toHaveAttribute('data-on', 'false');
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('skycontrol_onboarding_seen'))).not.toBe('1');
+
+    // step 1 completes itself when the player selects the aircraft
+    await game.selectStrip('BAW1');
+    await expect(page.getByTestId('tip-2')).toBeVisible();
+    await expect(page.getByTestId('tip-2')).toHaveAttribute('data-step', '1');
+    await expect(page.getByTestId('tip-progress-1')).toHaveAttribute('data-done', 'true');
+    await expect(page.getByTestId('tip-2')).toContainText(/Pushback approved/);
+    // Next button and Enter (with nothing focused) advance; the help overlay hides the tip while open
+    await page.getByTestId('tip-next').click();
+    await expect(page.getByTestId('tip-3')).toBeVisible();
+    await expect(page.getByTestId('tip-3')).toContainText((await sim.storeAtis())!.activeDep[0]);  // the first active departure runway
+    await game.helpBtn().click();
+    await expect(game.helpOverlay()).toBeVisible();
+    await expect(page.getByTestId('tip-3')).toHaveCount(0);
+    await game.helpClose().click();
+    await expect(page.getByTestId('tip-3')).toBeVisible();
+    await page.evaluate(() => { (document.activeElement as HTMLElement | null)?.blur?.(); });
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('tip-4')).toBeVisible();
+    // Skip dismisses for good
+    await page.getByTestId('tip-skip-all').click();
+    await expect(page.locator('[data-testid^="tip-"][data-step]')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('skycontrol_onboarding_seen'))).toBe('1');
+    await page.reload();
+    await game.waitReady();
+    await expect(page.locator('[data-testid^="tip-"][data-step]')).toHaveCount(0);
+    // the last tip's button reads Done and finishes
+    await game.settingsBtn().click();
+    await page.getByTestId('set-reset-tips').click();
+    await expect(page.getByTestId('tip-1')).toBeVisible();
+    for (let i = 0; i < 4; i++) await page.getByTestId('tip-next').click();
+    await expect(page.getByTestId('tip-5')).toBeVisible();
+    await expect(page.getByTestId('tip-next')).toHaveText('Done');
+    await page.getByTestId('tip-next').click();
+    await expect(page.locator('[data-testid^="tip-"][data-step]')).toHaveCount(0);
+  });
+
+  test('Esc with the help overlay open over an onboarding tip closes the overlay and keeps the tip @full', async ({ openGame, page }) => {
+    test.fixme(true, 'BUG: src/game/HelpOverlay/OnboardingTips.tsx:63-75 — the tips\' capture-phase keydown listener stays armed while the tip is not rendered (shell.open.help / pause return null), so Esc pressed to close the help overlay is swallowed (stopPropagation) and dismisses the tips for good (onboarding_seen=1) while the overlay stays open ; expected first Esc closes help-overlay and tip-1 is visible again ; actual help-overlay still open, tip gone, skycontrol_onboarding_seen=1, a second Esc closes the overlay ; repro settings -> Replay tips, press ?, press Esc');
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'ground' });
+    await game.settingsBtn().click();
+    await page.getByTestId('set-reset-tips').click();
+    await expect(page.getByTestId('tip-1')).toBeVisible();
+    await game.hotkey('?');
+    await expect(game.helpOverlay()).toBeVisible();
+    await expect(page.getByTestId('tip-1')).toHaveCount(0);
+    await game.hotkey('Escape');
+    await expect(game.helpOverlay()).toHaveCount(0);
+    await expect(page.getByTestId('tip-1')).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem('skycontrol_onboarding_seen'))).not.toBe('1');
+  });
 });
+
+test.describe('holding screen below 1280 px', () => {
+  test.use({ viewport: { width: 1100, height: 800 } });
+
+  test('"Desktop required" covers a narrow window; Continue anyway is remembered; Home leaves @full', async ({ openGame, sim, page }) => {
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'tower' });
+    const hold = page.getByTestId('desktop-required');
+    await expect(hold).toBeVisible();
+    await expect(hold).toHaveAttribute('role', 'dialog');
+    await expect(hold).toHaveAttribute('data-width', '1100');
+    await expect(hold).toContainText(/1100 px/);
+    await expect(hold).toContainText(/1280 px/);
+    // the shift keeps running underneath
+    await sim.advance(2);
+    expect(await sim.time()).toBeCloseTo(2, 0);
+    await expect(game.shell()).toHaveAttribute('data-mode', 'tower');
+
+    await page.getByTestId('desktop-required-continue').click();
+    await expect(hold).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem('skycontrol_allow_narrow'))).toBeTruthy();
+    await page.reload();
+    await game.waitReady();
+    await expect(hold).toHaveCount(0);                                                              // the choice sticks
+
+    // a fresh choice: Home leaves the game
+    await page.evaluate(() => localStorage.removeItem('skycontrol_allow_narrow'));
+    await page.reload();
+    await game.waitReady();
+    await expect(hold).toBeVisible();
+    await page.getByTestId('desktop-required-home').click();
+    await expect(page.getByTestId('page-home')).toBeVisible();
+  });
+});
+
+for (const width of [1280, 1920]) {
+  test.describe(`layout at ${width} px`, () => {
+    test.use({ viewport: { width, height: 900 } });
+
+    test(`nav chrome, panels and the TRANSMIT button fit without overlap at ${width} px @full`, async ({ openGame, sim, page }) => {
+      const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'ground' });
+      await expect(page.getByTestId('desktop-required')).toHaveCount(0);
+      const box = async (id: string) => { const b = await page.getByTestId(id).boundingBox(); expect(b, `${id} has no box`).not.toBeNull(); return b!; };
+      const inView = (b: { x: number; y: number; width: number; height: number }) => b.x >= 0 && b.y >= 0 && b.x + b.width <= width && b.y + b.height <= 900;
+      const overlap = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) =>
+        a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+      // top bar: left-to-right order with no overlap, everything inside the viewport
+      const navIds = ['brand-home', 'airport-badge', 'position-tabs', 'atis-chip', 'clock-utc', 'rate-pause', 'rate-1x', 'rate-4x', 'rate-ff', 'score-chip', 'alerts-bell', 'tx-indicator', 'settings-btn', 'help-btn'];
+      const boxes: Record<string, { x: number; y: number; width: number; height: number }> = {};
+      for (const id of navIds) { boxes[id] = await box(id); expect(inView(boxes[id]), `${id} outside the viewport: ${JSON.stringify(boxes[id])}`).toBe(true); }
+      for (let i = 0; i < navIds.length; i++) for (let j = i + 1; j < navIds.length; j++) {
+        expect(overlap(boxes[navIds[i]], boxes[navIds[j]]), `${navIds[i]} overlaps ${navIds[j]}`).toBe(false);
+      }
+      for (let i = 1; i < navIds.length; i++) expect(boxes[navIds[i]].x, `${navIds[i]} is left of ${navIds[i - 1]}`).toBeGreaterThanOrEqual(boxes[navIds[i - 1]].x + boxes[navIds[i - 1]].width - 1);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);   // no horizontal scroll
+
+      // strip bay vs command panel vs comm log
+      const gates = await sim.gates();
+      await sim.spawnAt({ callsign: 'BAW1', type: A320, kind: 'departure', phase: 'parked', gate: gates[0], plan: { runway: '27L' } });
+      await sim.spawnAt({ callsign: 'UAL9', type: A320, kind: 'arrival', phase: 'descent', posRel: { fromRunway: '27L', alongNM: -20, offsetNM: -6, altFt: 8000 }, heading: 90, speedKts: 250 });
+      await game.openPanelFor('BAW1');
+      const bay = await box('strip-bay'); const panel = await box('detail-panel'); const log = await box('comm-log');
+      expect(overlap(bay, panel), 'strip bay overlaps the command panel').toBe(false);
+      expect(overlap(bay, log), 'strip bay overlaps the comm log').toBe(false);
+      expect(overlap(panel, log), 'command panel overlaps the comm log').toBe(false);
+      expect(inView(await box('cmd-input'))).toBe(true);
+
+      // TRANSMIT button in view at the confirm step, and actually clickable (nothing floats over it)
+      await game.action('action-pushback');
+      await game.pickRunway('27L');
+      await game.next();                                                                          // -> facing
+      await game.next();                                                                          // -> confirm
+      await expect(game.confirmStep()).toBeVisible();
+      const tx = await box('btn-transmit');
+      expect(inView(tx), `btn-transmit outside the viewport: ${JSON.stringify(tx)}`).toBe(true);
+      const hit = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest('[data-testid="btn-transmit"]') != null, [tx.x + tx.width / 2, tx.y + tx.height / 2] as const);
+      expect(hit, 'btn-transmit is covered by another element').toBe(true);
+      await game.cancel();
+
+      // alert stack vs the vehicles panel (GROUND / TOWER floating chrome)
+      await sim.forceEmergency('UAL9', 'engine_fire');
+      const al = (await sim.alerts()).find((a) => a.kind === 'emergency')!;
+      await expect(game.alertCard(al.id)).toBeVisible();
+      await game.hotkey('F10');
+      await expect(game.vehiclesPanel()).toBeVisible();
+      const card = await box(`toast-${al.id}`); const veh = await box('vehicle-panel');
+      expect(inView(card)).toBe(true);
+      expect(inView(veh)).toBe(true);
+      expect(overlap(card, veh), `alert card ${JSON.stringify(card)} overlaps the vehicles panel ${JSON.stringify(veh)}`).toBe(false);
+      expect(overlap(veh, await box('strip-bay')), 'vehicles panel overlaps the strip bay').toBe(false);
+    });
+  });
+}

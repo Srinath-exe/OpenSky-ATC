@@ -12,6 +12,11 @@
     stand 401  Terminal 4, SOUTH of 27L                              -> taxi to 27R crosses 27L: holds = [27L crossing, 27R entry]
     stand 402  next to 401 (within 300 m)                            -> give-way partner
     taxiway S3 first leg out of Terminal 4, before the 27L crossing  -> hold-short-of-taxiway insertion point
+
+  Wave-3 audit additions (end of the describe block): the full departure by clicks only (pushback facing picker ->
+  start-up -> taxi via the REQ answer -> holding point -> contact tower with autoHandoff off), the request band
+  (Standby / Unable / answer), the runway crossing that needs a clearance ("request cross"), the "contact tower at
+  the holding point" route chip, and a fixme for re-arming a pre-cleared crossing with Hold short of runway.
 */
 import { test, expect } from './fixtures/test';
 import type { SimApi, AircraftView } from './fixtures/test';
@@ -965,5 +970,346 @@ test.describe('GROUND position by clicks', () => {
     await expect(veh.card('FOLLOW1')).toHaveAttribute('data-state', 'returning');
     await veh.close();
     await expect(veh.toolbarBtn()).toHaveAttribute('data-state', 'off');
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  //  Wave-3 audit additions (05 §4.4 GC1 / GC3 / GC9-GC11 by clicks, §G8 request band, §G2 handoff column)
+  // ───────────────────────────────────────────────────────────────────────────
+
+  test('full departure by clicks only: pushback (facing picker) -> start-up -> taxi -> holding point -> contact tower @smoke @full', async ({ openGame, sim }) => {
+    // manual handoff so the last step is the player's click, not the engine's auto handoff
+    const game = await openGame({ ...GROUND, settings: { autoHandoff: false } });
+    const cs = 'BAW1';
+    const spawned = await spawnParked(sim, cs, PUSH_STAND, '27L');
+    await expectInBay(game, cs, 'PENDING');
+    await game.openPanelFor(cs);
+    await expect(game.panelStage()).toHaveAttribute('data-stage', 'parked');
+    await expect(game.actionBtn('action-taxi-runway')).toHaveAttribute('data-reason', 'Push back first');
+    for (const k of ['P', 'T', 'W', 'O', 'F']) await expect(game.page.getByTestId(`strip-${cs}-box-${k}`)).toHaveAttribute('aria-pressed', 'false');
+
+    // 1. pushback: runway picker (27L pre-selected) -> facing picker (compass) -> confirm
+    await game.action('action-pushback');
+    await expect(game.stepperFor('action-pushback')).toHaveAttribute('data-step-type', 'runway');
+    await expect(game.page.getByTestId('picker-runway-27L')).toHaveAttribute('aria-pressed', 'true');
+    await game.next();
+    await expect(game.stepperFor('action-pushback')).toHaveAttribute('data-step-type', 'direction');
+    await expect(game.picker('direction')).toBeVisible();
+    await expect(game.page.getByTestId('picker-dir-any')).toHaveAttribute('aria-pressed', 'true');   // "as required" is the default
+    await game.pickDirection('W');
+    await expect(game.page.getByTestId('picker-dir-any')).not.toHaveAttribute('aria-pressed', 'true');
+    await game.next();
+    await expect(game.confirmSummary()).toContainText(/pushback approved, face west, expect runway two seven left/i);
+    const push = await game.transmit();
+    expect(push.code).toBe('ok_queued');
+    expect(push.tx).toMatch(/face west/i);
+    await expect(game.page.getByTestId(`strip-${cs}-pending`)).toHaveText('1');
+    await sim.advance(PILOT);
+    let a = await sim.aircraftOrFail(cs);
+    expect(a.phase).toBe('pushback');
+    expect((await sim.state(cs))?.pushback.facing).toBe('W');
+    await game.waitRadio(/pushback approved, facing west, expect runway two seven left/i, { who: 'PILOT', callsign: cs });
+    await expect(game.page.getByTestId(`strip-${cs}-box-P`)).toHaveAttribute('aria-pressed', 'true');
+    await expectInBay(game, cs, 'PUSH_START');
+    await expect(game.actionBtn('action-pushback')).toHaveAttribute('data-reason', 'Already cleared');   // R18 while pushing
+
+    // 2. the tug finishes; engines are started with the push (start-up implied) and the pilot calls for taxi
+    await sim.advanceUntilOk(`s => s.aircraft.find(x => x.callsign === '${cs}')?.phase === 'startup'`, 240);
+    a = await sim.aircraftOrFail(cs);
+    expect(dist(a.pos, spawned.pos)).toBeGreaterThan(30);
+    expect((await sim.state(cs))?.startup.startedAt).not.toBeNull();
+    await expect(game.panelStage()).toHaveAttribute('data-stage', 'startup');
+    await sim.advanceUntilOk(`s => { const x = s.aircraft.find(x => x.callsign === '${cs}'); return !!x && x.requests.some(r => r.kind === 'taxi' && r.answeredAt == null); }`, 400);
+    await expect(game.stripReq(cs)).toHaveAttribute('data-kind', 'taxi');
+    await game.waitRadio(/Heathrow Ground, .*ready to taxi/i, { who: 'PILOT', callsign: cs });
+    await expect(game.reqBand()).toHaveAttribute('data-request', 'taxi');
+    await expect(game.actionBtn('action-taxi-runway')).toHaveAttribute('data-primary', 'true');
+
+    // 3. taxi: the REQ answer opens the taxi stepper on the confirm step (runway + AUTO route already resolved)
+    await game.reqAnswer().click();
+    await expect(game.stepperFor('action-taxi-runway')).toHaveAttribute('data-step-type', 'confirm');
+    await expect(game.confirmSummary()).toContainText(/taxi to holding point runway two seven left/i);
+    const taxi = await game.transmit();
+    expect(taxi.code).toBe('ok_queued');
+    await expect(game.stripReq(cs)).toHaveCount(0);
+    await sim.advance(PILOT);
+    a = await sim.aircraftOrFail(cs);
+    expect(a.phase).toBe('taxi');
+    expect(a.plan.runway).toBe('27L');
+    expect(a.pathTotal).toBeGreaterThan(500);
+    const holds = await holdsOf(sim, cs);
+    expect(holds[holds.length - 1]).toMatchObject({ runway: '27L', dep: true });
+    await game.waitRadio(/holding point runway two seven left/i, { who: 'PILOT', callsign: cs });
+    await expectInBay(game, cs, 'TAXI_OUT');
+    await expect(game.page.getByTestId(`strip-${cs}-box-T`)).toHaveAttribute('aria-pressed', 'true');
+    await expect(game.panelRunway()).toHaveText('RWY 27L');
+
+    // 4. the holding point: stopped at the departure entry, still on ground (no auto handoff), tower actions blocked
+    await sim.advanceUntilOk(`s => s.aircraft.find(x => x.callsign === '${cs}')?.stage === 'hold_short_dep'`, 900);
+    await sim.advance(3);
+    a = await sim.aircraftOrFail(cs);
+    expect(a.speed).toBe(0);
+    expect(a.holdShortRunway).toBe('27L');
+    expect(a.onFrequency).toBe('ground');
+    expect(a.handedTo).toBeNull();
+    expect(Math.abs(a.distAlong - holds[holds.length - 1].at)).toBeLessThan(25);
+    await expectInBay(game, cs, 'AT_HOLD');
+    await expect(game.panelStage()).toHaveAttribute('data-stage', 'hold_short_dep');
+    await expect(game.actionBtn('action-hold-short')).toHaveAttribute('data-reason', 'Already cleared');
+    await game.waitRadio(/holding short runway 27L/i, { who: 'PILOT', callsign: cs });
+
+    // 5. contact tower by clicks: position picker (tower is the next position, ground is greyed out)
+    await expect(game.actionBtn('action-handoff')).toHaveAttribute('data-state', 'enabled');
+    await game.action('action-handoff');
+    await expect(game.stepperFor('action-handoff')).toHaveAttribute('data-step-type', 'position');
+    await expect(game.page.getByTestId('picker-position-tower')).toHaveAttribute('aria-pressed', 'true');
+    await expect(game.page.getByTestId('picker-position-ground')).toHaveAttribute('data-state', 'disabled');
+    await game.next();
+    await expect(game.confirmSummary()).toContainText(/contact tower one one eight decimal fife zero fife/i);
+    const ho = await game.transmit();
+    expect(ho.code).toBe('ok_queued');
+    await sim.advance(PILOT);
+    a = await sim.aircraftOrFail(cs);
+    expect(a.handedTo).toBe('tower');
+    await game.waitRadio(/Tower one one eight decimal fife zero fife/i, { who: 'PILOT', callsign: cs });
+    await expect(game.page.getByTestId(`strip-${cs}-box-F`)).toHaveAttribute('aria-pressed', 'true');
+    await sim.advanceUntilOk(`s => s.aircraft.find(x => x.callsign === '${cs}')?.onFrequency === 'tower'`, 30);
+    a = await sim.aircraftOrFail(cs);
+    expect(a.handedTo).toBeNull();
+    expect(a.stage).toBe('hold_short_dep');
+    // the strip has left the GROUND bays; TOWER holds it in AT_HOLD with the same stage
+    await expect(game.strip(cs)).toHaveCount(0);
+    await expect(game.bayTotal()).toHaveAttribute('data-value', '0');
+    await game.showAllFrequencies();
+    await game.waitRadio(/contact Heathrow Tower 118\.505/, { who: 'SYS', callsign: cs });
+    await game.setPosition('tower');
+    await expectInBay(game, cs, 'AT_HOLD');
+    await expect(game.strip(cs)).toHaveAttribute('data-onfreq', 'tower');
+    await expect(game.strip(cs)).toHaveAttribute('data-stage', 'hold_short_dep');
+  });
+
+  test('pilot taxi request: Standby parks the request, Unable answers it, the answer chip transmits the clearance @full', async ({ openGame, sim }) => {
+    const game = await openGame(GROUND);
+    const cs = 'BAW3';
+    await spawnReadyToTaxi(sim, cs, NOPUSH_STAND);
+    await sim.request(cs, 'taxi');
+    await game.waitRadio(/ready to taxi/i, { who: 'PILOT', callsign: cs });
+    await expect(game.stripReq(cs)).toHaveAttribute('data-kind', 'taxi');
+    await game.openPanelFor(cs);
+    await expect(game.reqBand()).toHaveAttribute('data-request', 'taxi');
+    await expect(game.reqAnswer()).toContainText('Taxi to runway');
+    await expect(game.reqUnable()).toBeEnabled();
+    await expect(game.reqStandby()).toBeEnabled();
+    await expect(game.page.getByTestId('panel-req-age')).toBeVisible();
+
+    // STANDBY: immediate result; the request stays open in the engine but is parked for 120 s (chip + band hidden)
+    await game.reqStandby().click();
+    await expect(game.stepperFor('action-standby')).toHaveAttribute('data-step-type', 'confirm');
+    const sb = await game.transmit();
+    expect(sb.status).toBe('ok');
+    expect(sb.tx).toMatch(/standby/i);
+    await game.waitRadio(/standby/i, { who: 'ATC', callsign: cs });
+    let a = await sim.aircraftOrFail(cs);
+    expect(a.requests).toHaveLength(1);
+    expect(a.requests[0].answeredAt).toBeNull();
+    expect(a.requests[0].recallAt).toBeCloseTo((await sim.time()) + 120, 0);
+    expect((await sim.state(cs))?.standbyUntil).toBeCloseTo((await sim.time()) + 120, 0);
+    await expect(game.stripReq(cs)).toHaveCount(0);
+    await expect(game.reqBand()).toHaveCount(0);
+    await expect(game.strip(cs)).not.toHaveAttribute('data-req', 'taxi');
+    expect(a.phase).toBe('taxi');
+    expect(a.pathTotal).toBe(0);
+    // ... and comes back on the strip and in the panel when the standby window closes
+    await sim.advance(60);
+    await expect(game.stripReq(cs)).toHaveCount(0);
+    await sim.advance(61);
+    await expect(game.stripReq(cs)).toHaveAttribute('data-kind', 'taxi');
+    await expect(game.reqBand()).toHaveAttribute('data-request', 'taxi');
+    expect((await sim.aircraftOrFail(cs)).requests[0].answeredAt).toBeNull();
+
+    // UNABLE: reason chips -> the request is answered (chip gone) and no clearance was given
+    await game.reqUnable().click();
+    await expect(game.stepperFor('action-unable')).toHaveAttribute('data-step-type', 'text');
+    await expect(game.page.getByTestId('picker-unable-reason-traffic')).toHaveAttribute('aria-pressed', 'true');
+    await game.page.getByTestId('picker-unable-reason-delay').click();
+    await expect(game.page.getByTestId('picker-unable-reason-delay')).toHaveAttribute('aria-pressed', 'true');
+    await game.next();
+    await expect(game.confirmSummary()).toContainText(/expect delay, standby/i);
+    const un = await game.transmit();
+    expect(un.status).toBe('ok');
+    expect(un.tx).toMatch(/expect delay, standby/i);
+    a = await sim.aircraftOrFail(cs);
+    expect(a.requests.every((r) => r.answeredAt != null)).toBe(true);
+    expect(a.pathTotal).toBe(0);
+    await expect(game.stripReq(cs)).toHaveCount(0);
+    await expect(game.reqBand()).toHaveCount(0);
+    await game.waitRadio(/expect delay, standby/i, { who: 'ATC', callsign: cs });
+
+    // the pilot calls again later (injected: the engine's own re-call timer is not what this scenario tests)
+    await sim.advance(130);
+    expect((await sim.aircraftOrFail(cs)).pathTotal).toBe(0);                 // still waiting, nothing moved
+    await sim.request(cs, 'taxi');
+    await expect(game.stripReq(cs)).toHaveAttribute('data-kind', 'taxi');
+    await expect(game.reqBand()).toHaveAttribute('data-request', 'taxi');
+    // ... and the one-tap answer clears it with a real taxi clearance
+    await game.reqAnswer().click();
+    await expect(game.stepperFor('action-taxi-runway')).toHaveAttribute('data-step-type', 'confirm');
+    const tx = await game.transmit();
+    expect(tx.code).toBe('ok_queued');
+    await expect(game.stripReq(cs)).toHaveCount(0);
+    await sim.advance(PILOT);
+    a = await sim.aircraftOrFail(cs);
+    expect(a.pathTotal).toBeGreaterThan(100);
+    expect(a.requests.every((r) => r.answeredAt != null)).toBe(true);
+    await expectInBay(game, cs, 'TAXI_OUT');
+  });
+
+  test('runway crossing needs a clearance: the pilot waits at the 27L hold, calls "request cross", the REQ answer is Cross runway @full', async ({ openGame, sim }) => {
+    const game = await openGame(GROUND);
+    const cs = 'BAW2';
+    await spawnReadyToTaxi(sim, cs, T4_STAND);
+    await game.openPanelFor(cs);
+    const tx = await clickTaxiToRunway(game, '27R');
+    expect(tx.code).toBe('ok_queued');
+    await sim.advance(PILOT);
+    // the route picker warned about the crossing at draft time; the engine armed the 27L hold
+    expect((await holdsOf(sim, cs)).map((h) => h.runway)).toEqual(['27L', '27R']);
+
+    await sim.advanceUntilOk(`s => s.aircraft.find(x => x.callsign === '${cs}')?.stage === 'hold_short_cross'`, 600);
+    const stoppedAt = (await sim.aircraftOrFail(cs)).distAlong;
+    // the pilot calls for the crossing on his own
+    await sim.advanceUntilOk(`s => { const x = s.aircraft.find(x => x.callsign === '${cs}'); return !!x && x.requests.some(r => r.kind === 'cross' && r.answeredAt == null); }`, 30);
+    await game.waitRadio(/holding short runway two seven left, request cross/i, { who: 'PILOT', callsign: cs });
+    await expect(game.stripReq(cs)).toHaveAttribute('data-kind', 'cross');
+    await expect(game.strip(cs)).toHaveAttribute('data-req', 'cross');
+    await expect(game.reqBand()).toHaveAttribute('data-request', 'cross');
+    await expect(game.reqAnswer()).toContainText(/cross/i);
+    await expect(game.actionBtn('action-cross')).toHaveAttribute('data-primary', 'true');
+
+    // without a clearance nothing moves: 90 s later still holding at the same spot, the runway untouched
+    await sim.advance(90);
+    let a = await sim.aircraftOrFail(cs);
+    expect(a.phase).toBe('hold_short');
+    expect(a.stage).toBe('hold_short_cross');
+    expect(a.speed).toBe(0);
+    expect(a.distAlong).toBeCloseTo(stoppedAt, 0);
+    expect(a.holdReleased).toBe(false);
+    expect((await sim.runways()).find((r) => r.name === '27L')?.occupied).toBe(false);
+    await expectInBay(game, cs, 'TAXI_OUT');
+    await expect(game.strip(cs)).toHaveAttribute('data-stage', 'hold_short_cross');
+    // Continue / Line up are not the way across (R-codes from §G2)
+    await expect(game.actionBtn('action-continue')).toHaveCount(0);
+    await expect(game.actionBtn('action-lineup')).toHaveAttribute('data-reason', 'Holding to cross, not to depart');
+
+    // the one-tap answer: Cross runway 27L on its confirm step
+    await game.reqAnswer().click();
+    await expect(game.stepperFor('action-cross')).toHaveAttribute('data-step-type', 'confirm');
+    await expect(game.confirmSummary()).toContainText(/cross runway two seven left/i);
+    const cross = await game.transmit();
+    expect(cross.code).toBe('ok_queued');
+    await expect(game.stripReq(cs)).toHaveCount(0);
+    await sim.advance(PILOT);
+    a = await sim.aircraftOrFail(cs);
+    expect(a.holdReleased).toBe(true);
+    expect(a.requests.every((r) => r.answeredAt != null)).toBe(true);
+    await game.waitRadio(/cross(ing)? (runway )?two seven left/i, { who: 'PILOT', callsign: cs });
+    // rolling across: the runway shows the crossing occupant until the strip is physically clear
+    await sim.advanceUntilOk(`s => { const x = s.aircraft.find(x => x.callsign === '${cs}'); return !!x && x.speed > 3; }`, 60);
+    await sim.advanceUntilOk(`s => s.radio.some(l => l.callsign === '${cs}' && /runway .*27L vacated/.test(l.text))`, 240);
+    await game.waitRadio(/runway .*27L vacated/i, { who: 'PILOT', callsign: cs });
+    expect((await sim.runways()).find((r) => r.name === '27L')?.occupied).toBe(false);
+    a = await sim.aircraftOrFail(cs);
+    expect(a.phase).toBe('taxi');
+    expect((await holdsOf(sim, cs)).map((h) => h.runway)).toEqual(['27R']);
+  });
+
+  test('taxi clearance with the "contact tower at the holding point" chip hands the departure to tower on arrival at the hold @full', async ({ openGame, sim }) => {
+    const game = await openGame({ ...GROUND, settings: { autoHandoff: false } });
+    const cs = 'BAW7';
+    await spawnReadyToTaxi(sim, cs, NOPUSH_STAND);
+    await game.openPanelFor(cs);
+
+    await game.action('action-taxi-runway');
+    await game.pickRunway('27R');
+    await game.next();
+    await game.pickTaxiwayRoute({ auto: true });
+    const chip = game.page.getByTestId('picker-route-contact-tower');
+    await expect(chip).not.toHaveAttribute('aria-pressed', 'true');
+    await chip.click();
+    await expect(chip).toHaveAttribute('aria-pressed', 'true');
+    await game.next();
+    await expect(game.confirmSummary()).toContainText(/taxi to holding point runway two seven right/i);
+    await expect(game.confirmSummary()).toContainText(/contact tower/i);
+    const tx = await game.transmit();
+    expect(tx.status).toBe('ok');
+    expect(tx.code).toBe('ok_conditional');                                  // the handoff part waits for the hold
+    expect(tx.tx).toMatch(/contact tower one one eight decimal fife zero fife/i);
+
+    // two commands are queued behind the pilot delay: the taxi and the conditional handoff
+    let a = await sim.aircraftOrFail(cs);
+    expect(a.pendingCmds.map((c) => c.kind).sort()).toEqual(['contact', 'taxi']);
+    await expect(game.page.getByTestId(`strip-${cs}-pending`)).toHaveText('2');
+    await sim.advance(PILOT);
+    a = await sim.aircraftOrFail(cs);
+    expect(a.phase).toBe('taxi');
+    expect(a.pathTotal).toBeGreaterThan(100);
+    expect(a.onFrequency).toBe('ground');
+    expect(a.pendingCmds.map((c) => c.kind)).toEqual(['contact']);          // waits for "on reaching the hold"
+    expect(a.pendingCmds[0].condition).toMatchObject({ type: 'on_reaching_hold' });
+    await expect(game.page.getByTestId(`strip-${cs}-pending`)).toHaveText('1');
+    await game.waitRadio(/holding point runway two seven right, tower one one eight decimal fife zero fife at the holding point/i, { who: 'PILOT', callsign: cs });
+
+    // still on ground while taxiing; the handoff fires by itself at the holding point
+    await sim.advance(60);
+    a = await sim.aircraftOrFail(cs);
+    expect(a.phase).toBe('taxi');
+    expect(a.onFrequency).toBe('ground');
+    expect(a.handedTo).toBeNull();
+    await sim.advanceUntilOk(`s => s.aircraft.find(x => x.callsign === '${cs}')?.stage === 'hold_short_dep'`, 900);
+    await sim.advanceUntilOk(`s => s.aircraft.find(x => x.callsign === '${cs}')?.onFrequency === 'tower'`, 30);
+    a = await sim.aircraftOrFail(cs);
+    expect(a.pendingCmds).toEqual([]);
+    expect(a.stage).toBe('hold_short_dep');
+    await expect(game.strip(cs)).toHaveCount(0);
+    await game.showAllFrequencies();
+    await game.waitRadio(/contact Heathrow Tower 118\.505/, { who: 'SYS', callsign: cs });
+    await game.setPosition('tower');
+    await expectInBay(game, cs, 'AT_HOLD');
+    await expect(game.strip(cs)).toHaveAttribute('data-onfreq', 'tower');
+  });
+
+  test('hold short of a runway by clicks mid-taxi ("Runway..." chip) re-arms a crossing that was pre-cleared in the taxi clearance @full', async ({ openGame, sim }) => {
+    test.fixme(true, 'BUG: src/lib/sim/engine.ts:1610 execTaxi splices a pre-cleared crossing out of path.holds, so src/lib/sim/engine.ts:1651 cmdHoldShort cannot find runway 27L on the route any more and answers code "queried" ("unable, 27L is not on our route") although the taxi route physically crosses 27L ; expected: HOLD SHORT 27L re-arms the crossing (holds 27L+27R, holdReleased false, the pilot stops at the 27L hold line) ; actual: pilot query, holds stay [27R], the aircraft taxis across 27L ; repro: taxi to 27R from stand 401 with the cross-27L pill, then Hold short of -> Runway... -> 27L');
+    const game = await openGame(GROUND);
+    const cs = 'BAW8';
+    await spawnReadyToTaxi(sim, cs, T4_STAND);
+    await game.openPanelFor(cs);
+    // pre-clear the crossing in the taxi clearance, then take it back with Hold short of runway 27L
+    await game.action('action-taxi-runway');
+    await game.pickRunway('27R');
+    await game.next();
+    await game.pickTaxiwayRoute({ auto: true, cross: ['27L'] });
+    await game.next();
+    expect((await game.transmit()).code).toBe('ok_queued');
+    await sim.advance(PILOT);
+    expect((await holdsOf(sim, cs)).map((h) => h.runway)).toEqual(['27R']);   // the 27L crossing was pre-cleared
+
+    await game.action('action-hold-short');
+    await expect(game.page.getByTestId('picker-holdshort-next')).toHaveAttribute('aria-pressed', 'true');
+    await game.page.getByTestId('picker-holdshort-runway').click();
+    await game.page.getByTestId('picker-holdshort-runway-27L').click();
+    await game.next();
+    await expect(game.confirmSummary()).toContainText(/hold short of runway two seven left/i);
+    const hs = await game.transmit();
+    expect(hs.status).toBe('ok');
+    expect(hs.code).toBe('ok_queued');
+    await sim.advance(PILOT);
+    const a = await sim.aircraftOrFail(cs);
+    expect((await holdsOf(sim, cs)).map((h) => h.runway)).toEqual(['27L', '27R']);
+    expect(a.holdReleased).toBe(false);
+    await game.waitRadio(/hold short (of )?(runway )?two seven left/i, { who: 'PILOT', callsign: cs });
+    const stop = await sim.advanceUntil(`s => s.aircraft.find(x => x.callsign === '${cs}')?.phase === 'hold_short'`, 600);
+    expect(stop.ok).toBe(true);
+    expect((await sim.aircraftOrFail(cs)).holdShortRunway).toBe('27L');
+    await expect(game.strip(cs)).toHaveAttribute('data-stage', 'hold_short_cross');
   });
 });
