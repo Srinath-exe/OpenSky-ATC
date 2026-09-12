@@ -118,7 +118,9 @@ const TERRAIN_FRAG = /* glsl */ `
     float ripple = noise(vWorld.xz * 0.004 + vec2(uTime * 0.02, 0.0)) * 0.5 + noise(vWorld.xz * 0.015 - vec2(0.0, uTime * 0.03)) * 0.5;
     vec3 waterCol = mix(cWater, cWaterDeep, 0.5 + 0.5 * ripple) + spec * 0.25 + ripple * 0.006;
     // soft shoreline: the mask is bilinear so the edge blends over ~1 texel
+    float shore = smoothstep(0.2, 0.5, water) * (1.0 - smoothstep(0.5, 0.8, water));
     col = mix(col, waterCol, smoothstep(0.35, 0.65, water));
+    col += shore * vec3(0.05, 0.06, 0.06);   // faint pale rim where land meets water
 
     // distance fog to the page background + a soft fade at the world's edge (no hard rectangle)
     float d = distance(uCam, vWorld);
@@ -226,22 +228,48 @@ export function buildBuildings(world: World): THREE.Mesh {
   merged.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
   const mesh = new THREE.Mesh(merged, mat); mesh.name = 'buildings';
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(merged, 25), new THREE.LineBasicMaterial({ color: 0x0b0b0c, transparent: true, opacity: 0.35 }));
+  mesh.add(edges);
   return mesh;
 }
 
 function mergeGeometries(geos: THREE.BufferGeometry[]): THREE.BufferGeometry {
   geos = geos.map(g => (g.index ? g.toNonIndexed() : g));   // indexed inputs (ribbons) must be expanded before concatenation
   let count = 0; for (const g of geos) count += g.getAttribute('position').count;
-  const pos = new Float32Array(count * 3), nor = new Float32Array(count * 3);
-  let o = 0;
+  const pos = new Float32Array(count * 3), nor = new Float32Array(count * 3), uv = new Float32Array(count * 2);
+  let o = 0; let hasUv = true;
   for (const g of geos) {
     if (!g.getAttribute('normal')) g.computeVertexNormals();
     const p = g.getAttribute('position').array as Float32Array; const n = g.getAttribute('normal').array as Float32Array;
+    const u = g.getAttribute('uv'); if (u) uv.set(u.array as Float32Array, (o / 3) * 2); else hasUv = false;
     pos.set(p, o); nor.set(n, o); o += p.length; g.dispose();
   }
   const out = new THREE.BufferGeometry();
   out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  if (hasUv) out.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   return out;
+}
+
+// ── procedural surface grain (canvas noise, tiled) ────────────────────────────
+function grainTexture(base: number, amp: number, size = 256): THREE.CanvasTexture {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const ctx = c.getContext('2d')!; const img = ctx.createImageData(size, size);
+  let seed = 1234;
+  const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  for (let i = 0; i < size * size; i++) { const v = Math.max(0, Math.min(255, base + (rnd() - 0.5) * amp + (rnd() - 0.5) * amp * 0.5)); img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v; img.data[i * 4 + 3] = 255; }
+  ctx.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1 / 24, 1 / 24); t.anisotropy = 8; t.colorSpace = THREE.NoColorSpace;
+  return t;
+}
+
+/** Runway designator as a canvas texture ("28L"), white on transparent, for the threshold number plates. */
+function designatorTexture(text: string): THREE.CanvasTexture {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+  const ctx = c.getContext('2d')!; ctx.clearRect(0, 0, 256, 128);
+  ctx.fillStyle = '#e8e8e4'; ctx.font = '700 104px "DM Sans", "Helvetica Neue", Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, 128, 66);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return t;
 }
 
 // ── airport surfaces with generated markings ──────────────────────────────────
@@ -254,12 +282,16 @@ function ribbon(a: THREE.Vector3, b: THREE.Vector3, width: number): THREE.Buffer
   const p = [a.clone().add(side), a.clone().sub(side), b.clone().sub(side), b.clone().add(side)];
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(p.flatMap(v => [v.x, v.y, v.z]), 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(p.flatMap(v => [v.x, v.z]), 2));   // world-planar UVs (the grain texture repeats every 24 m)
   geo.setIndex([0, 1, 2, 0, 2, 3]); geo.computeVertexNormals();
   return geo;
 }
 function polygonGeo(pts: { x: number; y: number }[], h: number): THREE.BufferGeometry {
   const shape = new THREE.Shape(pts.map(p => new THREE.Vector2(p.x, p.y)));   // (east, north)
   const geo = new THREE.ShapeGeometry(shape); geo.rotateX(-Math.PI / 2); geo.translate(0, h, 0);   // faces +y, north -> -z
+  const pos = geo.getAttribute('position'); const uv = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) { uv[i * 2] = pos.getX(i); uv[i * 2 + 1] = pos.getZ(i); }
+  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   return geo;
 }
 
@@ -268,8 +300,8 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[]): THRE
   const c = world.toLocal(air.center.lng, air.center.lat);
   const base = world.heightAt(c.x, c.y);
   const xy = (id: string) => { const n = air.nodes.get(id)!; return world.toLocal(n.lng, n.lat); };
-  const flat = new THREE.MeshLambertMaterial({ color: PALETTE.asphalt, side: THREE.DoubleSide });
-  const concrete = new THREE.MeshLambertMaterial({ color: PALETTE.concrete, side: THREE.DoubleSide });
+  const flat = new THREE.MeshLambertMaterial({ color: PALETTE.asphalt, side: THREE.DoubleSide, map: grainTexture(200, 70) });
+  const concrete = new THREE.MeshLambertMaterial({ color: PALETTE.concrete, side: THREE.DoubleSide, map: grainTexture(210, 50) });
   const mark = new THREE.MeshBasicMaterial({ color: PALETTE.marking, side: THREE.DoubleSide });
 
   // aprons + terminals from the airport data (the world's building layer covers the rest)
@@ -321,6 +353,34 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[]): THRE
     }
   }
   if (markGeos.length) g.add(new THREE.Mesh(mergeGeometries(markGeos), mark));
+  // designator plates just past each threshold (numbers read toward the landing aircraft) + runway / threshold lights
+  const lightPos: number[] = []; const lightCol: number[] = [];
+  const pushLight = (v: THREE.Vector3, c: THREE.Color) => { lightPos.push(v.x, v.y + 0.6, v.z); lightCol.push(c.r, c.g, c.b); };
+  const white = new THREE.Color('#f4f1e6'), green = new THREE.Color('#3ee06a'), red = new THREE.Color('#ff3b30'), amber = new THREE.Color('#ffb020');
+  for (const r of air.runways) {
+    const [e0, e1] = r.ends; const a = world.toLocal(e0.lng, e0.lat), b = world.toLocal(e1.lng, e1.lat);
+    const va = toV3(a.x, a.y, base + 0.78), vb = toV3(b.x, b.y, base + 0.78);
+    const dir = new THREE.Vector3().subVectors(vb, va); const len = dir.length(); dir.normalize(); const side = new THREE.Vector3(-dir.z, 0, dir.x);
+    for (const [end, name, sign] of [[va, e0.name, 1], [vb, e1.name, -1]] as [THREE.Vector3, string, number][]) {
+      const d = dir.clone().multiplyScalar(sign);
+      const plate = new THREE.Mesh(new THREE.PlaneGeometry(rw * 0.55, rw * 0.28), new THREE.MeshBasicMaterial({ map: designatorTexture(name), transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+      plate.rotation.x = -Math.PI / 2; plate.rotation.z = Math.atan2(-d.x, -d.z);   // top of the glyphs points down the runway (as seen on approach)
+      plate.position.copy(end).addScaledVector(d, 62).setY(base + 0.8);
+      g.add(plate);
+    }
+    // edge lights every 60 m (white, amber in the last 600 m), threshold green / end red
+    for (let dd = 30; dd < len - 30; dd += 60) {
+      const c = dd < 600 || dd > len - 600 ? amber : white;
+      for (const sgn of [-1, 1]) pushLight(va.clone().addScaledVector(dir, dd).addScaledVector(side, sgn * (rw / 2 + 1.5)), c);
+    }
+    for (let i = -Math.floor(rw / 6); i <= Math.floor(rw / 6); i++) {
+      pushLight(va.clone().addScaledVector(side, i * 3), green); pushLight(va.clone().addScaledVector(dir, -2).addScaledVector(side, i * 3), red);
+      pushLight(vb.clone().addScaledVector(side, i * 3), green); pushLight(vb.clone().addScaledVector(dir, 2).addScaledVector(side, i * 3), red);
+    }
+  }
+  const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lightPos, 3)); lg.setAttribute('color', new THREE.Float32BufferAttribute(lightCol, 3));
+  const lm = new THREE.PointsMaterial({ size: 2.2, vertexColors: true, transparent: true, opacity: 0.95, sizeAttenuation: true, depthWrite: false });
+  g.add(new THREE.Points(lg, lm)); fades.push({ mat: lm, base: 0.95, near: 2500, far: 7000 });
 
   // holding position bars (double yellow across the taxiway)
   const holdGeos: THREE.BufferGeometry[] = [];

@@ -20,6 +20,7 @@ import { sim, useSim } from '../simStore';
 import type { AircraftState } from '@/lib/sim/types';
 import { isAirborne } from '@/lib/sim/aircraft';
 import { loadWorld, type World } from './world';
+import { instantiate, loadAircraftModel, tint } from './models';
 import { PALETTE, applyFades, buildAirport, buildBuildings, buildRoads, buildTerrain, toV3, type Fade } from './terrain';
 
 const FT = 0.3048;
@@ -39,7 +40,7 @@ const GRADE = {
 };
 
 interface Cam { target: THREE.Vector3; dist: number; yaw: number; pitch: number }
-interface Marker { mesh: THREE.Mesh; id: number; label: HTMLDivElement }
+interface Marker { mesh: THREE.Mesh; id: number; label: HTMLDivElement; shadow: THREE.Mesh; stem: THREE.Line; model: THREE.Group | null; modelWanted: boolean; tinted: string }
 
 function aircraftGeometry(): THREE.BufferGeometry {
   // unit-length airliner silhouette in the XZ plane, nose toward -z (north); scaled per aircraft
@@ -92,6 +93,13 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const matSel = new THREE.MeshLambertMaterial({ color: PALETTE.orange, emissive: 0x3a2008 });
     const matGhost = new THREE.MeshLambertMaterial({ color: 0x9a9c9a, emissive: 0x151515 });
     const traffic = new THREE.Group(); scene.add(traffic);
+    const shadowGeo = new THREE.CircleGeometry(0.5, 24); shadowGeo.rotateX(-Math.PI / 2);
+    const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false });
+    const stemMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 });
+    const decor = new THREE.Group(); scene.add(decor);
+    // smooth camera moves (centre-on / locate) and the world's pan limits
+    let camGoal: THREE.Vector3 | null = null;
+    const clampTarget = () => { if (!world) return; const ex = world.extent; cam.target.x = Math.min(ex.maxX - 1500, Math.max(ex.minX + 1500, cam.target.x)); cam.target.z = Math.min(-ex.minY - 1500, Math.max(-ex.maxY + 1500, cam.target.z)); };
     // ground vehicles: small boxes, ARFF red / ambulance white / others grey, with a beacon when active
     const vehGeo = new THREE.BoxGeometry(2.6, 2.4, 7);
     const vehMats: Record<string, THREE.MeshLambertMaterial> = {
@@ -159,8 +167,8 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       const r = el.getBoundingClientRect();
       raycaster.setFromCamera(new THREE.Vector2(((sx - r.left) / r.width) * 2 - 1, -((sy - r.top) / r.height) * 2 + 1), camera);
       raycaster.params.Line = { threshold: 1 };
-      const hits = raycaster.intersectObjects(traffic.children, false);
-      if (hits.length) return (hits[0].object.userData.id as number) ?? null;
+      const hits = raycaster.intersectObjects(traffic.children, true);
+      for (const h of hits) { let o: THREE.Object3D | null = h.object; while (o && o.userData.id == null) o = o.parent; if (o && o.visible && o.userData.id != null) return o.userData.id as number; }
       // generous pick: nearest marker within 18 px
       let best: number | null = null, bd = 18;
       for (const m of markers.values()) {
@@ -185,7 +193,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         if (Math.hypot(dx, dy) > 3) drag.moved = true;
         if (drag.mode === 'orbit') { cam.yaw -= dx * 0.005; cam.pitch = Math.min(1.45, Math.max(0.3, cam.pitch + dy * 0.004)); drag.x = ev.clientX; drag.y = ev.clientY; }
         else if (drag.start) { const g = groundAt(ev.clientX, ev.clientY); if (g) { cam.target.x += drag.start.x - g.x; cam.target.z += drag.start.z - g.z; } }
-        follow = false;
+        follow = false; camGoal = null;
         return;
       }
       const id = pick(ev.clientX, ev.clientY);
@@ -220,7 +228,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     // projector for the test API / centre-on
     const unregister = sim.registerProjector('ground',
       (xy) => { const v = toV3(xy.x, xy.y, world?.heightAt(xy.x, xy.y) ?? 0).project(camera); const r = el.getBoundingClientRect(); return v.z > 1 ? null : { x: (v.x + 1) / 2 * r.width, y: (1 - v.y) / 2 * r.height }; },
-      (xy) => { cam.target.set(xy.x, world?.heightAt(xy.x, xy.y) ?? 0, -xy.y); },
+      (xy) => { camGoal = new THREE.Vector3(xy.x, world?.heightAt(xy.x, xy.y) ?? 0, -xy.y); },
       () => ({ lng: 0, lat: 0, zoom: Math.log2(40000 / cam.dist) + 10 }) as never,
       { size: () => { const r = el.getBoundingClientRect(); return { w: r.width, h: r.height }; } } as never);
 
@@ -240,7 +248,9 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         if (!m) {
           const mesh = new THREE.Mesh(acGeo, matPlane); mesh.userData.id = a.id;
           const label = document.createElement('div'); label.className = styles.label; labels.current?.appendChild(label);
-          m = { mesh, id: a.id, label }; markers.set(a.id, m); traffic.add(mesh);
+          const shadow = new THREE.Mesh(shadowGeo, shadowMat); decor.add(shadow);
+          const stem = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 1, 0)]), stemMat); decor.add(stem);
+          m = { mesh, id: a.id, label, shadow, stem, model: null, modelWanted: false, tinted: '' }; markers.set(a.id, m); traffic.add(mesh);
         }
         const air = isAirborne(a);
         const ground = world ? world.heightAt(a.pos.x, a.pos.y) : 0;
@@ -250,7 +260,25 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         const scale = Math.max(1, cam.dist / 2600);            // keep symbols legible when zoomed out
         m.mesh.scale.set(span * scale, 1, len * scale);
         m.mesh.rotation.y = -a.heading * Math.PI / 180;
+        // ground shadow (softens with height) + a thin stem from an airborne aircraft down to the ground
+        m.shadow.position.set(a.pos.x, ground + 0.4, -a.pos.y);
+        const sh = air ? Math.max(0.8, 1 + (h - ground) / 600) : 1.05;
+        m.shadow.scale.set(span * scale * sh, 1, len * scale * sh);
+        (m.shadow.material as THREE.MeshBasicMaterial).opacity = air ? Math.max(0.05, 0.3 - (h - ground) / 6000) : 0.35;
+        m.stem.visible = air; if (air) { m.stem.position.set(a.pos.x, ground, -a.pos.y); m.stem.scale.y = Math.max(1, h - ground); }
         m.mesh.material = a.id === sim.selectedId ? matSel : a.onFrequency === sim.position || sim.position === 'ground' ? matPlane : matGhost;
+        // real model (lazy per type); the silhouette stays as the far-zoom symbol and the pick target
+        if (!m.modelWanted) {
+          m.modelWanted = true; const mk = m;
+          loadAircraftModel(a.perf.icaoCode).then((mdl) => { if (!mdl || disposed || !markers.has(mk.id)) return; mk.model = instantiate(mdl, a.perf.lengthMeters); mk.model.userData.id = mk.id; traffic.add(mk.model); });
+        }
+        if (m.model) {
+          const useModel = cam.dist < 6500;
+          m.model.visible = useModel; m.mesh.visible = !useModel;
+          m.model.position.copy(m.mesh.position); m.model.rotation.y = m.mesh.rotation.y;
+          const state = a.id === sim.selectedId ? 'sel' : a.id === sim.hoveredId ? 'hover' : '';
+          if (state !== m.tinted) { tint(m.model, state === 'sel' ? PALETTE.orange : state === 'hover' ? new THREE.Color(0x404040) : null); m.tinted = state; }
+        }
         // label
         tmp.copy(m.mesh.position).project(camera);
         const r = el.getBoundingClientRect();
@@ -265,7 +293,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
           m.label.dataset.hover = a.id === sim.hoveredId ? 'true' : 'false';
         }
       }
-      for (const [id, m] of markers) if (!live.has(id)) { traffic.remove(m.mesh); m.label.remove(); markers.delete(id); }
+      for (const [id, m] of markers) if (!live.has(id)) { traffic.remove(m.mesh); if (m.model) traffic.remove(m.model); decor.remove(m.shadow); decor.remove(m.stem); m.stem.geometry.dispose(); m.label.remove(); markers.delete(id); }
       // vehicles (only when away from the station, so the map stays calm)
       const liveV = new Set<string>();
       let fleet: Array<{ id: string; type: string; state: string; pos: { x: number; y: number }; heading: number }> = [];
@@ -305,6 +333,8 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       const fogNear = cam.dist * 1.6, fogFar = cam.dist * 5.5;
       (scene.fog as THREE.Fog).near = fogNear; (scene.fog as THREE.Fog).far = fogFar;
       if (terrainUniforms) { terrainUniforms.uTime.value += dt; terrainUniforms.uCam.value.copy(camera.position); terrainUniforms.uFogNear.value = fogNear; terrainUniforms.uFogFar.value = fogFar; }
+      if (camGoal) { cam.target.lerp(camGoal, Math.min(1, dt * 5)); if (cam.target.distanceTo(camGoal) < 2) camGoal = null; }
+      clampTarget();
       applyCamera(); applyFades(fades, cam.dist);
       (bokeh.uniforms as Record<string, THREE.IUniform>).focus.value = cam.dist;
       (bokeh.uniforms as Record<string, THREE.IUniform>).maxblur.value = 0.006 + Math.min(0.006, cam.dist / 4e6);
@@ -329,7 +359,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       <div ref={labels} className={styles.labels} aria-hidden="true" />
       {tip ? <div className={styles.tip} style={{ transform: `translate(${tip.x + 14}px, ${tip.y + 16}px)` }} data-testid="map-tooltip">{tip.text}</div> : null}
       {status !== 'ready' ? <div className={styles.status} data-testid="world-status">{status === 'error' ? 'World data unavailable' : 'Building the world…'}</div> : null}
-      <div className={styles.hint}>drag · pan &nbsp; right-drag · orbit &nbsp; wheel · zoom &nbsp; Home · reset view</div>
+      {standalone ? <div className={styles.hint}>drag · pan &nbsp; right-drag · orbit &nbsp; wheel · zoom &nbsp; Home · reset view</div> : null}
     </div>
   );
 }
