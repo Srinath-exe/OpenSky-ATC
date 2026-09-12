@@ -1007,7 +1007,8 @@ class SimStore implements TestApiHost {
       return [...bays].map(([bay, items]) => ({ bay, title: BAY_TITLES[bay], items }));
     });
   }
-  vehicles(): Vehicle[] { return this.cached('vehicles', () => this.engine ? [...this.engine.fleet.list()] : []); }
+  // shallow copies: the fleet mutates vehicles in place, and useSim's shallow-equal would otherwise miss a state change (recall / hold) until the next tick
+  vehicles(): Vehicle[] { return this.cached('vehicles', () => this.engine ? this.engine.fleet.list().map(v => ({ ...v })) : []); }
   alerts(): Alert[] { return this.cached('alerts', () => this.engine ? [...this.engine.activeAlerts()] : []); }
   allAlerts(): Alert[] { return this.cached('allAlerts', () => this.engine ? [...this.engine.alerts.list()] : []); }
   atis(): Atis | null { return this.cached('atis', () => { try { return this.engine ? this.engine.weather.atis() : null; } catch { return null; } }); }

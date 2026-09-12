@@ -39,11 +39,12 @@ import type {
 import { IMMEDIATE_KINDS, describe, isAircraftCommand, isSystemCommand } from './commandAst';
 import type { PhraseCtx } from './phraseology';
 import { readback as phraseReadback, transmission as phraseTransmission, unableLine } from './phraseology';
-import type { ActionCtx, FixInfo, RunwayInfo, StandInfo, ValidationResult, VehicleInfo } from './commandTree';
+import type { ActionCtx, FixInfo, NearbyAircraft, RunwayInfo, StandInfo, ValidationResult, VehicleInfo } from './commandTree';
 import { REASONS, actionsFor, validateAst } from './commandTree';
 import type { ParseAircraft, ParseCtx, ParseErrorCode, ParseResult } from './commands';
 import { parseCommand } from './commands';
 import { headingTo, NM_TO_M, dist as xyDist } from './projection';
+import { isAirborne } from './aircraft';
 
 // ──────────────────────────────────────────────────────────────────────────────
 //  The engine surface dispatch codes against (W1-ENGINE implements on SimEngine)
@@ -299,6 +300,7 @@ export interface EngineCtxSource {
   parallelRunways?(name: string): string[];
   isOnRunway?(a: AircraftState): boolean;
   distToThresholdNM?(a: AircraftState, runway: string): number | null;
+  exitsAhead?(a: AircraftState): Array<{ taxiway: string; distAheadM: number; dir: 'L' | 'R'; highSpeed: boolean; engineDefault: boolean; passed: boolean }>;
   wx?(): WeatherState;
   activeAlerts?(): Array<{ subjects: string[]; resolvedAt?: number | null; ack?: boolean }>;
 }
@@ -375,7 +377,13 @@ export function actionCtxFromEngine(engine: EngineCommandApi, a: AircraftState |
     stands: (e.gates ?? []).map<StandInfo>(g => ({ ref: g.ref, terminal: g.terminal, occupant: e.standOccupant?.(g.ref) ?? null, reservedFor: g.reservedFor != null ? String(g.reservedFor) : null, closed: g.closed })),
     vehicles: safeList(e.fleet).map<VehicleInfo>(v => ({ id: v.id, callsign: v.callsign, type: v.type, state: v.state, available: v.state === 'standby', etaS: v.etaAt != null ? v.etaAt - engine.time : null })),
     positions: (['ground', 'tower', 'departure', 'approach'] as Position[]).map(p => ({ position: p, freq: e.frequencies?.[p] ?? '', label: p.toUpperCase() })),
-    nearbyAircraft: [],
+    exits: a && e.exitsAhead ? safe(() => e.exitsAhead!(a), []) : [],
+    nearbyAircraft: a ? (e.aircraft ?? []).filter(o => o.id !== a.id && xyDist(o.pos, a.pos) <= 8 * NM_TO_M).map<NearbyAircraft>(o => {
+      const rwy = o.plan.runway ?? o.assignedRunway ?? null;
+      const airborne = isAirborne(o);
+      const onFinal = airborne && rwy && (o.ilsCaptured || o.phase === 'landing' || o.navMode === 'visual') && e.distToThresholdNM ? e.distToThresholdNM(o, rwy) : null;
+      return { callsign: o.callsign, type: o.perf.icaoCode, bearingTrue: headingTo(a.pos, o.pos), distM: xyDist(a.pos, o.pos), onFinalNM: onFinal != null && onFinal <= 15 ? onFinal : null, runway: rwy, ground: !airborne };
+    }).sort((x, y) => x.distM - y.distM).slice(0, 12) : [],
     msaFt: 1000,
     ceilingFt: 20000,
     transitionAltFt: e.transitionAltFt ?? 6000,

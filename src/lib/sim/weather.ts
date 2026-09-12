@@ -600,11 +600,13 @@ export class WeatherModel {
   /** Active runway config as last told to the model (kept for ATIS regeneration on weather triggers). */
   activeConfig(): { dep: string[]; arr: string[] } { return { dep: [...this.activeDep], arr: [...this.activeArr] }; }
 
-  regenerateAtis(reason: string, activeDep: string[], activeArr: string[], remarks: string[] = []): Atis {
+  regenerateAtis(reason: string, activeDep: string[], activeArr: string[], remarks: string[] = [], opts: { silent?: boolean } = {}): Atis {
     if (!this.cfg) throw new Error('WeatherModel not initialised');
     this.activeDep = [...activeDep];
     this.activeArr = [...activeArr];
     this.remarks = [...remarks];
+    // silent: rebuild the current information in place (boot-time runway config) — no new letter, no comm-log line
+    if (opts.silent && this.current) { this.current = this.buildAtis(this.current.letter, 'initial'); return this.current; }
     const letter = this.current ? nextAtisLetter(this.current.letter) : (this.cfg.atisLetter ?? 'A');
     this.current = this.buildAtis(letter, reason);
     this.log('atis_update', `information ${letter}: ${reason}`, { letter, reason });

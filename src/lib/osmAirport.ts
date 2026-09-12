@@ -842,6 +842,7 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
       uniq.push(c);
     }
     const usedRefs = new Map<string, number>();
+    const realRefs = new Set(uniq.map(c => (c.ref ? String(c.ref).trim() : '')).filter(Boolean));
     for (const c of uniq) {
       // entry point on the taxiway network
       let entryNode: OsmNode | null = null;
@@ -881,8 +882,9 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
         const perpA = (edgeBrg + 90) % 360, perpB = (edgeBrg + 270) % 360;
         headingIn = tBrg == null ? perpA : (angDiff(perpA, tBrg) <= angDiff(perpB, tBrg) ? perpA : perpB);
       }
-      // ref: OSM ref, else synthesized; keep unique
-      let ref = c.ref ? String(c.ref).trim() : (c.isGate ? `G${c.osmId ?? stands.length + 1}` : `S${c.osmId ?? stands.length + 1}`);
+      // ref: OSM ref, else a short readable synthesized one (R01, R02, … — the OSM id would print as "S626510130"); keep unique
+      let ref = c.ref ? String(c.ref).trim() : '';
+      if (!ref) { let n = 1; while (usedRefs.has(`R${String(n).padStart(2, '0')}`) || realRefs.has(`R${String(n).padStart(2, '0')}`)) n++; ref = `R${String(n).padStart(2, '0')}`; }
       if (usedRefs.has(ref)) { const n = usedRefs.get(ref)! + 1; usedRefs.set(ref, n); ref = `${ref}#${n}`; } else usedRefs.set(ref, 1);
       // terminal + type
       let terminal: string | undefined, tdist = Infinity;

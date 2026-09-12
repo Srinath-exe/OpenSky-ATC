@@ -358,7 +358,7 @@ export class AlertEngine {
     }
 
     // ── wake on final ──
-    const onFinal = airborne.filter(a => (a.ilsCaptured || a.phase === 'approach' || a.phase === 'landing' || a.navMode === 'visual') && (a.assignedRunway || a.plan.runway));
+    const onFinal = airborne.filter(a => (a.ilsCaptured || a.phase === 'landing' || a.navMode === 'visual') && (a.assignedRunway || a.plan.runway));
     const dtt = (a: AircraftState): number | null => {
       if (ctx.distToThresholdNM) { const d = ctx.distToThresholdNM(a); if (d != null) return d; }
       if (a.path && a.phase === 'landing') return Math.max(0, a.thresholdDist - a.distAlong) / NM_TO_M;
@@ -378,6 +378,8 @@ export class AlertEngine {
           const DEG = Math.PI / 180;
           const ahead = (lead.pos.x - trail.pos.x) * Math.sin(trail.heading * DEG) + (lead.pos.y - trail.pos.y) * Math.cos(trail.heading * DEG);
           if (ahead <= 0) continue;
+          const hdgDiff = Math.abs(((lead.heading - trail.heading + 540) % 360) - 180);
+          if (hdgDiff > 45) continue; // not on the same track
           const lateral = Math.abs((lead.pos.x - trail.pos.x) * Math.cos(trail.heading * DEG) - (lead.pos.y - trail.pos.y) * Math.sin(trail.heading * DEG));
           if (lateral / NM_TO_M > ALERT_CONST.wakeLateralNM) continue;
           gap = ahead / NM_TO_M;
@@ -553,16 +555,19 @@ export class AlertEngine {
   }
 
   ack(id: string, time = 0): boolean {
-    const a = this.alerts.find(x => x.id === id);
+    const i = this.alerts.findIndex(x => x.id === id);
+    const a = i >= 0 ? this.alerts[i] : null;
     if (!a || a.ack) return false;
-    a.ack = true; a.ackAt = time;
+    // new object: `activeAlerts()` consumers compare by identity (simStore.useSim shallow-equal)
+    this.alerts[i] = { ...a, ack: true, ackAt: time };
     return true;
   }
 
   resolve(id: string, time = 0): boolean {
-    const a = this.alerts.find(x => x.id === id);
+    const i = this.alerts.findIndex(x => x.id === id);
+    const a = i >= 0 ? this.alerts[i] : null;
     if (!a || a.resolvedAt != null) return false;
-    a.resolvedAt = time;
+    this.alerts[i] = { ...a, resolvedAt: time };
     this.managed.delete(id);
     return true;
   }

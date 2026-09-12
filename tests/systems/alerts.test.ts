@@ -117,7 +117,7 @@ test('STCA: pairs both on the ground and pairs under reduced minima are ignored;
   assert.ok(al);
   assert.equal(eng.ack(al.id, 3), true);
   eng.step([a, b], [], [], 1, ctxFor(3));
-  assert.equal(al.ack, true);
+  assert.equal(eng.active().find(x => x.id === al.id)?.ack, true);
 });
 
 test('MSAW: level flight below the default floor outside 5 NM raises critical; on approach it does not', () => {

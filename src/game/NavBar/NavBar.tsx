@@ -25,7 +25,7 @@ function PositionTabs() {
     root.querySelectorAll<HTMLButtonElement>('[role="tab"]').forEach((b) => {
       b.setAttribute('aria-pressed', b.getAttribute('aria-selected') === 'true' ? 'true' : 'false')
     })
-  }, [position])
+  }, [position, hasRadar])
   const items = POSITIONS.map((p) => ({ id: p, label: p.toUpperCase(), testId: `mode-tab-${p}`, disabled: p === 'approach' && !hasRadar }))
   const tabs = (
     <div ref={ref} className={styles.tabs} data-testid="position-tabs">

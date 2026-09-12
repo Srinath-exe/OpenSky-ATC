@@ -96,8 +96,9 @@ export class RadarCamera {
     this.vy = this.vy * 0.5 + (dy / dt) * 0.5;
     this.lastMove = now;
   }
-  beginDrag(now: number): void { this.vx = this.vy = 0; this.lastMove = now; this.panStart = -1; }
-  endDrag(now: number): void { if (now - this.lastMove > 80) this.vx = this.vy = 0; }
+  private dragging = false;
+  beginDrag(now: number): void { this.dragging = true; this.vx = this.vy = 0; this.lastMove = now; this.panStart = -1; }
+  endDrag(now: number): void { this.dragging = false; if (now - this.lastMove > 80) this.vx = this.vy = 0; }
   stopInertia(): void { this.vx = this.vy = 0; }
 
   /** Advance animations. `now` in ms (performance.now()), `followPos` = position of the followed aircraft if any. */
@@ -123,7 +124,7 @@ export class RadarCamera {
       const s = 1 - Math.pow(1 - 0.18, dtMs / 16.7);
       this.x += (followPos.x - this.x) * s;
       this.y += (followPos.y - this.y) * s;
-    } else if (Math.hypot(this.vx, this.vy) > 0.02) {
+    } else if (!this.dragging && Math.hypot(this.vx, this.vy) > 0.02) {
       const k = this.k;
       const decay = Math.pow(0.92, dtMs / 16.7);
       this.x -= (this.vx * dtMs) / k; this.y += (this.vy * dtMs) / k;

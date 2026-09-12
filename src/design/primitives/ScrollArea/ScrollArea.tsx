@@ -24,11 +24,15 @@ export const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(func
 ) {
   const inner = React.useRef<HTMLDivElement>(null)
   const [atBottom, setAtBottom] = React.useState(true)
+  const atBottomRef = React.useRef(true)
   const check = React.useCallback(() => {
     const el = inner.current
     if (!el) return
     const b = el.scrollHeight - el.scrollTop - el.clientHeight < 8
-    setAtBottom((prev) => { if (prev !== b) onAtBottomChange?.(b); return b })
+    if (atBottomRef.current === b) return
+    atBottomRef.current = b
+    setAtBottom(b)
+    onAtBottomChange?.(b)
   }, [onAtBottomChange])
   React.useEffect(() => {
     if (!stickToBottom) return
@@ -36,7 +40,7 @@ export const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(func
     if (!el) return
     if (atBottom) el.scrollTop = el.scrollHeight
   })
-  const scrollToBottom = () => { const el = inner.current; if (el) { el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }); setAtBottom(true); onAtBottomChange?.(true) } }
+  const scrollToBottom = () => { const el = inner.current; if (el) { el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }); atBottomRef.current = true; setAtBottom(true); onAtBottomChange?.(true) } }
   return (
     <div className={cx(styles.root, className)} style={{ maxHeight, height, ...style }} data-testid={testId ? `${testId}-root` : undefined}>
       <div

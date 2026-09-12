@@ -451,7 +451,7 @@ test.describe('start config, sessions, fresh state', () => {
       [LS_KEYS.autoTower]: '???',
       [LS_KEYS.groundTheme]: 'neon',
     };
-    for (const k of SHELL_KEYS) garbage[k] = ' {"';
+    for (const k of SHELL_KEYS) garbage[k] = '{"';
     await seedLocalStorage(page, garbage);
 
     await page.goto('/');

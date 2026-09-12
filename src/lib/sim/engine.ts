@@ -126,6 +126,7 @@ interface RunwayExit { runwayNodeId: string; twyNodeId: string; xy: XY; taxiway:
 
 /** Private per-aircraft timers/scratch (not part of AircraftState). */
 interface Scratch {
+  preclearedHolds?: PathHold[];
   nextRequestAt: number | null;
   nextRequestKind: PilotRequestKind | null;
   rollAt: number | null;
@@ -291,7 +292,8 @@ export class SimEngine implements EngineCommandApi, StageCtx {
   setActiveRunwayEnds(ends: string[] | null) {
     const set = ends && ends.length ? new Set(ends.map(upper)) : null;
     for (const rs of this.runways) { rs.activeDep = !set || set.has(rs.name); rs.activeArr = rs.activeDep; }
-    this.regenAtis('runway change');
+    // at boot (home-page config) this is the initial information, not a runway change
+    this.regenAtis('runway change', this.time < 1);
   }
   /** Explicit dep/arr split (runway-change dialog / weather suggestion applied). */
   setActiveRunways(dep: string[], arr: string[]) {
@@ -521,10 +523,10 @@ export class SimEngine implements EngineCommandApi, StageCtx {
   // ── weather accessors (stub-tolerant) ──────────────────────────────────────
   wx(): WeatherState { return this.safe('weather', () => this.weather.state(), defaultWeather(this.time)); }
   atisLetter(): string | null { return this.safe('weather', () => this.weather.atis().letter, null); }
-  private regenAtis(reason: string) {
+  private regenAtis(reason: string, silent = false) {
     this.safe('weather', () => {
       // weather.regenerateAtis queues the `atis` SimEvent itself ("ATIS X — reason"); emitting a second one here doubled the comm-log line.
-      this.weather.regenerateAtis(reason, this.activeEnds('dep').map(r => r.name), this.activeEnds('arr').map(r => r.name), this.atisRemarks());
+      this.weather.regenerateAtis(reason, this.activeEnds('dep').map(r => r.name), this.activeEnds('arr').map(r => r.name), this.atisRemarks(), { silent });
     }, undefined);
   }
   private atisRemarks(): string[] {
@@ -1379,7 +1381,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     let text = result.readback || this.fallbackReadback(ast, a, status, result.reason);
     let mismatch: ScheduledReadback['mismatch'] = null;
     if (status === 'ok' && this.settings.pilotErrorRate > 0 && chance(this.settings.pilotErrorRate)) {
-      const m = this.wrongReadback(ast, text); if (m) { mismatch = m.mismatch; text = m.text; }
+      const m = this.wrongReadback(ast, text, a); if (m) { mismatch = m.mismatch; text = m.text; }
     }
     a.readback = { ...a.readback, status: 'pending', dueAt: at, text: '', mismatch: null, refused: result.refused ?? [] };
     this.readbacks.push({ at, aircraftId: a.id, status: mismatch ? 'mismatch' : status, text, ast, refused: result.refused ?? [], mismatch });
@@ -1392,19 +1394,24 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     if (status === 'say_again') return `${cs}, ${reason ?? 'say again'}?`;
     return `${describe(ast)}, ${cs}.`;
   }
-  /** 2 % wrong readback (03 §G4): perturb a heading/altitude/speed/runway token in the readback text. */
-  private wrongReadback(ast: CommandAST, text: string): { text: string; mismatch: NonNullable<ScheduledReadback['mismatch']> } | null {
-    if (ast.kind === 'heading') { const wrong = hdg3(ast.hdg + (chance(0.5) ? 10 : -10)); return { text: text.replace(/\b\d{3}\b/, wrong), mismatch: { field: 'heading', expected: hdg3(ast.hdg), read: wrong } }; }
-    if (ast.kind === 'altitude') { const wrong = ast.ft + (chance(0.5) ? 1000 : -1000); return { text: text.replace(String(ast.ft), String(wrong)), mismatch: { field: 'altitude', expected: String(ast.ft), read: String(wrong) } }; }
-    if (ast.kind === 'speed' && typeof ast.kts === 'number') { const wrong = ast.kts + 10; return { text: text.replace(String(ast.kts), String(wrong)), mismatch: { field: 'speed', expected: String(ast.kts), read: String(wrong) } }; }
-    if (ast.kind === 'taxi' && ast.dest.kind === 'runway' || ast.kind === 'lineup' || ast.kind === 'takeoff' || ast.kind === 'clearedLand' || ast.kind === 'ils') {
+  /** 2 % wrong readback (03 §G4): re-speak the readback from a perturbed AST (heading/altitude/speed/runway) so the error is audible in the spoken numbers. */
+  private wrongReadback(ast: CommandAST, text: string, a: AircraftState): { text: string; mismatch: NonNullable<ScheduledReadback['mismatch']> } | null {
+    let wrongAst: CommandAST | null = null; let mismatch: NonNullable<ScheduledReadback['mismatch']> | null = null;
+    if (ast.kind === 'heading') { const w = ((ast.hdg + (chance(0.5) ? 10 : -10)) % 360 + 360) % 360 || 360; wrongAst = { ...ast, hdg: w }; mismatch = { field: 'heading', expected: hdg3(ast.hdg), read: hdg3(w) }; }
+    else if (ast.kind === 'altitude') { const w = Math.max(1000, ast.ft + (chance(0.5) ? 1000 : -1000)); wrongAst = { ...ast, ft: w }; mismatch = { field: 'altitude', expected: String(ast.ft), read: String(w) }; }
+    else if (ast.kind === 'speed' && typeof ast.kts === 'number') { const w = ast.kts + 10; wrongAst = { ...ast, kts: w }; mismatch = { field: 'speed', expected: String(ast.kts), read: String(w) }; }
+    else if (ast.kind === 'taxi' && ast.dest.kind === 'runway' || ast.kind === 'lineup' || ast.kind === 'takeoff' || ast.kind === 'clearedLand' || ast.kind === 'ils') {
       const rwy = ast.kind === 'taxi' ? (ast.dest as { runway: string }).runway : (ast as { runway: string }).runway;
       const rs = this.runwayState(rwy); if (!rs) return null;
       const other = this.runways.find(r => r.name !== rs.name && r.ref !== rs.ref && r.name.slice(0, 2) === rs.name.slice(0, 2)) ?? this.runways.find(r => r.ref !== rs.ref);
       if (!other) return null;
-      return { text: text.replace(rs.name, other.name), mismatch: { field: 'runway', expected: rs.name, read: other.name } };
+      wrongAst = ast.kind === 'taxi' ? { ...ast, dest: { ...ast.dest, runway: other.name } } as CommandAST : { ...ast, runway: other.name } as CommandAST;
+      mismatch = { field: 'runway', expected: rs.name, read: other.name };
     }
-    return null;
+    if (!wrongAst || !mismatch) return null;
+    const spoken = this.safe('phrase', () => phraseReadback(wrongAst!, this.phraseCtx(a)), '');
+    if (!spoken || spoken === text) return null;
+    return { text: spoken, mismatch };
   }
   private processReadbacks() {
     if (!this.readbacks.length) return;
@@ -1607,7 +1614,8 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     const path = plan.path;
     // Explicit hold-short target / crossing clearances in the same transmission
     if (holdShortOf?.kind === 'taxiway') this.insertTaxiwayHold(a, path, upper(holdShortOf.taxiway));
-    for (const c of cross) { const ref = this.refOf(c); const h = path.holds!.find(x => this.refOf(x.runway) === ref && !x.isDepartureEntry); if (h) { path.holds!.splice(path.holds!.indexOf(h), 1); } }
+    s.preclearedHolds = [];
+    for (const c of cross) { const ref = this.refOf(c); const h = path.holds!.find(x => this.refOf(x.runway) === ref && !x.isDepartureEntry); if (h) { path.holds!.splice(path.holds!.indexOf(h), 1); s.preclearedHolds.push(h); } }
     path.holdAt = path.holds!.length ? path.holds![0].at : undefined;
     // Leaving a runway / a hold node: release runway occupancy bookkeeping
     if (s.onRunwayRef && (a.phase === 'rollout' || a.phase === 'hold_short')) { /* vacate handled by transitions */ }
@@ -1647,7 +1655,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     if (!a.path || (a.phase !== 'taxi' && a.phase !== 'hold_short' && a.phase !== 'rollout')) return { ok: false, code: 'invalid_stage', reason: 'Not moving' };
     if (of.kind === 'runway') {
       const ref = this.refOf(of.runway); if (!ref) return { ok: false, code: 'unknown_runway', reason: `Unknown runway ${of.runway}` };
-      const h = a.path.holds?.find(x => this.refOf(x.runway) === ref);
+      const h = a.path.holds?.find(x => this.refOf(x.runway) === ref) ?? this.sc(a).preclearedHolds?.find(x => this.refOf(x.runway) === ref && a.distAlong < x.at - 1);
       if (!h) return { ok: false, code: 'queried', reason: `${this.telephony(a.callsign)}, unable, ${of.runway} is not on our route` };
       if (a.phase === 'hold_short' && a.path.holds![0] === h) return { ok: false, code: 'already', reason: 'Already holding short' };
     } else if (of.kind === 'taxiway') {
@@ -1659,7 +1667,11 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     if (!a.path) return;
     if (of.kind === 'runway') {
       const ref = this.refOf(of.runway);
-      const h = a.path.holds?.find(x => this.refOf(x.runway) === ref);
+      let h = a.path.holds?.find(x => this.refOf(x.runway) === ref);
+      // a crossing pre-cleared in the taxi clearance can be re-armed while the aircraft is still short of it
+      const s = this.sc(a);
+      const pre = !h ? s.preclearedHolds?.find(x => this.refOf(x.runway) === ref && a.distAlong < x.at - 1) : undefined;
+      if (pre) { s.preclearedHolds = s.preclearedHolds!.filter(x => x !== pre); a.path.holds = [...(a.path.holds ?? []), pre].sort((x, y) => x.at - y.at); a.path.holdAt = a.path.holds[0].at; h = pre; }
       // re-arm a released crossing only while the aircraft can still stop before the line (never pull it back, B5)
       if (h && a.path.holds![0] === h) {
         if (a.distAlong <= h.at - HOLD_BUFFER_M) a.holdReleased = false;
@@ -1941,7 +1953,12 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     if (expedite) a.expediteTaxiUntil = this.time + 90;
     if (holdShortOf?.kind === 'runway') a.lahsoHoldShortOf = upper(holdShortOf.runway);
     const s = this.sc(a);
-    if (a.phase === 'rollout' && a.plan.runway) { const rs = this.runwayState(a.plan.runway)!; const ex = this.chooseExit(a, rs.ref, rs.headingTrue, a.speed, a.exitTaxiway, false); if (ex) s.exitPlan = ex; }
+    if (a.phase === 'rollout' && a.plan.runway) {
+      // re-plan the exit and move the braking target with it, otherwise the aircraft keeps the touchdown plan's holdAt/speed
+      const rs = this.runwayState(a.plan.runway)!;
+      const ex = this.chooseExit(a, rs.ref, rs.headingTrue, a.speed, a.exitTaxiway, false) ?? (a.exitTaxiway ? this.chooseExit(a, rs.ref, rs.headingTrue, a.speed, null, false) : null);
+      if (ex) { s.exitPlan = ex; if (a.path) a.path.holdAt = ex.at; a.cmdIas = ex.speedKt; }
+    }
     if (contactGround) { s.handoffTo = 'ground'; s.handoffAt = null; a.handedTo = 'ground'; }
   }
   cmdExpedite(a: AircraftState, on: boolean, scope: ExpediteScope): EngineOutcome {
@@ -2294,6 +2311,9 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       const c = a.pendingCmds[i];
       if (c.cancellable === false) continue;
       a.pendingCmds.splice(i, 1);
+      // the pilot must not read back an instruction that was just withdrawn
+      this.readbacks = this.readbacks.filter(r => !(r.aircraftId === a.id && r.ast?.kind === c.kind));
+      if (a.readback.status === 'pending' && !this.readbacks.some(r => r.aircraftId === a.id)) a.readback = { ...a.readback, status: 'none', dueAt: 0 };
       if (c.kind === 'takeoff') this.clearTakeoffClearance(a);
       if (c.kind === 'altitude') a.cmdAltitude = a.targetAltitude;
       if (c.kind === 'speed') a.cmdIas = null;
@@ -2397,6 +2417,8 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     const e = a.emergency; if (!e || e.status === 'resolved') return;
     e.status = 'resolved'; e.resolvedAt = this.time;
     a.priority = false;
+    // the pilot stops squawking the emergency code (7700/7600/7500) once the emergency is over
+    if (a.squawk && ['7700', '7600', '7500'].includes(a.squawk)) a.squawk = a.clearance?.squawk ?? this.newSquawk();
     const evs = this.safe('emergencies', () => scoreOnResolved(a, this.time), null);
     if (evs) for (const ev of evs) this.applyScore(ev); else this.addScore('EMERGENCY_DONE', a.callsign, null, e.runway, reason);
     this.stats.emergenciesResolved++;
@@ -3146,9 +3168,29 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       const side = cands.find(c => (crossTrack(this.nodeXY(c.twyNodeId)!, thr, hdg) > 0 ? 'R' : 'L') === a.exitDir);
       if (side) return strip(side);
     }
-    const first = cands.find(c => c.hs) ?? cands[0];
+    // from a standstill (cancelled line-up) the nearest exit is the right one; on a rollout prefer the first high-speed exit
+    const first = fromStandstill ? cands[0] : (cands.find(c => c.hs) ?? cands[0]);
     return strip(first);
     function strip(c: ExitPlan & { along: number; hs: boolean }): ExitPlan { return { runwayNodeId: c.runwayNodeId, twyNodeId: c.twyNodeId, at: c.at, speedKt: c.speedKt, taxiway: c.taxiway, angleDeg: c.angleDeg }; }
+  }
+  /** Runway exits for the command panel picker (04 §1.4): distance ahead of the aircraft along its landing runway, side, high-speed flag, engine default. */
+  exitsAhead(a: AircraftState): Array<{ taxiway: string; distAheadM: number; dir: 'L' | 'R'; highSpeed: boolean; engineDefault: boolean; passed: boolean }> {
+    const rw = a.plan.runway ?? a.assignedRunway; const rs = rw ? this.runwayState(rw) : undefined;
+    if (!rs) return [];
+    const hdg = rs.headingTrue; const thr = this.thresholdXY(rs.name); if (!thr) return [];
+    const alongNow = isAirborne(a) ? 0 : alongTrack(a.pos, thr, hdg);
+    const def = this.sc(a).exitPlan ?? (a.phase === 'rollout' || a.phase === 'lineup' ? this.chooseExit(a, rs.ref, hdg, a.speed, null, a.phase === 'lineup') : null);
+    const out: Array<{ taxiway: string; distAheadM: number; dir: 'L' | 'R'; highSpeed: boolean; engineDefault: boolean; passed: boolean }> = [];
+    const seen = new Set<string>();
+    for (const ex of this.runwayExits(rs.ref)) {
+      const along = alongTrack(ex.xy, thr, hdg);
+      const twy = this.nodeXY(ex.twyNodeId); if (!twy) continue;
+      const angle = Math.abs(angleDelta(hdg, headingTo(ex.xy, twy)));
+      if (!ex.taxiway || angle > 125 || seen.has(ex.taxiway)) continue;
+      seen.add(ex.taxiway);
+      out.push({ taxiway: ex.taxiway, distAheadM: along - alongNow, dir: crossTrack(twy, thr, hdg) > 0 ? 'R' : 'L', highSpeed: angle >= 8 && angle <= 55, engineDefault: def?.taxiway === ex.taxiway, passed: along < alongNow + 10 });
+    }
+    return out.sort((x, y) => x.distAheadM - y.distAheadM);
   }
   /** Leave the runway via an exit: runway node -> taxiway node -> until clear of the hold line, then stop. */
   private exitViaTaxiway(a: AircraftState, rs: RunwayState, exit: ExitPlan, fromLineup: boolean) {
@@ -3490,7 +3532,10 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       time: this.time,
       requiredSepNM: (a, b) => this.requiredSepNM(a, b),
       reducedMinima: (a, b) => this.reducedMinima(a, b),
+      // no terrain database: the default floor outside the terminal area applies (alerts.ts msawDefaultFloorFt / msawNearNM)
       msaAt: () => null,
+      centerXY: this.centerXY,
+      airspaceRadiusM: this.airspaceRadiusM,
       onRunwayWithoutClearance: (id) => this.onRunwayWithoutClearance(id),
       arrivalOnFinal: (rw, nm) => this.arrivalOnFinal(rw, nm)?.callsign ?? null,
       rollingDeparture: (rw) => this.rollingDeparture(rw),

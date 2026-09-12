@@ -83,6 +83,8 @@ export function stage(a: AircraftState, ctx: StageCtx): Stage {
 
 function holdShortStage(a: AircraftState, ctx: StageCtx): Stage {
   const dep = a.plan.kind === 'departure';
+  // A taxiway hold-short (no runway involved) is a stopped taxi, not a runway hold: the release is "continue taxi".
+  if (a.holdShortTaxiway && !a.holdShortRunway) return dep ? 'taxi_out' : 'taxi_in';
   if (a.holdShortNode && a.plan.runway) {
     return dep && ctx.isHoldNodeForRunway(a.holdShortNode, a.plan.runway) ? 'hold_short_dep' : 'hold_short_cross';
   }

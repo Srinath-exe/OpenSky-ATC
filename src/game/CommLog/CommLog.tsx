@@ -201,6 +201,8 @@ export function CommLog() {
   const [shakeKey, setShakeKey] = React.useState(0)
   const [acceptKey, setAcceptKey] = React.useState(0)
   const [historyIdx, setHistoryIdx] = React.useState(-1)
+  // while stepping through history the recalled text must not open the autocomplete (arrows keep walking the history)
+  const historyMode = historyIdx >= 0
   const history = React.useRef<string[]>([])
   React.useEffect(() => { history.current = readJson<string[]>(LS.cmdHistory, []) }, [])
 
@@ -208,7 +210,7 @@ export function CommLog() {
     if (!hasEngine || !focused || !value.trim()) return []
     try { return sim.suggest(value).slice(0, MAX_SUGGESTIONS) } catch { return [] }
   }, [value, focused, hasEngine])
-  const menuOpen = suggestions.length > 0 && focused && !review
+  const menuOpen = suggestions.length > 0 && focused && !review && !historyMode
   React.useEffect(() => { setActive(suggestions.length ? 0 : -1) }, [suggestions])
 
   const placeholder = React.useMemo(() => {

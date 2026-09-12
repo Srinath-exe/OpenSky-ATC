@@ -621,7 +621,7 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       if (p.at('ALL')) p.fail('unknown_verb', '"Hold all" is a system command (no callsign)', ['POSITION', 'SHORT', 'AT']);
       if (p.accept('FOR')) { p.skip('WAKE', 'TURBULENCE', 'TRAFFIC'); return done(mk('holdPosition', { reason: 'wake turbulence' })); }
       if (p.at('AT') || p.at('OVER') || p.isFixAhead() || p.at('AS PUBLISHED')) return done(parseHold(p, mk, self));
-      if (p.eof) return done(mk('holdPosition', {}));
+      if (p.eof) { if (stage && isAirStageName(stage)) p.fail('missing_param', 'Hold at which fix?', ['AT <FIX>']); return done(mk('holdPosition', {})); }
       // "HOLD TRAFFIC ON FINAL" style reason
       return done(mk('holdPosition', { reason: restText(p) }));
     }
