@@ -444,7 +444,6 @@ test.describe('GROUND position by clicks', () => {
   }
 
   test('hold short of a taxiway mid-taxi: the pilot stops at the taxiway hold, Continue taxi (clicks) releases it @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: a taxiway hold-short (holdShortTaxiway set, holdShortRunway null) derives stage hold_short_cross (src/lib/sim/stage.ts:80 holdShortStage) and ACTION_MATRIX hides action-continue in that stage (src/lib/sim/commandTree.ts:294), so the aircraft stopped at the taxiway hold can only be released by the typed "CONTINUE TAXI"; the click tree offers "Cross runway 27L" instead, which the engine refuses (not at the 27L holding point yet)');
     const game = await openGame(GROUND);
     const cs = 'BAW6';
     await spawnReadyToTaxi(sim, cs, T4_STAND);
@@ -549,7 +548,6 @@ test.describe('GROUND position by clicks', () => {
   });
 
   test('give way by clicks: the aircraft picker lists the nearby traffic @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: actionCtxFromEngine never fills ActionCtx.nearbyAircraft (src/lib/sim/dispatch.ts:378 hard-codes []), so the give-way / follow aircraft picker is always empty ("No traffic nearby") and the click flow cannot be completed');
     const game = await openGame(GROUND);
     await spawnReadyToTaxi(sim, 'BAW8', T4_STAND);
     await spawnReadyToTaxi(sim, 'BAW9', T4_NEXT_STAND);
@@ -1278,7 +1276,6 @@ test.describe('GROUND position by clicks', () => {
   });
 
   test('hold short of a runway by clicks mid-taxi ("Runway..." chip) re-arms a crossing that was pre-cleared in the taxi clearance @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/lib/sim/engine.ts:1610 execTaxi splices a pre-cleared crossing out of path.holds, so src/lib/sim/engine.ts:1651 cmdHoldShort cannot find runway 27L on the route any more and answers code "queried" ("unable, 27L is not on our route") although the taxi route physically crosses 27L ; expected: HOLD SHORT 27L re-arms the crossing (holds 27L+27R, holdReleased false, the pilot stops at the 27L hold line) ; actual: pilot query, holds stay [27R], the aircraft taxis across 27L ; repro: taxi to 27R from stand 401 with the cross-27L pill, then Hold short of -> Runway... -> 27L');
     const game = await openGame(GROUND);
     const cs = 'BAW8';
     await spawnReadyToTaxi(sim, cs, T4_STAND);

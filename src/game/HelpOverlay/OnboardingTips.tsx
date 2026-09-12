@@ -54,8 +54,9 @@ export function OnboardingTips() {
   }, [visible, step, selectedId, atcLines, pilotLines, next])
 
   // Enter = next, Esc = skip (capture so the shell dispatcher does not also act); never while a panel or input has focus.
+  const rendered = visible && hasEngine && !shell.open.help && !shell.open.pause
   React.useEffect(() => {
-    if (!visible) return
+    if (!rendered) return   // the tip is not on screen while help / pause is open: Esc belongs to them
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
       // only when nothing in a panel owns the keyboard (body or the map surface)
@@ -66,7 +67,7 @@ export function OnboardingTips() {
     }
     document.addEventListener('keydown', onKey, true)
     return () => document.removeEventListener('keydown', onKey, true)
-  }, [visible, finish, next])
+  }, [rendered, finish, next])
 
   if (!visible || !hasEngine || shell.open.help || shell.open.pause) return null
   const cs = firstDep ?? 'the first departure'

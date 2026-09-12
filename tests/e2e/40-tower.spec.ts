@@ -443,7 +443,6 @@ test.describe('tower', () => {
   });
 
   test('exit picker during the rollout: "next exit right" makes the aircraft vacate @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/lib/sim/engine.ts:1944 execExitAt (rollout branch) only replaces scratch.exitPlan and leaves a.path.holdAt / a.cmdIas at the touchdown plan values set by onTouchdown (src/lib/sim/engine.ts:3092-3095), and trRollout (src/lib/sim/engine.ts:3039-3042) only turns off at `speed <= plan.speedKt + 3` ; expected: after "take the next available exit on the right" during the rollout the aircraft vacates at the next right-hand exit, PILOT "runway 27L vacated", runway free, taxi-in request ; actual: readback "Next available right" then the aircraft rolls to the end of the path (distAlong == pathTotal) and sits there in phase rollout at 30 kt forever (no vacated line, runway stays occupied, no request) ; repro: land DAL9 on 27L, in rollout click Exit / vacate -> next exit RIGHT -> Transmit, advance 120 s');
     const game = await openTower(openGame);
     await spawnOnFinal(sim, 'DAL9', 7, { landingCleared: true });
     await sim.advanceUntilPhase('DAL9', 'rollout', 300);
@@ -667,7 +666,6 @@ test.describe('tower', () => {
   });
 
   test('strip E box ticks after a "next exit left/right" instruction @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/game/StripBay/StripCard.tsx:38 ARR_BOXES "E" (UX 04 §3.1 "E exit given") is done only when a.exitTaxiway != null, so a directional exit instruction ("take the next available exit on the right", engine execExitAt src/lib/sim/engine.ts:1940 sets a.exitDir = "R" and exitTaxiway = null) leaves the box unticked ; expected: strip-{cs}-box-E aria-pressed=true once the exit instruction is read back ; actual: stays false ; repro: DAL8 in rollout on 27L, "DAL8 TAKE NEXT EXIT RIGHT", advance 3.5 s');
     const game = await openTower(openGame);
     await sim.spawnAt({ callsign: 'DAL8', type: 'A320', kind: 'arrival', phase: 'rollout', runway: RWY, onFrequency: 'tower' });
     await expect(game.page.getByTestId('strip-DAL8-box-E')).toHaveAttribute('aria-pressed', 'false');
@@ -680,7 +678,6 @@ test.describe('tower', () => {
   });
 
   test('wake timer chip is visible on the tower view after a heavy rotates @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: no DOM wake-timer indicator exists — 03-ATC-FEATURE-SPEC §2.7 asks for a countdown on the runway entry marker / strip badge "WT 1:23" and 05-TEST-STRATEGY §3.1 reserves wake-timer-{rwy} (T11); src/components/atc/GroundView/runwayStatus.ts:55 computes wakeRemainingS but runwayOccupancy() has no consumer in src/game or src/components, src/game/StripBay/StripCard.tsx renders no wake badge, src/components/atc/GroundView/render.ts only labels closed/sterile/inspection runways ; expected: wake-timer-27L[data-value=remainingS] visible and counting down after the heavy rotates ; actual: only the engine timer + the SYS radio line exist (covered by the test above) ; repro: HVY3 (B77W) cleared for takeoff 27L, advance until airborne');
     const game = await openTower(openGame);
     await spawnLinedUp(sim, 'HVY3', RWY, 'B77W');
     expect((await sim.command(`HVY3 CLEARED FOR TAKEOFF ${RWY}`)).code).toBe('ok_queued');
@@ -878,7 +875,6 @@ test.describe('tower', () => {
   });
 
   test('line up "behind landing aircraft": the aircraft picker lists the arrival on final @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/lib/sim/dispatch.ts:378 actionCtxFromEngine hard-codes ActionCtx.nearbyAircraft = [], so aircraftChips() (src/lib/sim/commandTree.ts:552-556, mode behind_landing) never has a candidate ; expected: the optional "Behind landing aircraft" step of Line up lists DAL5 (A320, 5.x NM final) as picker-aircraft-DAL5 and the confirm summary reads "behind the landing Delta fife" ; actual: "No other traffic on final", no chip ; repro: DAL5 on a 5 NM final to 27L, BAW1 at the 27L hold, Line up -> Next');
     const game = await openTower(openGame);
     await spawnAtHold(sim, 'BAW1');
     await spawnOnFinal(sim, 'DAL5', 5, { landingCleared: true });
@@ -893,12 +889,11 @@ test.describe('tower', () => {
     await game.next();
     await expect(game.confirmSummary()).toContainText(/behind the landing/i);
     const tx = await game.transmit();
-    expect(tx.code).toBe('ok_queued');
+    expect(['ok_queued', 'ok_conditional']).toContain(tx.code);   // a conditional line-up clearance
     expect(tx.tx).toMatch(/behind the landing .*Delta fife/i);
   });
 
   test('cancel line-up (vacate runway) by clicks: the departure leaves via the nearest exit and the runway is free again @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/lib/sim/engine.ts:3147 chooseExit prefers the first HIGH-SPEED exit (`cands.find(c => c.hs) ?? cands[0]`) even when called fromStandstill by execCancelLineup (src/lib/sim/engine.ts:1921-1926), and the vacate picker offers every airport taxiway because actionCtxFromEngine (src/lib/sim/dispatch.ts) never fills ActionCtx.exits (src/lib/sim/commandTree.ts:211-212, fallback at :609) ; expected (04 §1.4 "Cancel line-up / vacate runway": picker-taxiway = exits ahead, exit reachable; 03 §845 "next available exit = nearest exit ahead"): the picker lists only the exits ahead of the line-up point and the aircraft vacates at the nearest one within ~60 s ; actual: picker lists A1…S11 with no exit metadata, the aircraft crawls 3.5 km down 27L at 10 kt towards N10 (runway occupied for ~12 min) ; repro: BAW6 lined up on 27L, Cancel line-up -> Next -> Transmit, advance 120 s');
     const game = await openTower(openGame);
     await spawnLinedUp(sim, 'BAW6', RWY);
     await game.openPanelFor('BAW6');
@@ -918,11 +913,13 @@ test.describe('tower', () => {
     const off = await sim.advanceUntil(`s => !(s.aircraft.find(a => a.callsign === 'BAW6')?.phase === 'lineup') && ${findSrc('BAW6')}?.phase !== 'rollout'`, 120);
     expect(off.ok).toBe(true);
     expect((await sim.runways()).find((r) => r.name === RWY)?.occupied).toBe(false);
-    await expect(game.strip('BAW6')).not.toHaveAttribute('data-bay', 'LINED_UP');
+    // off the runway: the strip leaves LINED_UP (it may already have been handed back to ground and left the tower bays)
+    const s6 = game.strip('BAW6');
+    if (await s6.count()) await expect(s6).not.toHaveAttribute('data-bay', 'LINED_UP');
+    expect((await sim.aircraftOrFail('BAW6')).phase).not.toBe('lineup');
   });
 
   test('exit picker on final lists only the exits ahead with their distance, the engine default pre-selected @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: ActionCtx.exits (src/lib/sim/commandTree.ts:211-212 "Runway exits ahead of the aircraft") is never provided by actionCtxFromEngine (src/lib/sim/dispatch.ts:300-390 has no `exits:` key), so S.taxiway (src/lib/sim/commandTree.ts:608-611) falls back to ctx.taxiways ; expected (04 §1.4 "Exit at [E]": exit chips with distance / L-R / high-speed, engine default pre-selected): a short list such as N8, N10, N11 with data-state and the default pressed ; actual: all 36 EGLL taxiways (A1 … S11) as plain chips with no data-state, nothing pre-selected, taxiways behind the aircraft included ; repro: DAL6 on a 7 NM final to 27L, Exit / vacate');
     const game = await openTower(openGame);
     await spawnOnFinal(sim, 'DAL6', 7, { landingCleared: true });
     await sim.advance(1);

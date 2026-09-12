@@ -16,6 +16,7 @@ import { ShellContext, useOverlayState } from '../shellContext'
 import type { ShellState } from '../shellContext'
 import { NavBar } from '../NavBar/NavBar'
 import { AlertStack, AlertsDrawer } from '../AlertStack/AlertStack'
+import { RunwayBars } from '../RunwayBars/RunwayBars'
 import { AtisWeather } from '../AtisWeather/AtisWeather'
 import { RunwayConfigDialog } from '../AtisWeather/RunwayConfigDialog'
 import { StripBay } from '@/game/StripBay'
@@ -165,6 +166,7 @@ export function GameShell({ loading = false, loadError = null, onRetry }: GameSh
           ) : null}
 
           <AlertStack />
+          <RunwayBars />
 
           <div className={styles.bay} data-region="bay">
             <StripBay ref={bayRef} />

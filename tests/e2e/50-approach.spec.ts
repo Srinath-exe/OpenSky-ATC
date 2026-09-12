@@ -742,7 +742,6 @@ test.describe('approach: radar scope', () => {
   });
 
   test('drag pan moves the camera by the pointer delta @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: RadarCamera.step applies the drag inertia while the drag is still in progress (src/components/atc/ApproachView/camera.ts:119-125 — the `else if (Math.hypot(this.vx, this.vy) > 0.02)` branch runs between pointermove events during a pan), so a 100 px drag pans the scope by ~190-270 px (the world slides under the cursor). 05 §4.10 M5 expects camera x/y to change by exactly dx/k, -dy/k and the aircraft symbols to shift by (dx, dy).');
     const game = await openGame({ icao: ICAO, spawn: 'none', position: 'approach' });
     const radar = new RadarPage(game.page, game);
     await radar.waitReady();

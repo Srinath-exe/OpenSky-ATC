@@ -162,7 +162,8 @@ class GroundUiStore {
     if (this.state.selectedVehicleId === id) return;
     this.patch({ selectedVehicleId: id });
     sim.selectedVehicleId = id;
-    for (const v of vehicleList()) v.selected = v.id === id;
+    for (const v of sim.engine?.fleet.list() ?? []) v.selected = v.id === id;   // the live fleet objects (the store hands out copies)
+    (sim as unknown as { emit?: () => void }).emit?.();
     if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(EV_SELECT_VEHICLE, { detail: { id } }));
   }
 }

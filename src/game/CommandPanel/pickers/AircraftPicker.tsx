@@ -27,7 +27,7 @@ export function AircraftPicker({ step, params, onChange, onAccept }: PickerProps
         {step.candidates.map(c => (
           <button key={c.callsign} type="button" role="option" aria-selected={value === c.callsign} aria-pressed={value === c.callsign} className={cx(s.listRow)} onClick={() => onChange({ aircraft: c.callsign })} onDoubleClick={() => { onChange({ aircraft: c.callsign }); onAccept() }} onMouseEnter={() => sim.hover(idOf(c.callsign))} onMouseLeave={() => sim.hover(null)} data-testid={`${step.mode === 'break_off' ? 'picker-emerg-break' : 'picker-aircraft'}-${c.callsign}`}>
             <span className={s.listTitle}>{c.callsign} <span className={s.listMeta}>{c.type}</span></span>
-            <span className={s.listMeta}>{c.onFinalNM != null ? `${c.onFinalNM.toFixed(1)} NM final` : `${String(c.bearingMag).padStart(3, '0')}° / ${c.distM} m`}</span>
+            <span className={s.listMeta}>{' '}{c.onFinalNM != null ? `${c.onFinalNM.toFixed(1)} NM final` : `${String(c.bearingMag).padStart(3, '0')}° / ${c.distM} m`}</span>
           </button>
         ))}
         {!step.candidates.length ? <div className={s.empty}>{step.mode === 'behind_landing' || step.mode === 'break_off' ? 'No other traffic on final' : 'No traffic nearby'}</div> : null}

@@ -82,6 +82,18 @@ export interface GroundViewProps {
   theme?: GroundTheme;
 }
 
+/** Floating chrome over the map (strip bay left, command panel right), from the shell's CSS variables. */
+function chromeInsets(el: HTMLElement | null): { left: number; right: number; top: number; bottom: number } {
+  if (!el) return { left: 0, right: 0, top: 0, bottom: 0 };
+  const r = el.getBoundingClientRect();
+  const bay = document.querySelector<HTMLElement>('[data-testid="strip-bay"]');
+  const panel = document.querySelector<HTMLElement>('[data-testid="detail-panel"]');
+  const tools = el.querySelector<HTMLElement>('[data-testid="map-toolbar"]');
+  const left = bay ? bay.getBoundingClientRect().right - r.left : 0;
+  const right = Math.max(panel ? r.right - panel.getBoundingClientRect().left : 0, tools ? r.right - tools.getBoundingClientRect().left : 0);
+  return { left: Math.max(0, Math.min(left, r.width / 2)), right: Math.max(0, Math.min(right, r.width / 2)), top: 0, bottom: 0 };
+}
+
 export default function GroundView({ theme: themeProp }: GroundViewProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const mapDiv = useRef<HTMLDivElement>(null);
@@ -311,6 +323,7 @@ export default function GroundView({ theme: themeProp }: GroundViewProps) {
       const c = m.getCenter();
       frameCam(c.lng, c.lat, m.getZoom(), w, h, camRef.current);
       input.now = now; input.position = playerPosition(); input.theme = styledTheme; input.layers = groundUi.state.layers; input.showRings = showRings();
+      input.insets = chromeInsets(rootRef.current);
       input.selectedId = store.selectedId; input.hoveredId = store.hoveredId;
       input.selectedVehicleId = groundUi.state.selectedVehicleId; input.hoveredVehicleId = groundUi.state.hoveredVehicleId;
       input.drag = dragRef.current; input.version = store.version; input.reducedMotion = reducedRef.current;
@@ -571,8 +584,9 @@ export default function GroundView({ theme: themeProp }: GroundViewProps) {
         if (menu || bubble || groundUi.state.popover) { e.preventDefault(); closeFloating(); }
         return;
       }
-      if (/^[1-6]$/.test(e.key) && e.shiftKey) {
-        const slot = Number(e.key) - 1;
+      const digit = /^Digit([1-6])$/.exec(e.code);   // e.code: on a US layout Shift+1 reports key "!"
+      if (digit && e.shiftKey) {
+        const slot = Number(digit[1]) - 1;
         if (e.ctrlKey || e.metaKey) saveUser(slot); else recallUser(slot);
         e.preventDefault(); return;
       }
@@ -609,7 +623,7 @@ export default function GroundView({ theme: themeProp }: GroundViewProps) {
   const magVar = store.engine?.magVar ?? 0;
 
   return (
-    <div ref={rootRef} className={styles.root} data-testid="ground-view" data-theme={theme} data-paused={paused ? 'true' : 'false'} data-position={position} tabIndex={0} aria-label="Airport map" onContextMenu={e => e.preventDefault()}>
+    <div ref={rootRef} className={styles.root} data-testid="ground-view" data-theme={theme} data-paused={paused ? 'true' : 'false'} data-position={position} data-map-floating={menu || bubble || popover ? '1' : undefined} tabIndex={0} aria-label="Airport map" onContextMenu={e => e.preventDefault()}>
       <div ref={mapDiv} className={styles.map} data-testid="ground-map" data-ready={readyRef.current ? 'true' : 'false'} />
       <canvas ref={canvasRef} className={styles.overlay} data-testid="ground-overlay" aria-hidden="true" />
       {theme === 'satellite' ? <div className={styles.veil} aria-hidden="true" /> : null}

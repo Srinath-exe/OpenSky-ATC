@@ -55,6 +55,15 @@ export function StatsPanel() {
   const time = useSim((s) => Math.floor(s.time()))
   const icao = useSim((s) => s.icao)
   const ref = React.useRef<HTMLDivElement>(null)
+  // anchor the popover's right edge to the score chip that opened it (design A11.1 dropdowns hang from their trigger)
+  const [anchorRight, setAnchorRight] = React.useState<number | null>(null)
+  React.useLayoutEffect(() => {
+    const chip = document.querySelector<HTMLElement>('[data-testid="score-chip"]')
+    const host = ref.current?.offsetParent as HTMLElement | null
+    if (!chip || !host) return
+    const c = chip.getBoundingClientRect(), h = host.getBoundingClientRect()
+    setAnchorRight(Math.max(12, h.right - c.right))
+  }, [])
   React.useEffect(() => {
     const onDown = (e: PointerEvent) => {
       const t = e.target as HTMLElement
@@ -96,6 +105,7 @@ export function StatsPanel() {
       radius="card-lg"
       headerGap
       className={styles.panel}
+      style={anchorRight != null ? { right: anchorRight } : undefined}
       role="dialog"
       aria-label="Score breakdown"
       headerRight={<IconButton size={32} variant="ghost" label="Close" icon={<IconX size={16} />} onClick={() => shell.hide('stats')} testId="score-breakdown-close" />}

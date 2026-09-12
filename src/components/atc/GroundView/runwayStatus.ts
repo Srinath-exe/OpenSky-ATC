@@ -22,6 +22,8 @@ export interface RunwayOccupancy {
   landingClearances: string[];
   wakeRemainingS: number;
   arrivalOnFinalNM: number | null;
+  activeDep: boolean;
+  activeArr: boolean;
 }
 
 export function runwayBarState(rs: RunwayState, engine: SimEngine | null): RunwayBarState {
@@ -54,6 +56,7 @@ export function runwayOccupancy(engine: SimEngine | null): RunwayOccupancy[] {
       takeoffClearance: rs.takeoffClearance, landingClearances: rs.landingClearances,
       wakeRemainingS: rs.wakeTimer && rs.wakeTimer.expiresAt > engine.time ? Math.round(rs.wakeTimer.expiresAt - engine.time) : 0,
       arrivalOnFinalNM: final ? Math.round(final.nm * 10) / 10 : null,
+      activeDep: rs.activeDep, activeArr: rs.activeArr,
     };
   });
 }

@@ -297,7 +297,8 @@ export class AlertEngine {
     // ── MSAW ──
     for (const a of airborne) {
       if (a.phase === 'takeoff' || a.phase === 'go_around') continue;
-      const onApproach = a.phase === 'approach' || a.phase === 'landing' || a.ilsCaptured || a.gsCaptured || a.navMode === 'visual';
+      // phase 'approach' only means "under approach control" here; the exemption is for aircraft actually on an approach
+      const onApproach = a.phase === 'landing' || a.ilsCaptured || a.gsCaptured || a.navMode === 'visual';
       if (onApproach) continue;
       if (a.plan.kind === 'departure' && a.altitude < 1500 && a.phase === 'climb') continue; // initial climb
       let floor = ctx.msaAt(a.pos);

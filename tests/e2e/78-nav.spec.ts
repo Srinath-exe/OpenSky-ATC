@@ -87,7 +87,6 @@ test.describe('nav bar and shell chrome', () => {
   });
 
   test('position tabs mirror aria-pressed already at boot @full', async ({ openGame }) => {
-    test.fixme(true, 'BUG: src/game/NavBar/NavBar.tsx:20-27 — the aria-pressed mirror runs in a layout effect keyed on [position] only; the tabs remount when hasRadar flips (the Tooltip wrapper is dropped once the engine loads), so a freshly booted game has no aria-pressed on any position tab until the first position change');
     const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'ground' });
     await expect(game.modeTab('ground')).toHaveAttribute('aria-selected', 'true');
     await expect(game.modeTab('ground')).toHaveAttribute('aria-pressed', 'true');
@@ -339,7 +338,6 @@ test.describe('nav bar and shell chrome', () => {
   });
 
   test('ACK on the stack card collapses it into an acknowledged pill at once @full', async ({ openGame, sim, page }) => {
-    test.fixme(true, 'BUG: src/lib/sim/alerts.ts:558 AlertEngine.ack() mutates the Alert in place and simStore.useSim (simStore.ts:1186) shallow-equals the `alerts()` array, so the AlertStack (`useSim((s) => s.alerts())`) does not re-render on ack: the card with its ACK button stays until the next sim-second tick instead of collapsing into alert-pill-{id}');
     const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'approach' });
     await spawnArrival(sim);
     await sim.forceEmergency('UAL9', 'engine_fire');
@@ -781,7 +779,6 @@ test.describe('nav bar and shell chrome', () => {
   });
 
   test('Esc with the help overlay open over an onboarding tip closes the overlay and keeps the tip @full', async ({ openGame, page }) => {
-    test.fixme(true, 'BUG: src/game/HelpOverlay/OnboardingTips.tsx:63-75 — the tips\' capture-phase keydown listener stays armed while the tip is not rendered (shell.open.help / pause return null), so Esc pressed to close the help overlay is swallowed (stopPropagation) and dismisses the tips for good (onboarding_seen=1) while the overlay stays open ; expected first Esc closes help-overlay and tip-1 is visible again ; actual help-overlay still open, tip gone, skycontrol_onboarding_seen=1, a second Esc closes the overlay ; repro settings -> Replay tips, press ?, press Esc');
     const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'ground' });
     await game.settingsBtn().click();
     await page.getByTestId('set-reset-tips').click();

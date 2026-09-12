@@ -292,7 +292,7 @@ export interface EngineCtxSource {
   runwayState?(name: string): RunwayState | undefined;
   runwayStates?(): RunwayState[];
   runwayOccupant?(name: string, exceptId?: number): string | null;
-  arrivalOnFinal?(name: string, nm: number): { callsign: string; nm: number } | null;
+  arrivalOnFinal?(name: string, nm: number): { callsign: string; nm: number; a?: AircraftState } | null;
   weightAllowed?(name: string, wc: WeightClass): boolean;
   standOccupant?(ref: string): string | null;
   wakeTimerRemainingS?(name: string, follower?: AircraftState['wakeCategory']): number;
@@ -364,7 +364,8 @@ export function actionCtxFromEngine(engine: EngineCommandApi, a: AircraftState |
     otherArrivalsOnFinal: arrivalsOnFinal,
     runwayStatus: (r) => rs(e, r)?.status ?? 'open',
     runwayOccupant: (r) => (e.runwayOccupant ? e.runwayOccupant(r, a?.id) : (rs(e, r)?.occupiedBy.find(o => o.id !== a?.id)?.callsign ?? null)),
-    arrivalOnFinal: (r) => { const x = e.arrivalOnFinal?.(r, 10); return x ? { callsign: x.callsign, nm: x.nm } : null; },
+    // the engine helper matches the runway strip (both ends); the tree wants the arrival for THIS end
+    arrivalOnFinal: (r) => { const x = e.arrivalOnFinal?.(r, 10); const end = x?.a ? (x.a.plan.runway ?? x.a.assignedRunway ?? '').toUpperCase() : r.toUpperCase(); return x && end === r.toUpperCase() ? { callsign: x.callsign, nm: x.nm } : null; },
     parallelRunways: (r) => e.parallelRunways?.(r) ?? [],
     weightAllowed: (r) => (wc && e.weightAllowed ? e.weightAllowed(r, wc) : true),
     runwayActive: (r, role) => { const s = rs(e, r); return s ? (role === 'dep' ? s.activeDep : s.activeArr) : true; },

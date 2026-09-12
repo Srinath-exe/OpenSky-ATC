@@ -15,6 +15,7 @@ export function isEditableTarget(t: EventTarget | null): boolean {
 export function isPickerTarget(t: EventTarget | null): boolean {
   const el = t as HTMLElement | null
   if (!el || typeof el.closest !== 'function') return false
+  if (el.closest('[data-testid="strip-bay"]')) return false   // the strip bay is a listbox too, but it keeps the shell hotkeys live
   return !!el.closest('[role="slider"],[role="listbox"],[role="radiogroup"],[role="dialog"] [data-picker],[data-picker]')
 }
 
@@ -23,8 +24,11 @@ export function keyChord(e: KeyboardEvent): string {
   const parts: string[] = []
   if (e.ctrlKey || e.metaKey) parts.push('Ctrl')
   if (e.altKey) parts.push('Alt')
-  const key = e.key === ' ' ? 'Space' : e.key.length === 1 ? e.key : e.key
-  const isGlyph = key.length === 1
+  // Shift+digit: report the digit (the shifted glyph differs per layout) so "Shift+1" is a distinct chord from "1"
+  const digit = e.shiftKey ? /^Digit(\d)$/.exec(e.code)?.[1] : undefined
+  const key = digit ?? (e.key === ' ' ? 'Space' : e.key)
+  if (digit) parts.push('Shift')
+  const isGlyph = key.length === 1 && !digit
   if (e.shiftKey && !isGlyph) parts.push('Shift')
   parts.push(isGlyph ? key.toUpperCase() === key.toLowerCase() ? key : key.toUpperCase() : key)
   return parts.join('+')

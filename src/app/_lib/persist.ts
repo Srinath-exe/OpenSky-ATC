@@ -59,6 +59,8 @@ function notify() { for (const l of listeners) l(); }
 function subscribe(fn: () => void) {
   listeners.add(fn);
   const unsub = sim.subscribe(fn);
+  // subscriptions happen after hydration: first chance to read the persisted settings / high score without an SSR mismatch
+  sim.hydratePersisted();
   return () => { listeners.delete(fn); unsub(); };
 }
 

@@ -76,6 +76,7 @@ export function useShellHotkeys(shell: ShellState, { hasRadar, openPause }: Shel
       case 'Ctrl+Z': if (editable) return false; sim.undo(); return true
       case 'Escape': {
         if (editable) { (e.target as HTMLElement).blur?.(); return true }
+        if (document.querySelector('[data-map-floating="1"]')) return false   // the map closes its own popover / menu / bubble first
         if (s.closeTop()) return true
         if (sim.selectedId != null) { sim.select(null); return true }
         openPause()

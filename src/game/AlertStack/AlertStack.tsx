@@ -111,7 +111,7 @@ export function AlertStack() {
       if (t) { clearTimeout(t); timers.current.delete(id) }
       const rec = sim.engine?.alerts.byId(id)
       const delta = rec?.scoreDelta ?? 0
-      const k = Date.now()
+      const k = Date.now() + Math.random()   // unique per pill even when two alerts resolve in the same tick
       setResolved((r) => [...r, { id, title: prev.title, delta, k }])
       setTimeout(() => setResolved((r) => r.filter((x) => x.k !== k)), 3000)
     }

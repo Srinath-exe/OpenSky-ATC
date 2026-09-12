@@ -41,8 +41,10 @@ function AtisChip() {
   const atis = useSim((s) => s.atis())
   const rwys = useSim((s) => s.runways())
   const open = !!shell.open.atis
-  const dep = atis?.activeDep?.length ? atis.activeDep.join('/') : rwys.filter((r) => r.activeDep).map((r) => r.name).join('/') || '—'
-  const arr = atis?.activeArr?.length ? atis.activeArr.join('/') : rwys.filter((r) => r.activeArr).map((r) => r.name).join('/') || '—'
+  // more than two ends: "27R/27L +2" keeps the chip from clipping mid-token at 1600 px (full list in the ATIS panel)
+  const short = (list: string[]) => (list.length > 2 ? `${list.slice(0, 2).join('/')} +${list.length - 2}` : list.join('/')) || '—'
+  const dep = short(atis?.activeDep?.length ? atis.activeDep : rwys.filter((r) => r.activeDep).map((r) => r.name))
+  const arr = short(atis?.activeArr?.length ? atis.activeArr : rwys.filter((r) => r.activeArr).map((r) => r.name))
   const wind = atis ? `${String(Math.round(atis.wind.dir)).padStart(3, '0')}/${String(Math.round(atis.wind.kts)).padStart(2, '0')}${atis.wind.gust ? `G${Math.round(atis.wind.gust)}` : ''}` : '—'
   return (
     <Pill

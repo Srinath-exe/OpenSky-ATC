@@ -310,7 +310,6 @@ test.describe('ground map', () => {
   });
 
   test('Shift+1 recalls camera slot 1 from the keyboard as the presets popover advertises @full', async ({ openGame, sim, page }) => {
-    test.fixme(true, 'BUG: src/game/GameShell/useShellHotkeys.ts:100 + src/game/hooks/useHotkeys.ts:26-29 — keyChord drops Shift for glyph keys, so Shift+1 reaches the shell as the chord "1" (sim rate 1x, handled + preventDefault) and GroundView/index.tsx:573 never sees it (e.defaultPrevented); on a US layout the browser key is "!" which its /^[1-6]$/ test on e.key rejects as well ; expected Shift+1..6 to recall the saved camera slot (toolbar tooltip "Shift 1-6", slot title "Shift+1") ; actual nothing happens (rate 1x) ; repro: save slot 1, move the camera, press Shift+1');
     const game = await openGame(GROUND);
     await page.getByTestId('map-tool-presets').click();
     await page.getByTestId('preset-auto-rwy-27L').click();
@@ -326,7 +325,6 @@ test.describe('ground map', () => {
   });
 
   test('Escape closes an open layers / presets popover instead of pausing the game @full', async ({ openGame, page }) => {
-    test.fixme(true, 'BUG: src/game/GameShell/useShellHotkeys.ts:76-82 — the shell\'s Escape handler runs before the ground map\'s (GroundView/index.tsx:569-572 only closes its floating chrome when the event is not defaultPrevented): with nothing selected it opens the pause menu, so Escape over an open layers / presets popover pauses the shift and leaves the popover open ; expected Escape to close the popover first (the map\'s own contract) ; actual pause-menu opens, popover stays ; repro: GROUND, click map-tool-layers, press Escape');
     const game = await openGame(GROUND);
     await page.getByTestId('map-tool-layers').click();
     await expect(page.getByTestId('map-layers-popover')).toBeVisible();
@@ -464,7 +462,6 @@ test.describe('ground map', () => {
   });
 
   test('edge arrow: a selected aircraft outside the view shows the arrow; clicking it centres the map on it @full', async ({ openGame, sim, page }) => {
-    test.fixme(true, 'BUG: src/components/atc/GroundView/render.ts:604-605 — the off-screen edge arrow is clamped 28 px inside the FULL map canvas (cam.w / cam.h), but the strip bay (left) and the command panel (right) float over the map, so an arrow pointing east / west lands under the panel / bay and cannot be clicked (Playwright: "<aside data-testid=detail-panel> intercepts pointer events") ; expected the arrow to be clamped to the uncovered map area ; actual it is hidden behind the chrome ; repro: select a taxiing aircraft, fly to the RWY 09L preset, click map-edge-arrow');
     const game = await openGame(GROUND);
     await sim.spawnAt(readyToTaxi('BAW8', '401'));
     await game.selectStrip('BAW8');

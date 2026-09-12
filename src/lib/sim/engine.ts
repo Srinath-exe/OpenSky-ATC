@@ -3179,7 +3179,8 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     if (!rs) return [];
     const hdg = rs.headingTrue; const thr = this.thresholdXY(rs.name); if (!thr) return [];
     const alongNow = isAirborne(a) ? 0 : alongTrack(a.pos, thr, hdg);
-    const def = this.sc(a).exitPlan ?? (a.phase === 'rollout' || a.phase === 'lineup' ? this.chooseExit(a, rs.ref, hdg, a.speed, null, a.phase === 'lineup') : null);
+    // default: the planned exit; before touchdown, the exit the pilot would take at a typical landing roll speed
+    const def = this.sc(a).exitPlan ?? (a.phase === 'rollout' || a.phase === 'lineup' ? this.chooseExit(a, rs.ref, hdg, a.speed, null, a.phase === 'lineup') : isAirborne(a) ? this.chooseExit(a, rs.ref, hdg, 120, a.exitTaxiway, false) : null);
     const out: Array<{ taxiway: string; distAheadM: number; dir: 'L' | 'R'; highSpeed: boolean; engineDefault: boolean; passed: boolean }> = [];
     const seen = new Set<string>();
     for (const ex of this.runwayExits(rs.ref)) {
@@ -3190,7 +3191,10 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       seen.add(ex.taxiway);
       out.push({ taxiway: ex.taxiway, distAheadM: along - alongNow, dir: crossTrack(twy, thr, hdg) > 0 ? 'R' : 'L', highSpeed: angle >= 8 && angle <= 55, engineDefault: def?.taxiway === ex.taxiway, passed: along < alongNow + 10 });
     }
-    return out.sort((x, y) => x.distAheadM - y.distAheadM);
+    const ahead = out.filter(e => !e.passed).sort((x, y) => x.distAheadM - y.distAheadM);
+    const top = ahead.slice(0, 8);
+    const d = ahead.find(e => e.engineDefault); if (d && !top.includes(d)) top.push(d);
+    return top;
   }
   /** Leave the runway via an exit: runway node -> taxiway node -> until clear of the hold line, then stop. */
   private exitViaTaxiway(a: AircraftState, rs: RunwayState, exit: ExitPlan, fromLineup: boolean) {

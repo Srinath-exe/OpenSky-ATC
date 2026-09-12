@@ -140,9 +140,10 @@ function drawChart(fr: Frame, hit: HitGeometry): void {
       ctx.closePath();
     } else continue;
     // Half the .08 tint per polygon: CTR/TMA areas overlap several deep at EGLL and the fills stack.
-    ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = t.redTint08; ctx.fill(); ctx.restore();
+    // faint: the areas are context, not traffic (design A10 — map overlays stay under the data); outline carries the shape
+    ctx.save(); ctx.globalAlpha = 0.22; ctx.fillStyle = t.redTint08; ctx.fill(); ctx.restore();
     ctx.strokeStyle = t.redBorder25; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
-    if (cam.pxPerNM > 5) {
+    if (cam.pxPerNM > 14) {
       ctx.fillStyle = t.text4; ctx.font = font(t, 11); ctx.textAlign = 'center';
       ctx.fillText(`${a.name ?? 'Restricted'}${a.altFt ? ` · ${fmtAlt(a.altFt)}` : ''}`, lx / n, ly / n);
     }
@@ -189,14 +190,14 @@ function drawChart(fr: Frame, hit: HitGeometry): void {
     ctx.strokeStyle = active ? t.lime : t.lime50; ctx.lineWidth = active ? 2 : 1; ctx.setLineDash([10, 6]);
     ctx.beginPath(); ctx.moveTo(thrS.x, thrS.y); ctx.lineTo(e.x, e.y); ctx.stroke(); ctx.setLineDash([]);
     // 2000/3000/4000 ft glideslope intercept circles
-    if (ils && cam.pxPerNM > 4) {
+    if (ils && cam.pxPerNM > 8) {
       ctx.strokeStyle = t.w35; ctx.lineWidth = 1;
       ctx.fillStyle = t.text5; ctx.font = font(t, 10); ctx.textAlign = 'left';
       for (const ft of [2000, 3000, 4000]) {
         const d = gsDistM(ft, ils);
         const p = cam.toScreen(advance(rw.thr, app, d));
         ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, TAU); ctx.stroke();
-        if (cam.pxPerNM > 9) ctx.fillText(String(ft), p.x + 6, p.y + (rw.course > 90 && rw.course < 270 ? -7 : 7));
+        if (cam.pxPerNM > 22 && active) ctx.fillText(String(ft), p.x + 6, p.y + (rw.course > 90 && rw.course < 270 ? -7 : 7));
       }
     }
   }

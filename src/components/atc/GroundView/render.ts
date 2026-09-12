@@ -62,6 +62,8 @@ export interface FrameInput {
   version: number;
   /** Player selected a heading-drag direction key while dragging. */
   reducedMotion: boolean;
+  /** Map area covered by floating chrome (strip bay / command panel), CSS px — edge markers stay inside the uncovered part. */
+  insets?: { left: number; right: number; top: number; bottom: number };
 }
 
 interface Placed { x: number; y: number; w: number; h: number }
@@ -602,7 +604,8 @@ export class GroundRenderer {
       if (isSel && !this.onScreen(cam, x, y, 0) && !edgeSet) {
         edgeSet = true;
         const cx = cam.w / 2, cy = cam.h / 2; const dx = x - cx, dy = y - cy; const ang = Math.atan2(dy, dx);
-        const m = 28; const tx = Math.max(m, Math.min(cam.w - m, cx + Math.cos(ang) * 10000)), ty = Math.max(m, Math.min(cam.h - m, cy + Math.sin(ang) * 10000));
+        const m = 28; const ins = f.insets ?? { left: 0, right: 0, top: 0, bottom: 0 };
+        const tx = Math.max(ins.left + m, Math.min(cam.w - ins.right - m, cx + Math.cos(ang) * 10000)), ty = Math.max(ins.top + m, Math.min(cam.h - ins.bottom - m, cy + Math.sin(ang) * 10000));
         this.edge = { x: tx, y: ty, angle: ang / DEG, callsign: a.callsign };
       }
       if (!visible) continue;

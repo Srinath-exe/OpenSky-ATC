@@ -112,7 +112,7 @@
   z-index: calc(var(--z-float) + 2);
   max-width: calc(100% - var(--bay-w) - var(--cmd-w) - var(--float-gap) * 4);
   /* leave the top strip free for the alert stack (UX §2.3: panels never overlap) */
-  max-height: calc(100% - var(--float-gap) * 2 - 240px);
+  max-height: calc(55% - var(--float-gap));
   display: flex;
   animation: global(ds-rise) var(--t-base) var(--ease-out) both;
 }

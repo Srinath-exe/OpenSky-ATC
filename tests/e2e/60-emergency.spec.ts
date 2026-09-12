@@ -904,7 +904,6 @@ test.describe('emergencies: actions and services', () => {
   });
 
   test('cancel MAYDAY drops the 7700 squawk @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/lib/sim/engine.ts:2395 SimEngine.resolveEmergency() (the path behind emerg-cancel-ack / emergencyCancelAck) only drops a.priority and never clears the emergency squawk, unlike emergencies.ts:537 resolveEmergency() which resets 7700/7600/7500 ; expected the aircraft to stop squawking 7700 once "roger, MAYDAY cancelled" is transmitted (03 §3 squawk: emergency codes are set by the pilot for the emergency only) ; actual a.squawk stays "7700" after status === "resolved" ; repro forceEmergency(engine_fire) -> sim.request(cs, "cancel_mayday") -> emerg-cancel-ack -> TRANSMIT -> sim.aircraft(cs).squawk === "7700"');
     const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'approach' });
     await sim.spawnAt(arrival('BAW1'));
     const sq0 = (await sim.aircraftOrFail('BAW1')).squawk;
@@ -1006,7 +1005,6 @@ test.describe('emergencies: actions and services', () => {
   });
 
   test('Recall on a Vehicles panel card updates the card state at once (no sim tick needed) @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/lib/sim/vehicles.ts:690 Fleet.recall() flips the Vehicle to "returning" in place and simStore.useSim (src/components/atc/simStore.ts:1186) shallow-equals the `vehicles()` array, so the VehiclePanel card (`useSim((s) => s.vehicles())`) does not re-render on the Recall click ; expected veh-card-{id}-status[data-state=returning] and the Recall button disabled immediately ; actual the card keeps "On scene" / "En route" until the next whole sim second (the `time` selector changes) ; repro dispatch ARFF -> vehicle-recall-FIRE1 click -> sim.vehicle("FIRE1").state === "returning" but veh-card-FIRE1-status still data-state=enroute (same root cause as the alert ACK fixme in 65-alerts.spec.ts and 78-nav.spec.ts:332)');
     const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'tower', waitMap: true });
     await sim.spawnAt(arrival('BAW1'));
     await sim.forceEmergency('BAW1', 'engine_fire');

@@ -194,6 +194,21 @@ const BAY_ORDER: Record<Position, BayId[]> = {
 /** Bays sorted by distance to threshold (arrival flow). */
 const DISTANCE_BAYS = new Set<BayId>(['FINAL', 'SEQUENCE', 'ESTABLISHED', 'TO_TOWER', 'INBOUND']);
 
+/** Drop persisted values that are outside the Settings domain (old / edited / foreign blobs must not break `load()`). */
+function sanitizeSettings(s: Settings): Settings {
+  const out: Settings = { ...s };
+  const d = DEFAULT_SETTINGS as unknown as Record<string, unknown>;
+  const o = out as unknown as Record<string, unknown>;
+  for (const k of Object.keys(d)) {
+    if (d[k] == null) { if (o[k] != null && typeof o[k] !== 'number' && typeof o[k] !== 'string' && typeof o[k] !== 'boolean') o[k] = d[k]; continue; }   // nullable option (e.g. pilotDelayS)
+    if (o[k] == null || typeof o[k] !== typeof d[k] || (typeof o[k] === 'number' && !isFinite(o[k] as number))) o[k] = d[k];
+  }
+  if (!['low', 'normal', 'high'].includes(out.difficulty)) out.difficulty = DEFAULT_SETTINGS.difficulty;
+  if (!['satellite', 'chart'].includes(out.groundTheme)) out.groundTheme = DEFAULT_SETTINGS.groundTheme;
+  if (typeof out.volume === 'number') out.volume = Math.min(1, Math.max(0, out.volume));
+  return out;
+}
+
 /** Autospawn tuning per difficulty: traffic cap and spawn cadence (sim s). */
 const SPAWN_TUNING: Record<Settings['difficulty'], { base: number; lo: number; hi: number; depShare: number }> = {
   low: { base: 5, lo: 90, hi: 150, depShare: 0.55 },
@@ -283,11 +298,26 @@ class SimStore implements TestApiHost {
   private urlTest: ReturnType<typeof readUrlParams> | null = null;
 
   constructor() {
-    this.settings = persist.loadSettings(DEFAULT_SETTINGS);
+    // defaults only: the SSR HTML is rendered from these, so the client must hydrate against the same values
+    // (persisted settings / high score are read in `hydratePersisted()` from the page's mount effect).
+    this.settings = { ...DEFAULT_SETTINGS };
+    this.highScore = 0;
+    sound.setEnabled(this.settings.sound);
+    sound.setTTS(this.settings.tts);
+    sound.setVolume(this.settings.volume);
+  }
+  private persistedLoaded = false;
+  /** Read localStorage once (after hydration): settings blob (validated) + high score. Safe to call repeatedly. */
+  hydratePersisted(): void {
+    if (this.persistedLoaded || typeof window === 'undefined') return;
+    this.persistedLoaded = true;
+    this.settings = sanitizeSettings(persist.loadSettings(DEFAULT_SETTINGS));
     this.highScore = persist.loadHighScore();
     sound.setEnabled(this.settings.sound);
     sound.setTTS(this.settings.tts);
     sound.setVolume(this.settings.volume);
+    this.memo.clear();
+    this.emit();
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -295,6 +325,7 @@ class SimStore implements TestApiHost {
   // ═══════════════════════════════════════════════════════════════════════════
   subscribe = (fn: () => void): (() => void) => {
     this.listeners.add(fn);
+    if (!this.persistedLoaded) queueMicrotask(() => this.hydratePersisted());
     return () => { this.listeners.delete(fn); };
   };
   emit(): void {
@@ -345,6 +376,7 @@ class SimStore implements TestApiHost {
    * starts the RAF loop (never in test mode).
    */
   async load(cfg: StartConfig): Promise<void> {
+    this.hydratePersisted();
     const token = ++this.loadToken;
     const url = this.urlTest ?? readUrlParams();
     this.urlTest = null;
@@ -424,6 +456,7 @@ class SimStore implements TestApiHost {
    * restarts the RAF loop when an engine exists. Returns false when there is nothing to resume.
    */
   resume(): boolean {
+    this.hydratePersisted();
     if (!this.engine || this.loading) return false;
     if (!this.testMode) this.start();
     this.emit();

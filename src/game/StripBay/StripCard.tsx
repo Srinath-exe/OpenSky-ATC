@@ -35,7 +35,7 @@ const DEP_BOXES: BoxDef[] = [
 const ARR_BOXES: BoxDef[] = [
   { key: 'I', label: 'Approach', action: 'action-ils', done: (a) => a.ilsArmed || a.ilsCaptured },
   { key: 'L', label: 'Land', action: 'action-land', done: (a) => a.landingCleared },
-  { key: 'E', label: 'Exit', action: 'action-exit', done: (a, s) => a.exitTaxiway != null || ['taxi_in', 'arrived'].includes(s) },
+  { key: 'E', label: 'Exit', action: 'action-exit', done: (a, s) => a.exitTaxiway != null || a.exitDir != null || ['taxi_in', 'arrived'].includes(s) },
   { key: 'F', label: 'Handoff', action: 'action-handoff', done: (a) => a.handedTo != null || a.onFrequency === 'ground' },
 ]
 

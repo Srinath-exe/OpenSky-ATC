@@ -256,7 +256,7 @@ export interface ActionCtx {
 //  Matrix cells
 // ──────────────────────────────────────────────────────────────────────────────
 export type DynRule =
-  | 'pushback' | 'startup' | 'hold_position_startup' | 'hold_fix_alt' | 'continue_pushback' | 'continue'
+  | 'pushback' | 'startup' | 'hold_position_startup' | 'hold_fix_alt' | 'continue_pushback' | 'continue' | 'hold_short_taxi'
   | 'cross_next' | 'lineup_near' | 'takeoff_near' | 'cancel_takeoff_speed' | 'cancel_approach_dist' | 'exit_agl'
   | 'resume_sid' | 'ils_positioned' | 'ils_available' | 'change_runway' | 'handoff_ground' | 'handoff_taxi_out'
   | 'handoff_rollout' | 'recent_pilot_line' | 'req_pending' | 'standby' | 'sandbox' | 'rollout_dep'
@@ -288,7 +288,7 @@ export const ACTION_MATRIX: Record<ActionId, MatrixRow> = {
   'action-taxi-stand': row('-', { taxi_out: 'on', taxi_in: 'on', hold_short_cross: 'on', rollout: 'on' }),
   'action-taxi-point': row('-', { startup: 'on', taxi_out: 'on', taxi_in: 'on', hold_short_dep: 'on', hold_short_cross: 'on' }),
   'action-amend-route': row('-', { taxi_out: 'on', taxi_in: 'on', hold_short_dep: 'on', hold_short_cross: 'on' }),
-  'action-hold-short': row('-', { taxi_out: 'on', taxi_in: 'on', hold_short_dep: 'off:R18', hold_short_cross: 'off:R18', rollout: 'on' }),
+  'action-hold-short': row('-', { taxi_out: 'dyn:hold_short_taxi', taxi_in: 'dyn:hold_short_taxi', hold_short_dep: 'off:R18', hold_short_cross: 'off:R18', rollout: 'on' }),
   'action-hold-position': row('-', { startup: 'dyn:hold_position_startup', pushback: 'on', taxi_out: 'on', taxi_in: 'on', hold_short_dep: 'on', hold_short_cross: 'on', lineup: 'on', rollout: 'on' }),
   'action-hold-fix': row('-', { takeoff_air: 'dyn:hold_fix_alt', dep_climb: 'on', dep_level: 'on', go_around: 'on', arr_inbound: 'on', arr_armed: 'on', arr_established: 'off:X4' }),
   'action-continue': row('-', { pushback: 'dyn:continue_pushback', taxi_out: 'dyn:continue', taxi_in: 'dyn:continue' }),
@@ -352,6 +352,7 @@ export const DYNAMIC_RULES: Record<DynRule, (a: AircraftState, ctx: ActionCtx) =
   continue_pushback: a => (a.pushback.stage === 'paused' ? enabled : disabled('R12')),
   // Mirrors engine.cmdContinue: a manual / traffic hold, or stopped at a taxiway (non-runway) hold-short place. A taxi path that
   // merely ends at the runway hold is not an active hold (the engine answers "No hold active").
+  hold_short_taxi: a => (a.phase === 'hold_short' && a.holdShortTaxiway != null ? disabled('R18') : enabled),
   continue: a => (a.trafficHold || a.holdShortTaxiway != null || (a.phase === 'hold_short' && a.holdShortNode != null && !a.holdShortRunway) ? enabled : hidden),
   cross_next: (_a, ctx) => (ctx.nextHoldIsCrossing && ctx.nextCrossingRunway ? enabled : hidden),
   lineup_near: (_a, ctx) => (ctx.distToNextHoldM != null && ctx.distToNextHoldM < 200 && !ctx.nextHoldIsCrossing ? enabled : disabled('R1')),
@@ -1242,7 +1243,8 @@ function validatePart(ast: CommandAST, a: AircraftState | null, ctx: ActionCtx):
       }
       const recip = reciprocalRunway(rwy);
       const opp = recip !== rwy ? ctx.arrivalOnFinal(recip) : null;
-      if (opp && opp.callsign !== a?.callsign) { if (opp.nm < 4) hard('runway_occupied', `Opposite-end arrival ${opp.callsign} ${opp.nm.toFixed(1)} NM final ${recip}`, 'R4'); else soft(`Opposite-end arrival ${opp.callsign} ${opp.nm.toFixed(1)} NM final ${recip}`, 'R4'); }
+      // ctx.arrivalOnFinal matches the runway strip (both ends): only a different aircraft than the same-end arrival is an opposite-end one
+      if (opp && opp.callsign !== a?.callsign && opp.callsign !== arr?.callsign) { if (opp.nm < 4) hard('runway_occupied', `Opposite-end arrival ${opp.callsign} ${opp.nm.toFixed(1)} NM final ${recip}`, 'R4'); else soft(`Opposite-end arrival ${opp.callsign} ${opp.nm.toFixed(1)} NM final ${recip}`, 'R4'); }
       const oppOcc = recip !== rwy ? ctx.runwayOccupant(recip) : null;
       if (oppOcc && oppOcc !== a?.callsign && oppOcc !== occ) soft(`Departure ${oppOcc} rolling from ${recip}`);
       for (const x of ctx.intersectingRunways?.(rwy) ?? []) {

@@ -140,6 +140,8 @@ function PanelBody({ a, position, pinned, onPin, className }: { a: AircraftState
     const el = rootRef.current
     if (!el) return
     if (isEditableTarget(document.activeElement)) return
+    // the strip bay keeps the keyboard while the user is arrowing through strips (UX 04 §3.3)
+    if (document.activeElement?.closest?.('[data-testid="strip-bay"]')) return
     el.focus({ preventScroll: true })
   }, [])
 

@@ -112,7 +112,6 @@ test.describe('typed command errors', () => {
   });
 
   test('bare HOLD on an airborne arrival asks for the fix, it is not a hold-position order @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/lib/sim/commands.ts:624 — a bare "UAL9 HOLD" (no fix) is parsed as holdPosition regardless of the stage, so the engine (engine.ts:1679 cmdHoldPosition) refuses an airborne arrival 20 NM out with "Airborne — use Go around" ; expected the missing-parameter reason "Hold at which fix?" / "Fix required" (05 §4.9 row "UAL9 HOLD") ; actual SYS "UAL9 HOLD — Airborne — use Go around" ; repro: spawn inbound UAL9 on APPROACH, type "UAL9 HOLD"');
     const game = await openGame(APP);
     await sim.spawnAt(inbound('UAL9'));
     await rejected(game, sim, 'UAL9 HOLD', /[Ff]ix/);

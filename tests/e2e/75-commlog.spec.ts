@@ -222,7 +222,6 @@ test.describe('comm log', () => {
   });
 
   test('history walks with repeated ArrowUp and back down with ArrowDown @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/game/CommLog/CommLog.tsx:289-306 — the recalled text opens the autocomplete menu (value non-empty + focused), and while menuOpen ArrowUp / ArrowDown move the menu\'s active item instead of the history index, so only the newest entry can ever be recalled');
     const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'approach' });
     await spawnArrival(sim);
     await game.sendOk('UAL9 HEADING 180');
@@ -300,7 +299,6 @@ test.describe('comm log', () => {
   });
 
   test('after UNDO the pilot does not read back the disregarded instruction @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/lib/sim/engine.ts:2292 cmdDisregard() drops the pending command but leaves its ScheduledReadback in `readbacks`: after "disregard" at t+1.5 the pilot still reads back "Heading one eight zero" at t+3.0, then "Disregard" at t+4.5');
     const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'approach' });
     await spawnArrival(sim);
     const atc = await game.sendOk('UAL9 HEADING 180');
@@ -391,7 +389,6 @@ test.describe('comm log', () => {
     // BUG: src/design/primitives/ScrollArea/ScrollArea.tsx:30 calls `onAtBottomChange` inside the `setAtBottom` updater,
     // so React logs "Cannot update a component (`CommLog`) while rendering a different component (`ScrollArea`)" as a
     // console.error whenever the log is scrolled (the console collector fails the test on it).
-    test.fixme(true, 'BUG: src/design/primitives/ScrollArea/ScrollArea.tsx:30 — onAtBottomChange is invoked inside the setAtBottom updater; React reports "Cannot update a component (CommLog) while rendering a different component (ScrollArea)" (console.error) on every scroll of the radio log');
     const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'ground' });
     const gates = await sim.gates();
     for (let i = 0; i < 20; i++) await sim.spawnAt({ callsign: `TST${i}`, type: A320, kind: 'departure', phase: 'parked', gate: gates[5 + i], plan: { runway: '27L' } });
@@ -599,7 +596,6 @@ test.describe('comm log', () => {
   });
 
   test('a wrong readback is audible: the PILOT line carries the wrong value so the player can catch it @full', async ({ openGame, sim, page }) => {
-    test.fixme(true, 'BUG: src/lib/sim/engine.ts:1397-1399 wrongReadback() perturbs a DIGIT token (text.replace(/\\b\\d{3}\\b/, ...) / String(ast.ft)) but the phraseology renders spoken numbers ("Heading one eight zero", "descend to fife thousand"), so the readback text is unchanged while readback.mismatch is set ; expected the PILOT line to read "one seven zero" / "one niner zero" ; actual "Heading one eight zero, United niner." flagged data-status=mismatch, READBACK_ERROR_MISSED scored 15 s later for an error the player could not hear ; repro pilotErrorRate=1, send "UAL9 HEADING 180", advance 3.1');
     const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'approach' });
     await spawnArrival(sim);
     await forceWrongReadbacks(page);

@@ -671,7 +671,6 @@ test.describe('strip bay', () => {
   });
 
   test('ArrowDown / ArrowUp inside the bay walk the selection through the visible strips @full', async ({ openGame, sim, page }) => {
-    test.fixme(true, 'BUG: src/game/CommandPanel/CommandPanel.tsx:139-144 — the panel mount effect focuses the panel root whenever an aircraft gets selected, so StripBay.tsx focusStrip() loses the focus it just gave the strip; the bay-local ArrowDown / ArrowUp handler (StripBay.tsx onBayKey, UX 04 §3.3 "↑/↓ within bay") only works for the first press: every further arrow lands on the panel and the selection never moves ; expected UAL9 -> DAL5 -> SWR7 ; actual UAL9 stays selected with document.activeElement = detail-panel ; repro focus strip-UAL9, press ArrowDown twice');
     const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'approach' });
     await sim.spawnAt({ callsign: 'UAL9', type: A320, kind: 'arrival', phase: 'descent', posRel: { fromRunway: '27L', alongNM: -20, offsetNM: -6, altFt: 8000 }, heading: 90, speedKts: 250 });
     await sim.spawnAt({ callsign: 'DAL5', type: A320, kind: 'arrival', phase: 'descent', posRel: { fromRunway: '27L', alongNM: -24, offsetNM: 6, altFt: 9000 }, heading: 90, speedKts: 250 });

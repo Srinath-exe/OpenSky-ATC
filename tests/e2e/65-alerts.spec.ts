@@ -118,7 +118,6 @@ test.describe('alerts: STCA', () => {
   });
 
   test('ACK on the stack card collapses it into the acked pill at once (no sim tick needed) @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/lib/sim/alerts.ts:558 AlertEngine.ack() mutates the Alert in place and simStore.useSim (src/components/atc/simStore.ts:1186) shallow-equals the `alerts()` array, so AlertStack (`useSim((s) => s.alerts())`), the CommandPanel AlertBanner (`alertsFor`) and the VehiclePanel cards (`vehicles()`, same pattern on recall) do not re-render on the click ; expected the card to collapse into alert-pill-{id} (and the panel banner to read "acknowledged") immediately ; actual the card with its ACK button stays until the next whole sim second (the `now` selector changes) ; repro head-on pair -> advance until the STCA is critical -> click toast-{id}-ack -> toast-{id} still in the DOM (same root cause as 78-nav.spec.ts:332)');
     const game = await openGame(APP);
     await headOnPair(sim);
     // a critical card: no wall-clock auto-dismiss can mask the missing re-render (warning cards hide after 12 s anyway)
@@ -265,7 +264,6 @@ test.describe('alerts: STCA', () => {
   });
 
   test('a head-on pair passing abeam 1100 ft apart in heading mode raises no WAKE alert @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/lib/sim/alerts.ts:361 the "wake on final" pass treats every aircraft in phase approach with a plan runway as on final (no ilsCaptured / same-track check), and its straight-line fallback (alerts.ts:377) only asks "leader ahead along the trailer heading + lateral < 0.5 NM", so opposite-direction traffic passing abeam is flagged ; expected no wake alert for two heading-mode arrivals 20+ NM out flying head-on, 1100 ft apart ; actual a critical WAKE "STA2 0.0 NM behind STA1 (MEDIUM), minimum 3 NM" on the bell and both strips ; repro headOnPair(6100) -> advance(70)');
     const game = await openGame(APP);
     await headOnPair(sim, 6100);
     await sim.advance(70);
@@ -280,7 +278,6 @@ test.describe('alerts: STCA', () => {
 
 test.describe('alerts: MSAW, runway incursion, ground conflict', () => {
   test('MSAW: an arrival below the 1500 ft AGL floor more than 5 NM out (not on an approach) raises a critical MSAW alert @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/lib/sim/engine.ts:3493 stepAlerts() builds the AlertStepCtx with `msaAt: () => null` and without `centerXY`, so alerts.ts:274-281 (the msawDefaultFloorFt fallback needs ctx.centerXY) can never find a floor and the MSAW branch is dead although features().msaw === true ; expected an arrival level at 1200 ft 14 NM out in heading mode to raise kind "msaw" (critical, "below MSA 1500 ft") with the MSAW strip tag ; actual no alert at all ; repro spawn inbound at 1200 ft / 14 NM / heading 270 -> advance(5) -> alerts() has no msaw');
     const game = await openGame(APP);
     await sim.spawnAt(inbound('MSA1', { alongNM: -14, offsetNM: 5, altFt: 1200, heading: 270, speedKts: 200 }));
     await sim.advance(5);
@@ -567,7 +564,6 @@ test.describe('alerts: stack, drawer and acknowledgement', () => {
   });
 
   test('two alerts resolving in the same tick keep distinct resolved pills (no duplicate React keys) @full', async ({ openGame, sim }) => {
-    test.fixme(true, 'BUG: src/game/AlertStack/AlertStack.tsx:114 keys every resolved pill with `k = Date.now()` inside one effect loop, so two alerts that resolve in the same sim tick get the same key ; expected two alert-resolved-{id} pills (one per alert) and a clean console ; actual React "Encountered two children with the same key" console.error (the harness fails the test) and one pill may be dropped ; repro emergency on STA3 + STCA pair STA3/STA4 -> sim.remove(STA3) -> both alerts resolve on the next step');
     const game = await openGame(APP);
     await sim.spawnAt(inbound('STA3', { alongNM: -14, altFt: 4000, heading: 90 }));
     await sim.spawnAt(inbound('STA4', { alongNM: -22, altFt: 4000, heading: 270 }));
