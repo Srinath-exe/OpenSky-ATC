@@ -21,7 +21,7 @@ import type { AircraftState } from '@/lib/sim/types';
 import { isAirborne } from '@/lib/sim/aircraft';
 import { loadWorld, type World } from './world';
 import { NOSE_WHEEL, genericLights, instantiate, lightsOf, loadAircraftModel, setModelNight, tint, type LightSpec } from './models';
-import { PALETTE, applyFades, buildAirport, buildBuildings, buildRoads, buildTerrain, setSurfaceNight, toV3, type Fade, type NightHandle } from './terrain';
+import { PALETTE, applyFades, buildAirport, buildBuildings, buildRoads, buildTerrain, setSurfaceNight, toV3, type BuildingsHandle, type Fade, type NightHandle } from './terrain';
 import { buildGse, buildJetBridges, buildLabels, buildStands, type LabelHandle } from './apron';
 import { applySky, buildClouds, buildRain, buildSky, lightingFor, sunPosition, weatherLook, type TimeMode } from './sky';
 import { IconButton, Segmented, Icon, Tooltip } from '@/design';
@@ -156,6 +156,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const rain = buildRain(); scene.add(rain.points);
     const nightHandles: NightHandle[] = [];
     let buildingMat: THREE.MeshLambertMaterial | null = null;
+    let buildings: BuildingsHandle | null = null;
     const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false });   // aircraft-shaped (acGeo), per-marker opacity
     const stemMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 });
     const decor = new THREE.Group(); scene.add(decor);
@@ -198,7 +199,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       w.flatten(field, 120);
       const t = buildTerrain(w, lite ? 192 : 512); terrainUniforms = t.uniforms; scene.add(t.mesh);
       scene.add(buildRoads(w, fades));
-      const bl = buildBuildings(w, e.air); buildingMat = bl.material as THREE.MeshLambertMaterial; scene.add(bl);
+      const bl = buildBuildings(w, e.air); buildingMat = bl.material; buildings = bl; scene.add(bl.mesh); scene.add(bl.shadows);
       const ap = buildAirport(w, e.air, fades, nightHandles); scene.add(ap);
       const base = ap.userData.base as number;
       scene.add(buildStands(w, e.air, base, fades));
@@ -510,6 +511,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       setModelNight(nightAmt); setSurfaceNight(nightAmt); lightMaterial.uniforms.uOpacity.value = 0.5 + 0.5 * nightAmt; lightMaterial.uniforms.uPixelRatio.value = renderer.getPixelRatio();
       if (buildingMat) { buildingMat.emissive.setRGB(0.028 * nightAmt, 0.028 * nightAmt, 0.032 * nightAmt); (buildingMat.userData.uNight as THREE.IUniform | undefined)!.value = nightAmt; }
       for (const nm of nightMats) nm.emissive.setRGB(0.16 * nightAmt, 0.14 * nightAmt, 0.11 * nightAmt);
+      buildings?.setSun(L.sunDir, L.day, wx.cloudCover);
       if (terrainUniforms) {
         terrainUniforms.uTime.value += dt; terrainUniforms.uCam.value.copy(camera.position);
         terrainUniforms.uFogNear.value = (scene.fog as THREE.Fog).near; terrainUniforms.uFogFar.value = (scene.fog as THREE.Fog).far; (terrainUniforms.uFog.value as THREE.Color).copy((scene.fog as THREE.Fog).color);

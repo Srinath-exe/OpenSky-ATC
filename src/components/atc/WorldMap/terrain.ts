@@ -222,9 +222,11 @@ export function buildRoads(world: World, fades: Fade[]): THREE.Group {
 }
 
 // ── buildings (extruded footprints) ──────────────────────────────────────────
-export function buildBuildings(world: World, air?: OsmAirport): THREE.Mesh {
+export interface BuildingsHandle { mesh: THREE.Mesh; material: THREE.MeshLambertMaterial; shadows: THREE.Mesh; setSun(dir: THREE.Vector3, day: number, cloud: number): void }
+
+export function buildBuildings(world: World, air?: OsmAirport): BuildingsHandle {
   const geos: THREE.BufferGeometry[] = [];
-  const colors: number[] = [];
+  const colors: number[] = []; const info: number[] = [];   // per vertex: base y, height, kind (0 building / 1 terminal / 2 hangar), seed
   // The world layer only carries OSM building WAYS; terminals mapped as relations or tagged aeroway=terminal without
   // building=* are missing from it - yet the gates, bridges and apron are laid out against exactly those outlines. So
   // the airport data's terminal / hangar polygons are extruded too, skipping the ones the world layer already has
@@ -240,6 +242,7 @@ export function buildBuildings(world: World, air?: OsmAirport): THREE.Mesh {
       list.push({ p: b.polygon.map(q => [q.lng, q.lat] as [number, number]), h: null, k: b.kind === 'terminal' ? 'terminal' : 'hangar' });
     }
   }
+  const tmpC = new THREE.Color();
   for (const b of list) {
     const pts = b.p.map(([lng, lat]) => world.toLocal(lng, lat));
     if (pts.length < 4) continue;
@@ -250,44 +253,93 @@ export function buildBuildings(world: World, air?: OsmAirport): THREE.Mesh {
     const geo = new THREE.ExtrudeGeometry(shape, { depth: h, bevelEnabled: false });
     geo.rotateX(-Math.PI / 2);                 // extrude along +y
     geo.translate(0, base, 0);
-    const c = b.k === 'terminal' ? PALETTE.terminal : PALETTE.building;
+    // a stable per-building seed varies the tint (warm / cool greys) so a district is not one flat colour
+    const seed = ((Math.sin(cx * 0.013 + cy * 0.031) * 43758.5453) % 1 + 1) % 1;
+    const kind = b.k === 'terminal' ? 1 : b.k === 'hangar' ? 2 : 0;
+    tmpC.copy(b.k === 'terminal' ? PALETTE.terminal : PALETTE.building);
+    if (kind === 0) tmpC.offsetHSL((seed - 0.5) * 0.06, 0, (seed - 0.5) * 0.12);
+    else if (kind === 2) tmpC.offsetHSL(0, 0, -0.04);
     // roofs a shade lighter than the walls so the blocks read as volumes from the tilted camera
     const n = geo.getAttribute('position').count; const nor = geo.getAttribute('normal');
-    for (let i = 0; i < n; i++) { const k = nor.getY(i) > 0.5 ? 1.1 : 0.86; colors.push(c.r * k, c.g * k, c.b * k); }
+    for (let i = 0; i < n; i++) { const k = nor.getY(i) > 0.5 ? 1.1 : 0.86; colors.push(tmpC.r * k, tmpC.g * k, tmpC.b * k); info.push(base, h, kind, seed); }
     geos.push(geo);
   }
   const merged = mergeGeometries(geos);
   merged.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  merged.setAttribute('aInfo', new THREE.Float32BufferAttribute(info, 4));
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
-  // night: rows of lit windows on the walls (world-space cells, a stable hash decides which are lit), a faint roof glow
+  // Facade detail in the shader (no extra geometry): floor slabs and window columns on the walls, glazing on terminals,
+  // a parapet band and contact shading at the base, panel seams + rooftop units on the roofs; at night rows of lit windows
+  // (world-space cells, a stable hash decides which are lit).
   const uNight = { value: 0 }; mat.userData.uNight = uNight;
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uNight = uNight;
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWNormal;')
+      .replace('#include <common>', '#include <common>\nattribute vec4 aInfo;\nvarying vec4 vInfo;\nvarying vec3 vWPos;\nvarying vec3 vWNormal;')
       .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nvWNormal = normalize(mat3(modelMatrix) * objectNormal);')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvInfo = aInfo;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWNormal;\nuniform float uNight;\nfloat bhash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }')
+      .replace('#include <common>', '#include <common>\nvarying vec4 vInfo;\nvarying vec3 vWPos;\nvarying vec3 vWNormal;\nuniform float uNight;\nfloat bhash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }')
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        {
+          float wall = 1.0 - smoothstep(0.35, 0.65, abs(vWNormal.y));
+          float roof = smoothstep(0.35, 0.65, vWNormal.y);
+          float hgt = max(vInfo.y, 1.0); float t = clamp((vWPos.y - vInfo.x) / hgt, 0.0, 1.0);
+          float terminal = step(0.5, vInfo.z) * step(vInfo.z, 1.5);
+          vec2 tng = normalize(vec2(-vWNormal.z, vWNormal.x) + vec2(1e-4, 0.0));
+          float along = dot(vWPos.xz, tng);
+          float floorF = fract((vWPos.y - vInfo.x) / 3.6), colF = fract(along / 3.4);
+          // window band: terminals are glazed curtain walls (wide band), others have punched windows
+          float wx = mix(step(0.18, colF) * step(colF, 0.82), step(0.06, colF) * step(colF, 0.94), terminal);
+          float wy = step(0.28, floorF) * step(floorF, mix(0.78, 0.9, terminal));
+          float win = wx * wy * step(2.5, hgt);
+          vec3 glass = mix(vec3(0.40, 0.47, 0.55), vec3(0.58, 0.66, 0.74), t) * (0.9 + 0.2 * bhash(vec2(floor(along / 3.4), floor((vWPos.y - vInfo.x) / 3.6)) + vInfo.w));
+          diffuseColor.rgb = mix(diffuseColor.rgb, glass, win * wall * mix(0.55, 0.9, terminal));
+          // floor slabs, parapet band, contact shading at the base
+          diffuseColor.rgb *= 1.0 - 0.16 * wall * (1.0 - smoothstep(0.0, 0.08, floorF)) * step(2.5, hgt);
+          diffuseColor.rgb *= 1.0 - 0.18 * wall * smoothstep(0.9, 0.97, t);
+          diffuseColor.rgb *= 1.0 - 0.28 * wall * (1.0 - smoothstep(0.0, 0.15, t));
+          // roof: membrane panel seams + darker rooftop plant in some cells; terminals get skylight strips
+          vec2 rp = vWPos.xz / 6.0; vec2 rf = fract(rp);
+          float seam = 1.0 - smoothstep(0.0, 0.05, min(min(rf.x, 1.0 - rf.x), min(rf.y, 1.0 - rf.y)));
+          diffuseColor.rgb *= 1.0 - 0.07 * roof * seam;
+          vec2 uc = floor(vWPos.xz / 11.0); vec2 uf = fract(vWPos.xz / 11.0);
+          float unit = step(0.86, bhash(uc + vInfo.w * 3.0)) * step(0.25, uf.x) * step(uf.x, 0.65) * step(0.3, uf.y) * step(uf.y, 0.7);
+          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.72, unit * roof * step(60.0, hgt * hgt));
+          float sky = terminal * step(0.44, fract(vWPos.x / 30.0)) * step(fract(vWPos.x / 30.0), 0.52) * step(0.2, fract(vWPos.z / 60.0)) * step(fract(vWPos.z / 60.0), 0.8);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.58, 0.66), sky * roof * 0.45);
+        }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         {
           float wall = 1.0 - smoothstep(0.35, 0.65, abs(vWNormal.y));
           vec2 tng = normalize(vec2(-vWNormal.z, vWNormal.x) + vec2(1e-4, 0.0));
           float along = dot(vWPos.xz, tng);
-          vec2 cell = vec2(floor(along / 3.4), floor(vWPos.y / 3.6));
-          vec2 f = vec2(fract(along / 3.4), fract(vWPos.y / 3.6));
+          vec2 cell = vec2(floor(along / 3.4), floor((vWPos.y - vInfo.x) / 3.6));
+          vec2 f = vec2(fract(along / 3.4), fract((vWPos.y - vInfo.x) / 3.6));
           float win = step(0.18, f.x) * step(f.x, 0.82) * step(0.28, f.y) * step(f.y, 0.78);
-          float seed = bhash(cell + floor(vWNormal.xz * 7.0));
+          float seed = bhash(cell + floor(vWNormal.xz * 7.0) + vInfo.w);
           float lit = step(0.62, seed) * (0.55 + 0.45 * bhash(cell * 1.7 + 0.3));   // ~40 % of the windows, varied brightness
           vec3 tone = mix(vec3(1.0, 0.84, 0.6), vec3(0.85, 0.92, 1.0), step(0.9, seed));
           totalEmissiveRadiance += tone * win * lit * wall * uNight * 0.85;
         }`);
   };
-  mat.customProgramCacheKey = () => 'buildings-night';
+  mat.customProgramCacheKey = () => 'buildings-facade';
   const mesh = new THREE.Mesh(merged, mat); mesh.name = 'buildings';
   const edges = new THREE.LineSegments(new THREE.EdgesGeometry(merged, 25), new THREE.LineBasicMaterial({ color: 0x0b0b0c, transparent: true, opacity: 0.35 }));
   mesh.add(edges);
-  return mesh;
+  // Sun shadows: the same geometry projected onto the ground along the sun direction in the vertex shader (walls become
+  // the skewed sides of the shadow, the roof its far end). depthFunc Less keeps overlapping faces from darkening twice.
+  const shadowUniforms = { uSun: { value: new THREE.Vector3(-0.5, 0.6, 0.5) }, uOpacity: { value: 0.3 }, uLift: { value: 0.66 } };
+  const shadowMat = new THREE.ShaderMaterial({
+    uniforms: shadowUniforms, transparent: true, depthWrite: true, depthFunc: THREE.LessDepth,
+    vertexShader: `attribute vec4 aInfo; uniform vec3 uSun; uniform float uLift;
+      void main() { float hgt = max(0.0, position.y - aInfo.x); vec3 p = position; p.xz -= uSun.xz / max(uSun.y, 0.25) * hgt; p.y = aInfo.x + uLift;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }`,
+    fragmentShader: `uniform float uOpacity; void main() { gl_FragColor = vec4(0.02, 0.02, 0.035, uOpacity); }`,
+  });
+  const shadows = new THREE.Mesh(merged, shadowMat); shadows.name = 'building-shadows'; shadows.frustumCulled = false; shadows.renderOrder = 4;
+  const setSun = (dir: THREE.Vector3, day: number, cloud: number) => { shadowUniforms.uSun.value.copy(dir); shadowUniforms.uOpacity.value = 0.32 * day * (1 - cloud * 0.7); shadows.visible = shadowUniforms.uOpacity.value > 0.02; };
+  return { mesh, material: mat, shadows, setSun };
 }
 
 function polyAreaM2(pts: { x: number; y: number }[]): number {
