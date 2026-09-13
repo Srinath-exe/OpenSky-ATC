@@ -19,7 +19,7 @@ import type { SessionRecord } from '@/components/atc/persist';
 
 /** src/components/atc/simStore.ts DEFAULT_SETTINGS. */
 const DEFAULTS: Settings = {
-  autoTower: false, autoGround: false, autoHandoff: true, strictFrequencies: false, emergencyRate: 'normal',
+  autoTower: false, autoGround: false, autoApproach: false, autoHandoff: true, strictFrequencies: false, emergencyRate: 'normal',
   groundTheme: 'satellite', showRings: true, difficulty: 'normal', sound: true, tts: false, volume: 0.8,
   pilotDelayS: null, readbackErrors: true, region: 'auto', instantVectors: false, typedInstant: true,
 };

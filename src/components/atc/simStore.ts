@@ -103,6 +103,7 @@ export interface Toast {
 export interface Settings {
   autoTower: boolean;
   autoGround: boolean;
+  autoApproach: boolean;
   autoHandoff: boolean;
   strictFrequencies: boolean;
   emergencyRate: 'off' | 'rare' | 'normal' | 'training';
@@ -126,7 +127,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  autoTower: false, autoGround: false, autoHandoff: true, strictFrequencies: false, emergencyRate: 'normal',
+  autoTower: false, autoGround: false, autoApproach: false, autoHandoff: true, strictFrequencies: false, emergencyRate: 'normal',
   groundTheme: 'satellite', showRings: true, difficulty: 'normal', sound: true, tts: false, volume: 0.8,
   pilotDelayS: null, readbackErrors: true, region: 'auto', instantVectors: false, typedInstant: true,
 };
@@ -917,6 +918,7 @@ class SimStore implements TestApiHost {
     const s = this.settings;
     e.settings.autoTower = s.autoTower;
     e.settings.autoGround = s.autoGround;
+    e.settings.autoApproach = s.autoApproach;
     e.settings.autoHandoff = s.autoHandoff;
     e.settings.strictFrequencies = s.strictFrequencies;
     if (!this.testMode) {

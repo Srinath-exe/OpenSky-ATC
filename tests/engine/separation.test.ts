@@ -28,7 +28,7 @@ test('air-air: 2.5 NM / same altitude is a separation loss scored once; restored
   assert.equal(cmd(e, makeAst('altitude', 'SEP1', { ft: 10000 })).code, 'ok_queued');
   const ok = runUntil(e, () => !a.conflict && !b.conflict, 120);
   assert.ok(ok.ok, 'conflict cleared with 1000 ft');
-  assert.ok(Math.abs(a.altitude - b.altitude) >= 1000);
+  assert.ok(Math.abs(a.altitude - b.altitude) >= 950, "Mode C: 950 ft reads as 1,000 ft");
   // new loss later re-emits (pair key cleared) - only after the 60 s dedupe window
   run(e, 60);
   cmd(e, makeAst('altitude', 'SEP1', { ft: 8000 }));

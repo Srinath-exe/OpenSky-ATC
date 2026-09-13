@@ -104,7 +104,8 @@ export function cpa(a: { pos: XY; heading: number; speedKt: number; altFt: numbe
   t = Math.max(0, Math.min(maxS, t));
   const cx = dx + dvx * t, cy = dy + dvy * t;
   const vert = (b.altFt + b.vsFpm * t / 60) - (a.altFt + a.vsFpm * t / 60);
-  return { tS: t, distNM: Math.hypot(cx, cy) / NM_TO_M, vertFt: Math.abs(vert), nowNM: Math.hypot(dx, dy) / NM_TO_M, nowVertFt: Math.abs(b.altFt - a.altFt) };
+  const modeC = (ft: number) => Math.round(ft / 100) * 100;   // 100 ft Mode C increments, as the engine's separation check
+  return { tS: t, distNM: Math.hypot(cx, cy) / NM_TO_M, vertFt: Math.abs(vert), nowNM: Math.hypot(dx, dy) / NM_TO_M, nowVertFt: Math.abs(modeC(b.altFt) - modeC(a.altFt)) };
 }
 
 /**

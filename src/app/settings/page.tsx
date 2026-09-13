@@ -96,6 +96,9 @@ export default function SettingsPage() {
             <ListRow title="AI tower assist" subtitle="Routine tower clearances go out on their own once they are safe" trailing={
               <StateMirror state={settings.autoTower ? 'on' : 'off'}><Toggle checked={settings.autoTower} onChange={(v) => set({ autoTower: v })} testId="set-autotower" /></StateMirror>
             } />
+            <ListRow title="AI approach assist" subtitle="Arrivals on the approach frequency are sequenced onto the ILS for you — radar contact, descent, spacing vectors, approach clearance" trailing={
+              <StateMirror state={settings.autoApproach ? 'on' : 'off'}><Toggle checked={settings.autoApproach} onChange={(v) => set({ autoApproach: v })} testId="set-autoapproach" /></StateMirror>
+            } />
             <ListRow title="Auto taxi-in" subtitle="Arrivals taxi to their stand after vacating without a ground clearance" trailing={
               <StateMirror state={settings.autoGround ? 'on' : 'off'}><Toggle checked={settings.autoGround} onChange={(v) => set({ autoGround: v })} testId="set-autoground" /></StateMirror>
             } />

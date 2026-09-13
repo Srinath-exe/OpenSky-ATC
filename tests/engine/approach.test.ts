@@ -302,3 +302,19 @@ test('15 NM auto-slow to 220 kt for arrivals without an assigned speed; a depart
   assert.ok(a.targetSpeed <= 220 && a.speed < 250, `arrival slowed (${a.speed.toFixed(0)} kt)`);
   assert.ok(d.speed >= 249, 'departure keeps 250');
 });
+
+test('AI approach assist: three arrivals are sequenced onto the ILS (radar contact, descent, 30-degree intercept beyond the 10 NM gate) without a separation loss', () => {
+  const e = makeEngine('EGLL', { ends: ['27R', '27L'] });
+  e.settings.autoApproach = true; e.settings.autoTower = true;
+  const list = [e.spawnArrival()!, e.spawnArrival()!, e.spawnArrival()!];
+  for (const a of list) { a.plan.runway = '27L'; a.assignedRunway = '27L'; }
+  const cap = runUntil(e, () => list.every(a => ['rollout', 'taxi', 'hold_short', 'arrived'].includes(a.phase) || !e.aircraft.includes(a)), 2400, 2);
+  assert.ok(cap.ok, `all landed (${list.map(a => `${a.callsign}:${a.phase}/${a.ilsCaptured}`).join(' ')})`);
+  assert.equal(evs(e, 'separation_loss').length, 0, evs(e, 'separation_loss').map(x => x.message).join('; '));
+  assert.equal(evs(e, 'diversion').length, 0);
+  assert.equal(evs(e, 'go_around').length, 0, evs(e, 'go_around').map(x => x.message).join('; '));
+  const ai = evs(e, 'transmission').filter(x => /^AI APP:/.test(x.message));
+  assert.ok(ai.some(x => /radar contact/.test(x.message)) && ai.some(x => /cleared ILS/.test(x.message)) && ai.some(x => /fly heading/.test(x.message)), 'assist transmissions logged');
+  // no established aircraft ever turned in inside 7.5 NM
+  for (const a of list) if (a.ilsCaptured) assert.ok(a.requests.every(r => r.kind !== 'further'), 'no vectors-back requests');
+});

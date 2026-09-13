@@ -96,7 +96,12 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
 
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bokeh = new BokehPass(scene, camera, { focus: 5200, aperture: 0.00002, maxblur: 0.008 });
+    // Depth of field as a background effect only: the airfield is always sharp, the blur ramps in beyond it (far
+    // terrain, the bay, the horizon) - a tilt-shift look that does not depend on the zoom level. The stock bokeh
+    // formula blurs symmetrically around the focus distance; patched to blur only past `focus`.
+    const bokeh = new BokehPass(scene, camera, { focus: 9000, aperture: 0.0000012, maxblur: 0.009 });
+    bokeh.materialBokeh.fragmentShader = bokeh.materialBokeh.fragmentShader.replace('float factor = ( focus + viewZ );', 'float factor = max( 0.0, -viewZ - focus );');
+    bokeh.materialBokeh.needsUpdate = true;
     if (!lite) composer.addPass(bokeh);
     const grade = new ShaderPass(GRADE); composer.addPass(grade);
     composer.addPass(new OutputPass());
@@ -314,7 +319,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         // real model (lazy per type); the silhouette stays as the far-zoom symbol and the pick target
         if (!m.modelWanted) {
           m.modelWanted = true; const mk = m;
-          loadAircraftModel(a.perf.icaoCode).then((mdl) => { if (!mdl || disposed || !markers.has(mk.id)) return; mk.model = instantiate(mdl, a.perf.lengthMeters); mk.model.userData.id = mk.id; traffic.add(mk.model); });
+          loadAircraftModel(a.perf.icaoCode).then((mdl) => { if (!mdl || disposed || !markers.has(mk.id)) return; mk.model = instantiate(mdl, a.perf.lengthMeters, a.callsign); mk.model.userData.id = mk.id; traffic.add(mk.model); });
         }
         if (m.model) {
           const useModel = cam.dist < 6500;
@@ -425,8 +430,9 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       if (camGoal) { cam.target.lerp(camGoal, Math.min(1, dt * 5)); if (cam.target.distanceTo(camGoal) < 2) camGoal = null; }
       clampTarget();
       applyCamera(); applyFades(fades, cam.dist);
-      (bokeh.uniforms as Record<string, THREE.IUniform>).focus.value = cam.dist;
-      (bokeh.uniforms as Record<string, THREE.IUniform>).maxblur.value = 0.006 + Math.min(0.006, cam.dist / 4e6);
+      // sharp out to the far side of the airfield (camera distance + ~4 km), then an 8 km ramp to full blur
+      (bokeh.uniforms as Record<string, THREE.IUniform>).focus.value = cam.dist + 4000;
+      (bokeh.uniforms as Record<string, THREE.IUniform>).maxblur.value = 0.007 + Math.min(0.005, cam.dist / 4e6);
       composer.render();
     };
     applyCamera(); frame();

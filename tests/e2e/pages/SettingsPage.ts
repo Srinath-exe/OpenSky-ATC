@@ -14,7 +14,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 export type ToggleId =
-  | 'set-autotower' | 'set-autoground' | 'set-auto-handoff' | 'set-strict-frequencies' | 'set-readback-errors'
+  | 'set-autotower' | 'set-autoground' | 'set-autoapproach' | 'set-auto-handoff' | 'set-strict-frequencies' | 'set-readback-errors'
   | 'set-instant-vectors' | 'set-typed-instant' | 'set-show-rings' | 'set-reduced-motion' | 'set-sound' | 'set-tts';
 export type SelectId = 'set-emergency-rate' | 'set-pilot-delay' | 'set-phraseology';
 

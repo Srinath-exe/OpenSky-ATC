@@ -17,13 +17,13 @@ import type { SessionRecord } from '@/components/atc/persist';
 
 /** src/components/atc/simStore.ts DEFAULT_SETTINGS. */
 const DEFAULTS: Settings = {
-  autoTower: false, autoGround: false, autoHandoff: true, strictFrequencies: false, emergencyRate: 'normal',
+  autoTower: false, autoGround: false, autoApproach: false, autoHandoff: true, strictFrequencies: false, emergencyRate: 'normal',
   groundTheme: 'satellite', showRings: true, difficulty: 'normal', sound: true, tts: false, volume: 0.8,
   pilotDelayS: null, readbackErrors: true, region: 'auto', instantVectors: false, typedInstant: true,
 };
 /** Toggle id -> Settings key (store-owned toggles). `set-reduced-motion` is a UI pref (skycontrol_prefs). */
 const TOGGLE_KEY: Record<Exclude<ToggleId, 'set-reduced-motion'>, keyof Settings> = {
-  'set-autotower': 'autoTower', 'set-autoground': 'autoGround', 'set-auto-handoff': 'autoHandoff',
+  'set-autotower': 'autoTower', 'set-autoground': 'autoGround', 'set-autoapproach': 'autoApproach', 'set-auto-handoff': 'autoHandoff',
   'set-strict-frequencies': 'strictFrequencies', 'set-readback-errors': 'readbackErrors', 'set-instant-vectors': 'instantVectors',
   'set-typed-instant': 'typedInstant', 'set-show-rings': 'showRings', 'set-sound': 'sound', 'set-tts': 'tts',
 };
@@ -470,6 +470,7 @@ test.describe('settings: live session', () => {
 
     await settings.setToggle('set-autotower', true);
     await settings.setToggle('set-autoground', true);
+    await settings.setToggle('set-autoapproach', true);
     await settings.setToggle('set-auto-handoff', false);
     await settings.setToggle('set-strict-frequencies', true);
     await settings.pickSelect('set-phraseology', /^FAA/);
@@ -479,10 +480,11 @@ test.describe('settings: live session', () => {
     await settings.setToggle('set-instant-vectors', true);
 
     const store = await sim.storeSettings();
-    expect(store).toMatchObject({ autoTower: true, autoGround: true, autoHandoff: false, strictFrequencies: true, region: 'FAA', pilotDelayS: 4, difficulty: 'high', showRings: false, instantVectors: true });
+    expect(store).toMatchObject({ autoTower: true, autoGround: true, autoApproach: true, autoHandoff: false, strictFrequencies: true, region: 'FAA', pilotDelayS: 4, difficulty: 'high', showRings: false, instantVectors: true });
     const eng = await sim.engineSettings();
     expect(eng.autoTower).toBe(true);
     expect(eng.autoGround).toBe(true);
+    expect(eng.autoApproach).toBe(true);
     expect(eng.autoHandoff).toBe(false);
     expect(eng.strictFrequencies).toBe(true);
     expect(eng.region).toBe('FAA');
