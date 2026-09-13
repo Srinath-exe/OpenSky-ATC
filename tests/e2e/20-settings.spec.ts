@@ -17,13 +17,13 @@ import type { SessionRecord } from '@/components/atc/persist';
 
 /** src/components/atc/simStore.ts DEFAULT_SETTINGS. */
 const DEFAULTS: Settings = {
-  autoTower: false, autoGround: false, autoApproach: false, autoHandoff: true, strictFrequencies: false, emergencyRate: 'normal',
+  autoTower: false, autoGround: false, autoApproach: false, autoMode: false, autoHandoff: true, strictFrequencies: false, emergencyRate: 'normal',
   groundTheme: 'satellite', showRings: true, difficulty: 'normal', sound: true, tts: false, volume: 0.8,
   pilotDelayS: null, readbackErrors: true, region: 'auto', instantVectors: false, typedInstant: true,
 };
 /** Toggle id -> Settings key (store-owned toggles). `set-reduced-motion` is a UI pref (skycontrol_prefs). */
 const TOGGLE_KEY: Record<Exclude<ToggleId, 'set-reduced-motion'>, keyof Settings> = {
-  'set-autotower': 'autoTower', 'set-autoground': 'autoGround', 'set-autoapproach': 'autoApproach', 'set-auto-handoff': 'autoHandoff',
+  'set-autotower': 'autoTower', 'set-autoground': 'autoGround', 'set-autoapproach': 'autoApproach', 'set-automode': 'autoMode', 'set-auto-handoff': 'autoHandoff',
   'set-strict-frequencies': 'strictFrequencies', 'set-readback-errors': 'readbackErrors', 'set-instant-vectors': 'instantVectors',
   'set-typed-instant': 'typedInstant', 'set-show-rings': 'showRings', 'set-sound': 'sound', 'set-tts': 'tts',
 };

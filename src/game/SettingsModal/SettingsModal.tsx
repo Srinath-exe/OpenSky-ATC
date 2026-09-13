@@ -90,6 +90,7 @@ export function SettingsModal() {
         <div className={styles.section}>
           <span className={styles.sectionTitle}>AI assist</span>
           <div className={styles.rows}>
+            <ListRow flush title="Auto mode" subtitle="AI works every position you are not on" trailing={<Mirror state={settings.autoMode ? 'on' : 'off'}><Toggle checked={settings.autoMode} onChange={(v) => set({ autoMode: v })} testId="set-automode-modal" /></Mirror>} />
             <ListRow flush title="Approach" subtitle="Arrivals sequenced onto the ILS for you" trailing={<Mirror state={settings.autoApproach ? 'on' : 'off'}><Toggle checked={settings.autoApproach} onChange={(v) => set({ autoApproach: v })} testId="set-autoapproach-modal" /></Mirror>} />
             <ListRow flush title="Tower" subtitle="Routine clearances once they are safe" trailing={<Mirror state={settings.autoTower ? 'on' : 'off'}><Toggle checked={settings.autoTower} onChange={(v) => set({ autoTower: v })} testId="set-autotower-modal" /></Mirror>} />
             <ListRow flush title="Ground" subtitle="Arrivals taxi to their stand after vacating" trailing={<Mirror state={settings.autoGround ? 'on' : 'off'}><Toggle checked={settings.autoGround} onChange={(v) => set({ autoGround: v })} testId="set-autoground-modal" /></Mirror>} />

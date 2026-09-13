@@ -18,7 +18,7 @@ function PositionTabs() {
   const position = useSim((s) => s.position)
   const hasRadar = useSim((s) => !!s.radar)
   const icao = useSim((s) => s.icao)
-  const ai = useSim((s) => `${s.settings.autoGround ? 'g' : ''}${s.settings.autoTower ? 't' : ''}${s.settings.autoApproach ? 'a' : ''}`)
+  const ai = useSim((s) => { const m = s.settings.autoMode; return `${s.settings.autoGround || (m && s.position !== 'ground') ? 'g' : ''}${s.settings.autoTower || (m && s.position !== 'tower') ? 't' : ''}${s.settings.autoApproach || (m && s.position !== 'approach') ? 'a' : ''}` })
   const ref = React.useRef<HTMLDivElement>(null)
   React.useLayoutEffect(() => {
     const root = ref.current

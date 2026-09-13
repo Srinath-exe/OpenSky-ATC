@@ -93,6 +93,9 @@ export default function SettingsPage() {
         {/* ---------------- Simulation ---------------- */}
         <GlassPanel variant="solid" title="Simulation" testId="set-section-simulation" as="section">
           <div className={s.rows}>
+            <ListRow title="Auto mode" subtitle="AI controllers work every position you are not on — play ground while the AI runs tower and approach, or the other way round" trailing={
+              <StateMirror state={settings.autoMode ? 'on' : 'off'}><Toggle checked={settings.autoMode} onChange={(v) => set({ autoMode: v })} testId="set-automode" /></StateMirror>
+            } />
             <ListRow title="AI tower assist" subtitle="Routine tower clearances go out on their own once they are safe" trailing={
               <StateMirror state={settings.autoTower ? 'on' : 'off'}><Toggle checked={settings.autoTower} onChange={(v) => set({ autoTower: v })} testId="set-autotower" /></StateMirror>
             } />

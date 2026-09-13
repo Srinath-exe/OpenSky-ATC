@@ -318,3 +318,31 @@ test('AI approach assist: three arrivals are sequenced onto the ILS (radar conta
   // no established aircraft ever turned in inside 7.5 NM
   for (const a of list) if (a.ilsCaptured) assert.ok(a.requests.every(r => r.kind !== 'further'), 'no vectors-back requests');
 });
+
+test('auto mode: with the player on ground, AI tower + approach land three arrivals and get two departures out of the TMA; nothing diverts', () => {
+  const e = makeEngine('EGLL', { ends: ['27R', '27L'] });
+  e.settings.autoMode = true; e.playerPosition = 'ground';
+  const arr = [e.spawnArrival()!, e.spawnArrival()!, e.spawnArrival()!];
+  const dep = [e.spawnAt({ callsign: 'DEP1', type: 'A320', kind: 'departure', phase: 'hold_short', runway: '27L', onFrequency: 'tower' }), e.spawnAt({ callsign: 'DEP2', type: 'B738', kind: 'departure', phase: 'hold_short', runway: '27R', onFrequency: 'tower' })];
+  const done = runUntil(e, () => arr.every(a => !e.aircraft.includes(a) || ['rollout', 'taxi', 'hold_short', 'arrived'].includes(a.phase)) && dep.every(d => !e.aircraft.includes(d)), 3000, 2);
+  assert.ok(done.ok, `arr ${arr.map(a => a.phase).join('/')} dep ${dep.map(d => e.aircraft.includes(d) ? `${d.phase}@${Math.round(d.altitude)}/${d.onFrequency}` : 'gone').join('/')}`);
+  assert.equal(evs(e, 'diversion').length, 0, evs(e, 'diversion').map(x => x.message).join('; '));
+  assert.equal(evs(e, 'separation_loss').length, 0, evs(e, 'separation_loss').map(x => x.message).join('; '));
+  assert.ok(evs(e, 'departed').length >= 2, 'departures left the TMA');
+  assert.ok(evs(e, 'transmission').some(x => /^AI TWR:.*cleared for takeoff/.test(x.message)));
+  assert.ok(evs(e, 'transmission').some(x => /^AI APP:.*climb/.test(x.message)));
+});
+
+test('AI ground: a departure at the stand is started, pushed, taxied to the runway and handed to tower; an arrival is taxied to its stand', () => {
+  const e = makeEngine('EGLL', { ends: ['27R', '27L'] });
+  e.settings.autoGround = true; e.settings.autoTower = true;
+  const d = e.spawnDeparture()!;
+  const gate = runUntil(e, () => (d.phase === 'hold_short' && d.onFrequency === 'tower') || d.phase === 'takeoff' || !e.aircraft.includes(d) || ['climb', 'cruise', 'departed'].includes(d.phase), 2400, 2);
+  assert.ok(gate.ok, `departure reaches the runway (${d.phase} on ${d.onFrequency}, req ${d.requests.map(r => r.kind + ':' + r.answeredAt).join(',')})`);
+  const tx = evs(e, 'transmission').filter(x => /^AI GND:/.test(x.message)).map(x => x.message);
+  assert.ok(tx.some(t => /approved/.test(t)) && tx.some(t => /taxi to runway/.test(t)), tx.join('; '));
+  const a = e.spawnAt({ callsign: 'ARR1', type: 'A320', kind: 'arrival', phase: 'rollout', runway: '27L', speedKts: 60, onFrequency: 'tower' });
+  a.plan.gateRef = e.gates[0].ref;
+  const stand = runUntil(e, () => a.phase === 'arrived' || !e.aircraft.includes(a), 1200, 2);
+  assert.ok(stand.ok, `arrival on stand (${a.phase}, ${a.onFrequency}, req ${a.requests.map(r => r.kind + ':' + r.answeredAt).join(',')})`);
+});
