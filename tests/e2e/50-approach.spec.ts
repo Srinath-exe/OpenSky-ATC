@@ -407,12 +407,14 @@ test.describe('approach: ILS, runways, cancel', () => {
     // vectors are still offered while intercepting, but flagged as cancelling the clearance
     expect((await sim.actions('BAW12')).find((r) => r.id === 'action-heading')?.state).toBe('enabled');
 
-    // localizer capture (25 deg intercept, below the slope -> LOC and GS capture together), still > 10 NM out
+    // localizer capture (25 deg intercept), still > 10 NM out; 3,500 ft is well below the slope there, so the
+    // glideslope is not captured yet - the aircraft stays level until the slope comes down to it (never climbs to it)
     const tCap = await sim.advanceUntilOk(pred('BAW12', 'a.ilsCaptured'), 300);
     expect(tCap).toBeGreaterThan(10);
     v = await sim.aircraftOrFail('BAW12');
     expect(v.ilsCaptured).toBe(true);
-    expect(v.gsCaptured).toBe(true);
+    expect(v.gsCaptured).toBe(false);
+    expect(v.altitude).toBeLessThan(3560);
     expect(v.stage).toBe('arr_established');
     expect(v.onFrequency).toBe('approach');
     expect(v.handedTo).toBeNull();
@@ -424,6 +426,11 @@ test.describe('approach: ILS, runways, cancel', () => {
     expect((await sim.actions('BAW12')).find((r) => r.id === 'action-land')?.state).toBe('enabled');
     await expect(game.actionBtn('action-heading')).toHaveAttribute('data-state', 'disabled');
 
+    // the slope reaches 3,500 ft at ~10.5 NM: glideslope capture from level flight, no climb
+    await sim.advanceUntilOk(pred('BAW12', 'a.gsCaptured'), 300);
+    v = await sim.aircraftOrFail('BAW12');
+    expect(v.altitude).toBeLessThan(3560);
+    expect((await radar.distToThresholdNM('BAW12', '27L'))!).toBeGreaterThan(9.5);
     // the engine hands the established arrival to tower once it is inside 10 NM; the frequency change completes 2 s later
     await sim.advanceUntilOk(pred('BAW12', "a.handedTo === 'tower'"), 400);
     expect((await radar.distToThresholdNM('BAW12', '27L'))!).toBeLessThanOrEqual(10);
@@ -1023,11 +1030,14 @@ test.describe('approach: end-to-end, handoff, sequencing (Wave-3 audit additions
     await expect(game.actionBtn('action-altitude')).toHaveAttribute('data-reason', 'On glideslope — use Cancel approach');
     await expect(game.actionBtn('action-speed')).toHaveAttribute('data-state', 'enabled');
 
-    // 6. automatic handoff inside 10 NM; the glideslope is captured on the way down
+    // 6. automatic handoff inside 10 NM; the glideslope (3,000 ft at ~9.3 NM) is captured just after, from level flight
     await sim.advanceUntilOk(pred('UAL9', "a.onFrequency === 'tower'"), 400);
     v = await sim.aircraftOrFail('UAL9');
-    expect(v.gsCaptured).toBe(true);
     expect((await radar.distToThresholdNM('UAL9', '27L'))!).toBeLessThanOrEqual(10);
+    await sim.advanceUntilOk(pred('UAL9', 'a.gsCaptured'), 120);
+    v = await sim.aircraftOrFail('UAL9');
+    expect(v.altitude).toBeLessThanOrEqual(3100);
+    expect((await radar.distToThresholdNM('UAL9', '27L'))!).toBeGreaterThan(8);
     await note();
     await expect(game.strip('UAL9')).toHaveAttribute('data-bay', 'TO_TOWER');
     await expect(game.page.getByTestId('strip-UAL9-ghost')).toHaveText('TWR');

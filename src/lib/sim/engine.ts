@@ -2854,7 +2854,12 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     for (const a of moving) {
       const bId = blockedBy.get(a.id); if (bId == null || this.manualHold.has(a.id)) continue;
       const b = this.byId(bId);
-      if (blockedBy.get(bId) === a.id && a.id < bId && a.phase !== 'pushback' && b?.phase !== 'pushback') a.trafficHold = false;
+      if (b && blockedBy.get(bId) === a.id && a.id < bId && a.phase !== 'pushback' && b.phase !== 'pushback') {
+        // never release into a collision: the path ahead must clear the other aircraft
+        const sa = aheadOf.get(a.id) ?? ahead(a);
+        const clearance = (a.perf.safetyRadiusMeters + b.perf.safetyRadiusMeters) * 0.62;
+        if (!sa.some(q => dist(q.p, b.pos) < clearance)) a.trafficHold = false;
+      }
     }
     // active-runway protection: ground traffic (not cleared onto it) stays clear of a runway with a landing/rolling movement
     const active = new Map<string, { a: XY; b: XY }>();

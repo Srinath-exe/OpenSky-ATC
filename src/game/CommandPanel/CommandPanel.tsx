@@ -337,7 +337,7 @@ function PanelBody({ a, position, pinned, onPin, className }: { a: AircraftState
   const inMyBay = sim.bayOf(a, position) != null
   const viewIn = !inMyBay ? (PLAYER_POSITIONS.find((p) => p !== position && (p !== 'approach' || hasRadar) && sim.bayOf(a, p) != null) ?? null) : null
   const offFreq = owner != null && owner !== position
-  const aiTag = (owner === 'tower' && settings.autoTower) || (owner === 'ground' && settings.autoGround)
+  const aiTag = (owner === 'tower' && settings.autoTower) || (owner === 'ground' && settings.autoGround) || (owner === 'approach' && settings.autoApproach && a.plan.kind === 'arrival')
   const label = stageLabel(stage)
   const primary = rows.find((r) => r.primary && r.state === 'enabled') ?? null
   const emergencyRows = rows.filter((r) => r.group === 'emergency')
