@@ -129,6 +129,9 @@ const TERRAIN_FRAG = /* glsl */ `
     float spec = pow(clamp(dot(vec3(0.0, 1.0, 0.0), hv), 0.0, 1.0), 180.0);
     float ripple = noise(vWorld.xz * 0.004 + vec2(uTime * 0.02, 0.0)) * 0.5 + noise(vWorld.xz * 0.015 - vec2(0.0, uTime * 0.03)) * 0.5;
     vec3 waterCol = (mix(cWater, cWaterDeep, 0.5 + 0.5 * ripple) + ripple * 0.006) * (0.35 + 0.65 * uDay) + uSunColor * spec * (0.25 + 0.2 * night);
+    // the water reflects the sky at grazing angles (Fresnel): dark from above, a pale sheet toward the horizon
+    float fres = pow(1.0 - clamp(viewDir.y, 0.0, 1.0), 3.0);
+    waterCol = mix(waterCol, uFog, (0.08 + 0.55 * fres) * (0.3 + 0.7 * uDay));
     // soft shoreline: the mask is bilinear so the edge blends over ~1 texel
     float shore = smoothstep(0.2, 0.5, water) * (1.0 - smoothstep(0.5, 0.8, water));
     col = mix(col, waterCol, smoothstep(0.35, 0.65, water));

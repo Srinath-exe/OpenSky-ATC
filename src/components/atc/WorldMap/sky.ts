@@ -67,25 +67,28 @@ export function lightingFor(elevation: number, azimuth: number): Lighting {
 const SKY_VERT = /* glsl */ `varying vec3 vDir; void main(){ vDir = normalize(position); vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }`;
 const SKY_FRAG = /* glsl */ `
   precision highp float;
-  uniform vec3 uZenith, uHorizon, uSunColor, uSunDir; uniform float uDay, uGlow, uStars, uCloud;
+  uniform vec3 uZenith, uHorizon, uSunColor, uSunDir, uFog; uniform float uDay, uGlow, uStars, uCloud;
   varying vec3 vDir;
   float hash(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
   void main() {
-    float y = clamp(vDir.y, -0.05, 1.0);
-    vec3 col = mix(uHorizon, uZenith, pow(y, 0.55));
+    float y = vDir.y;
+    // above the horizon: horizon -> zenith gradient; below it (seen past the world's edge at a low camera pitch): the
+    // fog colour, darkening slightly with depth, so the ground haze and the terrain's edge fade are one surface
+    vec3 col = mix(uHorizon, uZenith, pow(max(y, 0.0), 0.55));
+    col = mix(col, uFog * (1.0 - 0.25 * smoothstep(0.0, 0.2, -y)), smoothstep(0.0, -0.01, y));
     float s = max(dot(normalize(vDir), uSunDir), 0.0);
     col += uSunColor * (pow(s, 380.0) * 1.6 + pow(s, 14.0) * 0.25 * uGlow);
     // stars: sparse hash points, only when dark and clear
     vec3 d = normalize(vDir) * 260.0; float st = step(0.9975, hash(floor(d))) * uStars * (1.0 - uCloud);
     col += vec3(st * 0.7);
-    // haze near the horizon
-    col = mix(col, uHorizon, (1.0 - smoothstep(0.0, 0.18, y)) * 0.6);
+    // haze near the horizon (the fog colour, so far terrain melts into it)
+    col = mix(col, uFog, (1.0 - smoothstep(0.0, 0.16, abs(y))) * 0.7);
     gl_FragColor = vec4(col, 1.0);
   }`;
 
 export function buildSky(): { mesh: THREE.Mesh; uniforms: Record<string, THREE.IUniform> } {
   const uniforms: Record<string, THREE.IUniform> = {
-    uZenith: { value: C('#0b0b0c') }, uHorizon: { value: C('#1a1a1c') }, uSunColor: { value: C('#ffd9a0') }, uSunDir: { value: new THREE.Vector3(0, 1, 0) },
+    uZenith: { value: C('#0b0b0c') }, uHorizon: { value: C('#1a1a1c') }, uFog: { value: C('#1a1a1c') }, uSunColor: { value: C('#ffd9a0') }, uSunDir: { value: new THREE.Vector3(0, 1, 0) },
     uDay: { value: 1 }, uGlow: { value: 0 }, uStars: { value: 0 }, uCloud: { value: 0 },
   };
   const mat = new THREE.ShaderMaterial({ uniforms, vertexShader: SKY_VERT, fragmentShader: SKY_FRAG, side: THREE.BackSide, depthWrite: false, depthTest: false });
@@ -97,7 +100,7 @@ export function buildSky(): { mesh: THREE.Mesh; uniforms: Record<string, THREE.I
 /** Sets the sky-dome uniforms; returns the horizon colour (the scene fog uses it so far terrain melts into the sky). */
 export function applySky(u: Record<string, THREE.IUniform>, L: Lighting, cloudCover: number): THREE.Color {
   const twilight = Math.exp(-Math.pow((L.elevation - 1) / 7, 2));
-  const dayZen = lerpC(C('#6f8fb5'), C('#3f6a9e'), 0.3), dayHor = C('#c9cfd4');
+  const dayZen = lerpC(C('#6f8fb5'), C('#3f6a9e'), 0.3), dayHor = C('#bcc8d3');
   const duskZen = C('#1b2233'), duskHor = C('#c86a3a');
   const nightZen = C('#05070c'), nightHor = C('#0d1118');
   let zen = lerpC(nightZen, dayZen, L.day), hor = lerpC(nightHor, dayHor, L.day);

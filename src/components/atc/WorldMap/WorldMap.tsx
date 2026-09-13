@@ -108,7 +108,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     if (!el || !e || !icao) return;
     let disposed = false;
     // lite: test mode / software GL — smaller mesh, no depth-of-field, 1x pixels (the look is unchanged, only the cost)
-    const lite = sim.testMode || /[?&]lite=1/.test(window.location.search);
+    const lite = /[?&]lite=1/.test(window.location.search) || (sim.testMode && !/[?&]nolite=1/.test(window.location.search));
     const renderer = new THREE.WebGLRenderer({ antialias: !lite, powerPreference: 'high-performance' });
     renderer.setPixelRatio(lite ? 1 : Math.min(window.devicePixelRatio, 1.5));   // 1.5x is plenty with the depth-of-field pass on top
     renderer.setClearColor(PALETTE.bg);
@@ -127,9 +127,19 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     // Depth of field as a background effect only: the airfield is always sharp, the blur ramps in beyond it (far
     // terrain, the bay, the horizon) - a tilt-shift look that does not depend on the zoom level. The stock bokeh
     // formula blurs symmetrically around the focus distance; patched to blur only past `focus`.
+    // Tilt-shift by WORLD position, not camera depth: each pixel's depth is unprojected to a ground position and the blur
+    // grows with its horizontal distance outside the airfield circle (uField = centre x, z, radius) - so the airport is
+    // sharp and everything around it soft from any camera angle, including the city on the near side of the field.
     const bokeh = new BokehPass(scene, camera, { focus: 9000, aperture: 0.0000026, maxblur: 0.0065 });
     const fieldCentre = new THREE.Vector3(0, 0, 0);
-    bokeh.materialBokeh.fragmentShader = bokeh.materialBokeh.fragmentShader.replace('float factor = ( focus + viewZ );', 'float factor = max( 0.0, -viewZ - focus );');
+    Object.assign(bokeh.uniforms, { uInvProj: { value: new THREE.Matrix4() }, uCamWorld: { value: new THREE.Matrix4() }, uField: { value: new THREE.Vector3(0, 0, 3000) } });
+    bokeh.materialBokeh.fragmentShader = bokeh.materialBokeh.fragmentShader
+      .replace('uniform float focus;', 'uniform float focus;\nuniform mat4 uInvProj, uCamWorld;\nuniform vec3 uField;')
+      .replace('float viewZ = getViewZ( getDepth( vUv ) );', 'float depth = getDepth( vUv ); float viewZ = getViewZ( depth );')
+      .replace('float factor = ( focus + viewZ );', `vec4 clip = vec4( vUv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0 );
+			vec4 view = uInvProj * clip; view /= view.w;
+			vec3 world = ( uCamWorld * vec4( view.xyz, 1.0 ) ).xyz;
+			float factor = max( 0.0, distance( world.xz, uField.xy ) - uField.z );`);
     bokeh.materialBokeh.needsUpdate = true;
     if (!lite) composer.addPass(bokeh);
     const grade = new ShaderPass(GRADE); composer.addPass(grade);
@@ -317,6 +327,8 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       follow: (on) => { follow = on && sim.selectedId != null; setFollowRef.current(follow); },
       centre: () => { const a = sim.selectedId != null ? sim.engine?.byId(sim.selectedId) : null; if (a) camGoal = new THREE.Vector3(a.pos.x, world?.heightAt(a.pos.x, a.pos.y) ?? 0, -a.pos.y); },
     };
+    // camera hook for headless screenshots / debugging: window.__worldCam(yaw?, pitch?, dist?)
+    (window as unknown as { __worldCam?: (y: number | null, p: number | null, d?: number | null) => void }).__worldCam = (y, p, d) => { if (y != null) cam.yaw = y; if (p != null) cam.pitch = Math.min(1.45, Math.max(0.3, p)); if (d != null) cam.dist = cam.distGoal = d; };
     // projector for the test API / centre-on
     const unregister = sim.registerProjector('ground',
       (xy) => { const v = toV3(xy.x, xy.y, world?.heightAt(xy.x, xy.y) ?? 0).project(camera); const r = el.getBoundingClientRect(); return v.z > 1 ? null : { x: (v.x + 1) / 2 * r.width, y: (1 - v.y) / 2 * r.height }; },
@@ -484,6 +496,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       const horizon = applySky(sky.uniforms, L, wx.cloudCover); sky.mesh.position.copy(camera.position); sky.mesh.scale.setScalar(camera.far * 0.9);
       // fog = the sky's horizon colour, so the far terrain and the world's edge melt into the sky instead of going black
       scene.background = null; (scene.fog as THREE.Fog).color.copy(L.fog).lerp(horizon, 0.9);
+      (sky.uniforms.uFog.value as THREE.Color).copy((scene.fog as THREE.Fog).color);
       const fogFar2 = Math.min(fogFar, wx.visM * 3.2 + cam.dist * 0.5);   // poor visibility pulls the fog in
       (scene.fog as THREE.Fog).near = Math.min(fogNear, fogFar2 * 0.4); (scene.fog as THREE.Fog).far = fogFar2;
       // the deck is only drawn while the camera is under it (from above it would veil the whole map); overcast still dims the sun
@@ -510,13 +523,12 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         if (zoomAnchor) { applyCamera(); const after = groundAt(zoomAnchor.sx, zoomAnchor.sy); if (after) { cam.target.x += zoomAnchor.ground.x - after.x; cam.target.z += zoomAnchor.ground.z - after.z; } }
       } else zoomAnchor = null;
       clampTarget();
-      applyCamera(); applyFades(fades, cam.dist);
+      applyCamera(); camera.updateMatrixWorld(); applyFades(fades, cam.dist);
       if (mapLabels) { mapLabels.update(camera, cam.dist, rect.height); if (!labelsRef.current) mapLabels.group.visible = false; }
-      // tilt-shift: everything out to the far side of the airfield stays sharp whatever the zoom, the surrounding
-      // landscape blurs in over the next ~2.5 km beyond it
       { const u = bokeh.uniforms as Record<string, THREE.IUniform>;
-        u.focus.value = camera.position.distanceTo(fieldCentre) + fieldR;
-        u.maxblur.value = 0.0065 + Math.min(0.004, cam.dist / 5e6); u.aperture.value = u.maxblur.value / 2500; }
+        (u.uInvProj.value as THREE.Matrix4).copy(camera.projectionMatrixInverse); (u.uCamWorld.value as THREE.Matrix4).copy(camera.matrixWorld);
+        (u.uField.value as THREE.Vector3).set(fieldCentre.x, fieldCentre.z, fieldR);
+        u.maxblur.value = 0.011 + Math.min(0.005, cam.dist / 4e6); u.aperture.value = u.maxblur.value / 1400; }   // full blur 1.4 km past the field
       composer.render();
     };
     applyCamera(); frame();
