@@ -141,11 +141,12 @@ function classify(wrap: THREE.Group): void {
     for (let i = 0; i < pos.count; i++) {
       v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);
       const ax = Math.abs(v.x);
+      const onFuselage = Math.hypot(v.x, v.y - yMid) < radius * 1.12 && v.z > -0.46 && v.z < 0.36;   // inside the fuselage tube (wing roots excluded)
       let r = 0;
       if (v.z > 0.22 && v.y > yTop + radius * 0.35 && ax < radius * 2.2) r = 1;                                   // vertical stabiliser (+ a T-tail)
       else if (v.y < yMid && v.y > 0.004 && ax > radius * 1.25 && ax < radius * 6 && v.z > -0.32 && v.z < 0.18) r = 2;  // wing-mounted engines
-      else if (ax < radius * 1.15 && v.y < yBot + radius * 0.9 && v.z > -0.46 && v.z < 0.34) r = 3;              // lower fuselage
-      else if (ax < radius * 1.15 && v.y > yBot + radius * 0.9 && v.y < yBot + radius * 1.12 && v.z > -0.42 && v.z < 0.3) r = 4;  // cheat line
+      else if (onFuselage && v.y < yBot + radius * 0.92) r = 3;                                                   // lower fuselage
+      else if (onFuselage && v.y >= yBot + radius * 0.92 && v.y < yBot + radius * 1.12 && v.z > -0.42 && v.z < 0.3) r = 4;  // cheat line
       out[i] = r;
     }
     geo.setAttribute('livery', new THREE.BufferAttribute(out, 1));

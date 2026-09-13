@@ -255,7 +255,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const onWheel = (ev: WheelEvent) => {
       ev.preventDefault();
       const before = groundAt(ev.clientX, ev.clientY);
-      cam.dist = Math.min(38000, Math.max(250, cam.dist * Math.exp(ev.deltaY * 0.0012)));
+      cam.dist = Math.min(38000, Math.max(90, cam.dist * Math.exp(ev.deltaY * 0.0012)));
       applyCamera();
       const after = groundAt(ev.clientX, ev.clientY);
       if (before && after) { cam.target.x += before.x - after.x; cam.target.z += before.z - after.z; }
@@ -269,7 +269,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     window.addEventListener('keydown', onKey);
     let follow = false;
     ctl.current = {
-      zoom: (f) => { cam.dist = Math.min(38000, Math.max(250, cam.dist * f)); },
+      zoom: (f) => { cam.dist = Math.min(38000, Math.max(90, cam.dist * f)); },
       reset: () => { cam.target.set(0, world?.heightAt(0, 0) ?? 0, 0); cam.dist = 5200; cam.yaw = -0.35; cam.pitch = 0.95; camGoal = null; follow = false; setFollowRef.current(false); },
       follow: (on) => { follow = on && sim.selectedId != null; setFollowRef.current(follow); },
       centre: () => { const a = sim.selectedId != null ? sim.engine?.byId(sim.selectedId) : null; if (a) camGoal = new THREE.Vector3(a.pos.x, world?.heightAt(a.pos.x, a.pos.y) ?? 0, -a.pos.y); },
