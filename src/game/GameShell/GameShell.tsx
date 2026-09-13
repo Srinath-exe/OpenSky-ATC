@@ -19,7 +19,6 @@ import { AlertStack, AlertsDrawer } from '../AlertStack/AlertStack'
 import { RunwayBars } from '../RunwayBars/RunwayBars'
 import { WorldMap } from '@/components/atc/WorldMap/WorldMap'
 import { hasWorld } from '@/components/atc/WorldMap/world'
-import { Segmented } from '@/design'
 import { AtisWeather } from '../AtisWeather/AtisWeather'
 import { RunwayConfigDialog } from '../AtisWeather/RunwayConfigDialog'
 import { StripBay } from '@/game/StripBay'
@@ -142,17 +141,19 @@ export function GameShell({ loading = false, loadError = null, onRetry }: GameSh
   React.useEffect(() => { if (hasEngine && !hasRadar && position === 'approach') sim.setPosition('tower') }, [hasEngine, hasRadar, position])
 
   const view = position === 'approach' && hasRadar ? 'radar' : 'ground'
-  // procedural 3D world (KSFO): default on for live play, off in test mode unless ?world=3d (the 2D map is the tested surface)
+  // the procedural 3D world is the ground/tower map; the 2D map remains the tested surface (test mode, or ?world=2d)
+  // and the fallback for an airport without baked world data
   const worldAvailable = hasWorld(icao)
-  const [world3d, setWorld3d] = React.useState<boolean>(() => {
-    if (typeof window === 'undefined') return false
-    const q = new URLSearchParams(window.location.search).get('world')
-    if (q === '3d') return true
-    if (q === '2d' || sim.testMode) return false
-    try { return localStorage.getItem('skycontrol_world3d') !== '0' } catch { return true }
+  const [worldPref] = React.useState<'3d' | '2d' | 'auto'>(() => {
+    if (typeof window === 'undefined') return 'auto'
+    const q = new URLSearchParams(window.location.search)
+    const w = q.get('world')
+    if (w === '3d') return '3d'
+    if (w === '2d' || q.get('test') === '1' || q.get('test') === 'true') return '2d'
+    return 'auto'
   })
-  const use3d = worldAvailable && world3d
-  const toggleWorld = (id: string) => { const on = id === '3d'; setWorld3d(on); try { localStorage.setItem('skycontrol_world3d', on ? '1' : '0') } catch { /* private mode */ } }
+  // sim.testMode is set by load(), after this component first mounts — read it at render time (the map only mounts once the engine exists)
+  const use3d = worldAvailable && (worldPref === '3d' || (worldPref === 'auto' && !sim.testMode))
 
   return (
     <ShellContext.Provider value={shell}>
@@ -172,11 +173,6 @@ export function GameShell({ loading = false, loadError = null, onRetry }: GameSh
           <div className={styles.view} data-region="map" data-view={view} data-testid={`view-${view}`}>
             {hasEngine ? (view === 'radar' ? <ApproachView key={`radar-${icao}`} /> : use3d ? <WorldMap key={`world-${icao}`} /> : <GroundView key={`ground-${icao}`} />) : null}
           </div>
-          {hasEngine && view === 'ground' && worldAvailable ? (
-            <div className={styles.worldToggle} data-testid="world-toggle">
-              <Segmented ariaLabel="Map style" small value={use3d ? '3d' : '2d'} onChange={toggleWorld} items={[{ id: '3d', label: '3D', testId: 'world-3d' }, { id: '2d', label: '2D', testId: 'world-2d' }]} />
-            </div>
-          ) : null}
 
           {paused ? (
             <div className={styles.paused}>

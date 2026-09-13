@@ -1,6 +1,6 @@
 'use client'
 /*
-  WorldMap — the procedural 3D airport map (KSFO first). Terrain, water, roads, buildings and the airport are generated
+  WorldMap — the procedural 3D airport map (every airport with baked world data, all six today). Terrain, water, roads, buildings and the airport are generated
   from baked data (scripts/bake_world.py) and shaded live; the sim's traffic is placed on the surface. Tilted game camera
   (drag = pan, right-drag / Alt-drag = orbit, wheel = zoom), depth-of-field + vignette grade, hover / click selection wired
   to the store like the 2D ground view.
@@ -22,6 +22,7 @@ import { isAirborne } from '@/lib/sim/aircraft';
 import { loadWorld, type World } from './world';
 import { instantiate, loadAircraftModel, tint } from './models';
 import { PALETTE, applyFades, buildAirport, buildBuildings, buildRoads, buildTerrain, toV3, type Fade, type NightHandle } from './terrain';
+import { buildGse, buildJetBridges, buildLabels, buildStands, type LabelHandle } from './apron';
 import { applySky, buildClouds, buildRain, buildSky, lightingFor, sunPosition, weatherLook, type TimeMode } from './sky';
 import { IconButton, Segmented, Icon, Tooltip } from '@/design';
 import { requestOpenAction } from '@/game/CommandPanel/bus';
@@ -43,14 +44,15 @@ const GRADE = {
     }`,
 };
 
-interface Cam { target: THREE.Vector3; dist: number; yaw: number; pitch: number }
+interface Cam { target: THREE.Vector3; dist: number; yaw: number; pitch: number; distGoal: number }
 interface Marker { mesh: THREE.Mesh; id: number; label: HTMLDivElement; shadow: THREE.Mesh; stem: THREE.Line; model: THREE.Group | null; modelWanted: boolean; tinted: string }
 
 function aircraftGeometry(): THREE.BufferGeometry {
-  // unit-length airliner silhouette in the XZ plane, nose toward -z (north); scaled per aircraft
+  // unit-length airliner silhouette in the XZ plane, nose toward -z (north); scaled per aircraft.
+  // Shape space: +y = nose (rotateX(-90°) maps shape y to -z, the same mapping the terrain uses for north).
   const s = new THREE.Shape();
-  const pts: [number, number][] = [[0, -0.5], [0.06, -0.42], [0.06, -0.12], [0.5, 0.12], [0.5, 0.18], [0.07, 0.1], [0.06, 0.34], [0.22, 0.44], [0.22, 0.48], [0.02, 0.46], [0, 0.5],
-    [-0.02, 0.46], [-0.22, 0.48], [-0.22, 0.44], [-0.06, 0.34], [-0.07, 0.1], [-0.5, 0.18], [-0.5, 0.12], [-0.06, -0.12], [-0.06, -0.42]];
+  const pts: [number, number][] = [[0, 0.5], [0.06, 0.42], [0.06, 0.12], [0.5, -0.12], [0.5, -0.18], [0.07, -0.1], [0.06, -0.34], [0.22, -0.44], [0.22, -0.48], [0.02, -0.46], [0, -0.5],
+    [-0.02, -0.46], [-0.22, -0.48], [-0.22, -0.44], [-0.06, -0.34], [-0.07, -0.1], [-0.5, -0.18], [-0.5, -0.12], [-0.06, 0.12], [-0.06, 0.42]];
   s.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) s.lineTo(pts[i][0], pts[i][1]); s.closePath();
   const g = new THREE.ExtrudeGeometry(s, { depth: 0.06, bevelEnabled: false });
   g.rotateX(-Math.PI / 2);        // shape y -> -z (nose north)
@@ -63,7 +65,8 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
   const icao = useSim((s) => s.icao);
   const hasEngine = useSim((s) => !!s.engine);
   const [status, setStatus] = React.useState<'loading' | 'ready' | 'error'>('loading');
-  const [tip, setTip] = React.useState<{ x: number; y: number; lines: string[] } | null>(null);
+  const [tip, setTip] = React.useState<{ lines: string[] } | null>(null);
+  const tipEl = React.useRef<HTMLDivElement>(null); const tipKey = React.useRef('');
   const [timeMode, setTimeMode] = React.useState<TimeMode>(() => { try { return (localStorage.getItem('skycontrol_world_time') as TimeMode) || 'auto'; } catch { return 'auto'; } });
   const [showLabels, setShowLabels] = React.useState(true);
   const [following, setFollowing] = React.useState(false);
@@ -82,7 +85,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     // lite: test mode / software GL — smaller mesh, no depth-of-field, 1x pixels (the look is unchanged, only the cost)
     const lite = sim.testMode || /[?&]lite=1/.test(window.location.search);
     const renderer = new THREE.WebGLRenderer({ antialias: !lite, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(lite ? 1 : Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(lite ? 1 : Math.min(window.devicePixelRatio, 1.5));   // 1.5x is plenty with the depth-of-field pass on top
     renderer.setClearColor(PALETTE.bg);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     el.appendChild(renderer.domElement);
@@ -90,7 +93,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     scene.background = new THREE.Color(PALETTE.bg);
     scene.fog = new THREE.Fog(PALETTE.bg, 9000, 32000);   // rescaled with the camera distance every frame (terrain shader mirrors it)
     const camera = new THREE.PerspectiveCamera(48, 1, 20, 80000);
-    const cam: Cam = { target: new THREE.Vector3(0, 0, 0), dist: 5200, yaw: -0.35, pitch: 0.95 };
+    const cam: Cam = { target: new THREE.Vector3(0, 0, 0), dist: 5200, yaw: -0.35, pitch: 0.95, distGoal: 5200 };
     const hemiLight = new THREE.HemisphereLight(0xbfc7d1, 0x1a1c1a, 0.9); scene.add(hemiLight);
     const sun = new THREE.DirectionalLight(0xfff1dc, 1.2); sun.position.set(-5000, 6000, 5000); scene.add(sun);
 
@@ -145,6 +148,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     let route: Line2 | null = null;
     let terrainUniforms: Record<string, THREE.IUniform> | null = null;
     let world: World | null = null;
+    let mapLabels: LabelHandle | null = null;
     const fades: Fade[] = [];
     const raycaster = new THREE.Raycaster();
 
@@ -157,7 +161,12 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       const t = buildTerrain(w, lite ? 192 : 512); terrainUniforms = t.uniforms; scene.add(t.mesh);
       scene.add(buildRoads(w, fades));
       const bl = buildBuildings(w); buildingMat = bl.material as THREE.MeshLambertMaterial; scene.add(bl);
-      scene.add(buildAirport(w, e.air, fades, nightHandles));
+      const ap = buildAirport(w, e.air, fades, nightHandles); scene.add(ap);
+      const base = ap.userData.base as number;
+      scene.add(buildStands(w, e.air, base, fades));
+      const jb = buildJetBridges(w, e.air, base); if (jb) scene.add(jb);
+      const gse = buildGse(w, e.air, base); if (gse) scene.add(gse);
+      mapLabels = buildLabels(w, e.air, base); scene.add(mapLabels.group);
       cam.target.set(0, w.heightAt(0, 0), 0);
       setStatus('ready');
     }).catch((err) => { console.error(err); setStatus('error'); });
@@ -182,30 +191,31 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       const r = el.getBoundingClientRect();
       raycaster.setFromCamera(new THREE.Vector2(((sx - r.left) / r.width) * 2 - 1, -((sy - r.top) / r.height) * 2 + 1), camera);
       const o = raycaster.ray.origin, d = raycaster.ray.direction;
-      if (!world) { if (d.y >= 0) return null; return o.clone().addScaledVector(d, -o.y / d.y); }
-      let t = 0; const step = 25;
-      for (let i = 0; i < 4000; i++) {
-        const p = o.clone().addScaledVector(d, t);
-        const h = world.heightAt(p.x, -p.z);
-        if (p.y <= h) { const q = o.clone().addScaledVector(d, Math.max(0, t - step / 2)); q.y = h; return q; }
-        if (p.y > 3000 && d.y >= 0) return null;
-        t += step * (1 + t / 4000);
+      if (d.y >= -0.02) return null;
+      // intersect the plane at the camera target's height, then re-evaluate the terrain height there (2 fixed-point
+      // steps are enough: the field is levelled and the far terrain is gentle relative to the ray's slant)
+      let h = cam.target.y; const p = new THREE.Vector3();
+      for (let i = 0; i < 3; i++) {
+        const t = (h - o.y) / d.y; if (t <= 0) return null;
+        p.copy(o).addScaledVector(d, t);
+        if (!world) break;
+        const nh = world.heightAt(p.x, -p.z); if (Math.abs(nh - h) < 0.5) { h = nh; break; } h = nh;
       }
-      return null;
+      p.y = h; return p;
     };
+    // screen-space pick: nearest aircraft whose projected footprint (or an 18 px halo) covers the pointer. No triangle
+    // raycasts against the models, so hovering stays cheap with 40 detailed aircraft on screen.
+    const pickV = new THREE.Vector3();
     const pick = (sx: number, sy: number): number | null => {
       const r = el.getBoundingClientRect();
-      raycaster.setFromCamera(new THREE.Vector2(((sx - r.left) / r.width) * 2 - 1, -((sy - r.top) / r.height) * 2 + 1), camera);
-      raycaster.params.Line = { threshold: 1 };
-      const hits = raycaster.intersectObjects(traffic.children, true);
-      for (const h of hits) { let o: THREE.Object3D | null = h.object; while (o && o.userData.id == null) o = o.parent; if (o && o.visible && o.userData.id != null) return o.userData.id as number; }
-      // generous pick: nearest marker within 18 px
-      let best: number | null = null, bd = 18;
+      const px = sx - r.left, py = sy - r.top;
+      let best: number | null = null, bd = Infinity;
       for (const m of markers.values()) {
-        const v = m.mesh.position.clone().project(camera);
-        const px = (v.x + 1) / 2 * r.width, py = (1 - v.y) / 2 * r.height;
-        const d = Math.hypot(px - (sx - r.left), py - (sy - r.top));
-        if (d < bd) { bd = d; best = m.id; }
+        pickV.copy(m.mesh.position).project(camera); if (pickV.z > 1) continue;
+        const mx = (pickV.x + 1) / 2 * r.width, my = (1 - pickV.y) / 2 * r.height;
+        const d = Math.hypot(mx - px, my - py);
+        const radius = Math.max(18, m.mesh.scale.z * 0.55 * r.height / (2 * Math.tan(camera.fov * Math.PI / 360) * Math.max(1, camera.position.distanceTo(m.mesh.position))));
+        if (d < radius && d < bd) { bd = d; best = m.id; }
       }
       return best;
     };
@@ -227,16 +237,19 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         return;
       }
       const id = pick(ev.clientX, ev.clientY);
-      sim.hover(id);
+      if (id !== sim.hoveredId) sim.hover(id);
       if (id != null) {
         const a = e.byId(id); const r = el.getBoundingClientRect();
         if (a) {
           const st = (() => { try { return stageLabel(sim.stageOf(a)).long; } catch { return ''; } })();
           const rwy = a.plan.runway ?? a.assignedRunway; const l2 = isAirborne(a) ? `${Math.round(a.altitude / 100) * 100} ft · ${Math.round(a.speed)} kt · hdg ${String(Math.round(a.heading)).padStart(3, '0')}` : `${Math.round(a.speed)} kt · hdg ${String(Math.round(a.heading)).padStart(3, '0')}`;
-          setTip({ x: ev.clientX - r.left, y: ev.clientY - r.top, lines: [`${a.callsign} · ${a.perf.icaoCode}/${a.perf.weightClass}`, `${st}${rwy ? ` · RWY ${rwy}` : ''}${a.plan.gateRef ? ` · stand ${a.plan.gateRef}` : ''}`, l2] });
+          const lines = [`${a.callsign} · ${a.perf.icaoCode}/${a.perf.weightClass}`, `${st}${rwy ? ` · RWY ${rwy}` : ''}${a.plan.gateRef ? ` · stand ${a.plan.gateRef}` : ''}`, l2];
+          const key = lines.join('\n');
+          if (tipKey.current !== key) { tipKey.current = key; setTip({ lines }); }
+          if (tipEl.current) tipEl.current.style.transform = `translate(${ev.clientX - r.left + 14}px, ${ev.clientY - r.top + 16}px)`;
         }
         el.style.cursor = 'pointer';
-      } else { setTip(null); el.style.cursor = drag ? 'grabbing' : 'grab'; }
+      } else { if (tipKey.current) { tipKey.current = ''; setTip(null); } el.style.cursor = drag ? 'grabbing' : 'grab'; }
     };
     const onUp = (ev: PointerEvent) => {
       if (drag && !drag.moved && ev.button === 0) { const id = pick(ev.clientX, ev.clientY); sim.select(id); setMenu(null); if (id != null && follow) { follow = false; setFollowRef.current(false); } }
@@ -252,25 +265,26 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       }
       drag = null;
     };
+    // wheel: the zoom goal moves at once, the distance eases toward it each frame (zoomAnchor keeps the ground point
+    // under the pointer fixed while it does)
+    let zoomAnchor: { sx: number; sy: number; ground: THREE.Vector3 } | null = null;
     const onWheel = (ev: WheelEvent) => {
       ev.preventDefault();
-      const before = groundAt(ev.clientX, ev.clientY);
-      cam.dist = Math.min(38000, Math.max(90, cam.dist * Math.exp(ev.deltaY * 0.0012)));
-      applyCamera();
-      const after = groundAt(ev.clientX, ev.clientY);
-      if (before && after) { cam.target.x += before.x - after.x; cam.target.z += before.z - after.z; }
+      const g = groundAt(ev.clientX, ev.clientY);
+      cam.distGoal = Math.min(38000, Math.max(90, cam.distGoal * Math.exp(ev.deltaY * 0.0012)));
+      zoomAnchor = g ? { sx: ev.clientX, sy: ev.clientY, ground: g } : null;
     };
     const onKey = (ev: KeyboardEvent) => {
       if ((ev.target as HTMLElement)?.tagName === 'INPUT') return;
-      if (ev.key === 'Home') { cam.target.set(0, world?.heightAt(0, 0) ?? 0, 0); cam.dist = 5200; cam.yaw = -0.35; cam.pitch = 0.95; }
+      if (ev.key === 'Home') { cam.target.set(0, world?.heightAt(0, 0) ?? 0, 0); cam.dist = cam.distGoal = 5200; cam.yaw = -0.35; cam.pitch = 0.95; }
     };
     el.addEventListener('pointerdown', onDown); el.addEventListener('pointermove', onMove); el.addEventListener('pointerup', onUp);
     el.addEventListener('wheel', onWheel, { passive: false }); el.addEventListener('contextmenu', (ev) => ev.preventDefault());
     window.addEventListener('keydown', onKey);
     let follow = false;
     ctl.current = {
-      zoom: (f) => { cam.dist = Math.min(38000, Math.max(90, cam.dist * f)); },
-      reset: () => { cam.target.set(0, world?.heightAt(0, 0) ?? 0, 0); cam.dist = 5200; cam.yaw = -0.35; cam.pitch = 0.95; camGoal = null; follow = false; setFollowRef.current(false); },
+      zoom: (f) => { cam.distGoal = Math.min(38000, Math.max(90, cam.distGoal * f)); zoomAnchor = null; },
+      reset: () => { cam.target.set(0, world?.heightAt(0, 0) ?? 0, 0); cam.dist = cam.distGoal = 5200; cam.yaw = -0.35; cam.pitch = 0.95; camGoal = null; zoomAnchor = null; follow = false; setFollowRef.current(false); },
       follow: (on) => { follow = on && sim.selectedId != null; setFollowRef.current(follow); },
       centre: () => { const a = sim.selectedId != null ? sim.engine?.byId(sim.selectedId) : null; if (a) camGoal = new THREE.Vector3(a.pos.x, world?.heightAt(a.pos.x, a.pos.y) ?? 0, -a.pos.y); },
     };
@@ -289,6 +303,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       if (document.hidden) return;
       const dt = clock.getDelta();
       const eng = sim.engine; if (!eng) return;
+      const rect = el.getBoundingClientRect();   // once per frame (layout read)
       // traffic sync
       const live = new Set<number>();
       for (const a of eng.aircraft) {
@@ -330,7 +345,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         }
         // label
         tmp.copy(m.mesh.position).project(camera);
-        const r = el.getBoundingClientRect();
+        const r = rect;
         if (tmp.z > 1 || tmp.x < -1.1 || tmp.x > 1.1 || tmp.y < -1.1 || tmp.y > 1.1) m.label.style.display = 'none';
         else {
           m.label.style.display = '';
@@ -369,7 +384,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         const g = world ? world.heightAt(v.pos.x, v.pos.y) : 0;
         m.mesh.position.set(v.pos.x, g + 1.2, -v.pos.y); m.mesh.rotation.y = -v.heading * Math.PI / 180;
         const sc = Math.max(1, cam.dist / 1800); m.mesh.scale.set(sc, sc, sc);
-        tmp.copy(m.mesh.position).project(camera); const r = el.getBoundingClientRect();
+        tmp.copy(m.mesh.position).project(camera); const r = rect;
         if (tmp.z > 1 || Math.abs(tmp.x) > 1.1 || Math.abs(tmp.y) > 1.1) m.label.style.display = 'none';
         else { m.label.style.display = ''; m.label.style.transform = `translate(${((tmp.x + 1) / 2 * r.width + 10).toFixed(1)}px, ${((1 - tmp.y) / 2 * r.height - 8).toFixed(1)}px)`; const t = `${v.id} · ${v.state.replace('_', ' ')}`; if (m.label.textContent !== t) m.label.textContent = t; }
       }
@@ -428,9 +443,17 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         terrainUniforms.uSunI.value = L.sunIntensity * cloudDim; terrainUniforms.uHemiI.value = L.hemiIntensity; terrainUniforms.uDay.value = L.day; terrainUniforms.uWet.value = wx.wet;
       }
       if (camGoal) { cam.target.lerp(camGoal, Math.min(1, dt * 5)); if (cam.target.distanceTo(camGoal) < 2) camGoal = null; }
+      if (Math.abs(cam.distGoal - cam.dist) > 0.5) {
+        cam.dist += (cam.distGoal - cam.dist) * Math.min(1, dt * 10);
+        if (Math.abs(cam.distGoal - cam.dist) < 0.5) cam.dist = cam.distGoal;
+        if (zoomAnchor) { applyCamera(); const after = groundAt(zoomAnchor.sx, zoomAnchor.sy); if (after) { cam.target.x += zoomAnchor.ground.x - after.x; cam.target.z += zoomAnchor.ground.z - after.z; } }
+      } else zoomAnchor = null;
       clampTarget();
       applyCamera(); applyFades(fades, cam.dist);
+      if (mapLabels) { mapLabels.update(camera, cam.dist, rect.height); if (!labelsRef.current) mapLabels.group.visible = false; }
       // sharp out to the far side of the airfield (camera distance + ~4 km), then an 8 km ramp to full blur
+      // zoomed in, nothing in view is far enough to blur: skip the extra depth render
+      bokeh.enabled = !lite && cam.dist > 1200;
       (bokeh.uniforms as Record<string, THREE.IUniform>).focus.value = cam.dist + 4000;
       (bokeh.uniforms as Record<string, THREE.IUniform>).maxblur.value = 0.007 + Math.min(0.005, cam.dist / 4e6);
       composer.render();
@@ -452,7 +475,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     <div className={styles.root} data-testid="world-map" data-status={status} data-standalone={standalone ? 'true' : 'false'}>
       <div ref={host} className={styles.canvasHost} data-testid="world-canvas" />
       <div ref={labels} className={styles.labels} aria-hidden="true" />
-      {tip ? <div className={styles.tip} style={{ transform: `translate(${tip.x + 14}px, ${tip.y + 16}px)` }} data-testid="map-tooltip">{tip.lines.map((l, i) => <div key={i} className={i === 0 ? styles.tipHead : styles.tipLine}>{l}</div>)}</div> : null}
+      {tip ? <div ref={tipEl} className={styles.tip} data-testid="map-tooltip">{tip.lines.map((l, i) => <div key={i} className={i === 0 ? styles.tipHead : styles.tipLine}>{l}</div>)}</div> : null}
       {menu ? (
         <div className={styles.menu} style={{ left: Math.min(menu.x, (host.current?.clientWidth ?? 800) - 240), top: Math.min(menu.y, (host.current?.clientHeight ?? 600) - 40 * (menu.rows.length + 1)) }} data-testid="world-quick-menu" role="menu" onPointerDown={(ev) => ev.stopPropagation()}>
           <div className={styles.menuHead}>{menu.callsign}</div>

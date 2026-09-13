@@ -14,7 +14,7 @@ export function loadAircraftModel(type: string): Promise<THREE.Group | null> {
   const key = type.toUpperCase();
   let p = cache.get(key);
   if (!p) {
-    p = loader.loadAsync(`/models/aircraft/${key}.glb`).then((gltf) => normalise(gltf.scene, 1)).catch(() => null);
+    p = loader.loadAsync(`/models/aircraft/${key}.glb`).then((gltf) => { const w = normalise(gltf.scene, 1, key); return w; }).catch(() => null);
     cache.set(key, p);
   }
   return p;
@@ -26,9 +26,11 @@ export function instantiate(template: THREE.Group, lengthM: number, callsign?: s
   const g = template.clone(true);
   g.scale.setScalar(lengthM);
   const livery = liveryFor(callsign ?? '');
+  const frame = (template.userData.frame as Frame | undefined) ?? { yBot: 0.02, yTop: 0.12, r: 0.05, maxAx: 0.45 };
   g.traverse((o) => {
     const m = o as THREE.Mesh; if (!m.isMesh) return;
-    m.material = Array.isArray(m.material) ? m.material.map((x) => paint(x.clone(), livery)) : paint(m.material.clone(), livery);
+    const part = (m.userData.part as number) ?? 0;
+    m.material = Array.isArray(m.material) ? m.material.map((x) => paint(x.clone(), livery, frame, part)) : paint(m.material.clone(), livery, frame, part);
   });
   return g;
 }
@@ -88,29 +90,47 @@ export function liveryFor(callsign: string): Livery {
   return l;
 }
 
-/** Patch a cloned material with the livery shader: regions from the `livery` vertex attribute, colours as uniforms. */
-function paint(mat: THREE.Material, livery: Livery): THREE.Material {
+/** Template measurements used by the livery shader (normalised frame: unit length, nose -z, wheels on y = 0). */
+interface Frame { yBot: number; yTop: number; r: number; maxAx: number }
+
+/**
+ * Patch a cloned material with the livery shader. Regions are decided per FRAGMENT from the vertex position in the
+ * template frame (attribute `lpos`), so the bands are clean whatever the mesh tessellation; a mesh that is a whole
+ * engine nacelle is painted as one part (uPart = 2).
+ */
+function paint(mat: THREE.Material, livery: Livery, frame: Frame, part: number): THREE.Material {
   const m = mat as THREE.MeshStandardMaterial;
   if (!('map' in m)) return mat;
   const white = new THREE.Color(0xffffff);
   const u = {
     uTail: { value: livery.primary }, uAccent: { value: livery.secondary },
     uBelly: { value: livery.belly ?? white }, uEngine: { value: livery.engines ?? livery.primary },
+    uFrame: { value: new THREE.Vector4(frame.yBot, frame.yTop, frame.r, frame.maxAx) }, uPart: { value: part },
   };
   m.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, u);
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float livery;\nvarying float vLivery;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvLivery = livery;');
+      .replace('#include <common>', '#include <common>\nattribute vec3 lpos;\nvarying vec3 vLpos;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvLpos = lpos;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying float vLivery;\nuniform vec3 uTail, uAccent, uBelly, uEngine;')
+      .replace('#include <common>', '#include <common>\nvarying vec3 vLpos;\nuniform vec3 uTail, uAccent, uBelly, uEngine;\nuniform vec4 uFrame;\nuniform float uPart;')
       .replace('#include <map_fragment>', `#include <map_fragment>
         {
           float luma = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));
-          float paintable = smoothstep(0.42, 0.62, luma);                 // only the white paint takes colour; dark parts stay
-          vec3 col = vLivery > 3.5 ? uAccent : vLivery > 2.5 ? uBelly : vLivery > 1.5 ? uEngine : vLivery > 0.5 ? uTail : diffuseColor.rgb;
-          float shade = 0.55 + 0.45 * luma;
-          diffuseColor.rgb = mix(diffuseColor.rgb, col * shade, paintable * step(0.5, vLivery));
+          float paintable = smoothstep(0.3, 0.55, luma);                  // only the light paint takes colour; dark details stay
+          float yBot = uFrame.x, yTop = uFrame.y, r = uFrame.z, maxAx = uFrame.w, yMid = 0.5 * (yBot + yTop);
+          vec3 p = vLpos; float ax = abs(p.x);
+          bool onFus = length(vec2(p.x, p.y - yMid)) < r * 1.12 && p.z > -0.46 && p.z < 0.36;
+          vec3 col = diffuseColor.rgb; float w = 0.0;
+          if (uPart > 1.5 && ax > r * 0.9) { col = uEngine; w = 1.0; }                                              // nacelle mesh
+          else if (p.z > 0.24 && ax < r * 0.55 && p.y > yTop - r * 0.4) { col = uTail; w = 1.0; }                 // fin + rear spine
+          else if (p.z > 0.2 && p.y > yTop + r * 0.35 && ax < r * 2.4) { col = uTail; w = 1.0; }                 // T-tail / fin top
+          else if (p.z > 0.31 && ax > r * 0.6 && p.y > yBot - r * 0.4 && p.y < yTop + r * 0.9) { col = uTail; w = 1.0; }   // tailplane
+          else if (ax > maxAx * 0.86 && p.z < 0.3) { col = uTail; w = 1.0; }                                       // wingtips
+          else if (onFus && p.y < yBot + r * 0.85) { col = uBelly; w = 1.0; }                                     // lower fuselage
+          else if (onFus && p.y < yBot + r * 1.2 && p.z > -0.44 && p.z < 0.32) { col = uAccent; w = 1.0; }      // cheat line
+          float shade = min(1.0, 0.7 + 0.35 * luma);
+          diffuseColor.rgb = mix(diffuseColor.rgb, col * shade, paintable * w);
         }`);
   };
   m.customProgramCacheKey = () => 'livery';
@@ -118,7 +138,7 @@ function paint(mat: THREE.Material, livery: Livery): THREE.Material {
   return m;
 }
 
-/** Classify the template's vertices into livery regions (attribute `livery`: 0 rest, 1 tail fin, 2 engines, 3 lower fuselage, 4 accent band). */
+/** Measure the template (fuselage cross-section, half span), bake the `lpos` attribute, and flag whole-engine meshes. */
 function classify(wrap: THREE.Group): void {
   wrap.updateMatrixWorld(true);
   const v = new THREE.Vector3();
@@ -126,30 +146,32 @@ function classify(wrap: THREE.Group): void {
   wrap.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh && m.geometry?.attributes?.position) meshes.push(m); });
   // fuselage cross-section from the vertices near the centreline in the middle third
   const ys: number[] = [];
+  let maxAx = 0;
   for (const m of meshes) {
     const pos = m.geometry.attributes.position;
-    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld); if (Math.abs(v.x) < 0.04 && v.z > -0.2 && v.z < 0.2) ys.push(v.y); }
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);
+      if (Math.abs(v.x) < 0.02 && v.z > -0.2 && v.z < 0.2) ys.push(v.y);
+      if (Math.abs(v.x) > maxAx) maxAx = Math.abs(v.x);
+    }
   }
   ys.sort((a, b) => a - b);
   if (ys.length < 20) return;
   const yBot = ys[Math.floor(ys.length * 0.04)], yTop = ys[Math.floor(ys.length * 0.96)];
-  const radius = (yTop - yBot) / 2, yMid = (yTop + yBot) / 2;
+  const r = (yTop - yBot) / 2, yMid = (yTop + yBot) / 2;
+  wrap.userData.frame = { yBot, yTop, r, maxAx } as Frame;
   const done = new Set<THREE.BufferGeometry>();
+  const bb = new THREE.Box3();
   for (const m of meshes) {
+    bb.setFromObject(m);
+    // a mesh confined to the under-wing engine zone (below the fuselage mid-line, ahead of the wing's trailing edge,
+    // no wider than the inboard engines) is a nacelle - one or both engines; the shader paints its outboard fragments
+    const size = bb.getSize(new THREE.Vector3());
+    m.userData.part = Math.max(Math.abs(bb.min.x), Math.abs(bb.max.x)) > r * 1.2 && bb.max.y < yMid + r * 0.2 && bb.min.z > -0.36 && bb.max.z < 0.22 && size.z < 0.3 && size.x < r * 9 ? 2 : 0;
     const geo = m.geometry; if (done.has(geo)) continue; done.add(geo);
-    const pos = geo.attributes.position; const out = new Float32Array(pos.count);
-    for (let i = 0; i < pos.count; i++) {
-      v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);
-      const ax = Math.abs(v.x);
-      const onFuselage = Math.hypot(v.x, v.y - yMid) < radius * 1.12 && v.z > -0.46 && v.z < 0.36;   // inside the fuselage tube (wing roots excluded)
-      let r = 0;
-      if (v.z > 0.22 && v.y > yTop + radius * 0.35 && ax < radius * 2.2) r = 1;                                   // vertical stabiliser (+ a T-tail)
-      else if (v.y < yMid && v.y > 0.004 && ax > radius * 1.25 && ax < radius * 6 && v.z > -0.32 && v.z < 0.18) r = 2;  // wing-mounted engines
-      else if (onFuselage && v.y < yBot + radius * 0.92) r = 3;                                                   // lower fuselage
-      else if (onFuselage && v.y >= yBot + radius * 0.92 && v.y < yBot + radius * 1.12 && v.z > -0.42 && v.z < 0.3) r = 4;  // cheat line
-      out[i] = r;
-    }
-    geo.setAttribute('livery', new THREE.BufferAttribute(out, 1));
+    const pos = geo.attributes.position; const out = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld); out[i * 3] = v.x; out[i * 3 + 1] = v.y; out[i * 3 + 2] = v.z; }
+    geo.setAttribute('lpos', new THREE.BufferAttribute(out, 3));
   }
 }
 
@@ -165,31 +187,34 @@ export function tint(group: THREE.Group, color: THREE.Color | null): void {
   });
 }
 
-function normalise(scene: THREE.Group, lengthM: number): THREE.Group {
+function normalise(scene: THREE.Group, lengthM: number, type = ''): THREE.Group {
   scene.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(scene);
   const size = new THREE.Vector3(); box.getSize(size);
   const ext = [size.x, size.y, size.z];
   const up = ext.indexOf(Math.min(...ext));                 // an airliner is flattest top-to-bottom
-  const long = ext.indexOf(Math.max(...ext));               // and longest nose-to-tail
-  const lat = 3 - up - long;
-  // the tail fin is the highest part: its centre along the long axis tells which end is the nose
-  let finMax = -Infinity, finCentre = 0;
-  const mb = new THREE.Box3();
-  scene.traverse((o) => {
-    const m = o as THREE.Mesh; if (!m.isMesh) return;
-    mb.setFromObject(m);
-    const top = mb.max.getComponent(up);
-    if (top > finMax) { finMax = top; finCentre = (mb.min.getComponent(long) + mb.max.getComponent(long)) / 2; }
-  });
+  // The tail fin is the highest part and sits at one END of the fuselage: the mean position of the top 20 % of the
+  // vertices is offset along the length axis and centred on the span axis. That picks the length axis even when the
+  // wingspan exceeds the length (A319, A332, A388, turboprops, fighters) and tells which end is the nose - a per-mesh
+  // bounding-box test cannot, because most models are one mesh spanning the whole aircraft.
   const centre = new THREE.Vector3(); box.getCenter(centre);
-  const noseSign = finCentre > centre.getComponent(long) ? -1 : 1;
+  const lo = box.min.getComponent(up), hgt = size.getComponent(up);
+  const sum = [0, 0, 0]; let n = 0; const v = new THREE.Vector3();
+  scene.traverse((o) => {
+    const m = o as THREE.Mesh; if (!m.isMesh || !m.geometry?.attributes?.position) return;
+    const pos = m.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld); if (v.getComponent(up) > lo + hgt * 0.8) { n++; for (let k = 0; k < 3; k++) sum[k] += v.getComponent(k) - centre.getComponent(k); } }
+  });
+  const rel = [0, 1, 2].map(k => (k === up || !n ? 0 : sum[k] / n / Math.max(1e-6, ext[k])));
+  const horiz = [0, 1, 2].filter(k => k !== up);
+  let long = Math.abs(rel[horiz[0]]) >= Math.abs(rel[horiz[1]]) ? horiz[0] : horiz[1];
+  if (Math.abs(rel[long]) < 0.08) long = ext.indexOf(Math.max(...ext));   // no fin found (odd model): longest axis
+  const noseSign = rel[long] > 0 ? -1 : 1;                 // fin at the +end -> nose is the -end
   // basis: model long axis * noseSign -> -z, model up -> +y, x = y × z (right-handed)
   const axis = (i: number, s: number) => new THREE.Vector3().setComponent(i, s);
   const zAxis = axis(long, -noseSign);                      // model direction that becomes +z (tail)
   const yAxis = axis(up, 1);
   const xAxis = new THREE.Vector3().crossVectors(yAxis, zAxis);
-  void lat;
   const basis = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis).invert();   // world <- model
   const scale = lengthM / Math.max(1e-3, ext[long]);
   const wrap = new THREE.Group();
@@ -208,8 +233,9 @@ function normalise(scene: THREE.Group, lengthM: number): THREE.Group {
     if (!m.isMesh) return;
     m.castShadow = false; m.receiveShadow = false; m.frustumCulled = false;
     const mats = Array.isArray(m.material) ? m.material : [m.material];
-    for (const mat of mats) { const s = mat as THREE.MeshStandardMaterial; if ('metalness' in s) { s.metalness = Math.min(s.metalness ?? 0, 0.2); s.roughness = Math.max(s.roughness ?? 1, 0.6); } s.side = THREE.FrontSide; }
+    for (const mat of mats) { const s = mat as THREE.MeshStandardMaterial; if ('metalness' in s) { s.metalness = Math.min(s.metalness ?? 0, 0.2); s.roughness = Math.max(s.roughness ?? 1, 0.6); } s.side = THREE.DoubleSide; }   // fins / control surfaces are single-sided sheets in several models
   });
+  wrap.userData.type = type;
   classify(wrap);
   return wrap;
 }

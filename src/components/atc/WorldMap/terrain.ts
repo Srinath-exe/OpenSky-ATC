@@ -233,8 +233,9 @@ export function buildBuildings(world: World): THREE.Mesh {
     geo.rotateX(-Math.PI / 2);                 // extrude along +y
     geo.translate(0, base, 0);
     const c = b.k === 'terminal' ? PALETTE.terminal : PALETTE.building;
-    const n = geo.getAttribute('position').count;
-    for (let i = 0; i < n; i++) colors.push(c.r, c.g, c.b);
+    // roofs a shade lighter than the walls so the blocks read as volumes from the tilted camera
+    const n = geo.getAttribute('position').count; const nor = geo.getAttribute('normal');
+    for (let i = 0; i < n; i++) { const k = nor.getY(i) > 0.5 ? 1.1 : 0.86; colors.push(c.r * k, c.g * k, c.b * k); }
     geos.push(geo);
   }
   const merged = mergeGeometries(geos);
@@ -246,7 +247,7 @@ export function buildBuildings(world: World): THREE.Mesh {
   return mesh;
 }
 
-function mergeGeometries(geos: THREE.BufferGeometry[]): THREE.BufferGeometry {
+export function mergeGeometries(geos: THREE.BufferGeometry[]): THREE.BufferGeometry {
   geos = geos.map(g => (g.index ? g.toNonIndexed() : g));   // indexed inputs (ribbons) must be expanded before concatenation
   let count = 0; for (const g of geos) count += g.getAttribute('position').count;
   const pos = new Float32Array(count * 3), nor = new Float32Array(count * 3), uv = new Float32Array(count * 2);
@@ -276,7 +277,7 @@ function grainTexture(base: number, amp: number, size = 256): THREE.CanvasTextur
 }
 
 /** Runway designator as a canvas texture ("28L"), white on transparent, for the threshold number plates. */
-function designatorTexture(text: string): THREE.CanvasTexture {
+export function designatorTexture(text: string): THREE.CanvasTexture {
   const c = document.createElement('canvas'); c.width = 256; c.height = 128;
   const ctx = c.getContext('2d')!; ctx.clearRect(0, 0, 256, 128);
   ctx.fillStyle = '#e8e8e4'; ctx.font = '700 104px "DM Sans", "Helvetica Neue", Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -285,11 +286,24 @@ function designatorTexture(text: string): THREE.CanvasTexture {
   return t;
 }
 
-// ── airport surfaces with generated markings ──────────────────────────────────
-const RUNWAY_WIDTH: Record<string, number> = { KSFO: 61 };
-const TAXIWAY_WIDTH = 23;
+/** Apron concrete (grained). */
+export function apronMaterial(): THREE.MeshLambertMaterial { return new THREE.MeshLambertMaterial({ color: PALETTE.concrete, side: THREE.DoubleSide, map: grainTexture(210, 50) }); }
 
-function ribbon(a: THREE.Vector3, b: THREE.Vector3, width: number): THREE.BufferGeometry {
+// ── airport surfaces with generated markings ──────────────────────────────────
+/** Runway widths (m) by airport, optionally per runway ref ("13R/31L"); anything else is 45 m. */
+const RUNWAY_WIDTH: Record<string, number | Record<string, number>> = {
+  KSFO: 61, EGLL: 50, KLAX: { '07R/25L': 61 }, KJFK: { '13L/31R': 46 }, KBOS: { '15L/33R': 30, '14/32': 30 }, VIDP: { '11L/29R': 60, '11/29': 60 },
+};
+const DEFAULT_RUNWAY_WIDTH: Record<string, number> = { KLAX: 46, KJFK: 61, KBOS: 46 };
+function runwayWidth(icao: string, ref: string): number {
+  const w = RUNWAY_WIDTH[icao];
+  if (typeof w === 'number') return w;
+  if (w) { const [a, b] = ref.split('/'); const alt = b && a ? `${b}/${a}` : ref; if (w[ref] != null) return w[ref]; if (w[alt] != null) return w[alt]; }
+  return DEFAULT_RUNWAY_WIDTH[icao] ?? 45;
+}
+export const TAXIWAY_WIDTH = 23;
+
+export function ribbon(a: THREE.Vector3, b: THREE.Vector3, width: number): THREE.BufferGeometry {
   const dir = new THREE.Vector3().subVectors(b, a); dir.y = 0; dir.normalize();
   const side = new THREE.Vector3(-dir.z, 0, dir.x).multiplyScalar(width / 2);
   const p = [a.clone().add(side), a.clone().sub(side), b.clone().sub(side), b.clone().add(side)];
@@ -317,31 +331,43 @@ function glowTexture(): THREE.CanvasTexture {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
+
 export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night: NightHandle[] = []): THREE.Group {
   const g = new THREE.Group(); g.name = 'airport';
   const c = world.toLocal(air.center.lng, air.center.lat);
   const base = world.heightAt(c.x, c.y);
   const xy = (id: string) => { const n = air.nodes.get(id)!; return world.toLocal(n.lng, n.lat); };
   const flat = new THREE.MeshLambertMaterial({ color: PALETTE.asphalt, side: THREE.DoubleSide, map: grainTexture(200, 70) });
-  const concrete = new THREE.MeshLambertMaterial({ color: PALETTE.concrete, side: THREE.DoubleSide, map: grainTexture(210, 50) });
+  const concrete = apronMaterial();
   const mark = new THREE.MeshBasicMaterial({ color: PALETTE.marking, side: THREE.DoubleSide });
 
-  // aprons + terminals from the airport data (the world's building layer covers the rest)
+  // Surface stack (metres above the levelled field): taxiway ribbons 0.5 < aprons 0.6 < markings 0.75+. The apron is one
+  // continuous slab, so the taxi lanes that cross it are only their painted centrelines - not asphalt strips.
   for (const b of air.buildings) {
     const pts = b.polygon.map(p => world.toLocal(p.lng, p.lat));
     if (pts.length < 3) continue;
-    if (b.kind === 'apron') g.add(new THREE.Mesh(polygonGeo(pts, base + 0.25), concrete));
+    if (b.kind === 'apron') { const m = new THREE.Mesh(polygonGeo(pts, base + 0.6), concrete); m.renderOrder = 1; g.add(m); }
   }
-  // taxiways: ribbons along the taxi graph edges + a yellow centreline
+  // taxiways: ribbons along the taxi graph edges (stand lead-ins excluded: those are painted lines on the apron) + a
+  // yellow centreline; a disc at every junction / bend fills the notches between ribbons
   const twyGeos: THREE.BufferGeometry[] = []; const centre: number[] = [];
-  const seen = new Set<string>();
+  const seen = new Set<string>(); const capped = new Set<string>();
+  const capGeo = new THREE.CircleGeometry(TAXIWAY_WIDTH / 2, 14); capGeo.rotateX(-Math.PI / 2);
   for (const n of air.nodes.values()) for (const e of n.edges) {
-    if (e.type !== 'taxiway') continue;
+    if (e.type !== 'taxiway' || e.leadIn) continue;
     const key = n.id < e.to ? `${n.id}|${e.to}` : `${e.to}|${n.id}`; if (seen.has(key)) continue; seen.add(key);
     const a = xy(n.id), b = xy(e.to);
     const va = toV3(a.x, a.y, base + 0.5), vb = toV3(b.x, b.y, base + 0.5);
     twyGeos.push(ribbon(va, vb, TAXIWAY_WIDTH));
     centre.push(va.x, va.y + 0.35, va.z, vb.x, vb.y + 0.35, vb.z);
+    for (const [id, v] of [[n.id, va], [e.to, vb]] as [string, THREE.Vector3][]) {
+      if (capped.has(id)) continue; capped.add(id);
+      const nd = air.nodes.get(id)!; if (nd.edges.filter(x => x.type === 'taxiway' && !x.leadIn).length < 2) continue;
+      const cg = capGeo.clone(); cg.translate(v.x, v.y, v.z);
+      const pos = cg.getAttribute('position'); const uv = new Float32Array(pos.count * 2);
+      for (let i = 0; i < pos.count; i++) { uv[i * 2] = pos.getX(i); uv[i * 2 + 1] = pos.getZ(i); }
+      cg.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); twyGeos.push(cg);
+    }
   }
   if (twyGeos.length) g.add(new THREE.Mesh(mergeGeometries(twyGeos), flat));
   const cl = new THREE.BufferGeometry(); cl.setAttribute('position', new THREE.Float32BufferAttribute(centre, 3));
@@ -349,15 +375,15 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
   g.add(new THREE.LineSegments(cl, clMat)); fades.push({ mat: clMat, base: 0.8, near: 1200, far: 4200 });
 
   // runways: surface, edge lines, centreline dashes, threshold bars
-  const rw = RUNWAY_WIDTH[air.icao] ?? 45;
   const markGeos: THREE.BufferGeometry[] = [];
   for (const r of air.runways) {
+    const rw = runwayWidth(air.icao, r.ref);
     const [e0, e1] = r.ends; const a = world.toLocal(e0.lng, e0.lat), b = world.toLocal(e1.lng, e1.lat);
-    const va = toV3(a.x, a.y, base + 0.6), vb = toV3(b.x, b.y, base + 0.6);
-    g.add(new THREE.Mesh(ribbon(va, vb, rw), flat));
+    const va = toV3(a.x, a.y, base + 0.65), vb = toV3(b.x, b.y, base + 0.65);
+    const rm = new THREE.Mesh(ribbon(va, vb, rw), flat); rm.renderOrder = 2; g.add(rm);
     const dir = new THREE.Vector3().subVectors(vb, va); const len = dir.length(); dir.normalize();
     const side = new THREE.Vector3(-dir.z, 0, dir.x);
-    const at = (d: number) => va.clone().addScaledVector(dir, d).setY(base + 0.75);
+    const at = (d: number) => va.clone().addScaledVector(dir, d).setY(base + 0.8);
     // edge lines
     for (const s of [-1, 1]) { const o = side.clone().multiplyScalar(s * (rw / 2 - 0.9)); markGeos.push(ribbon(at(0).add(o), at(len).add(o), 0.9)); }
     // centreline: 30 m dash / 20 m gap
@@ -374,12 +400,13 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
       const d0 = end === 0 ? 300 : len - 345; if (d0 > 0 && d0 + 45 < len) for (const s of [-1, 1]) markGeos.push(ribbon(at(d0).add(side.clone().multiplyScalar(s * 9)), at(d0 + 45).add(side.clone().multiplyScalar(s * 9)), 4));
     }
   }
-  if (markGeos.length) g.add(new THREE.Mesh(mergeGeometries(markGeos), mark));
+  if (markGeos.length) { const mm = new THREE.Mesh(mergeGeometries(markGeos), mark); mm.renderOrder = 3; g.add(mm); }
   // designator plates just past each threshold (numbers read toward the landing aircraft) + runway / threshold lights
   const lightPos: number[] = []; const lightCol: number[] = [];
   const pushLight = (v: THREE.Vector3, c: THREE.Color) => { lightPos.push(v.x, v.y + 0.6, v.z); lightCol.push(c.r, c.g, c.b); };
   const white = new THREE.Color('#f4f1e6'), green = new THREE.Color('#3ee06a'), red = new THREE.Color('#ff3b30'), amber = new THREE.Color('#ffb020');
   for (const r of air.runways) {
+    const rw = runwayWidth(air.icao, r.ref);
     const [e0, e1] = r.ends; const a = world.toLocal(e0.lng, e0.lat), b = world.toLocal(e1.lng, e1.lat);
     const va = toV3(a.x, a.y, base + 0.78), vb = toV3(b.x, b.y, base + 0.78);
     const dir = new THREE.Vector3().subVectors(vb, va); const len = dir.length(); dir.normalize(); const side = new THREE.Vector3(-dir.z, 0, dir.x);
@@ -387,7 +414,7 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
       const d = dir.clone().multiplyScalar(sign);
       const plate = new THREE.Mesh(new THREE.PlaneGeometry(rw * 0.55, rw * 0.28), new THREE.MeshBasicMaterial({ map: designatorTexture(name), transparent: true, side: THREE.DoubleSide, depthWrite: false }));
       plate.rotation.x = -Math.PI / 2; plate.rotation.z = Math.atan2(-d.x, -d.z);   // top of the glyphs points down the runway (as seen on approach)
-      plate.position.copy(end).addScaledVector(d, 62).setY(base + 0.8);
+      plate.position.copy(end).addScaledVector(d, 62).setY(base + 0.82); plate.renderOrder = 4;
       g.add(plate);
     }
     // edge lights every 60 m (white, amber in the last 600 m), threshold green / end red
@@ -407,7 +434,7 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
   const tPos: number[] = []; const tCol: number[] = []; const blue = new THREE.Color('#4f8cff'), grn = new THREE.Color('#38e07a');
   const seenN = new Set<string>();
   for (const n of air.nodes.values()) for (const e of n.edges) {
-    if (e.type !== 'taxiway') continue;
+    if (e.type !== 'taxiway' || e.leadIn) continue;
     const key = n.id < e.to ? `${n.id}|${e.to}` : `${e.to}|${n.id}`; if (seenN.has(key)) continue; seenN.add(key);
     const a = xy(n.id), b = xy(e.to); const va = toV3(a.x, a.y, base + 0.9), vb = toV3(b.x, b.y, base + 0.9);
     const d = new THREE.Vector3().subVectors(vb, va); const L = d.length(); if (L < 8) continue; d.normalize(); const sd = new THREE.Vector3(-d.z, 0, d.x);
@@ -424,25 +451,6 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
     const c = world.toLocal(b.centroid.lng, b.centroid.lat); const r = Math.sqrt(b.areaM2) * (b.kind === 'apron' ? 0.9 : 1.4);
     const sp = new THREE.Sprite(glowMat); sp.position.copy(toV3(c.x, c.y, base + 2)); sp.scale.set(r, r, 1); sp.visible = false; g.add(sp); glows.push(sp);
   }
-  // stands: yellow lead-in lines and a small number plate at each stop position (real refs only; synthesized R-numbers too)
-  const leadPos: number[] = []; const plates = new THREE.Group();
-  const plateMat = new Map<string, THREE.MeshBasicMaterial>();
-  for (const st of air.stands) {
-    const pts = st.leadInPts.map(p => world.toLocal(p.lng, p.lat));
-    for (let i = 1; i < pts.length; i++) { const a = toV3(pts[i - 1].x, pts[i - 1].y, base + 0.42), b = toV3(pts[i].x, pts[i].y, base + 0.42); leadPos.push(a.x, a.y, a.z, b.x, b.y, b.z); }
-    if (!st.ref || plates.children.length > 400) continue;
-    let pm = plateMat.get(st.ref); if (!pm) { pm = new THREE.MeshBasicMaterial({ map: designatorTexture(st.ref), transparent: true, depthWrite: false, opacity: 0.9 }); plateMat.set(st.ref, pm); }
-    const pl = new THREE.Mesh(new THREE.PlaneGeometry(9, 4.5), pm); const sp = world.toLocal(st.lng, st.lat);
-    pl.rotation.x = -Math.PI / 2; pl.rotation.z = -(st.headingIn) * Math.PI / 180; pl.position.copy(toV3(sp.x, sp.y, base + 0.45));
-    // plate sits 12 m before the stop point, along the lead-in, so the aircraft does not cover it
-    const back = new THREE.Vector3(Math.sin(st.headingIn * Math.PI / 180), 0, -Math.cos(st.headingIn * Math.PI / 180)).multiplyScalar(-14);
-    pl.position.add(back); plates.add(pl);
-  }
-  const leadGeo = new THREE.BufferGeometry(); leadGeo.setAttribute('position', new THREE.Float32BufferAttribute(leadPos, 3));
-  const leadMat = new THREE.LineBasicMaterial({ color: PALETTE.taxiLine, transparent: true, opacity: 0.7 });
-  g.add(new THREE.LineSegments(leadGeo, leadMat)); fades.push({ mat: leadMat, base: 0.7, near: 900, far: 2600 });
-  g.add(plates); const plateFade = { near: 500, far: 1600 };
-  fades.push(...[...plateMat.values()].map(m => ({ mat: m, base: 0.9, near: plateFade.near, far: plateFade.far })));
   let curNight = 0;
   night.push({ setNight: (n) => {
     curNight = n; tm.opacity = 0.95 * n; tp.visible = n > 0.03; glowMat.opacity = 0.75 * n; for (const sp of glows) sp.visible = n > 0.03;
@@ -462,6 +470,7 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
     const c2 = centre.clone().addScaledVector(dir, 1.5);
     holdGeos.push(ribbon(c2.clone().addScaledVector(side, -TAXIWAY_WIDTH / 2), c2.clone().addScaledVector(side, TAXIWAY_WIDTH / 2), 0.6));
   }
-  if (holdGeos.length) { const hm = new THREE.MeshBasicMaterial({ color: PALETTE.taxiLine, side: THREE.DoubleSide, transparent: true }); g.add(new THREE.Mesh(mergeGeometries(holdGeos), hm)); fades.push({ mat: hm, base: 1, near: 1500, far: 4000 }); }
+  if (holdGeos.length) { const hm = new THREE.MeshBasicMaterial({ color: PALETTE.taxiLine, side: THREE.DoubleSide, transparent: true }); const hmesh = new THREE.Mesh(mergeGeometries(holdGeos), hm); hmesh.renderOrder = 3; g.add(hmesh); fades.push({ mat: hm, base: 1, near: 1500, far: 4000 }); }
+  g.userData.base = base;
   return g;
 }

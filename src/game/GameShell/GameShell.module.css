@@ -9,6 +9,7 @@
   position: relative;
   display: grid;
   grid-template-rows: var(--nav-h) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr); /* the column never grows past the shell (a min-content nav would push the map's right-hand chrome off-screen) */
   height: 100vh;
   height: 100dvh;
   min-width: var(--min-width);
@@ -174,5 +175,3 @@
 }
 
 /* 3D / 2D world toggle (airports with a baked world) — bottom-left of the map, above the comm log */
-.worldToggle { position: absolute; left: calc(var(--bay-w) + 2 * var(--float-gap)); bottom: var(--float-gap); z-index: var(--z-float); }
-.shell[data-bay-collapsed="true"] .worldToggle { left: calc(44px + 2 * var(--float-gap)); }

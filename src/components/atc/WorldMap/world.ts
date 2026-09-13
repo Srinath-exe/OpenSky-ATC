@@ -36,7 +36,7 @@ export interface World {
 }
 
 /** Airports with a baked world (public/world/<ICAO>/meta.json). */
-export const WORLD_AIRPORTS = new Set(['KSFO']);
+export const WORLD_AIRPORTS = new Set(['KSFO', 'EGLL', 'KJFK', 'KLAX', 'KBOS', 'VIDP']);
 export function hasWorld(icao: string | null | undefined): boolean { return !!icao && WORLD_AIRPORTS.has(icao.toUpperCase()); }
 
 async function loadImageData(url: string): Promise<ImageData> {
