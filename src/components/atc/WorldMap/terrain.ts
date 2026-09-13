@@ -219,16 +219,31 @@ export function buildRoads(world: World, fades: Fade[]): THREE.Group {
 }
 
 // ── buildings (extruded footprints) ──────────────────────────────────────────
-export function buildBuildings(world: World): THREE.Mesh {
+export function buildBuildings(world: World, air?: OsmAirport): THREE.Mesh {
   const geos: THREE.BufferGeometry[] = [];
   const colors: number[] = [];
-  for (const b of world.vectors.buildings) {
+  // The world layer only carries OSM building WAYS; terminals mapped as relations or tagged aeroway=terminal without
+  // building=* are missing from it - yet the gates, bridges and apron are laid out against exactly those outlines. So
+  // the airport data's terminal / hangar polygons are extruded too, skipping the ones the world layer already has
+  // (same centroid and a similar footprint).
+  const list: { p: [number, number][]; h: number | null; k: 'terminal' | 'hangar' | 'b' }[] = world.vectors.buildings.slice();
+  if (air) {
+    const worldC = world.vectors.buildings.map(b => { const pts = b.p.map(([lng, lat]) => world.toLocal(lng, lat)); const cx = pts.reduce((s, q) => s + q.x, 0) / pts.length, cy = pts.reduce((s, q) => s + q.y, 0) / pts.length; return { cx, cy, area: polyAreaM2(pts) }; });
+    for (const b of air.buildings) {
+      if (b.kind === 'apron' || b.polygon.length < 4) continue;
+      const c = world.toLocal(b.centroid.lng, b.centroid.lat);
+      const dup = worldC.some(w => Math.hypot(w.cx - c.x, w.cy - c.y) < 25 && w.area > b.areaM2 * 0.6 && w.area < b.areaM2 * 1.6);
+      if (dup) continue;
+      list.push({ p: b.polygon.map(q => [q.lng, q.lat] as [number, number]), h: null, k: b.kind === 'terminal' ? 'terminal' : 'hangar' });
+    }
+  }
+  for (const b of list) {
     const pts = b.p.map(([lng, lat]) => world.toLocal(lng, lat));
     if (pts.length < 4) continue;
     const shape = new THREE.Shape(pts.map(p => new THREE.Vector2(p.x, p.y)));   // (east, north); rotateX(-90°) maps north to -z
     const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length, cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
     const base = world.heightAt(cx, cy);
-    const h = b.h ?? (b.k === 'terminal' ? 16 : b.k === 'hangar' ? 14 : 7);
+    const h = b.h ?? (b.k === 'terminal' ? 15 : b.k === 'hangar' ? 14 : 7);
     const geo = new THREE.ExtrudeGeometry(shape, { depth: h, bevelEnabled: false });
     geo.rotateX(-Math.PI / 2);                 // extrude along +y
     geo.translate(0, base, 0);
@@ -270,6 +285,10 @@ export function buildBuildings(world: World): THREE.Mesh {
   const edges = new THREE.LineSegments(new THREE.EdgesGeometry(merged, 25), new THREE.LineBasicMaterial({ color: 0x0b0b0c, transparent: true, opacity: 0.35 }));
   mesh.add(edges);
   return mesh;
+}
+
+function polyAreaM2(pts: { x: number; y: number }[]): number {
+  let a = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a += p.x * q.y - q.x * p.y; } return Math.abs(a) / 2;
 }
 
 export function mergeGeometries(geos: THREE.BufferGeometry[]): THREE.BufferGeometry {

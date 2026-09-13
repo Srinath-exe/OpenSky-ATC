@@ -188,7 +188,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       w.flatten(field, 120);
       const t = buildTerrain(w, lite ? 192 : 512); terrainUniforms = t.uniforms; scene.add(t.mesh);
       scene.add(buildRoads(w, fades));
-      const bl = buildBuildings(w); buildingMat = bl.material as THREE.MeshLambertMaterial; scene.add(bl);
+      const bl = buildBuildings(w, e.air); buildingMat = bl.material as THREE.MeshLambertMaterial; scene.add(bl);
       const ap = buildAirport(w, e.air, fades, nightHandles); scene.add(ap);
       const base = ap.userData.base as number;
       scene.add(buildStands(w, e.air, base, fades));
