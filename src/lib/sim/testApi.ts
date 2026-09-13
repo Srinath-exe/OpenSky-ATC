@@ -23,7 +23,7 @@ import { actionCtxFromEngine } from './dispatch';
 //  Views
 // ──────────────────────────────────────────────────────────────────────────────
 export interface RadioLine {
-  who: 'ATC' | 'PILOT' | 'SYS' | 'AI';
+  who: 'ATC' | 'PILOT' | 'SYS' | 'AI' | 'LLM';
   text: string;
   key: number;
   /** Sim time of the line. */

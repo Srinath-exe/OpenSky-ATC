@@ -26,6 +26,8 @@
 .line[data-who="PILOT"] .who { color: var(--text-2); }
 .line[data-who="SYS"] .who, .line[data-who="SYS"] .text { color: var(--text-3); }
 .line[data-who="AI"] .who, .line[data-who="AI"] .text { color: var(--text-4); }
+.line[data-who="LLM"] .who { color: var(--orange, #f5933f); }
+.line[data-who="LLM"] .text { color: var(--text-2); }
 .time { font: var(--fw-regular) var(--fs-label-xs) / 1.5 var(--font); color: var(--text-4); font-variant-numeric: tabular-nums; font-feature-settings: "kern", "tnum"; }
 .text { min-width: 0; overflow-wrap: anywhere; }
 .line[data-status="unable"] .text, .line[data-status="partial"] .text, .line[data-status="mismatch"] .text, .line[data-status="error"] .text { color: var(--orange); }

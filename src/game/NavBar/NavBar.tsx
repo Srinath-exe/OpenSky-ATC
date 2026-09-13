@@ -18,7 +18,10 @@ function PositionTabs() {
   const position = useSim((s) => s.position)
   const hasRadar = useSim((s) => !!s.radar)
   const icao = useSim((s) => s.icao)
-  const ai = useSim((s) => { const m = s.settings.autoMode; return `${s.settings.autoGround || (m && s.position !== 'ground') ? 'g' : ''}${s.settings.autoTower || (m && s.position !== 'tower') ? 't' : ''}${s.settings.autoApproach || (m && s.position !== 'approach') ? 'a' : ''}` })
+  const ai = useSim((s) => {
+    const m = s.settings.autoMode; const llm = s.llm.mode === 'control' ? s.llm.positions : []
+    return `${s.settings.autoGround || (m && s.position !== 'ground') || llm.includes('ground') ? 'g' : ''}${s.settings.autoTower || (m && s.position !== 'tower') || llm.includes('tower') ? 't' : ''}${s.settings.autoApproach || (m && s.position !== 'approach') || llm.includes('approach') ? 'a' : ''}${llm.length ? '|llm' : ''}`
+  })
   const ref = React.useRef<HTMLDivElement>(null)
   React.useLayoutEffect(() => {
     const root = ref.current
@@ -29,7 +32,7 @@ function PositionTabs() {
       const id = b.dataset.testid ?? ''
       const on = (id.endsWith('ground') && ai.includes('g')) || (id.endsWith('tower') && ai.includes('t')) || (id.endsWith('approach') && ai.includes('a'))
       b.setAttribute('data-ai', on ? 'true' : 'false')
-      b.title = on ? 'AI assist is active on this position' : ''
+      b.title = on ? (ai.includes('|llm') ? 'An AI assist or the edge LLM is working this position' : 'AI assist is active on this position') : ''
     })
   }, [position, hasRadar, ai])
   const items = POSITIONS.map((p) => ({ id: p, label: p.toUpperCase(), testId: `mode-tab-${p}`, disabled: p === 'approach' && !hasRadar }))

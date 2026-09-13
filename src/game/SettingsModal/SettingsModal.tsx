@@ -4,7 +4,11 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import styles from './SettingsModal.module.css'
-import { Modal, ListRow, Toggle, Select, Pill, Button, Icon } from '@/design'
+import { Modal, ListRow, Toggle, Select, Pill, Button, Icon, Input } from '@/design'
+import { sim, useSim } from '@/components/atc/simStore'
+import { probeEndpoint } from '@/lib/llm/client'
+import type { LlmConfig } from '@/lib/llm/client'
+import type { PlayerPosition } from '@/lib/sim/types'
 import type { MenuOption } from '@/design'
 import { useSettings, updateSettings } from '@/app/_lib/persist'
 import type { Settings } from '@/components/atc/simStore'
@@ -97,6 +101,8 @@ export function SettingsModal() {
           </div>
         </div>
 
+        <LlmSection />
+
         <div className={styles.section}>
           <span className={styles.sectionTitle}>Input</span>
           <div className={styles.rows}>
@@ -121,5 +127,76 @@ export function SettingsModal() {
         </div>
       </div>
     </Modal>
+  )
+}
+
+const INTERVAL_OPTIONS: MenuOption<'4' | '8' | '15' | '30'>[] = [
+  { value: '4', label: '4 s' }, { value: '8', label: '8 s' }, { value: '15', label: '15 s' }, { value: '30', label: '30 s' },
+]
+function fmtAgo(ms: number | null): string { if (ms == null) return '' ; const s = Math.round((Date.now() - ms) / 1000); return s < 60 ? `${s} s ago` : `${Math.round(s / 60)} min ago` }
+
+/** Edge LLM: an OpenAI-compatible model working / advising positions (docs/spec/07-LLM-IO.md). Config lives in its own persisted blob. */
+function LlmSection() {
+  const llm = useSim((s) => s.llm)
+  const status = useSim((s) => ({ ...s.llmStatus() }))
+  const logSize = useSim((s) => s.llmAgent.log.length)
+  const setLlm = (patch: Partial<LlmConfig>) => sim.updateLlm(patch)
+  const [probe, setProbe] = React.useState<{ ok: boolean; text: string } | null>(null)
+  const [busy, setBusy] = React.useState(false)
+  const togglePos = (p: PlayerPosition, on: boolean) => setLlm({ positions: on ? Array.from(new Set([...llm.positions, p])) : llm.positions.filter((x) => x !== p) })
+  const test = async () => {
+    setBusy(true); setProbe(null)
+    const r = await probeEndpoint(llm)
+    setProbe(r.ok ? { ok: true, text: `Connected in ${r.ms} ms${r.models.length ? ` · models: ${r.models.slice(0, 6).join(', ')}${r.models.length > 6 ? '…' : ''}` : ''}` } : { ok: false, text: r.error ?? 'failed' })
+    setBusy(false)
+  }
+  const exportLog = () => {
+    const blob = new Blob([sim.llmAgent.exportJsonl()], { type: 'application/jsonl' })
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `skycontrol-io-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.jsonl`
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000)
+  }
+  const statusText = status.lastError ? `Error: ${status.lastError}` : status.calls ? `${status.calls} call${status.calls === 1 ? '' : 's'} · last ${status.lastMs ?? '–'} ms ${fmtAgo(status.lastAt)}${status.model ? ` · ${status.model}` : ''}` : llm.mode === 'off' ? 'Off' : 'Waiting for the first call…'
+  return (
+    <div className={styles.section} data-testid="llm-section">
+      <span className={styles.sectionTitle}>Edge LLM</span>
+      <div className={styles.rows}>
+        <ListRow flush title="Mode" subtitle="Advise = suggestions in the comm log · Control = works the positions" trailing={
+          <span className={styles.pillGroup} role="group" aria-label="LLM mode">
+            {(['off', 'advise', 'control'] as const).map((m) => (
+              <Pill key={m} size="s" tone="outline" interactive selected={llm.mode === m} aria-pressed={llm.mode === m} onClick={() => setLlm({ mode: m })} testId={`llm-mode-${m}`}>{m === 'off' ? 'Off' : m === 'advise' ? 'Advise' : 'Control'}</Pill>
+            ))}
+          </span>
+        } />
+        <ListRow flush title="Positions" subtitle="Positions the model works" trailing={
+          <span className={styles.pillGroup} role="group" aria-label="LLM positions">
+            {(['ground', 'tower', 'approach'] as const).map((p) => (
+              <Pill key={p} size="s" tone="outline" interactive selected={llm.positions.includes(p)} aria-pressed={llm.positions.includes(p)} onClick={() => togglePos(p, !llm.positions.includes(p))} testId={`llm-pos-${p}`}>{p.toUpperCase()}</Pill>
+            ))}
+          </span>
+        } />
+        <ListRow flush title="Endpoint" subtitle="OpenAI-compatible base URL (…/v1); empty = server default" trailing={
+          <Input size="m" placeholder="http://127.0.0.1:11434/v1" value={llm.endpoint} onChange={(e) => setLlm({ endpoint: e.target.value })} testId="llm-endpoint" />
+        } />
+        <ListRow flush title="Model" subtitle="Model name at the endpoint" trailing={
+          <Input size="m" placeholder="llama3.2 / qwen2.5:3b" value={llm.model} onChange={(e) => setLlm({ model: e.target.value })} testId="llm-model" />
+        } />
+        <ListRow flush title="API key" subtitle="Optional bearer token" trailing={
+          <Input size="m" type="password" placeholder="sk-…" value={llm.apiKey} onChange={(e) => setLlm({ apiKey: e.target.value })} testId="llm-key" autoComplete="off" />
+        } />
+        <ListRow flush title="Cadence" subtitle="Seconds between calls per position" trailing={
+          <Select<'4' | '8' | '15' | '30'> value={String(llm.intervalS) as '4' | '8' | '15' | '30'} options={INTERVAL_OPTIONS} onChange={(v) => setLlm({ intervalS: Number(v) })} className={styles.select} testId="llm-interval" ariaLabel="LLM cadence" />
+        } />
+        <ListRow flush title="Call the endpoint from the browser" subtitle="Off = via this server (no CORS, key stays server-side)" trailing={<Mirror state={llm.direct ? 'on' : 'off'}><Toggle checked={llm.direct} onChange={(v) => setLlm({ direct: v })} testId="llm-direct" /></Mirror>} />
+        <ListRow flush title="Record I/O for training" subtitle={`Observation → command pairs from you and the model · ${logSize} record${logSize === 1 ? '' : 's'}`} trailing={
+          <span className={styles.pillGroup}>
+            <Mirror state={llm.record ? 'on' : 'off'}><Toggle checked={llm.record} onChange={(v) => setLlm({ record: v })} testId="llm-record" /></Mirror>
+            <Button variant="ghost" size="sm" disabled={!logSize} onClick={exportLog} testId="llm-export">Export JSONL</Button>
+            <Button variant="ghost" size="sm" disabled={!logSize} onClick={() => sim.llmAgent.clearLog()} testId="llm-clear">Clear</Button>
+          </span>
+        } />
+        <ListRow flush title="Status" subtitle={statusText} trailing={<Button variant="secondary" size="sm" disabled={busy} onClick={test} testId="llm-test">{busy ? 'Testing…' : 'Test connection'}</Button>} testId="llm-status" />
+        {probe ? <div className={styles.footHint} data-testid="llm-probe" data-ok={probe.ok ? 'true' : 'false'}>{probe.text}</div> : null}
+      </div>
+    </div>
   )
 }

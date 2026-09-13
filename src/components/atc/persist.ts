@@ -19,6 +19,7 @@ export const PERSIST_KEYS = {
   startConfig: 'skycontrol_start_config',
   sessionHistory: 'skycontrol_session_history',
   onboardingSeen: 'skycontrol_onboarding_seen',
+  llm: 'skycontrol_llm',
 } as const;
 
 export type PersistKey = (typeof PERSIST_KEYS)[keyof typeof PERSIST_KEYS];

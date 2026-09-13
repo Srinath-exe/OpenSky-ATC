@@ -47,6 +47,11 @@ import { createTestApi } from '../../lib/sim/testApi';
 import type { AtcTestApi, CameraView, TestApiHost } from '../../lib/sim/testApi';
 import { sound } from './sound';
 import * as persist from './persist';
+import { LlmAgent } from '../../lib/llm/agent';
+import type { LlmStatus } from '../../lib/llm/agent';
+import { DEFAULT_LLM_CONFIG } from '../../lib/llm/client';
+import type { LlmConfig } from '../../lib/llm/client';
+import { describe as describeAst } from '../../lib/sim/commandAst';
 
 const NM = NM_TO_M, DEG = Math.PI / 180;
 
@@ -69,7 +74,7 @@ export type Position = PlayerPosition;
 
 export interface RadioLine {
   key: number;
-  who: 'ATC' | 'PILOT' | 'SYS' | 'AI';
+  who: 'ATC' | 'PILOT' | 'SYS' | 'AI' | 'LLM';
   text: string;
   /** Sim seconds. */
   at: number;
@@ -211,6 +216,24 @@ function sanitizeSettings(s: Settings): Settings {
   return out;
 }
 
+/** Persisted LLM config: unknown / malformed fields fall back to the defaults. */
+function sanitizeLlm(raw: Partial<LlmConfig> | null): LlmConfig {
+  const d = DEFAULT_LLM_CONFIG; const r = raw ?? {};
+  const positions = Array.isArray(r.positions) ? r.positions.filter((p): p is PlayerPosition => p === 'ground' || p === 'tower' || p === 'approach') : d.positions;
+  return {
+    mode: r.mode === 'advise' || r.mode === 'control' ? r.mode : 'off',
+    positions: positions.length ? positions : d.positions,
+    endpoint: typeof r.endpoint === 'string' ? r.endpoint.trim() : d.endpoint,
+    model: typeof r.model === 'string' ? r.model.trim() : d.model,
+    apiKey: typeof r.apiKey === 'string' ? r.apiKey : d.apiKey,
+    intervalS: typeof r.intervalS === 'number' && isFinite(r.intervalS) ? Math.min(120, Math.max(3, r.intervalS)) : d.intervalS,
+    temperature: typeof r.temperature === 'number' && isFinite(r.temperature) ? Math.min(2, Math.max(0, r.temperature)) : d.temperature,
+    maxTokens: typeof r.maxTokens === 'number' && isFinite(r.maxTokens) ? Math.min(4096, Math.max(32, Math.round(r.maxTokens))) : d.maxTokens,
+    direct: typeof r.direct === 'boolean' ? r.direct : d.direct,
+    record: typeof r.record === 'boolean' ? r.record : d.record,
+  };
+}
+
 /** Autospawn tuning per difficulty: traffic cap and spawn cadence (sim s). */
 const SPAWN_TUNING: Record<Settings['difficulty'], { base: number; lo: number; hi: number; depShare: number }> = {
   low: { base: 5, lo: 90, hi: 150, depShare: 0.55 },
@@ -281,6 +304,11 @@ class SimStore implements TestApiHost {
   featureOverrides: Partial<Record<string, boolean>> = {};
   /** Sim time of the last spawn decision and the next planned spawn. */
   nextSpawnAt = 0;
+  /** Edge-LLM I/O (docs/spec/07-LLM-IO.md): config (persisted under its own key) + the agent loop. */
+  llm: LlmConfig = { ...DEFAULT_LLM_CONFIG };
+  llmAgent: LlmAgent = new LlmAgent(this, () => this.llm, () => this.emit());
+  /** Who the current command() call speaks as (tags the ATC line): the player, or the LLM working a position. */
+  private commandWho: 'ATC' | 'LLM' = 'ATC';
 
   get tts(): boolean { return this.settings.tts; }
 
@@ -315,6 +343,7 @@ class SimStore implements TestApiHost {
     if (this.persistedLoaded || typeof window === 'undefined') return;
     this.persistedLoaded = true;
     this.settings = sanitizeSettings(persist.loadSettings(DEFAULT_SETTINGS));
+    this.llm = sanitizeLlm(persist.readJson<Partial<LlmConfig> | null>(persist.PERSIST_KEYS.llm, null));
     this.highScore = persist.loadHighScore();
     sound.setEnabled(this.settings.sound);
     sound.setTTS(this.settings.tts);
@@ -557,6 +586,7 @@ class SimStore implements TestApiHost {
   stop(): void {
     if (this.raf && isBrowser()) cancelAnimationFrame(this.raf);
     this.raf = 0;
+    this.llmAgent.stop();
   }
 
   /**
@@ -643,7 +673,7 @@ class SimStore implements TestApiHost {
           const res = d.result;
           const undoOpen = res.ok && res.applyAt != null && res.applyAt > ev.at && undoable(d.ast);
           this.pushLine({
-            who: who === 'AI' ? 'AI' : 'ATC', at: ev.at, text: ev.message, callsign: ev.callsign !== 'SYSTEM' ? ev.callsign : undefined, position: ev.position,
+            who: who === 'AI' ? 'AI' : this.commandWho === 'LLM' ? 'LLM' : 'ATC', at: ev.at, text: ev.message, callsign: ev.callsign !== 'SYSTEM' ? ev.callsign : undefined, position: ev.position,
             result: res, ast: d.ast, undoUntil: undoOpen ? res.applyAt : undefined,
             status: res.ok ? (res.code === 'partial' ? 'partial' : 'ok') : res.code.startsWith('unable') ? 'unable' : res.code === 'queried' ? 'ok' : 'error',
           });
@@ -768,17 +798,41 @@ class SimStore implements TestApiHost {
     return fromEngine(e, { lastCallsign: sel?.callsign ?? this.lastCallsign, position: this.position });
   }
 
-  /** Comm-log text entry: executeText with the engine context; pushes the ATC line (via the transmission event) or a SYS line. */
-  command(text: string): DispatchResult {
+  /** Comm-log text entry: executeText with the engine context; pushes the ATC line (via the transmission event) or a SYS line.
+   *  `opts.position` runs the line as that position (the LLM working a position the player is not on); `opts.who` tags the line. */
+  command(text: string, opts: { position?: PlayerPosition; who?: 'ATC' | 'LLM' } = {}): DispatchResult {
     const e = this.engine;
     const trimmed = text.trim();
     if (!e) return { ok: false, code: 'not_implemented', transmission: '', readback: '', reason: 'No airport loaded', warnings: [] };
     if (!trimmed) return { ok: false, code: 'invalid_param', transmission: '', readback: '', reason: 'Empty command', warnings: [] };
-    const { parse, result } = executeText(e, trimmed, this.parseCtx(), { position: this.position });
-    if (parse.callsign) this.lastCallsign = parse.callsign;
-    this.afterDispatch(result, parse.callsign ?? null, trimmed);
-    return result;
+    const position = opts.position ?? this.position;
+    const who = opts.who ?? 'ATC';
+    const ctx = who === 'LLM' ? fromEngine(e, { lastCallsign: null, position }) : this.parseCtx();
+    this.commandWho = who;
+    let out: DispatchResult;
+    try {
+      const { parse, result } = executeText(e, trimmed, ctx, { position });
+      if (parse.callsign && who === 'ATC') this.lastCallsign = parse.callsign;
+      this.afterDispatch(result, parse.callsign ?? null, trimmed);
+      out = result;
+    } finally { this.commandWho = 'ATC'; }
+    if (who === 'ATC' && this.llm.record) this.llmAgent.recordPlayer(this.playerPosition(), trimmed, out.ok, out.ok ? out.readback : (out.reason ?? out.code));
+    return out;
   }
+  private playerPosition(): PlayerPosition { return this.position === 'approach' ? 'approach' : this.position === 'ground' ? 'ground' : 'tower'; }
+  /** The LLM's advice (advise mode): shown in the comm log as an LLM line the player can type or click. */
+  llmSuggest(line: string, position: PlayerPosition): void {
+    const e = this.engine; if (!e) return;
+    this.pushLine({ who: 'LLM', at: e.time, text: `▸ ${line}`, position, status: 'partial' });
+  }
+  updateLlm(patch: Partial<LlmConfig>): void {
+    this.llm = sanitizeLlm({ ...this.llm, ...patch });
+    persist.writeJson(persist.PERSIST_KEYS.llm, this.llm);
+    this.llmAgent.sync();
+    this.memo.clear();
+    this.emit();
+  }
+  llmStatus(): LlmStatus { return this.llmAgent.status; }
 
   /** Structured dispatch (click tree, drag gestures, panels). */
   dispatchAst(ast: CommandAST): DispatchResult {
@@ -789,6 +843,7 @@ class SimStore implements TestApiHost {
     const result = dispatch(e, ast, ctx ? { ctx } : {});
     if (a) this.lastCallsign = a.callsign;
     this.afterDispatch(result, a?.callsign ?? null, null);
+    if (this.llm.record) { let line = ''; try { line = describeAst(ast); } catch { line = ast.kind; } this.llmAgent.recordPlayer(this.playerPosition(), line, result.ok, result.ok ? result.readback : (result.reason ?? result.code)); }
     return result;
   }
 
