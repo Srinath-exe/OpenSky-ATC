@@ -18,14 +18,20 @@ function PositionTabs() {
   const position = useSim((s) => s.position)
   const hasRadar = useSim((s) => !!s.radar)
   const icao = useSim((s) => s.icao)
+  const ai = useSim((s) => `${s.settings.autoGround ? 'g' : ''}${s.settings.autoTower ? 't' : ''}${s.settings.autoApproach ? 'a' : ''}`)
   const ref = React.useRef<HTMLDivElement>(null)
   React.useLayoutEffect(() => {
     const root = ref.current
     if (!root) return
     root.querySelectorAll<HTMLButtonElement>('[role="tab"]').forEach((b) => {
       b.setAttribute('aria-pressed', b.getAttribute('aria-selected') === 'true' ? 'true' : 'false')
+      // a dot on positions an AI assist is working (settings: AI assist)
+      const id = b.dataset.testid ?? ''
+      const on = (id.endsWith('ground') && ai.includes('g')) || (id.endsWith('tower') && ai.includes('t')) || (id.endsWith('approach') && ai.includes('a'))
+      b.setAttribute('data-ai', on ? 'true' : 'false')
+      b.title = on ? 'AI assist is active on this position' : ''
     })
-  }, [position, hasRadar])
+  }, [position, hasRadar, ai])
   const items = POSITIONS.map((p) => ({ id: p, label: p.toUpperCase(), testId: `mode-tab-${p}`, disabled: p === 'approach' && !hasRadar }))
   const tabs = (
     <div ref={ref} className={styles.tabs} data-testid="position-tabs">

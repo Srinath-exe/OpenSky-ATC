@@ -85,3 +85,13 @@
 
 .divider { width: 1px; height: 20px; background: var(--line-strong); margin: 0 var(--s-1); }
 
+
+/* AI assist dot on a position tab */
+.tabs [role='tab'][data-ai='true'] { position: relative; }
+.tabs [role='tab'][data-ai='true']::after {
+  content: '';
+  position: absolute; top: 6px; right: 6px;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--orange, #ff8a3d);
+  box-shadow: 0 0 6px var(--orange, #ff8a3d);
+}
