@@ -161,6 +161,7 @@ interface Scratch {
   aiRank: number | null;      // place in the assist's queue (hysteresis on re-ordering)
   aiLevel: number | null;     // committed stack level (ft)
   aiGate: number | null;      // intercept gate being flown (NM)
+  holdReason: string | null;  // why applyTraffic is holding this aircraft (debug / tooltip)
   arffDispatchedAt: number | null;
   handoffLateScored: boolean;
   wakeWarned: Set<number>;
@@ -177,7 +178,7 @@ function newScratch(): Scratch {
     nextRequestAt: null, nextRequestKind: null, rollAt: null, handoffAt: null, handoffTo: null, exitPlan: null, taxiDest: null,
     crossingRef: null, onRunwayRef: null, luawAt: null, gaAt: null, stoppedSince: null, continueApproach: false, queried4NM: false,
     vacated: false, passedFixes: new Set(), lastStage: null, emergNoticeAt: 0, crosswindChecked: false, despawnAt: null, rtoRecoverAt: null,
-    lastLevelAt: 0, overshootSaid: false, locMinXtM: null, aiNextAt: 0, aiAlt: null, aiHdg: null, aiRank: null, aiLevel: null, aiGate: null, arffDispatchedAt: null, handoffLateScored: false, wakeWarned: new Set(), entryKey: null, touchdownDone: false,
+    lastLevelAt: 0, overshootSaid: false, locMinXtM: null, aiNextAt: 0, aiAlt: null, aiHdg: null, aiRank: null, aiLevel: null, aiGate: null, holdReason: null, arffDispatchedAt: null, handoffLateScored: false, wakeWarned: new Set(), entryKey: null, touchdownDone: false,
     crossingEntered: false, crossingMinD: Infinity, enteredAirspace: false,
   };
 }
@@ -334,10 +335,10 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       if (same.length) return same;
     }
     // prefer the best headwind: keep ends within 8 kt of the best
-    const best = Math.max(...ok.map(r => this.windFor(r.headingTrue).headKt));
-    const pick = ok.filter(r => this.windFor(r.headingTrue).headKt >= best - 8);
-    this.opsHeading = pick[0].headingTrue;
-    return pick;
+    // one direction family only (all ends within 45 degrees of the best-headwind end)
+    const anchor = ok.reduce((b, r) => (this.windFor(r.headingTrue).headKt > this.windFor(b.headingTrue).headKt ? r : b));
+    this.opsHeading = anchor.headingTrue;
+    return ok.filter(r => Math.abs(angleDelta(r.headingTrue, anchor.headingTrue)) < 45);
   }
   /** Runway heading (true) traffic is currently flowing on; null until the first spawn picks one. */
   private opsHeading: number | null = null;
@@ -554,6 +555,8 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     if (!this.sys[name]) return fallback;
     try { return fn(); } catch (e) { if (isNotImpl(e)) { this.sys[name] = false; return fallback; } throw e; }
   }
+  /** Why ground traffic logic is holding an aircraft (null = not held). */
+  holdReasonOf(id: number): string | null { const a = this.byId(id); return a ? this.sc(a).holdReason : null; }
   /** Which systems are live (test API `features()`). */
   systemsAvailable(): Record<'weather' | 'fleet' | 'alerts' | 'emergencies' | 'phrase', boolean> { return { ...this.sys }; }
 
@@ -973,7 +976,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       // incursion zone: pull the hold back along the path until it is clear of the strip
       let at = pr.at;
       const rsH = this.runwayState(h.runway);
-      if (rsH) for (let k = 0; k < 20 && at > lastAt + 5 && this.distToRunway(sampleAlong(path.pts, path.cum, at).pos, rsH.ref) < STRIP_HALF_M + 18; k++) at -= 5;
+      if (rsH) for (let k = 0; k < 70 && at > lastAt + 5 && this.distToRunway(sampleAlong(path.pts, path.cum, at).pos, rsH.ref) < STRIP_HALF_M + 18; k++) at -= 5;
       holds.push({ nodeId: h.nodeId, runway: upper(h.runway), at, isDepartureEntry: h.isDepartureEntry });
       lastAt = at;
       if (!this.holdNodeInfo.has(h.nodeId)) {
@@ -2817,17 +2820,19 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     // Direction of travel: a pushback moves tail-first, so it looks behind itself for traffic.
     const travelHdg = (a: AircraftState) => (a.phase === 'pushback' ? (a.heading + 180) % 360 : a.heading);
     const blockedBy = new Map<number, number>();
-    for (const a of moving) { if (!this.manualHold.has(a.id)) a.trafficHold = false; else a.trafficHold = true; }
+    for (const a of moving) { this.sc(a).holdReason = null; if (!this.manualHold.has(a.id)) a.trafficHold = false; else { a.trafficHold = true; this.sc(a).holdReason = 'manual hold'; } }
     for (const a of moving) {
       if (a.phase === 'hold_short' || a.phase === 'rollout' || this.manualHold.has(a.id)) continue;
       for (const b of blockers) {
         if (b === a) continue;
         const d = dist(a.pos, b.pos); if (d < 1) continue;
         const hs = b.wakeCategory === 'HEAVY' || b.wakeCategory === 'SUPER' ? 20 : 0;
-        const gap = a.perf.safetyRadiusMeters + b.perf.safetyRadiusMeters + 14 + a.speed * 0.9 + hs;
+        // still inside a runway's protected zone (just crossed it): close up to the minimum so the tail clears the strip
+        const inZone = this.runwaysAt(a.pos, HOLD_LINE_M).length > 0;
+        const gap = inZone ? a.perf.safetyRadiusMeters + b.perf.safetyRadiusMeters + 8 : a.perf.safetyRadiusMeters + b.perf.safetyRadiusMeters + 14 + a.speed * 0.9 + hs;
         if (d < gap) {
           const rel = Math.abs(angleDelta(travelHdg(a), headingTo(a.pos, b.pos)));
-          if (rel < 48) { a.trafficHold = true; blockedBy.set(a.id, b.id); }
+          if (rel < 48) { a.trafficHold = true; blockedBy.set(a.id, b.id); this.sc(a).holdReason ??= `traffic ahead: ${b.callsign}`; }
         }
       }
       // give way / follow
@@ -2837,13 +2842,13 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         else {
           const d = dist(a.pos, b.pos);
           const bRel = Math.abs(angleDelta(b.heading, headingTo(b.pos, a.pos)));
-          if (d < 160 && bRel < 100) a.trafficHold = true; else if (d > 200 || bRel > 120) a.giveWayTo = null;
+          if (d < 160 && bRel < 100) { a.trafficHold = true; this.sc(a).holdReason ??= `giving way to ${b.callsign}`; } else if (d > 200 || bRel > 120) a.giveWayTo = null;
         }
       }
       if (a.followId != null) {
         const b = this.byId(a.followId);
         if (!b || isAirborne(b) || b.phase === 'parked' || b.phase === 'arrived') a.followId = null;
-        else if (dist(a.pos, b.pos) < a.perf.safetyRadiusMeters + b.perf.safetyRadiusMeters + 20 || b.speed < 0.5 && dist(a.pos, b.pos) < 120) a.trafficHold = true;
+        else if (dist(a.pos, b.pos) < a.perf.safetyRadiusMeters + b.perf.safetyRadiusMeters + 20 || b.speed < 0.5 && dist(a.pos, b.pos) < 120) { a.trafficHold = true; this.sc(a).holdReason ??= `following ${b.callsign}`; }
       }
     }
     // Path look-ahead: crossing traffic. The cone test above only sees traffic ahead of the nose; two aircraft
@@ -2869,7 +2874,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
           // stopped (or path-less) aircraft on the way: stop short of it
           const dNow = dist(a.pos, b.pos);
           const near = dNow > 8 && sa.find(q => q.s > 12 && dist(q.p, b.pos) < Math.min(dNow, gap * 0.65 + 8));
-          if (near && Math.abs(angleDelta(travelHdg(a), headingTo(a.pos, b.pos))) < 120) { a.trafficHold = true; if (!blockedBy.has(a.id)) blockedBy.set(a.id, b.id); break; }
+          if (near && Math.abs(angleDelta(travelHdg(a), headingTo(a.pos, b.pos))) < 120) { a.trafficHold = true; this.sc(a).holdReason ??= `${b.callsign} stopped on the way`; if (!blockedBy.has(a.id)) blockedBy.set(a.id, b.id); break; }
           continue;
         }
         let hit: { i: number; j: number } | null = null;
@@ -2877,7 +2882,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         if (!hit) continue;
         const tA = sa[hit.i].s / Math.max(3, a.speed), tB = sb[hit.j].s / Math.max(3, b.speed);
         const later = tA > tB + 0.5 || (Math.abs(tA - tB) <= 0.5 && a.id > b.id);
-        if (later && sa[hit.i].s > 15) { a.trafficHold = true; if (!blockedBy.has(a.id)) blockedBy.set(a.id, b.id); break; }
+        if (later && sa[hit.i].s > 15) { a.trafficHold = true; this.sc(a).holdReason ??= `giving way to ${b.callsign} (crossing)`; if (!blockedBy.has(a.id)) blockedBy.set(a.id, b.id); break; }
       }
     }
     // close pairs facing each other both stop; then break mutual blocks by lower id (B14). A pushback is a fixed
@@ -2887,8 +2892,8 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       if (dist(a.pos, b.pos) >= a.perf.safetyRadiusMeters + b.perf.safetyRadiusMeters + 7) continue;
       const aSeesB = Math.abs(angleDelta(travelHdg(a), headingTo(a.pos, b.pos)));
       const bSeesA = Math.abs(angleDelta(travelHdg(b), headingTo(b.pos, a.pos)));
-      if (aSeesB < 90 && a.phase !== 'hold_short') { a.trafficHold = true; if (!blockedBy.has(a.id)) blockedBy.set(a.id, b.id); }
-      if (bSeesA < 90 && b.phase !== 'hold_short') { b.trafficHold = true; if (!blockedBy.has(b.id)) blockedBy.set(b.id, a.id); }
+      if (aSeesB < 90 && a.phase !== 'hold_short') { a.trafficHold = true; this.sc(a).holdReason ??= `nose to nose with ${b.callsign}`; if (!blockedBy.has(a.id)) blockedBy.set(a.id, b.id); }
+      if (bSeesA < 90 && b.phase !== 'hold_short') { b.trafficHold = true; this.sc(b).holdReason ??= `nose to nose with ${a.callsign}`; if (!blockedBy.has(b.id)) blockedBy.set(b.id, a.id); }
     }
     for (const a of moving) {
       const bId = blockedBy.get(a.id); if (bId == null || this.manualHold.has(a.id)) continue;
@@ -2897,7 +2902,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         // never release into a collision: the path ahead must clear the other aircraft
         const sa = aheadOf.get(a.id) ?? ahead(a);
         const clearance = (a.perf.safetyRadiusMeters + b.perf.safetyRadiusMeters) * 0.62;
-        if (!sa.some(q => dist(q.p, b.pos) < clearance)) a.trafficHold = false;
+        if (!sa.some(q => dist(q.p, b.pos) < clearance)) { a.trafficHold = false; this.sc(a).holdReason = null; }
       }
     }
     // active-runway protection: ground traffic (not cleared onto it) stays clear of a runway with a landing/rolling movement
@@ -2915,7 +2920,11 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       const ahead = advance(ac.pos, ac.heading, 28);
       for (const [ref, seg] of active) {
         if (s.crossingRef === ref || s.onRunwayRef === ref) continue;
-        if (distToSegment(ac.pos, seg.a, seg.b) < HOLD_LINE_M || distToSegment(ahead, seg.a, seg.b) < HOLD_LINE_M) { if (!(ac.holdReleased && ac.path?.holds?.[0] && this.refOf(ac.path.holds[0].runway) === ref)) { ac.trafficHold = true; } break; }
+        const dNow = distToSegment(ac.pos, seg.a, seg.b), dAhead = distToSegment(ahead, seg.a, seg.b);
+        // already inside the protected zone (just crossed, tail still on the strip): keep going and clear it - stopping
+        // there is the one thing that must not happen
+        if (dNow < HOLD_LINE_M && dAhead >= dNow - 1) continue;
+        if (dNow < HOLD_LINE_M || dAhead < HOLD_LINE_M) { if (!(ac.holdReleased && ac.path?.holds?.[0] && this.refOf(ac.path.holds[0].runway) === ref)) { ac.trafficHold = true; this.sc(ac).holdReason ??= `runway ${ref} active`; } break; }
       }
     }
     for (const a of moving) if (a.trafficHold && a.speed < 0.5 && a.phase !== 'hold_short') a.delay.groundStoppedS += FIXED;
@@ -3482,6 +3491,19 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     // Stand-down: stopped/vacated for 10 min with no fire -> resolved
     if ((e.status === 'stopped' || e.status === 'landed') && e.stoppedAt != null && this.time - e.stoppedAt > 600 && !this.sys.emergencies) this.resolveEmergency(a, 'stand down');
   }
+  /**
+   * May an AI clear this aircraft across the runway it is holding short of? The crossing must be safe, and when a
+   * second runway follows right behind (a parallel pair, hold lines a few hundred metres apart) that one must be safe
+   * too and the stretch between them empty - one aircraft fits there, a queue does not, and an aircraft stopped there
+   * with its tail on the first runway blocks it for the next arrival.
+   */
+  private aiCrossAllowed(a: AircraftState): boolean {
+    if (!a.holdShortRunway || !this.crossingSafe(a.holdShortRunway)) return false;
+    const h0 = a.path?.holds?.[0], h1 = a.path?.holds?.[1];
+    if (!(h0 && h1 && h1.runway && h1.at - h0.at < 450)) return true;
+    const roomBetween = !this.aircraft.some(b => b !== a && !isAirborne(b) && b.phase !== 'parked' && b.phase !== 'arrived' && (() => { const pr = projectOntoPath(a.path!.pts, a.path!.cum, b.pos, h0.at, h1.at - h0.at + 60); return pr.dist < 60 && pr.at > h0.at + 20; })());
+    return roomBetween && this.crossingSafe(h1.runway) && !this.bothEnds(this.refOf(h1.runway) ?? h1.runway).some(o => o.occupiedBy.some(x => x.kind === 'takeoff' || x.kind === 'landing' || x.kind === 'rollout'));
+  }
   /** AI tower assist (UX §G5.10): routine clearances 8 s after they become valid; never violates the rules. */
   private autoTowerStep() {
     for (const rs of this.runways) {
@@ -3494,12 +3516,14 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       const heavy = waiting && (waiting.wakeCategory === 'HEAVY' || waiting.wakeCategory === 'SUPER' || waiting.perf.b757);
       const crossing = this.bothEnds(rs.ref)[0].intersects.flatMap(ref => this.bothEnds(ref)).some(o => !!this.arrivalOnFinal(o.name, heavy ? 9 : 4) || o.occupiedBy.some(x => x.kind === 'rollout' || x.kind === 'landing'));
       // an arrival inside 6 NM (8 behind a heavy: its wake must be clear of the touchdown zone) on this runway: wait
-      const finalBusy = !!waiting && !!this.arrivalOnFinal(rs.name, heavy ? 8 : 6);
-      if (waiting && (parallelDep || crossing || finalBusy)) {
+      const finalBusy = !!waiting && !!this.arrivalOnFinal(rs.name, heavy ? 7 : 5);
+      // an aircraft mid-crossing on the runway, or waiting at the next hold line with its tail still on it: no take-off
+      const crosserOn = rs.occupiedBy.some(x => x.kind === 'crossing');
+      if (waiting && (parallelDep || crossing || finalBusy || crosserOn)) {
         const req = waiting.requests.find(q => q.answeredAt == null && q.kind === 'ready');
         if (req && this.time - req.at > 8) { this.answerRequest(waiting, ['ready'], 'ai'); this.emit('transmission', waiting, `AI TWR: ${waiting.callsign} hold position, traffic`, { type: 'transmission', ast: makeAst('holdPosition', waiting.callsign, { reason: 'traffic' }), result: { ok: true, code: 'ok_queued', transmission: '', readback: '' }, who: 'ai' }, 'AI'); }
       }
-      if (waiting && !parallelDep && !crossing && !finalBusy) {
+      if (waiting && !parallelDep && !crossing && !finalBusy && !crosserOn) {
         // an unrestricted initial climb (SID altitude / FL90): the departure is above the 3-4,000 ft arrival levels quickly
         const init = Math.max(6000, Math.min(9000, waiting.plan.cruiseAlt ?? 9000));
         const r = this.cmdTakeoff(waiting, rs.name, { immediate: false, afterDepHdg: null, turn: null, initialAlt: init, contactDeparture: true });
@@ -3518,7 +3542,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
           if (r.ok) this.emit('transmission', a, `AI TWR: ${a.callsign} runway ${a.plan.runway} cleared to land`, { type: 'transmission', ast: makeAst('clearedLand', a.callsign, { runway: a.plan.runway }), result: { ok: true, code: r.code, transmission: '', readback: '' }, who: 'ai' }, 'AI');
         }
       }
-      if (a.phase === 'hold_short' && a.holdShortRunway && !a.holdReleased && a.path?.holds?.[0] && !a.path.holds[0].isDepartureEntry && this.sc(a).stoppedSince != null && this.time - this.sc(a).stoppedSince! > 8 && this.crossingSafe(a.holdShortRunway) && !a.pendingCmds.length) {
+      if (a.phase === 'hold_short' && a.holdShortRunway && !a.holdReleased && a.path?.holds?.[0] && !a.path.holds[0].isDepartureEntry && this.sc(a).stoppedSince != null && this.time - this.sc(a).stoppedSince! > 8 && this.aiCrossAllowed(a) && !a.pendingCmds.length) {
         const r = this.cmdCross(a, a.holdShortRunway, false, null);
         if (r.ok) this.emit('transmission', a, `AI TWR: ${a.callsign} cross runway ${a.holdShortRunway}`, { type: 'transmission', ast: makeAst('cross', a.callsign, { runway: a.holdShortRunway }), result: { ok: true, code: r.code, transmission: '', readback: '' }, who: 'ai' }, 'AI');
       }
@@ -3561,7 +3585,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
           if (a.plan.gateRef) ok = say(a, `${a.callsign} taxi to stand ${a.plan.gateRef}`, makeAst('taxi', a.callsign, { dest: { kind: 'stand', ref: a.plan.gateRef }, via: [], auto: true, holdShortOf: null, cross: [], expedite: false }), this.cmdTaxi(a, { kind: 'stand', ref: a.plan.gateRef }, [], true, null, [], false));
           break;
         case 'cross':
-          if (a.holdShortRunway && this.crossingSafe(a.holdShortRunway)) ok = say(a, `${a.callsign} cross runway ${a.holdShortRunway}`, makeAst('cross', a.callsign, { runway: a.holdShortRunway }), this.cmdCross(a, a.holdShortRunway, false, null));
+          if (a.holdShortRunway && this.aiCrossAllowed(a)) ok = say(a, `${a.callsign} cross runway ${a.holdShortRunway}`, makeAst('cross', a.callsign, { runway: a.holdShortRunway }), this.cmdCross(a, a.holdShortRunway, false, null));
           else { s.aiNextAt = this.time + 5; continue; }
           break;
         case 'with_you':
@@ -3600,6 +3624,10 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     const queue = this.aircraft.filter(a => a.plan.kind === 'arrival' && isAirborne(a) && !a.ilsCaptured && a.phase !== 'landing' && a.onFrequency === 'approach' && !(a.emergency && a.emergency.status !== 'resolved') && !!a.plan.runway && !!this.ilsFor(a.plan.runway));
     if (!queue.length) return;
     const tan30 = Math.tan(Math.PI / 6);
+    // Everything the assist flies stays inside the airspace: the furthest usable point on each centreline (2.5 NM
+    // inside the boundary) caps the gate (a base leg 4.5 NM abeam must fit beyond it) and with it the stack levels
+    const maxAlongNM = (r: ILSRunway) => { let d = 6; while (d < 40 && dist(advance(r.thrXY, featherHdg(r), (d + 1) * NM_TO_M), this.centerXY) < this.airspaceRadiusM - 2.5 * NM_TO_M) d += 1; return d; };
+    const gateCapNM = (r: ILSRunway) => Math.max(8, maxAlongNM(r) - 4.5 / tan30);
     // Track miles to the threshold along the route the assist will actually fly: a 30-degree intercept to the
     // centreline (never inside `gateNM`), or - when too close in for that - out to a base point 4.5 NM abeam one
     // intercept leg beyond the gate, then in. Established traffic: distance along the localizer.
@@ -3608,7 +3636,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       const along = distAlongFwd(a.pos, r), xt = crossTrackM(a.pos, r), alongNM = along / NM_TO_M, xtNM = Math.abs(xt) / NM_TO_M;
       if (a.ilsCaptured) return { tmNM: Math.max(0, alongNM), target: r.thrXY };
       if (alongNM - xtNM / tan30 >= gateNM - 0.5) {
-        const meet = Math.max(gateNM, alongNM - xtNM / tan30);
+        const meet = Math.max(gateNM, Math.min(alongNM - 2, alongNM - xtNM / tan30));   // never a point at the aircraft itself
         const p = advance(r.thrXY, featherHdg(r), meet * NM_TO_M);
         return { tmNM: dist(a.pos, p) / NM_TO_M + meet, target: p };
       }
@@ -3646,7 +3674,9 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       if (level.has(a)) continue;
       // parallel approaches are flown at different levels until both are established (reduced minima apply only then)
       const taken = (ft: number) => queue.some(b => b !== a && level.get(b) === ft && dist(a.pos, b.pos) < (parallel(a, b) ? 30 : 12) * NM_TO_M);
-      let l = 3000; while (l < 6000 && taken(l)) l += 1000;
+      const rA = this.ilsFor(a.plan.runway!)!;
+      let maxLevel = 3000; while (maxLevel < 6000 && gsDistM(maxLevel + 1000, rA) / NM_TO_M + 0.3 <= gateCapNM(rA)) maxLevel += 1000;
+      let l = 3000; while (l < maxLevel && taken(l)) l += 1000;
       level.set(a, l); this.sc(a).aiLevel = l;
     }
     for (const [ref, list] of byRef) {
@@ -3662,7 +3692,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         // vacated before the follower is over the threshold
         let g = i === 0 ? 10 : gates[i - 1] + wakeNM(list[i - 1], list[i]) + 2.5;
         if (i === 0 && established.length) { const lead = established[established.length - 1]; g = Math.max(10, route(lead, 10).tmNM + wakeNM(lead, list[0]) + 2.5); }
-        gates.push(Math.min(g, 17, this.airspaceRadiusM / NM_TO_M - 7));
+        gates.push(Math.min(g, 17, gateCapNM(this.ilsFor(list[i].plan.runway!)!)));
       }
       for (let i = 0; i < list.length; i++) {
         const a = list[i]; const s = this.sc(a);
@@ -3677,7 +3707,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         const lvl = level.get(a)!;
         // the gate is sticky: once inside a bigger one it keeps the gate it was flying (a re-route out and back again
         // would cost more than it gains) - spacing behind the leader is then made with speed
-        let gateNM = Math.max(gates[i], gsDistM(lvl, r) / NM_TO_M + 0.3);      // where the slope is at the level we hold
+        let gateNM = Math.min(gateCapNM(r), Math.max(gates[i], gsDistM(lvl, r) / NM_TO_M + 0.3));   // where the slope is at the level we hold
         if (s.aiGate != null && gateNM > s.aiGate && alongNM - xtNM / tan30 < gateNM + 2) gateNM = s.aiGate;
         s.aiGate = gateNM;
         const plan = route(a, gateNM);
@@ -3690,7 +3720,10 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         // altitude: 3000 for the first in the queue, +1000 per place; 5000+ while still more than 28 track miles out; never
         // touched once the approach clearance is in (the glideslope takes it down from there)
         const wantAlt = Math.round(Math.min(a.cmdAltitude ?? a.altitude, (plan.tmNM > 28 ? 5000 : 3000) - 3000 + lvl) / 1000) * 1000;
-        if (!a.ilsArmed && s.aiAlt !== wantAlt && (a.cmdAltitude ?? a.targetAltitude) !== wantAlt) {
+        // never descend through a level another aircraft is holding nearby (6 NM): wait until it has moved on
+        const cur = a.cmdAltitude ?? a.targetAltitude;
+        const through = wantAlt < cur && this.aircraft.some(b => b !== a && isAirborne(b) && dist(a.pos, b.pos) < 6 * NM_TO_M && b.altitude > wantAlt - 300 && b.altitude < a.altitude + 300);
+        if (!a.ilsArmed && s.aiAlt !== wantAlt && cur !== wantAlt && !through) {
           const o = this.cmdAltitude(a, wantAlt, false, null);
           if (say(a, `${a.callsign} descend ${wantAlt}`, makeAst('altitude', a.callsign, { ft: wantAlt }), o)) { s.aiAlt = wantAlt; s.aiNextAt = this.time + 6; continue; }
         }
