@@ -20,8 +20,8 @@ import { sim, useSim } from '../simStore';
 import type { AircraftState } from '@/lib/sim/types';
 import { isAirborne } from '@/lib/sim/aircraft';
 import { loadWorld, type World } from './world';
-import { instantiate, loadAircraftModel, tint } from './models';
-import { PALETTE, applyFades, buildAirport, buildBuildings, buildRoads, buildTerrain, toV3, type Fade, type NightHandle } from './terrain';
+import { NOSE_WHEEL, genericLights, instantiate, lightsOf, loadAircraftModel, setModelNight, tint, type LightSpec } from './models';
+import { PALETTE, applyFades, buildAirport, buildBuildings, buildRoads, buildTerrain, setSurfaceNight, toV3, type Fade, type NightHandle } from './terrain';
 import { buildGse, buildJetBridges, buildLabels, buildStands, type LabelHandle } from './apron';
 import { applySky, buildClouds, buildRain, buildSky, lightingFor, sunPosition, weatherLook, type TimeMode } from './sky';
 import { IconButton, Segmented, Icon, Tooltip } from '@/design';
@@ -45,7 +45,7 @@ const GRADE = {
 };
 
 interface Cam { target: THREE.Vector3; dist: number; yaw: number; pitch: number; distGoal: number }
-interface Marker { mesh: THREE.Mesh; id: number; label: HTMLDivElement; shadow: THREE.Mesh; stem: THREE.Line; model: THREE.Group | null; modelWanted: boolean; tinted: string }
+interface Marker { mesh: THREE.Mesh; id: number; label: HTMLDivElement; shadow: THREE.Mesh; stem: THREE.Line; model: THREE.Group | null; modelWanted: boolean; tinted: string; lights: THREE.Points; lightSpec: LightSpec | null }
 
 function aircraftGeometry(): THREE.BufferGeometry {
   // unit-length airliner silhouette in the XZ plane, nose toward -z (north); scaled per aircraft.
@@ -56,7 +56,32 @@ function aircraftGeometry(): THREE.BufferGeometry {
   s.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) s.lineTo(pts[i][0], pts[i][1]); s.closePath();
   const g = new THREE.ExtrudeGeometry(s, { depth: 0.06, bevelEnabled: false });
   g.rotateX(-Math.PI / 2);        // shape y -> -z (nose north)
+  g.translate(0, 0, 0.5 - NOSE_WHEEL);   // origin at the nose wheel, like the models
   return g;
+}
+
+/** Aircraft lights: additive glowing points with a per-point size in pixels (nav / beacon / strobe / landing / taxi). */
+const LIGHT_ORDER = ['tipL', 'tipR', 'tail', 'beaconTop', 'beaconBot', 'nose', 'landL', 'landR'] as const;
+const lightMaterial = new THREE.ShaderMaterial({
+  uniforms: { uOpacity: { value: 1 }, uPixelRatio: { value: 1 } },
+  vertexShader: `attribute float size; attribute vec3 color; varying vec3 vColor; uniform float uPixelRatio;
+    void main() { vColor = color; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = size * uPixelRatio; gl_Position = projectionMatrix * mv; }`,
+  fragmentShader: `varying vec3 vColor; uniform float uOpacity;
+    void main() { float d = length(gl_PointCoord - 0.5) * 2.0; float a = smoothstep(1.0, 0.0, d); float core = 1.0 - smoothstep(0.0, 0.32, d); gl_FragColor = vec4(vColor + vec3(0.5) * core, (a * a * 0.7 + core) * uOpacity); }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+});
+function makeLights(): THREE.Points {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(LIGHT_ORDER.length * 3), 3));
+  g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(LIGHT_ORDER.length * 3), 3));
+  g.setAttribute('size', new THREE.BufferAttribute(new Float32Array(LIGHT_ORDER.length), 1));
+  const p = new THREE.Points(g, lightMaterial); p.frustumCulled = false; p.renderOrder = 30;
+  return p;
+}
+function setLightPositions(p: THREE.Points, spec: LightSpec): void {
+  const arr = p.geometry.getAttribute('position').array as Float32Array;
+  LIGHT_ORDER.forEach((k, i) => { const v = spec[k]; arr[i * 3] = v.x; arr[i * 3 + 1] = v.y; arr[i * 3 + 2] = v.z; });
+  p.geometry.getAttribute('position').needsUpdate = true;
 }
 
 export function WorldMap({ standalone = false }: { standalone?: boolean }) {
@@ -102,7 +127,8 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     // Depth of field as a background effect only: the airfield is always sharp, the blur ramps in beyond it (far
     // terrain, the bay, the horizon) - a tilt-shift look that does not depend on the zoom level. The stock bokeh
     // formula blurs symmetrically around the focus distance; patched to blur only past `focus`.
-    const bokeh = new BokehPass(scene, camera, { focus: 9000, aperture: 0.0000012, maxblur: 0.009 });
+    const bokeh = new BokehPass(scene, camera, { focus: 9000, aperture: 0.0000026, maxblur: 0.0065 });
+    const fieldCentre = new THREE.Vector3(0, 0, 0);
     bokeh.materialBokeh.fragmentShader = bokeh.materialBokeh.fragmentShader.replace('float factor = ( focus + viewZ );', 'float factor = max( 0.0, -viewZ - focus );');
     bokeh.materialBokeh.needsUpdate = true;
     if (!lite) composer.addPass(bokeh);
@@ -120,8 +146,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const rain = buildRain(); scene.add(rain.points);
     const nightHandles: NightHandle[] = [];
     let buildingMat: THREE.MeshLambertMaterial | null = null;
-    const shadowGeo = new THREE.CircleGeometry(0.5, 24); shadowGeo.rotateX(-Math.PI / 2);
-    const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false });
+    const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false });   // aircraft-shaped (acGeo), per-marker opacity
     const stemMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 });
     const decor = new THREE.Group(); scene.add(decor);
     // smooth camera moves (centre-on / locate) and the world's pan limits
@@ -149,6 +174,9 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     let terrainUniforms: Record<string, THREE.IUniform> | null = null;
     let world: World | null = null;
     let mapLabels: LabelHandle | null = null;
+    let nightAmtRef = 0;                       // last frame's night amount (the lighting block runs after the traffic sync)
+    let fieldR = 3000;                         // airfield radius (m): the depth-of-field focus keeps everything inside it sharp
+    const nightMats: THREE.MeshLambertMaterial[] = [];   // jet bridges / ground equipment: lifted at night (apron floodlights)
     const fades: Fade[] = [];
     const raycaster = new THREE.Raycaster();
 
@@ -164,10 +192,11 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       const ap = buildAirport(w, e.air, fades, nightHandles); scene.add(ap);
       const base = ap.userData.base as number;
       scene.add(buildStands(w, e.air, base, fades));
-      const jb = buildJetBridges(w, e.air, base); if (jb) scene.add(jb);
-      const gse = buildGse(w, e.air, base); if (gse) scene.add(gse);
+      const jb = buildJetBridges(w, e.air, base); if (jb) { scene.add(jb); nightMats.push((jb as THREE.Mesh).material as THREE.MeshLambertMaterial); }
+      const gse = buildGse(w, e.air, base); if (gse) { scene.add(gse); nightMats.push((gse as THREE.Mesh).material as THREE.MeshLambertMaterial); }
+      fieldR = Math.min(6000, Math.max(1500, Math.max(...field.map(p => Math.hypot(p.x, p.y))) + 300));
       mapLabels = buildLabels(w, e.air, base); scene.add(mapLabels.group);
-      cam.target.set(0, w.heightAt(0, 0), 0);
+      cam.target.set(0, w.heightAt(0, 0), 0); fieldCentre.set(0, w.heightAt(0, 0), 0);
       setStatus('ready');
     }).catch((err) => { console.error(err); setStatus('error'); });
 
@@ -312,9 +341,10 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         if (!m) {
           const mesh = new THREE.Mesh(acGeo, matPlane); mesh.userData.id = a.id;
           const label = document.createElement('div'); label.className = styles.label; labels.current?.appendChild(label);
-          const shadow = new THREE.Mesh(shadowGeo, shadowMat); decor.add(shadow);
+          const shadow = new THREE.Mesh(acGeo, shadowMat.clone()); shadow.renderOrder = 5; decor.add(shadow);
           const stem = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 1, 0)]), stemMat); decor.add(stem);
-          m = { mesh, id: a.id, label, shadow, stem, model: null, modelWanted: false, tinted: '' }; markers.set(a.id, m); traffic.add(mesh);
+          const lights = makeLights(); setLightPositions(lights, genericLights(a.perf.lengthMeters, a.perf.wingspanMeters)); traffic.add(lights);
+          m = { mesh, id: a.id, label, shadow, stem, model: null, modelWanted: false, tinted: '', lights, lightSpec: null }; markers.set(a.id, m); traffic.add(mesh);
         }
         const air = isAirborne(a);
         const ground = world ? world.heightAt(a.pos.x, a.pos.y) : 0;
@@ -324,24 +354,52 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         const scale = Math.max(1, cam.dist / 2600);            // keep symbols legible when zoomed out
         m.mesh.scale.set(span * scale, 1, len * scale);
         m.mesh.rotation.y = -a.heading * Math.PI / 180;
-        // ground shadow (softens with height) + a thin stem from an airborne aircraft down to the ground
-        m.shadow.position.set(a.pos.x, ground + 0.4, -a.pos.y);
-        const sh = air ? Math.max(0.8, 1 + (h - ground) / 600) : 1.05;
-        m.shadow.scale.set(span * scale * sh, 1, len * scale * sh);
-        (m.shadow.material as THREE.MeshBasicMaterial).opacity = air ? Math.max(0.05, 0.3 - (h - ground) / 6000) : 0.35;
+        // ground shadow: the silhouette, flat on the surface, slightly larger and fainter with height; a thin stem from an
+        // airborne aircraft down to the ground
+        const useModel = !!m.model && cam.dist < 6500;
+        const shScale = useModel ? 1 : scale;
+        m.shadow.position.set(a.pos.x, ground + 0.4, -a.pos.y); m.shadow.rotation.y = m.mesh.rotation.y;
+        const sh = air ? Math.max(0.8, 1 + (h - ground) / 600) : 1.04;
+        m.shadow.scale.set(span * shScale * sh, 0.01, len * shScale * sh);
+        (m.shadow.material as THREE.MeshBasicMaterial).opacity = (air ? Math.max(0.04, 0.28 - (h - ground) / 6000) : 0.32) * (0.35 + 0.65 * (1 - nightAmtRef));
         m.stem.visible = air; if (air) { m.stem.position.set(a.pos.x, ground, -a.pos.y); m.stem.scale.y = Math.max(1, h - ground); }
         m.mesh.material = a.id === sim.selectedId ? matSel : a.onFrequency === sim.position || sim.position === 'ground' ? matPlane : matGhost;
         // real model (lazy per type); the silhouette stays as the far-zoom symbol and the pick target
         if (!m.modelWanted) {
           m.modelWanted = true; const mk = m;
-          loadAircraftModel(a.perf.icaoCode).then((mdl) => { if (!mdl || disposed || !markers.has(mk.id)) return; mk.model = instantiate(mdl, a.perf.lengthMeters, a.callsign); mk.model.userData.id = mk.id; traffic.add(mk.model); });
+          loadAircraftModel(a.perf.icaoCode).then((mdl) => {
+            if (!mdl || disposed || !markers.has(mk.id)) return;
+            mk.model = instantiate(mdl, a.perf.lengthMeters, a.callsign); mk.model.userData.id = mk.id; traffic.add(mk.model);
+            const spec = lightsOf(mdl, a.perf.lengthMeters); if (spec) { mk.lightSpec = spec; setLightPositions(mk.lights, spec); }
+          });
         }
         if (m.model) {
-          const useModel = cam.dist < 6500;
           m.model.visible = useModel; m.mesh.visible = !useModel;
           m.model.position.copy(m.mesh.position); m.model.rotation.y = m.mesh.rotation.y;
           const state = a.id === sim.selectedId ? 'sel' : a.id === sim.hoveredId ? 'hover' : '';
           if (state !== m.tinted) { tint(m.model, state === 'sel' ? PALETTE.orange : state === 'hover' ? new THREE.Color(0x404040) : null); m.tinted = state; }
+        }
+        // lights: nav (red / green / white) whenever not parked, red beacon blinking with the engines, wingtip strobes
+        // on the runway and in the air, landing lights below 10 000 ft / on the roll, taxi light while moving on the ground
+        {
+          const L = m.lights; L.position.copy(m.mesh.position); L.rotation.y = m.mesh.rotation.y;
+          const col = L.geometry.getAttribute('color').array as Float32Array, siz = L.geometry.getAttribute('size').array as Float32Array;
+          const ph = a.phase; const t = clock.elapsedTime + a.id * 0.37;
+          const active = ph !== 'parked' && ph !== 'arrived' && ph !== 'departed';
+          const onRunway = ph === 'lineup' || ph === 'takeoff' || ph === 'landing' || ph === 'rollout';
+          const beacon = active && (t % 1.2) < 0.32;
+          const strobe = (air || onRunway) && ((t % 1.35) < 0.07 || ((t % 1.35) > 0.16 && (t % 1.35) < 0.23));
+          const landing = onRunway || (air && a.altitude < 10000);
+          const taxi = !air && active && a.speed > 0.5;
+          // sizes in px (halo included): visible from a distance at night, faint by day
+          const nightK = 0.4 + 0.6 * nightAmtRef;
+          const set = (i: number, r: number, g: number, b: number, sz: number) => { col[i * 3] = r; col[i * 3 + 1] = g; col[i * 3 + 2] = b; siz[i] = sz * nightK; };
+          const nav = active ? 1 : 0;
+          set(0, 1, 0.12, 0.1, strobe ? 34 : 14 * nav); set(1, 0.2, 1, 0.3, strobe ? 34 : 14 * nav); set(2, 1, 1, 1, strobe ? 24 : 11 * nav);
+          set(3, 1, 0.15, 0.1, beacon ? 20 : 0); set(4, 1, 0.15, 0.1, beacon ? 16 : 0);
+          set(5, 1, 0.97, 0.9, taxi ? 18 : 0); set(6, 1, 0.98, 0.92, landing ? 26 : 0); set(7, 1, 0.98, 0.92, landing ? 26 : 0);
+          L.geometry.getAttribute('color').needsUpdate = true; L.geometry.getAttribute('size').needsUpdate = true;
+          L.visible = active || air;
         }
         // label
         tmp.copy(m.mesh.position).project(camera);
@@ -367,7 +425,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       // hover ring
       const hov = sim.hoveredId != null && sim.hoveredId !== sim.selectedId ? markers.get(sim.hoveredId) : null;
       if (hov) { hoverRing.visible = true; hoverRing.position.copy(hov.mesh.position).setY(hov.mesh.position.y + 0.5); const hr = Math.max(50, cam.dist * 0.024); hoverRing.scale.set(hr, 1, hr); } else hoverRing.visible = false;
-      for (const [id, m] of markers) if (!live.has(id)) { traffic.remove(m.mesh); if (m.model) traffic.remove(m.model); decor.remove(m.shadow); decor.remove(m.stem); m.stem.geometry.dispose(); m.label.remove(); markers.delete(id); }
+      for (const [id, m] of markers) if (!live.has(id)) { traffic.remove(m.mesh); if (m.model) traffic.remove(m.model); traffic.remove(m.lights); m.lights.geometry.dispose(); decor.remove(m.shadow); decor.remove(m.stem); m.stem.geometry.dispose(); m.label.remove(); markers.delete(id); }
       // vehicles (only when away from the station, so the map stays calm)
       const liveV = new Set<string>();
       let fleet: Array<{ id: string; type: string; state: string; pos: { x: number; y: number }; heading: number; path: { pts: { x: number; y: number }[] } | null }> = [];
@@ -411,7 +469,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
           }
         }
       } else { ring.visible = false; if (route) { scene.remove(route); route.geometry.dispose(); route = null; } }
-      const fogNear = cam.dist * 1.6, fogFar = cam.dist * 5.5;
+      const fogNear = cam.dist * 2.4, fogFar = cam.dist * 7.5;   // haze well beyond the airfield (the horizon colour); weather pulls it in below
       (scene.fog as THREE.Fog).near = fogNear; (scene.fog as THREE.Fog).far = fogFar;
       // ── sun, sky, weather ──
       const wx = weatherLook((() => { try { return eng.wx(); } catch { return null; } })());
@@ -423,8 +481,9 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       const cloudDim = 1 - wx.cloudCover * 0.45;
       sun.color.copy(L.sunColor); sun.intensity = L.sunIntensity * cloudDim; sun.position.copy(L.sunDir).multiplyScalar(8000);
       hemiLight.color.copy(L.hemiSky); hemiLight.groundColor.copy(L.hemiGround); hemiLight.intensity = L.hemiIntensity;
-      applySky(sky.uniforms, L, wx.cloudCover); sky.mesh.position.copy(camera.position); sky.mesh.scale.setScalar(camera.far * 0.9);
-      scene.background = null; (scene.fog as THREE.Fog).color.copy(L.fog);
+      const horizon = applySky(sky.uniforms, L, wx.cloudCover); sky.mesh.position.copy(camera.position); sky.mesh.scale.setScalar(camera.far * 0.9);
+      // fog = the sky's horizon colour, so the far terrain and the world's edge melt into the sky instead of going black
+      scene.background = null; (scene.fog as THREE.Fog).color.copy(L.fog).lerp(horizon, 0.9);
       const fogFar2 = Math.min(fogFar, wx.visM * 3.2 + cam.dist * 0.5);   // poor visibility pulls the fog in
       (scene.fog as THREE.Fog).near = Math.min(fogNear, fogFar2 * 0.4); (scene.fog as THREE.Fog).far = fogFar2;
       // the deck is only drawn while the camera is under it (from above it would veil the whole map); overcast still dims the sun
@@ -433,12 +492,14 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       clouds.mesh.visible = wx.cloudCover > 0.05 && under > 0.01; clouds.mesh.position.set(cam.target.x, deckY, cam.target.z);
       clouds.uniforms.uTime.value += dt; clouds.uniforms.uCover.value = wx.cloudCover * under; clouds.uniforms.uDay.value = L.day; (clouds.uniforms.uTint.value as THREE.Color).copy(L.hemiSky).lerp(new THREE.Color('#d8dbe0'), 0.5);
       rain.update(clock.elapsedTime, cam.target, Math.min(2500, cam.dist * 0.6), wx.precip === 'none' ? 0 : wx.precip === 'drizzle' ? 0.5 : 1);
-      const nightAmt = 1 - L.day;
+      const nightAmt = 1 - L.day; nightAmtRef = nightAmt;
       for (const nh of nightHandles) nh.setNight(nightAmt);
-      if (buildingMat) buildingMat.emissive.setRGB(0.14 * nightAmt, 0.105 * nightAmt, 0.05 * nightAmt);
+      setModelNight(nightAmt); setSurfaceNight(nightAmt); lightMaterial.uniforms.uOpacity.value = 0.5 + 0.5 * nightAmt; lightMaterial.uniforms.uPixelRatio.value = renderer.getPixelRatio();
+      if (buildingMat) { buildingMat.emissive.setRGB(0.028 * nightAmt, 0.028 * nightAmt, 0.032 * nightAmt); (buildingMat.userData.uNight as THREE.IUniform | undefined)!.value = nightAmt; }
+      for (const nm of nightMats) nm.emissive.setRGB(0.16 * nightAmt, 0.14 * nightAmt, 0.11 * nightAmt);
       if (terrainUniforms) {
         terrainUniforms.uTime.value += dt; terrainUniforms.uCam.value.copy(camera.position);
-        terrainUniforms.uFogNear.value = (scene.fog as THREE.Fog).near; terrainUniforms.uFogFar.value = (scene.fog as THREE.Fog).far; (terrainUniforms.uFog.value as THREE.Color).copy(L.fog);
+        terrainUniforms.uFogNear.value = (scene.fog as THREE.Fog).near; terrainUniforms.uFogFar.value = (scene.fog as THREE.Fog).far; (terrainUniforms.uFog.value as THREE.Color).copy((scene.fog as THREE.Fog).color);
         (terrainUniforms.uLight.value as THREE.Vector3).copy(L.sunDir); (terrainUniforms.uSunColor.value as THREE.Color).copy(L.sunColor);
         terrainUniforms.uSunI.value = L.sunIntensity * cloudDim; terrainUniforms.uHemiI.value = L.hemiIntensity; terrainUniforms.uDay.value = L.day; terrainUniforms.uWet.value = wx.wet;
       }
@@ -451,11 +512,11 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       clampTarget();
       applyCamera(); applyFades(fades, cam.dist);
       if (mapLabels) { mapLabels.update(camera, cam.dist, rect.height); if (!labelsRef.current) mapLabels.group.visible = false; }
-      // sharp out to the far side of the airfield (camera distance + ~4 km), then an 8 km ramp to full blur
-      // zoomed in, nothing in view is far enough to blur: skip the extra depth render
-      bokeh.enabled = !lite && cam.dist > 1200;
-      (bokeh.uniforms as Record<string, THREE.IUniform>).focus.value = cam.dist + 4000;
-      (bokeh.uniforms as Record<string, THREE.IUniform>).maxblur.value = 0.007 + Math.min(0.005, cam.dist / 4e6);
+      // tilt-shift: everything out to the far side of the airfield stays sharp whatever the zoom, the surrounding
+      // landscape blurs in over the next ~2.5 km beyond it
+      { const u = bokeh.uniforms as Record<string, THREE.IUniform>;
+        u.focus.value = camera.position.distanceTo(fieldCentre) + fieldR;
+        u.maxblur.value = 0.0065 + Math.min(0.004, cam.dist / 5e6); u.aperture.value = u.maxblur.value / 2500; }
       composer.render();
     };
     applyCamera(); frame();

@@ -241,6 +241,31 @@ export function buildBuildings(world: World): THREE.Mesh {
   const merged = mergeGeometries(geos);
   merged.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
+  // night: rows of lit windows on the walls (world-space cells, a stable hash decides which are lit), a faint roof glow
+  const uNight = { value: 0 }; mat.userData.uNight = uNight;
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uNight = uNight;
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWNormal;')
+      .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nvWNormal = normalize(mat3(modelMatrix) * objectNormal);')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWNormal;\nuniform float uNight;\nfloat bhash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }')
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        {
+          float wall = 1.0 - smoothstep(0.35, 0.65, abs(vWNormal.y));
+          vec2 tng = normalize(vec2(-vWNormal.z, vWNormal.x) + vec2(1e-4, 0.0));
+          float along = dot(vWPos.xz, tng);
+          vec2 cell = vec2(floor(along / 3.4), floor(vWPos.y / 3.6));
+          vec2 f = vec2(fract(along / 3.4), fract(vWPos.y / 3.6));
+          float win = step(0.18, f.x) * step(f.x, 0.82) * step(0.28, f.y) * step(f.y, 0.78);
+          float seed = bhash(cell + floor(vWNormal.xz * 7.0));
+          float lit = step(0.62, seed) * (0.55 + 0.45 * bhash(cell * 1.7 + 0.3));   // ~40 % of the windows, varied brightness
+          vec3 tone = mix(vec3(1.0, 0.84, 0.6), vec3(0.85, 0.92, 1.0), step(0.9, seed));
+          totalEmissiveRadiance += tone * win * lit * wall * uNight * 0.85;
+        }`);
+  };
+  mat.customProgramCacheKey = () => 'buildings-night';
   const mesh = new THREE.Mesh(merged, mat); mesh.name = 'buildings';
   const edges = new THREE.LineSegments(new THREE.EdgesGeometry(merged, 25), new THREE.LineBasicMaterial({ color: 0x0b0b0c, transparent: true, opacity: 0.35 }));
   mesh.add(edges);
@@ -286,8 +311,15 @@ export function designatorTexture(text: string): THREE.CanvasTexture {
   return t;
 }
 
+/** Surfaces lifted by the apron floodlights at night (apron, taxiways, runways). */
+const SURFACE_MATS: THREE.MeshLambertMaterial[] = [];   // aprons: floodlit
+const PAVEMENT_MATS: THREE.MeshLambertMaterial[] = [];  // taxiways / runways: dark, only their own lights
+export function setSurfaceNight(n: number): void {
+  for (const m of SURFACE_MATS) m.emissive.setRGB(0.085 * n, 0.076 * n, 0.06 * n);
+  for (const m of PAVEMENT_MATS) m.emissive.setRGB(0.018 * n, 0.018 * n, 0.02 * n);
+}
 /** Apron concrete (grained). */
-export function apronMaterial(): THREE.MeshLambertMaterial { return new THREE.MeshLambertMaterial({ color: PALETTE.concrete, side: THREE.DoubleSide, map: grainTexture(210, 50) }); }
+export function apronMaterial(): THREE.MeshLambertMaterial { const m = new THREE.MeshLambertMaterial({ color: PALETTE.concrete, side: THREE.DoubleSide, map: grainTexture(210, 50) }); SURFACE_MATS.push(m); return m; }
 
 // ── airport surfaces with generated markings ──────────────────────────────────
 /** Runway widths (m) by airport, optionally per runway ref ("13R/31L"); anything else is 45 m. */
@@ -324,6 +356,14 @@ function polygonGeo(pts: { x: number; y: number }[], h: number): THREE.BufferGeo
 
 export interface NightHandle { setNight(n: number): void }
 
+/** Soft white dot (radial alpha) for point lights. */
+function dotTexture(): THREE.CanvasTexture {
+  const c = document.createElement('canvas'); c.width = c.height = 64; const ctx = c.getContext('2d')!;
+  const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.3, 'rgba(255,255,255,0.85)'); g.addColorStop(0.65, 'rgba(255,255,255,0.25)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 64, 64);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+
 function glowTexture(): THREE.CanvasTexture {
   const c = document.createElement('canvas'); c.width = c.height = 128; const ctx = c.getContext('2d')!;
   const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,214,150,0.55)'); g.addColorStop(0.35, 'rgba(255,190,110,0.18)'); g.addColorStop(1, 'rgba(255,170,90,0)');
@@ -337,7 +377,7 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
   const c = world.toLocal(air.center.lng, air.center.lat);
   const base = world.heightAt(c.x, c.y);
   const xy = (id: string) => { const n = air.nodes.get(id)!; return world.toLocal(n.lng, n.lat); };
-  const flat = new THREE.MeshLambertMaterial({ color: PALETTE.asphalt, side: THREE.DoubleSide, map: grainTexture(200, 70) });
+  const flat = new THREE.MeshLambertMaterial({ color: PALETTE.asphalt, side: THREE.DoubleSide, map: grainTexture(200, 70) }); PAVEMENT_MATS.push(flat);
   const concrete = apronMaterial();
   const mark = new THREE.MeshBasicMaterial({ color: PALETTE.marking, side: THREE.DoubleSide });
 
@@ -428,7 +468,8 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
     }
   }
   const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lightPos, 3)); lg.setAttribute('color', new THREE.Float32BufferAttribute(lightCol, 3));
-  const lm = new THREE.PointsMaterial({ size: 2.2, vertexColors: true, transparent: true, opacity: 0.95, sizeAttenuation: true, depthWrite: false });
+  const dot = dotTexture();
+  const lm = new THREE.PointsMaterial({ size: 2.6, vertexColors: true, transparent: true, opacity: 0.95, sizeAttenuation: true, depthWrite: false, map: dot, blending: THREE.AdditiveBlending });
   g.add(new THREE.Points(lg, lm)); const rwFade: Fade = { mat: lm, base: 0.95, near: 2500, far: 7000 }; fades.push(rwFade);
   // night: taxiway edge lights (blue) + centreline lights (green) along the taxi graph, apron floodlight glows at the terminals
   const tPos: number[] = []; const tCol: number[] = []; const blue = new THREE.Color('#4f8cff'), grn = new THREE.Color('#38e07a');
@@ -442,19 +483,20 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
     for (let t = 10; t < L - 5; t += 45) for (const sgn of [-1, 1]) { const c = va.clone().addScaledVector(d, t).addScaledVector(sd, sgn * (TAXIWAY_WIDTH / 2 + 1)); tCol.push(blue.r, blue.g, blue.b); tPos.push(c.x, c.y, c.z); }
   }
   const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(tPos, 3)); tg.setAttribute('color', new THREE.Float32BufferAttribute(tCol, 3));
-  const tm = new THREE.PointsMaterial({ size: 1.7, vertexColors: true, transparent: true, opacity: 0, sizeAttenuation: true, depthWrite: false });
+  const tm = new THREE.PointsMaterial({ size: 2.0, vertexColors: true, transparent: true, opacity: 0, sizeAttenuation: true, depthWrite: false, map: dot, blending: THREE.AdditiveBlending });
   const tp = new THREE.Points(tg, tm); tp.visible = false; g.add(tp);
-  const glowMat = new THREE.SpriteMaterial({ map: glowTexture(), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
-  const glows: THREE.Sprite[] = [];
+  // apron floodlight pools: flat glow discs on the surface (depth-tested, so the buildings sit on top of them)
+  const glowMat = new THREE.MeshBasicMaterial({ map: glowTexture(), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+  const glows: THREE.Mesh[] = []; const glowGeo = new THREE.PlaneGeometry(1, 1); glowGeo.rotateX(-Math.PI / 2);
   for (const b of air.buildings) {
     if (b.kind !== 'terminal' && b.kind !== 'apron') continue;
-    const c = world.toLocal(b.centroid.lng, b.centroid.lat); const r = Math.sqrt(b.areaM2) * (b.kind === 'apron' ? 0.9 : 1.4);
-    const sp = new THREE.Sprite(glowMat); sp.position.copy(toV3(c.x, c.y, base + 2)); sp.scale.set(r, r, 1); sp.visible = false; g.add(sp); glows.push(sp);
+    const c = world.toLocal(b.centroid.lng, b.centroid.lat); const r = Math.sqrt(b.areaM2) * (b.kind === 'apron' ? 0.8 : 1.15);
+    const sp = new THREE.Mesh(glowGeo, glowMat); sp.position.copy(toV3(c.x, c.y, base + 1.2)); sp.scale.set(r, 1, r); sp.visible = false; sp.renderOrder = 6; g.add(sp); glows.push(sp);
   }
   let curNight = 0;
   night.push({ setNight: (n) => {
-    curNight = n; tm.opacity = 0.95 * n; tp.visible = n > 0.03; glowMat.opacity = 0.75 * n; for (const sp of glows) sp.visible = n > 0.03;
-    lm.size = 2.2 + 1.6 * n; rwFade.base = 0.95; rwFade.far = 7000 + 9000 * n;   // runway lights carry further at night
+    curNight = n; tm.opacity = 0.95 * n; tp.visible = n > 0.03; glowMat.opacity = 0.5 * n; for (const sp of glows) sp.visible = n > 0.03;
+    lm.size = 2.6 + 2.4 * n; tm.size = 2.0 + 1.0 * n; rwFade.base = 0.95; rwFade.far = 7000 + 9000 * n;   // runway lights carry further at night
   } });
   void curNight;
 

@@ -94,7 +94,8 @@ export function buildSky(): { mesh: THREE.Mesh; uniforms: Record<string, THREE.I
   return { mesh, uniforms };
 }
 
-export function applySky(u: Record<string, THREE.IUniform>, L: Lighting, cloudCover: number): void {
+/** Sets the sky-dome uniforms; returns the horizon colour (the scene fog uses it so far terrain melts into the sky). */
+export function applySky(u: Record<string, THREE.IUniform>, L: Lighting, cloudCover: number): THREE.Color {
   const twilight = Math.exp(-Math.pow((L.elevation - 1) / 7, 2));
   const dayZen = lerpC(C('#6f8fb5'), C('#3f6a9e'), 0.3), dayHor = C('#c9cfd4');
   const duskZen = C('#1b2233'), duskHor = C('#c86a3a');
@@ -105,6 +106,7 @@ export function applySky(u: Record<string, THREE.IUniform>, L: Lighting, cloudCo
   zen = lerpC(zen, C('#3a3d42').multiplyScalar(0.3 + 0.7 * L.day), cloudCover * 0.8); hor = lerpC(hor, C('#5a5d62').multiplyScalar(0.3 + 0.7 * L.day), cloudCover * 0.8);
   u.uZenith.value.copy(zen); u.uHorizon.value.copy(hor); u.uSunColor.value.copy(L.sunColor).multiplyScalar(1 - cloudCover * 0.8);
   u.uSunDir.value.copy(L.sunDir); u.uDay.value = L.day; u.uGlow.value = twilight; u.uStars.value = 1 - THREE.MathUtils.smoothstep(L.elevation, -12, -3); u.uCloud.value = cloudCover;
+  return hor;
 }
 
 // ── weather ───────────────────────────────────────────────────────────────────

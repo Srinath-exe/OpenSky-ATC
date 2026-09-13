@@ -71,8 +71,8 @@ function AtisChip() {
       <span className={styles.atisLetter}>ATIS {atis?.letter ?? '—'}</span>
       <span className={cx(styles.atisSep, styles.atisWide)}>·</span>
       <span className={cx(styles.atisPart, styles.atisWide)}>{dep === arr ? dep : `${dep} / ${arr}`}</span>
-      <span className={styles.atisSep}>·</span>
-      <span className={styles.atisPart} data-testid="wind">{wind}</span>
+      <span className={cx(styles.atisSep, styles.atisMid)}>·</span>
+      <span className={cx(styles.atisPart, styles.atisMid)} data-testid="wind">{wind}</span>
       <span className={cx(styles.atisSep, styles.atisWideQnh)}>·</span>
       <span className={cx(styles.atisPart, styles.atisWideQnh)}>Q{atis?.qnh ?? '—'}</span>
       {atis?.cloud ? <span className={cx(styles.atisSep, styles.atisWideCloud)}>·</span> : null}

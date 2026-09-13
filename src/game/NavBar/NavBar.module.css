@@ -14,6 +14,16 @@
   transition: box-shadow var(--t-slow) var(--ease-out);
 }
 .nav[data-escalated="true"] { box-shadow: inset 0 -1px 0 var(--red-border-55), inset 0 0 40px var(--red-tint-08); }
+/* 1280-1365 px: the left and right groups alone are ~1200 px wide, so the gaps tighten and the session clock hides to
+   keep the ATIS chip readable in the middle (the shell column is fixed at the viewport width). */
+@media (max-width: 1365px) {
+  .nav { gap: var(--s-2); padding: 0 var(--s-3) 0 var(--s-4); }
+  .left { gap: var(--s-2); }
+  .right { gap: var(--s-1); }
+  .clockSim { display: none; }
+  .atisMid { display: none; }   /* the chip reads "ATIS A"; wind and the rest live in the panel */
+  .atisChip svg { display: none; }
+}
 
 .brand { display: inline-flex; align-items: center; gap: var(--s-3); height: 40px; padding-right: var(--s-2); border-radius: var(--r-pill); color: var(--text-1); }
 .brand:focus-visible { box-shadow: var(--focus-ring); }

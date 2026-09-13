@@ -7,6 +7,11 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const loader = new GLTFLoader();
+/** Nose wheel position as a fraction of the length behind the nose (models and the built-in silhouette agree). */
+export const NOSE_WHEEL = 0.12;
+/** Night amount shared by every liveried material (apron floodlighting lifts the paint so aircraft do not go black). */
+const NIGHT = { value: 0 };
+export function setModelNight(n: number): void { NIGHT.value = n; }
 const cache = new Map<string, Promise<THREE.Group | null>>();
 
 /** Normalised template for a type (unit-length: 1 m nose-to-tail — `instantiate` scales it), or null when no model exists. */
@@ -92,6 +97,25 @@ export function liveryFor(callsign: string): Livery {
 
 /** Template measurements used by the livery shader (normalised frame: unit length, nose -z, wheels on y = 0). */
 interface Frame { yBot: number; yTop: number; r: number; maxAx: number }
+/** Light positions in the template frame (unit length; multiply by the aircraft length). */
+export interface LightSpec { tipL: THREE.Vector3; tipR: THREE.Vector3; tail: THREE.Vector3; beaconTop: THREE.Vector3; beaconBot: THREE.Vector3; nose: THREE.Vector3; landL: THREE.Vector3; landR: THREE.Vector3 }
+/** Generic light positions for the built-in silhouette (metres), used until the real model is loaded. */
+export function genericLights(lengthM: number, spanM: number): LightSpec {
+  const zc = (0.5 - NOSE_WHEEL) * lengthM;   // frame origin = nose wheel, +z toward the tail
+  return {
+    tipL: new THREE.Vector3(-spanM / 2, 2.5, zc + lengthM * 0.1), tipR: new THREE.Vector3(spanM / 2, 2.5, zc + lengthM * 0.1), tail: new THREE.Vector3(0, lengthM * 0.2, zc + lengthM * 0.45),
+    beaconTop: new THREE.Vector3(0, lengthM * 0.11, zc), beaconBot: new THREE.Vector3(0, 1.2, zc), nose: new THREE.Vector3(0, 1, -lengthM * 0.1),
+    landL: new THREE.Vector3(-lengthM * 0.08, 1.5, zc - lengthM * 0.08), landR: new THREE.Vector3(lengthM * 0.08, 1.5, zc - lengthM * 0.08),
+  };
+}
+/** The template's measured light positions scaled to an aircraft's length, or null when the model has none. */
+export function lightsOf(template: THREE.Group, lengthM: number): LightSpec | null {
+  const l = template.userData.lights as LightSpec | undefined; if (!l) return null;
+  const out = {} as LightSpec;
+  for (const k of Object.keys(l) as (keyof LightSpec)[]) out[k] = l[k].clone().multiplyScalar(lengthM);
+  // the template origin is the nose wheel already (normalise), so no offset is needed here
+  return out;
+}
 
 /**
  * Patch a cloned material with the livery shader. Regions are decided per FRAGMENT from the vertex position in the
@@ -105,7 +129,7 @@ function paint(mat: THREE.Material, livery: Livery, frame: Frame, part: number):
   const u = {
     uTail: { value: livery.primary }, uAccent: { value: livery.secondary },
     uBelly: { value: livery.belly ?? white }, uEngine: { value: livery.engines ?? livery.primary },
-    uFrame: { value: new THREE.Vector4(frame.yBot, frame.yTop, frame.r, frame.maxAx) }, uPart: { value: part },
+    uFrame: { value: new THREE.Vector4(frame.yBot, frame.yTop, frame.r, frame.maxAx) }, uPart: { value: part }, uNight: NIGHT,
   };
   m.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, u);
@@ -113,7 +137,8 @@ function paint(mat: THREE.Material, livery: Livery, frame: Frame, part: number):
       .replace('#include <common>', '#include <common>\nattribute vec3 lpos;\nvarying vec3 vLpos;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvLpos = lpos;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vLpos;\nuniform vec3 uTail, uAccent, uBelly, uEngine;\nuniform vec4 uFrame;\nuniform float uPart;')
+      .replace('#include <common>', '#include <common>\nvarying vec3 vLpos;\nuniform vec3 uTail, uAccent, uBelly, uEngine;\nuniform vec4 uFrame;\nuniform float uPart, uNight;')
+      .replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\nreflectedLight.indirectDiffuse += diffuseColor.rgb * uNight * vec3(0.30, 0.27, 0.22);')
       .replace('#include <map_fragment>', `#include <map_fragment>
         {
           float luma = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));
@@ -144,13 +169,15 @@ function classify(wrap: THREE.Group): void {
   const v = new THREE.Vector3();
   const meshes: THREE.Mesh[] = [];
   wrap.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh && m.geometry?.attributes?.position) meshes.push(m); });
+  // the wrap origin is the nose wheel; the livery bands are defined in a length-centred frame (z -0.5 nose .. +0.5 tail)
+  const zc = 0.5 - NOSE_WHEEL;
   // fuselage cross-section from the vertices near the centreline in the middle third
   const ys: number[] = [];
   let maxAx = 0;
   for (const m of meshes) {
     const pos = m.geometry.attributes.position;
     for (let i = 0; i < pos.count; i++) {
-      v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);
+      v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld); v.z -= zc;
       if (Math.abs(v.x) < 0.02 && v.z > -0.2 && v.z < 0.2) ys.push(v.y);
       if (Math.abs(v.x) > maxAx) maxAx = Math.abs(v.x);
     }
@@ -160,17 +187,31 @@ function classify(wrap: THREE.Group): void {
   const yBot = ys[Math.floor(ys.length * 0.04)], yTop = ys[Math.floor(ys.length * 0.96)];
   const r = (yTop - yBot) / 2, yMid = (yTop + yBot) / 2;
   wrap.userData.frame = { yBot, yTop, r, maxAx } as Frame;
+  // light positions (unit frame): wingtips = outermost vertices, tail = the rearmost high vertex, beacons on the fuselage
+  const tipL = new THREE.Vector3(-maxAx, yBot, zc), tipR = new THREE.Vector3(maxAx, yBot, zc), tail = new THREE.Vector3(0, yTop, 0.45 + zc), nose = new THREE.Vector3(0, yBot, -0.5 + zc);
+  let bestL = 0, bestR = 0, bestT = -Infinity;
+  for (const m of meshes) {
+    const pos = m.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);   // wrap frame (origin = nose wheel)
+      if (v.x < -bestL) { bestL = -v.x; tipL.set(v.x, v.y, v.z); }
+      if (v.x > bestR) { bestR = v.x; tipR.set(v.x, v.y, v.z); }
+      if (v.z - zc > 0.3 && v.y + (v.z - zc) * 0.5 > bestT && Math.abs(v.x) < r) { bestT = v.y + (v.z - zc) * 0.5; tail.set(0, v.y, v.z); }
+      if (v.z < nose.z) nose.set(0, yBot, v.z);
+    }
+  }
+  wrap.userData.lights = { tipL, tipR, tail, beaconTop: new THREE.Vector3(0, yTop + 0.004, zc + 0.02), beaconBot: new THREE.Vector3(0, yBot - 0.004, zc - 0.02), nose: new THREE.Vector3(0, yBot * 0.5, nose.z + 0.02), landL: new THREE.Vector3(-r * 1.6, yBot * 0.8, zc - 0.08), landR: new THREE.Vector3(r * 1.6, yBot * 0.8, zc - 0.08) } as LightSpec;
   const done = new Set<THREE.BufferGeometry>();
   const bb = new THREE.Box3();
   for (const m of meshes) {
-    bb.setFromObject(m);
+    bb.setFromObject(m); bb.min.z -= zc; bb.max.z -= zc;
     // a mesh confined to the under-wing engine zone (below the fuselage mid-line, ahead of the wing's trailing edge,
     // no wider than the inboard engines) is a nacelle - one or both engines; the shader paints its outboard fragments
     const size = bb.getSize(new THREE.Vector3());
     m.userData.part = Math.max(Math.abs(bb.min.x), Math.abs(bb.max.x)) > r * 1.2 && bb.max.y < yMid + r * 0.2 && bb.min.z > -0.36 && bb.max.z < 0.22 && size.z < 0.3 && size.x < r * 9 ? 2 : 0;
     const geo = m.geometry; if (done.has(geo)) continue; done.add(geo);
     const pos = geo.attributes.position; const out = new Float32Array(pos.count * 3);
-    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld); out[i * 3] = v.x; out[i * 3 + 1] = v.y; out[i * 3 + 2] = v.z; }
+    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld); out[i * 3] = v.x; out[i * 3 + 1] = v.y; out[i * 3 + 2] = v.z - zc; }
     geo.setAttribute('lpos', new THREE.BufferAttribute(out, 3));
   }
 }
@@ -182,7 +223,8 @@ export function tint(group: THREE.Group, color: THREE.Color | null): void {
     for (const mat of Array.isArray(m.material) ? m.material : [m.material]) {
       const s = mat as THREE.MeshStandardMaterial;
       if (!('emissive' in s)) continue;
-      if (color) { s.emissive.copy(color); s.emissiveIntensity = color.equals(new THREE.Color(0x404040)) ? 1 : 0.55; } else { s.emissive.setHex(0x000000); s.emissiveIntensity = 1; }
+      // a lift, not a repaint: the livery stays readable under the selection / hover tint (the ring carries the selection)
+      if (color) { s.emissive.copy(color); s.emissiveIntensity = color.equals(new THREE.Color(0x404040)) ? 0.6 : 0.28; } else { s.emissive.setHex(0x000000); s.emissiveIntensity = 1; }
     }
   });
 }
@@ -223,11 +265,12 @@ function normalise(scene: THREE.Group, lengthM: number, type = ''): THREE.Group 
   inner.scale.multiplyScalar(scale);
   inner.add(scene);
   wrap.add(inner);
-  // centre on the ground contact point
+  // origin = nose-wheel point: on the centreline, 12 % of the length behind the nose, wheels on y = 0. The sim's position
+  // is the nose wheel (it is what follows the taxi centreline and stops at the stand's stop mark).
   wrap.updateMatrixWorld(true);
   const wb = new THREE.Box3().setFromObject(wrap);
   const c = new THREE.Vector3(); wb.getCenter(c);
-  inner.position.sub(new THREE.Vector3(c.x, wb.min.y, c.z));
+  inner.position.sub(new THREE.Vector3(c.x, wb.min.y, wb.min.z + NOSE_WHEEL * (wb.max.z - wb.min.z)));
   scene.traverse((o) => {
     const m = o as THREE.Mesh;
     if (!m.isMesh) return;

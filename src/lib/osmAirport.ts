@@ -224,6 +224,8 @@ const HOLD_RWY_MIN_M = 35;
 const HOLD_RWY_PATH_M = 320;
 /** Synthesized hold: perpendicular distance from the runway centreline (ICAO Annex 14 code 4 CAT I = 75 m). */
 const SYNTH_HOLD_M = 75;
+/** Minimum distance from a stand's stop position (nose wheel) to a terminal outline; closer stops are pulled back. */
+const NOSE_CLEAR_M = 14;
 /** A hold within this along-axis distance of a runway end counts as an entry hold for that end. */
 const ENTRY_HOLD_M = 500;
 /** Runway edge cost multiplier in findPath (taxiways are strongly preferred). */
@@ -832,6 +834,14 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
       let best: Cand | null = null, bd = 30;
       for (const c of cands) { const d = Math.hypot(c.stop.x - p.x, c.stop.y - p.y); if (d < bd) { bd = d; best = c; } }
       if (best) { best.isGate = true; if (!best.ref) best.ref = refOf(f); continue; }
+      // a gate point at the terminal door (inside the outline or within 15 m of it) is not a stop position: attach it to
+      // the parking position with the same ref when there is one nearby, otherwise it is not a stand at all
+      if (terminalPolys.some(t => pointInPoly(p, t.pts) || distToPolyEdge(p, t.pts) < 15)) {
+        const ref = refOf(f) ? String(refOf(f)).trim() : '';
+        const same = ref ? cands.find(c => c.ref && String(c.ref).trim() === ref && Math.hypot(c.stop.x - p.x, c.stop.y - p.y) < 150) : undefined;
+        if (same) same.isGate = true;
+        continue;
+      }
       cands.push({ ref: refOf(f), osmId: idOf(f), stop: p, stopLL: { lng, lat }, entryLL: null, pts: [], isGate: true });
     }
     // dedupe candidates that share a stop position (< 12 m — no two stands are closer than that)
@@ -840,6 +850,19 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
       const dup = uniq.find(u => Math.hypot(u.stop.x - c.stop.x, u.stop.y - c.stop.y) < 12);
       if (dup) { if (!dup.ref && c.ref) dup.ref = c.ref; dup.isGate = dup.isGate || c.isGate; if (!dup.entryLL && c.entryLL) { dup.entryLL = c.entryLL; dup.pts = c.pts; } continue; }
       uniq.push(c);
+    }
+    // A stop position drawn right up against the terminal outline is a data error (the nose overhangs the nose wheel by
+    // 5-9 m): pull it back along the lead-in so the nose wheel stops NOSE_CLEAR_M from the building.
+    for (const c of uniq) {
+      if (c.pts.length < 2) continue;
+      let d = Infinity;   // signed: negative when the stop is inside the outline
+      for (const t of terminalPolys) { const dd = pointInPoly(c.stop, t.pts) ? -distToPolyEdge(c.stop, t.pts) : distToPolyEdge(c.stop, t.pts); if (dd < d) d = dd; }
+      if (d >= NOSE_CLEAR_M) continue;
+      const prev = frame.xy(c.pts[c.pts.length - 2].lng, c.pts[c.pts.length - 2].lat);
+      const seg = Math.hypot(c.stop.x - prev.x, c.stop.y - prev.y); if (seg < 4) continue;
+      const back = Math.min(NOSE_CLEAR_M - d, seg - 3);
+      const stop = { x: c.stop.x - (c.stop.x - prev.x) / seg * back, y: c.stop.y - (c.stop.y - prev.y) / seg * back };
+      c.stop = stop; c.stopLL = frame.ll(stop); c.pts[c.pts.length - 1] = c.stopLL;
     }
     const usedRefs = new Map<string, number>();
     const realRefs = new Set(uniq.map(c => (c.ref ? String(c.ref).trim() : '')).filter(Boolean));
