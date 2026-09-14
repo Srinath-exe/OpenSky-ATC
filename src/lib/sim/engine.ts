@@ -650,9 +650,12 @@ export class SimEngine implements EngineCommandApi, StageCtx {
 
   // ── identity / base ────────────────────────────────────────────────────────
   private newIdentity(type?: string, allowedWeights?: Set<WeightClass> | null, callsign?: string) {
+    // the world-pool draw happens first whatever the outcome, so scripted spawns (explicit callsign) consume the same
+    // seeded stream as before the home-carrier mix existed (deterministic scenarios keep their timings)
+    const al = rnd(AIRLINES); const fno = 1 + ri(998);
     const home = HOME_CARRIERS[this.air.icao];
     const pickAl = () => (home && chance(0.65) ? rnd(home) : rnd(AIRLINES).icao);
-    let cs = callsign ? upper(callsign) : `${pickAl()}${1 + ri(998)}`;
+    let cs = callsign ? upper(callsign) : `${home && chance(0.65) ? rnd(home) : al.icao}${fno}`;
     let guard = 0;
     while (!callsign && this.aircraft.some(a => a.callsign === cs) && guard++ < 20) cs = `${pickAl()}${1 + ri(998)}`;
     const m = cs.match(/^([A-Z]{3})(\d+)/);
@@ -4052,7 +4055,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
   /** Wake timers per runway end (test API shape). */
   wakeTimers(): Record<string, { runway: string; leader: string; remainingS: number }> {
     const out: Record<string, { runway: string; leader: string; remainingS: number }> = {};
-    for (const rs of this.runways) if (rs.wakeTimer && rs.wakeTimer.expiresAt > this.time) out[rs.name] = { runway: rs.name, leader: rs.wakeTimer.leader, remainingS: Math.round(rs.wakeTimer.expiresAt - this.time) };
+    for (const rs of this.runways) if (rs.wakeTimer && rs.wakeTimer.expiresAt > this.time) out[rs.name] = { runway: rs.name, leader: rs.wakeTimer.leader, remainingS: Math.ceil(rs.wakeTimer.expiresAt - this.time) };   // ceil: what the countdown in the UI shows
     return out;
   }
   /** Distance (m) to the next hold on the aircraft's path, null when none (ActionCtx.distToNextHoldM). */

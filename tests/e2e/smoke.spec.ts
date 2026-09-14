@@ -13,7 +13,7 @@ import { test, expect } from './fixtures/test';
 test.describe('smoke', () => {
   test('home -> EGLL -> START boots /play in test mode with the home config @smoke', async ({ home, game, sim }) => {
     await home.goto({ testMode: { seed: 7, spawn: 'default' } });
-    await expect(home.airportCards()).toHaveCount(6);
+    await expect(home.airportCards()).toHaveCount(12);
     await home.pickAirport('EGLL');
     await expect(home.detailTitle()).toContainText('Heathrow');
 

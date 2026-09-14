@@ -851,12 +851,14 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
     // an unnamed way with both ends on the taxiway network - a connector between taxilanes, not a stop.
     const distToPath = (p: XY, path: XY[]) => { let d = Infinity; for (let i = 1; i < path.length; i++) d = Math.min(d, projOnSeg(p, path[i - 1], path[i]).d); return d; };
     const namedPaths = cands.filter(c => c.ref && c.pts.length >= 2).map(c => c.pts.map(q => frame.xy(q.lng, q.lat)));
+    const connectors: Cand[] = [];
     const branch = (c: Cand) => {
       if (c.ref || c.pts.length < 2) return false;
       const ends = [frame.xy(c.pts[0].lng, c.pts[0].lat), c.stop];
       if (namedPaths.some(path => ends.some(e => distToPath(e, path) < 3))) return true;
       const dEntry = idx.nearest(ends[0], 200)?.proj.d ?? Infinity, dStop = idx.nearest(ends[1], 200)?.proj.d ?? Infinity;
-      return dEntry < 12 && dStop < 12;
+      if (dEntry < 12 && dStop < 12) { connectors.push(c); return true; }
+      return false;
     };
     // dedupe candidates that share a stop position (< 12 m — no two stands are closer than that)
     const uniq: Cand[] = [];
@@ -938,6 +940,19 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
         headingIn, heading: headingIn, pushbackHeading: (headingIn + 180) % 360, type, size: 'C', terminal: tdist <= 300 ? terminal : undefined,
         osmId: c.osmId, sizeSource: 'default', hasLeadIn: !!c.entryLL, needsPushback: true, closed: false,
       });
+    }
+    // taxilane connectors mapped as parking_position: not stands, but they are pavement the vehicles and tugs use - keep
+    // them in the graph as ordinary (un-named) taxi links between their two network ends
+    for (const c of connectors) {
+      const ends = [c.pts[0], c.pts[c.pts.length - 1]].map(p => { const xy = frame.xy(p.lng, p.lat); const exact = nodes.get(keyOf(p.lng, p.lat)); return exact && !isRunwayNode(exact.id) ? exact : snapToTaxiway(idx, xy, HOLD_SNAP_M, 45, 120); });
+      if (!ends[0] || !ends[1] || ends[0].id === ends[1].id) continue;
+      let prev = ends[0];
+      for (let i = 1; i < c.pts.length; i++) {
+        const n = i === c.pts.length - 1 ? ends[1] : node(c.pts[i].lng, c.pts[i].lat);
+        if (n.id === prev.id) continue;
+        link(prev, n, 'taxiway', { leadIn: true });
+        prev = n;
+      }
     }
     // sizes: ref hints > stand spacing > lead-in length > default C
     const stXY = stands.map(s => frame.xy(s.lng, s.lat));

@@ -457,7 +457,7 @@ test.describe('start config, sessions, fresh state', () => {
     await expect(page.getByTestId('page-home')).toHaveAttribute('data-ready', 'true');
     await expect(page.getByTestId('home-highscore')).toHaveCount(0);
     await expect(page.getByTestId('home-resume')).toHaveCount(0);
-    await expect(page.locator('[data-testid^="airport-card-"]')).toHaveCount(6);
+    await expect(page.locator('[data-testid^="airport-card-"]')).toHaveCount(12);
 
     await page.goto('/settings');
     await expect(page.getByTestId('page-settings')).toHaveAttribute('data-ready', 'true');

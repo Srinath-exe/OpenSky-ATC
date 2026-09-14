@@ -54,7 +54,7 @@ export function runwayOccupancy(engine: SimEngine | null): RunwayOccupancy[] {
     return {
       name: rs.name, ref: rs.ref, state, status: rs.status, occupants, occupant: occupants[0] ?? null, lineUp,
       takeoffClearance: rs.takeoffClearance, landingClearances: rs.landingClearances,
-      wakeRemainingS: rs.wakeTimer && rs.wakeTimer.expiresAt > engine.time ? Math.round(rs.wakeTimer.expiresAt - engine.time) : 0,
+      wakeRemainingS: rs.wakeTimer && rs.wakeTimer.expiresAt > engine.time ? Math.ceil(rs.wakeTimer.expiresAt - engine.time) : 0,
       arrivalOnFinalNM: final ? Math.round(final.nm * 10) / 10 : null,
       activeDep: rs.activeDep, activeArr: rs.activeArr,
     };
