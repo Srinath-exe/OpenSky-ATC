@@ -33,6 +33,7 @@ import { SettingsModal } from '../SettingsModal/SettingsModal'
 import { HoldingScreen } from '../HoldingScreen/HoldingScreen'
 import { ToastHost } from './ToastHost'
 import { LeaveConfirm } from './LeaveConfirm'
+import { LiquidGlassDefs } from './LiquidGlassDefs'
 import { useShellHotkeys } from './useShellHotkeys'
 
 const GroundView = dynamic(() => import('@/components/atc/GroundView'), { ssr: false, loading: () => <div className={styles.viewPending}>Loading map</div> })
@@ -236,6 +237,7 @@ export function GameShell({ loading = false, loadError = null, onRetry }: GameSh
         <SettingsModal />
         <LeaveConfirm />
         <HoldingScreen />
+        <LiquidGlassDefs />
       </div>
     </ShellContext.Provider>
   )

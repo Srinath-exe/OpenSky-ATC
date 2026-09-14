@@ -3,9 +3,12 @@
 .scrimLeaving { animation: global(ds-fade-out) var(--t-base) var(--ease-out) both; }
 .panel {
   position: relative; width: var(--modal-w); max-width: 100%; max-height: calc(100vh - 32px); overflow: auto;
-  background: var(--bg-1); border: var(--bw) solid var(--line); border-radius: var(--r-card-lg); padding: var(--card-pad-lg);
-  box-shadow: var(--shadow-modal); color: var(--text-1); animation: global(ds-pop) var(--t-base) var(--ease-out) both; outline: none;
+  background: var(--glass-spec), var(--glass-sheen), var(--glass-fill-strong); border: var(--bw) solid var(--glass-border); border-radius: var(--r-card-lg); padding: var(--card-pad-lg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: var(--glass-rim), var(--shadow-modal); color: var(--text-1); animation: global(ds-pop) var(--t-base) var(--ease-out) both; outline: none;
 }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .panel { background: var(--glass-fill-fallback); } }
+:global(html[data-lens="1"]) .panel { -webkit-backdrop-filter: url(#lg-lens) saturate(var(--glass-saturate)); backdrop-filter: url(#lg-lens) saturate(var(--glass-saturate)); }
 .panelLeaving { animation: global(ds-fade-out) var(--t-base) var(--ease-out) both; }
 .wide { width: 640px; }
 .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }

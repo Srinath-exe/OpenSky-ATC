@@ -16,7 +16,7 @@
 .glass:hover:not(:disabled), .glass[data-force="hover"] { background: var(--glass-btn-hover); }
 .glass:active:not(:disabled), .glass[data-force="pressed"] { background: var(--glass-btn-pressed); }
 /* map control: .10 fill + .10 border */
-.map { background: var(--glass-map-btn); border-color: var(--w-10); }
+.map { background: radial-gradient(90% 60% at 30% 0%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 70%), var(--glass-map-btn); border-color: var(--w-16); box-shadow: var(--glass-rim), 0 4px 14px rgba(0, 0, 0, 0.30); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8); }
 .map:hover:not(:disabled), .map[data-force="hover"] { background: var(--glass-map-btn-hover); }
 .map:active:not(:disabled), .map[data-force="pressed"] { background: var(--glass-map-btn-pressed); }
 /* mobile header: --bg-1 fill + .05 border */

@@ -1,7 +1,7 @@
 /* Nav-style text tabs with a sliding --bg-3 active pill (4.9, A2, A15) */
 .tabs { position: relative; display: inline-flex; align-items: center; gap: var(--nav-tab-gap); padding: 0 22px; height: 40px; }
 .compact { gap: 28px; padding: 0 12px; height: 36px; }
-.pillTrack { position: absolute; top: 0; left: 0; height: 100%; border-radius: var(--r-pill); background: var(--bg-3); pointer-events: none; opacity: 0; transition: transform var(--t-base) var(--ease-inout), width var(--t-base) var(--ease-inout), opacity var(--t-fast); will-change: transform, width; }
+.pillTrack { position: absolute; top: 0; left: 0; height: 100%; border-radius: var(--r-pill); background: radial-gradient(100% 70% at 30% 0%, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 70%), var(--bg-3); box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.28), inset -1px -1px 0 rgba(255, 255, 255, 0.08), 0 2px 8px rgba(0, 0, 0, 0.25); pointer-events: none; opacity: 0; transition: transform var(--t-base) var(--ease-inout), width var(--t-base) var(--ease-inout), opacity var(--t-fast); will-change: transform, width; }
 .pillVisible { opacity: 1; }
 .tab {
   position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 8px; height: 100%; padding: 0; margin: 0;

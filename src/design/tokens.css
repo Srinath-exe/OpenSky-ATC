@@ -42,25 +42,34 @@
   --w-85: rgba(255, 255, 255, 0.85);
 
   /* ---------- 1.2 Glass ---------- */
-  --glass-fill: rgba(40, 40, 42, 0.50);
-  --glass-fill-strong: rgba(24, 24, 26, 0.72);
+  --glass-fill: rgba(34, 36, 42, 0.16);            /* liquid glass: a thin smoky tint, the blurred map is the material */
+  --glass-fill-strong: rgba(16, 18, 22, 0.30);
   --glass-fill-fallback: rgba(24, 24, 26, 0.92);   /* A16 no-backdrop-filter fallback */
-  --glass-border: rgba(255, 255, 255, 0.10);
-  --glass-border-hover: rgba(255, 255, 255, 0.16);
-  --glass-border-lit: rgba(255, 255, 255, 0.18);
-  --glass-highlight: rgba(255, 255, 255, 0.14);   /* 1px inner top edge */
-  --glass-blur: 40px;
-  --glass-saturate: 1.15;
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-hover: rgba(255, 255, 255, 0.20);
+  --glass-border-lit: rgba(255, 255, 255, 0.24);
+  --glass-highlight: rgba(255, 255, 255, 0.26);   /* 1px inner top edge (specular) */
+  --glass-blur: 18px;                              /* enough to abstract the map, little enough to keep its shapes */
+  --glass-saturate: 1.9;
+  --glass-brightness: 1.18;                        /* the material is luminous: the backdrop is lifted, not dimmed */
   --glass-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.30);
+  /* the thick-glass rim: a bright bevel on the lit (top-left) edge, a fainter one opposite, a faint inner glow */
+  --glass-rim: inset 1.5px 1.5px 0 -0.5px rgba(255, 255, 255, 0.50), inset -1.5px -1.5px 0 -0.5px rgba(255, 255, 255, 0.18), inset 0 0 28px rgba(255, 255, 255, 0.07), inset 0 -1px 0 rgba(0, 0, 0, 0.30);
+  /* the light source: a soft specular reflection in the top-left corner */
+  --glass-spec: radial-gradient(120% 70% at 10% -6%, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.08) 38%, rgba(255, 255, 255, 0) 62%);
+  /* light falling across the pane: a soft specular wash from the top-left corner */
+  --glass-sheen: linear-gradient(118deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.045) 28%, rgba(255, 255, 255, 0.0) 52%, rgba(255, 255, 255, 0.025) 100%);
+  /* 1px edge ring, bright where the light hits (top-left), fading toward the bottom-right */
+  --glass-edge: linear-gradient(150deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.12) 35%, rgba(255, 255, 255, 0.05) 65%, rgba(255, 255, 255, 0.16) 100%);
   --glass-lit-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.08) 40%, rgba(255, 255, 255, 0.02) 100%);
   --glass-lit-gradient-60: linear-gradient(135deg, rgba(255, 255, 255, 0.17) 0%, rgba(255, 255, 255, 0.05) 40%, rgba(255, 255, 255, 0.01) 100%);
   --glass-prism: conic-gradient(from 200deg, rgba(255, 255, 255, 0), rgba(120, 170, 255, 0.55), rgba(255, 255, 255, 0) 30%, rgba(255, 190, 120, 0.35) 55%, rgba(255, 255, 255, 0));
   --glass-btn: rgba(255, 255, 255, 0.06);          /* icon buttons */
   --glass-btn-hover: rgba(255, 255, 255, 0.12);
   --glass-btn-pressed: rgba(255, 255, 255, 0.16);
-  --glass-map-btn: rgba(255, 255, 255, 0.10);      /* map control circles */
-  --glass-map-btn-hover: rgba(255, 255, 255, 0.16);
-  --glass-map-btn-pressed: rgba(255, 255, 255, 0.22);
+  --glass-map-btn: rgba(255, 255, 255, 0.12);      /* map control circles */
+  --glass-map-btn-hover: rgba(255, 255, 255, 0.20);
+  --glass-map-btn-pressed: rgba(255, 255, 255, 0.26);
   --puck-fill: rgba(255, 255, 255, 0.28);
   --puck-ring: rgba(255, 255, 255, 0.35);
   --puck-blur: 12px;

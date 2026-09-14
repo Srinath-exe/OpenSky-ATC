@@ -17,7 +17,7 @@
 
 /* tones */
 .neutral { background: var(--bg-2); color: var(--text-2); }
-.solid { background: var(--bg-3); color: var(--text-1); }
+.solid { background: radial-gradient(100% 70% at 30% 0%, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 70%), var(--bg-3); color: var(--text-1); box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.22), inset -1px -1px 0 rgba(255, 255, 255, 0.06); }
 .outline { background: transparent; border-color: var(--line-strong); color: var(--text-1); }
 .dim { background: transparent; border-color: var(--line); color: var(--text-3); }
 .green { background: transparent; border-color: var(--green-dim); color: var(--green-dim); }

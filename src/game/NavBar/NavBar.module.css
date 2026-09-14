@@ -8,8 +8,9 @@
   gap: var(--s-4);
   height: var(--nav-h);
   padding: 0 var(--s-5) 0 var(--s-6);
-  background: var(--bg-0);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.0) 60%), var(--bg-0);
   border-bottom: var(--bw) solid var(--line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
   color: var(--text-1);
   transition: box-shadow var(--t-slow) var(--ease-out);
 }

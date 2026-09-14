@@ -17,24 +17,37 @@
 .solid.selected { background: var(--bg-2); }
 .nested { background: var(--bg-2); border: 0; box-shadow: none; }
 
-/* Glass: blur 40 + hairline + inner top highlight (1.2) */
+/* Glass (1.2): a see-through fill over a blurred, saturated map; a specular sheen washing in from the top-left; a 1px
+   edge ring that catches the light on the lit side; an inner top highlight and a dark inner bottom line for thickness. */
 .glass, .glassStrong, .lit, .prism {
-  background: var(--glass-fill);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  background: var(--glass-spec), var(--glass-sheen), var(--glass-fill);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate)) brightness(var(--glass-brightness));
   border: var(--bw) solid var(--glass-border);
-  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+  box-shadow: var(--glass-rim), var(--glass-shadow);
   will-change: transform;
   transform: translateZ(0);
   contain: paint;
   --text-3: var(--text-3-on-glass);
 }
-.glassStrong { background: var(--glass-fill-strong); }
-.lit, .glass.selected, .glassStrong.selected { background: var(--glass-lit-gradient), var(--glass-fill); border-color: var(--glass-border-lit); }
+.glass::after, .glassStrong::after, .lit::after {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: var(--glass-edge);
+  -webkit-mask: linear-gradient(var(--mask-solid) 0 0) content-box, linear-gradient(var(--mask-solid) 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.glassStrong { background: var(--glass-spec), var(--glass-sheen), var(--glass-fill-strong); }
+.lit, .glass.selected, .glassStrong.selected { background: var(--glass-spec), var(--glass-lit-gradient), var(--glass-fill); border-color: var(--glass-border-lit); }
+/* Lens rim (Chromium, high graphics tier): the blurred backdrop is refracted toward the edges by an SVG displacement
+   map (GameShell/LiquidGlassDefs) - the "liquid" in liquid glass. Other browsers keep the plain blur. */
+:global(html[data-lens="1"]) .glass, :global(html[data-lens="1"]) .glassStrong, :global(html[data-lens="1"]) .lit {
+  -webkit-backdrop-filter: url(#lg-lens) saturate(var(--glass-saturate)) brightness(var(--glass-brightness));
+  backdrop-filter: url(#lg-lens) saturate(var(--glass-saturate)) brightness(var(--glass-brightness));
+}
 .glass.interactive:hover, .glassStrong.interactive:hover, .prism.interactive:hover, .glass.interactive[data-force="hover"], .glassStrong.interactive[data-force="hover"] {
   transform: translateY(-2px) translateZ(0);
   border-color: var(--glass-border-hover);
-  background: var(--glass-lit-gradient-60), var(--glass-fill);
+  background: var(--glass-spec), var(--glass-lit-gradient-60), var(--glass-fill);
 }
 .lit.interactive:hover { transform: translateY(-2px) translateZ(0); }
 .prism::before {
@@ -44,12 +57,12 @@
   -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0.55;
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass, .glassStrong, .lit, .prism { background: var(--glass-fill-fallback); }
+  .glass, .glassStrong, .lit, .prism { background: var(--glass-sheen), var(--glass-fill-fallback); }
 }
 
 .interactive { cursor: pointer; }
 .interactive:focus-visible { box-shadow: var(--focus-ring); }
-.glass.interactive:focus-visible, .glassStrong.interactive:focus-visible, .lit.interactive:focus-visible { box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow), var(--focus-ring); }
+.glass.interactive:focus-visible, .glassStrong.interactive:focus-visible, .lit.interactive:focus-visible { box-shadow: var(--glass-rim), var(--glass-shadow), var(--focus-ring); }
 .disabled { opacity: 0.45; pointer-events: none; }
 .disabled .affordance { visibility: hidden; }
 .error { border: var(--bw) solid var(--red-border-25); }
