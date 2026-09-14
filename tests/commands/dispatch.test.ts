@@ -22,7 +22,7 @@ const ok = (r: DispatchResult, code?: string, label = '') => {
 
 test('dispatch e2e: full departure BAW117 at EGLL by typed commands', () => {
   const e = makeEngine('EGLL', { ends: ['27R', '27L'] });
-  const a = e.spawnDeparture({ callsign: 'BAW117', type: 'A320', runway: '27R' })!;
+  const a = e.spawnDeparture({ callsign: 'BAW117', type: 'A320', runway: '27R', stand: '701' })!;   // pinned: the seeded stand pick shifts whenever the OSM stand set changes
   assert.equal(e.stageOf(a), 'parked');
   assert.ok(runUntil(e, () => a.requests.some(r => r.kind === 'pushback'), 120).ok, 'pilot requests pushback');
 
@@ -351,7 +351,7 @@ test('dispatch: parse failures map to silent codes and never reach the engine', 
 
 test('dispatch: fromEngine / actionCtxFromEngine expose the live airport for the parser and the tree', () => {
   const e = makeEngine('EGLL', { ends: ['27R', '27L'] });
-  const a = e.spawnDeparture({ callsign: 'BAW117', type: 'A320', runway: '27R' })!;
+  const a = e.spawnDeparture({ callsign: 'BAW117', type: 'A320', runway: '27R', stand: '701' })!;   // pinned: the seeded stand pick shifts whenever the OSM stand set changes
   const b = e.spawnAt({ callsign: 'DLH2', type: 'A320', kind: 'arrival', phase: 'approach', posRel: { fromRunway: '27L', alongNM: -14, offsetNM: 2, altFt: 4000 }, heading: 240, speedKts: 210 });
   const ctx = fromEngine(e, { lastCallsign: 'DLH2' });
   assert.deepEqual(ctx.aircraft!.map(x => x.callsign).sort(), ['BAW117', 'DLH2']);

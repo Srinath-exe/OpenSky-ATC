@@ -19,7 +19,7 @@ Usage:  python3 scripts/fetch_osm_airports.py [ICAO ...]
 """
 import json, os, sys, time, urllib.request, urllib.parse
 
-OVERPASS = "https://overpass-api.de/api/interpreter"
+OVERPASS = os.environ.get("OVERPASS", "https://overpass-api.de/api/interpreter")
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "public", "maps", "osm")
 
 # ICAO -> (lat, lng, half-box-degrees).  Half-box ~0.06deg ≈ 6.6 km radius.
@@ -30,6 +30,9 @@ AIRPORTS = {
     "KBOS": (42.3656,  -71.0096, 0.050),
     "VIDP": (28.5562,   77.1000, 0.060),
     "EGLL": (51.4700,   -0.4543, 0.070),   # London Heathrow — the AirNav example
+    "VHHH": (22.3080,  113.9185, 0.060),   # Hong Kong Chek Lap Kok
+    "YSSY": (-33.9399, 151.1753, 0.055),   # Sydney Kingsford Smith
+    "LFPG": (49.0097,    2.5479, 0.070),   # Paris Charles de Gaulle
 }
 
 # aeroway values we care about
@@ -91,19 +94,37 @@ def to_features(elements):
             else:
                 geom = {"type": "LineString", "coordinates": coords}
 
-        else:  # relation (multipolygon apron/terminal) — collect outer ways
-            outers = []
-            for m in el.get("members", []):
-                if m.get("role") == "outer" and m.get("geometry"):
-                    ring = [[p["lon"], p["lat"]] for p in m["geometry"]]
-                    if len(ring) >= 3:
-                        outers.append([ring])
+        else:  # relation (multipolygon apron/terminal) — chain the outer member ways into closed rings
+            outers = assemble_rings([[[p["lon"], p["lat"]] for p in m["geometry"]] for m in el.get("members", []) if m.get("role") == "outer" and m.get("geometry")])
             if not outers:
                 continue
-            geom = {"type": "MultiPolygon", "coordinates": outers}
+            geom = {"type": "MultiPolygon", "coordinates": [[r] for r in outers]}
 
         feats.append({"type": "Feature", "properties": props, "geometry": geom})
     return feats
+
+
+def assemble_rings(ways, tol=1e-7):
+    """OSM multipolygon outer rings are often split over several member ways (a terminal pier drawn as two ways): chain
+    ways end to end (either direction) into closed rings. A lone unclosed chain is closed by its chord."""
+    ways = [w[:] for w in ways if len(w) >= 2]
+    rings = []
+    same = lambda a, b: abs(a[0] - b[0]) < tol and abs(a[1] - b[1]) < tol
+    while ways:
+        ring = ways.pop(0)
+        grown = True
+        while grown and not same(ring[0], ring[-1]):
+            grown = False
+            for i, w in enumerate(ways):
+                if same(ring[-1], w[0]): ring += w[1:]
+                elif same(ring[-1], w[-1]): ring += w[-2::-1]
+                elif same(ring[0], w[-1]): ring = w[:-1] + ring
+                elif same(ring[0], w[0]): ring = w[::-1][:-1] + ring
+                else: continue
+                ways.pop(i); grown = True; break
+        if not same(ring[0], ring[-1]): ring.append(ring[0])
+        if len(ring) >= 4: rings.append(ring)
+    return rings
 
 
 def add_stands(feats):

@@ -231,7 +231,7 @@ const ENTRY_HOLD_M = 500;
 /** Runway edge cost multiplier in findPath (taxiways are strongly preferred). */
 const RUNWAY_COST = 40;
 /** Fallback magnetic variation per airport, degrees east-positive (2025 WMM, rounded). */
-const MAGVAR_FALLBACK: Record<string, number> = { EGLL: 0.5, KLAX: 11.5, KJFK: -12.7, KSFO: 13.2, KBOS: -14.2, VIDP: 0.9 };
+const MAGVAR_FALLBACK: Record<string, number> = { EGLL: 0.5, KLAX: 11.5, KJFK: -12.7, KSFO: 13.2, KBOS: -14.2, VIDP: 0.9, VHHH: -3.4, YSSY: 12.7, LFPG: 2.0 };
 
 // ── geo helpers ─────────────────────────────────────────────
 export function meters(aLng: number, aLat: number, bLng: number, bLat: number): number {
@@ -844,9 +844,22 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
       }
       cands.push({ ref: refOf(f), osmId: idOf(f), stop: p, stopLL: { lng, lat }, entryLL: null, pts: [], isGate: true });
     }
+    // Unnamed parking_position ways that branch off a named stand's lead-in are that stand's lead-OUT / alternate
+    // lead-in markings (SFO's mapper drew the curved exit arcs as parking_position too): they are not stands. Same for
+    // an unnamed way with both ends on the taxiway network - a connector between taxilanes, not a stop.
+    const distToPath = (p: XY, path: XY[]) => { let d = Infinity; for (let i = 1; i < path.length; i++) d = Math.min(d, projOnSeg(p, path[i - 1], path[i]).d); return d; };
+    const namedPaths = cands.filter(c => c.ref && c.pts.length >= 2).map(c => c.pts.map(q => frame.xy(q.lng, q.lat)));
+    const branch = (c: Cand) => {
+      if (c.ref || c.pts.length < 2) return false;
+      const ends = [frame.xy(c.pts[0].lng, c.pts[0].lat), c.stop];
+      if (namedPaths.some(path => ends.some(e => distToPath(e, path) < 3))) return true;
+      const dEntry = idx.nearest(ends[0], 200)?.proj.d ?? Infinity, dStop = idx.nearest(ends[1], 200)?.proj.d ?? Infinity;
+      return dEntry < 12 && dStop < 12;
+    };
     // dedupe candidates that share a stop position (< 12 m — no two stands are closer than that)
     const uniq: Cand[] = [];
     for (const c of cands) {
+      if (branch(c)) continue;
       const dup = uniq.find(u => Math.hypot(u.stop.x - c.stop.x, u.stop.y - c.stop.y) < 12);
       if (dup) { if (!dup.ref && c.ref) dup.ref = c.ref; dup.isGate = dup.isGate || c.isGate; if (!dup.entryLL && c.entryLL) { dup.entryLL = c.entryLL; dup.pts = c.pts; } continue; }
       uniq.push(c);
