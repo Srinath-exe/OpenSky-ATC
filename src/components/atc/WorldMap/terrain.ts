@@ -500,11 +500,13 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
 
   // Surface stack (metres above the levelled field): taxiway ribbons 0.5 < aprons 0.6 < markings 0.75+. The apron is one
   // continuous slab, so the taxi lanes that cross it are only their painted centrelines - not asphalt strips.
+  const apronGeos: THREE.BufferGeometry[] = [];   // one mesh for every apron polygon (Dubai maps 200+ of them)
   for (const b of air.buildings) {
     const pts = b.polygon.map(p => world.toLocal(p.lng, p.lat));
     if (pts.length < 3) continue;
-    if (b.kind === 'apron') { const m = new THREE.Mesh(polygonGeo(pts, base + 0.6), concrete); m.renderOrder = 1; g.add(m); }
+    if (b.kind === 'apron') apronGeos.push(polygonGeo(pts, base + 0.6));
   }
+  if (apronGeos.length) { const m = new THREE.Mesh(mergeGeometries(apronGeos), concrete); m.renderOrder = 1; g.add(m); }
   // taxiways: ribbons along the taxi graph edges (stand lead-ins excluded: those are painted lines on the apron) + a
   // yellow centreline; a disc at every junction / bend fills the notches between ribbons
   const twyGeos: THREE.BufferGeometry[] = []; const centre: number[] = [];

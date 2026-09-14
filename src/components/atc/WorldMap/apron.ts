@@ -192,15 +192,15 @@ const SIGN_VERT = `
   attribute vec2 info;        // x: aspect (w / h), y: kind (0 taxiway, 1 runway) + rank * 8
   uniform float uK;           // world metres per pixel at unit distance (2 tan(fov/2) / viewport px)
   uniform float uStep;        // taxiway sign thinning: every uStep-th sign along a taxiway
-  uniform vec2 uAlpha;        // x: taxiway signs, y: runway designators
+  uniform vec3 uAlpha;        // x: taxiway signs, y: runway designators, z: short-stub taxiway signs
   varying vec2 vUv; varying float vAlpha;
   void main() {
     float kind = mod(info.y, 8.0); float rank = floor(info.y / 8.0);
-    float a = kind < 0.5 ? (mod(rank, uStep) < 0.5 ? uAlpha.x : 0.0) : uAlpha.y;
+    float a = kind < 0.5 ? (mod(rank, uStep) < 0.5 ? uAlpha.x : 0.0) : kind < 1.5 ? uAlpha.y : uAlpha.z;
     vAlpha = a;
     vUv = vec2(mix(rect.x, rect.z, corner.x + 0.5), mix(rect.y, rect.w, corner.y));
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    float h = length(mv.xyz) * uK * (kind < 0.5 ? 22.0 : 24.0);   // 22 / 24 px tall on screen
+    float h = length(mv.xyz) * uK * (kind < 1.5 && kind > 0.5 ? 24.0 : 22.0);   // 22 / 24 px tall on screen
     mv.xy += vec2(corner.x * h * info.x, corner.y * h);
     gl_Position = a < 0.01 ? vec4(2.0, 2.0, 2.0, 1.0) : projectionMatrix * mv;   // invisible signs are clipped away
   }`;
@@ -216,13 +216,18 @@ const SIGN_FRAG = `
  */
 export function buildLabels(world: World, air: OsmAirport, base: number): LabelHandle {
   const group = new THREE.Group(); group.name = 'labels';
-  const signs: { text: string; kind: 'twy' | 'rwy'; pos: THREE.Vector3; rank: number }[] = [];
-  const add = (text: string, kind: 'twy' | 'rwy', pos: THREE.Vector3, rank = 0) => { signs.push({ text, kind, pos, rank }); };
+  const signs: { text: string; kind: 'twy' | 'rwy'; pos: THREE.Vector3; rank: number; stub: boolean }[] = [];
+  let curStub = false;
+  const add = (text: string, kind: 'twy' | 'rwy', pos: THREE.Vector3, rank = 0) => { signs.push({ text, kind, pos, rank, stub: kind === 'twy' && curStub }); };
   const xy = (id: string) => { const n = air.nodes.get(id)!; return world.toLocal(n.lng, n.lat); };
   // walk each taxiway's edges; drop a sign wherever the running length passes a multiple of 350 m, plus at the start
   for (const name of air.taxiwayNames) {
     const ids = air.taxiwayNodes.get(name); if (!ids || !ids.length) continue;
     const seen = new Set<string>(); const placed: THREE.Vector3[] = [];
+    // short stubs (a named link of < 300 m - Dubai has a hundred of them) only get their sign close in
+    { let total = 0; const s2 = new Set<string>();
+      for (const id of ids) { const n = air.nodes.get(id); if (!n) continue; for (const e of n.edges) { if (e.type !== 'taxiway' || e.leadIn || e.taxiway !== name) continue; const key = n.id < e.to ? `${n.id}|${e.to}` : `${e.to}|${n.id}`; if (s2.has(key)) continue; s2.add(key); const a = xy(n.id), b = xy(e.to); total += Math.hypot(a.x - b.x, a.y - b.y); } }
+      curStub = total < 300; }
     // rank = order along the taxiway; when zoomed out only every 2nd / 4th sign is shown (the first always is)
     const tryPlace = (p: THREE.Vector3) => { if (placed.some(q => q.distanceTo(p) < 300)) return; add(name, 'twy', p.clone().setY(base + 6), placed.length); placed.push(p); };
     for (const id of ids) {
@@ -244,7 +249,7 @@ export function buildLabels(world: World, air: OsmAirport, base: number): LabelH
     add(end.name, 'rwy', toV3(p.x, p.y, base + 10));
   }
   const material = new THREE.ShaderMaterial({
-    uniforms: { uAtlas: { value: null }, uK: { value: 0.001 }, uStep: { value: 1 }, uAlpha: { value: new THREE.Vector2(1, 1) } },
+    uniforms: { uAtlas: { value: null }, uK: { value: 0.001 }, uStep: { value: 1 }, uAlpha: { value: new THREE.Vector3(1, 1, 1) } },
     vertexShader: SIGN_VERT, fragmentShader: SIGN_FRAG, transparent: true, depthTest: false, depthWrite: false,
   });
   if (signs.length) {
@@ -268,7 +273,7 @@ export function buildLabels(world: World, air: OsmAirport, base: number): LabelH
     signs.forEach((sg, i) => {
       const u = unique.get(`${sg.kind}:${sg.text}`)!;
       const u0 = u.x / ATLAS_W, u1 = (u.x + u.w) / ATLAS_W, v1 = 1 - u.y / atlasH, v0 = 1 - (u.y + SIGN_H) / atlasH;   // canvas y grows down, texture v grows up
-      const kindRank = (sg.kind === 'rwy' ? 1 : 0) + sg.rank * 8, aspect = u.w / SIGN_H;
+      const kindRank = (sg.kind === 'rwy' ? 1 : sg.stub ? 2 : 0) + sg.rank * 8, aspect = u.w / SIGN_H;
       const cs: [number, number][] = [[-0.5, 0], [0.5, 0], [0.5, 1], [-0.5, 1]];
       for (let k = 0; k < 4; k++) {
         pos.set([sg.pos.x, sg.pos.y, sg.pos.z], (i * 4 + k) * 3); corner.set(cs[k], (i * 4 + k) * 2);
@@ -284,12 +289,12 @@ export function buildLabels(world: World, air: OsmAirport, base: number): LabelH
   }
   const update = (camera: THREE.Camera, dist: number, viewportH: number) => {
     // taxiway signs show from ~5 km in, runway names from ~14 km; both fade over the last stretch
-    const twyA = 1 - THREE.MathUtils.smoothstep(dist, 3600, 5200), rwyA = 1 - THREE.MathUtils.smoothstep(dist, 11000, 15000);
+    const twyA = 1 - THREE.MathUtils.smoothstep(dist, 3600, 5200), rwyA = 1 - THREE.MathUtils.smoothstep(dist, 11000, 15000), stubA = 1 - THREE.MathUtils.smoothstep(dist, 900, 1300);
     group.visible = rwyA > 0.01;
     const pxH = viewportH || 800;
     material.uniforms.uK.value = (2 * Math.tan(((camera as THREE.PerspectiveCamera).fov ?? 48) * Math.PI / 360)) / pxH;   // world metres per pixel at unit distance
     material.uniforms.uStep.value = dist < 1500 ? 1 : dist < 2800 ? 2 : 4;
-    (material.uniforms.uAlpha.value as THREE.Vector2).set(twyA * 0.95, rwyA * 0.95);
+    (material.uniforms.uAlpha.value as THREE.Vector3).set(twyA * 0.95, rwyA * 0.95, stubA * 0.95);
   };
   return { group, update };
 }

@@ -78,13 +78,21 @@ def overpass(query, tries=3):
     os.makedirs(CACHE, exist_ok=True)
     cf = os.path.join(CACHE, hashlib.md5(query.encode()).hexdigest() + '.json')
     if os.path.exists(cf): return json.load(open(cf))['elements']
-    for i in range(tries):
-        r = requests.post(OVERPASS, data={'data': query}, timeout=200, headers={'User-Agent': 'skycontrol-bake/1.0 (atc sim; contact: dev@skycontrol.local)'})
-        if r.status_code == 200:
-            open(cf, 'w').write(r.text)
-            return r.json()['elements']
-        print('  overpass', r.status_code, 'retrying'); time.sleep(8 * (i + 1))
-    raise SystemExit(f'overpass failed: {r.status_code}')
+    # the public Overpass instances time out under load: rotate through the mirrors, back off between rounds
+    mirrors = [OVERPASS, 'https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter']
+    status = None
+    for i in range(tries * len(mirrors)):
+        url = mirrors[i % len(mirrors)]
+        try:
+            r = requests.post(url, data={'data': query}, timeout=240, headers={'User-Agent': 'skycontrol-bake/1.0 (atc sim; contact: dev@skycontrol.local)'})
+            status = r.status_code
+            if r.status_code == 200 and r.text.lstrip().startswith('{'):
+                open(cf, 'w').write(r.text)
+                return r.json()['elements']
+        except requests.RequestException as e:
+            status = str(e)[:60]
+        print('  overpass', status, 'retrying on the next mirror'); time.sleep(6 + 6 * (i // len(mirrors)))
+    raise SystemExit(f'overpass failed: {status}')
 
 def land_from_imagery(icao, bbox, grid, height):
     """Land-cover values from the wide Esri image: vegetation (excess green), brightness, water (dark + low-lying)."""
