@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import type { World } from './world';
 import type { OsmAirport, OsmStand } from '@/lib/osmAirport';
-import { PALETTE, apronMaterial, designatorTexture, mergeGeometries, ribbon, toV3, type Fade } from './terrain';
+import { PALETTE, apronMaterial, mergeGeometries, plateGeometry, ribbon, textAtlas, toV3, type Fade } from './terrain';
 
 /** Parked-aircraft envelope per ICAO stand code (wingspan × length, m). */
 const ENVELOPE: Record<string, [number, number]> = { A: [15, 13], B: [24, 24], C: [36, 40], D: [52, 56], E: [65, 70], F: [80, 76] };
@@ -21,7 +21,8 @@ function basis(headingDeg: number): { f: THREE.Vector3; l: THREE.Vector3 } {
 export function buildStands(world: World, air: OsmAirport, base: number, fades: Fade[]): THREE.Group {
   const g = new THREE.Group(); g.name = 'stands';
   const leadPos: number[] = []; const envPos: number[] = []; const barGeos: THREE.BufferGeometry[] = []; const padGeos: THREE.BufferGeometry[] = [];
-  const plates = new THREE.Group(); const plateMat = new Map<string, THREE.MeshBasicMaterial>();
+  // number plates: one atlas texture + one merged mesh for the whole airport (not a mesh and a texture per stand)
+  const plateAtlas = textAtlas(air.stands.map(st => st.ref).filter((r): r is string => !!r)); const plateGeos: THREE.BufferGeometry[] = [];
   // stands drawn closer together than their code's wingspan (OSM spacing) get a narrower envelope so the boxes never overlap
   const stopsXY = air.stands.map(st => world.toLocal(st.lng, st.lat));
   const nearestM = (i: number) => { let d = Infinity; for (let j = 0; j < stopsXY.length; j++) if (j !== i) d = Math.min(d, Math.hypot(stopsXY[i].x - stopsXY[j].x, stopsXY[i].y - stopsXY[j].y)); return d; };
@@ -43,12 +44,9 @@ export function buildStands(world: World, air: OsmAirport, base: number, fades: 
     // concrete pad under the envelope: gate areas read as paved even where OSM has no apron polygon (sits just below
     // the real apron slab, so it only shows where that is missing)
     padGeos.push(ribbon(nose.clone().addScaledVector(f, 4).setY(base + 0.55), tail.clone().addScaledVector(f, -4).setY(base + 0.55), half * 2 + 6));
-    if (!st.ref || plates.children.length > 500) continue;
-    let pm = plateMat.get(st.ref); if (!pm) { pm = new THREE.MeshBasicMaterial({ map: designatorTexture(st.ref), transparent: true, depthWrite: false, opacity: 0.9 }); plateMat.set(st.ref, pm); }
-    const pl = new THREE.Mesh(new THREE.PlaneGeometry(9, 4.5), pm);
-    pl.rotation.x = -Math.PI / 2; pl.rotation.z = -st.headingIn * Math.PI / 180;
+    if (!st.ref) continue;
     // the number sits ahead of the nose, on the lead-in, so a parked aircraft never covers it
-    pl.position.copy(stop).addScaledVector(f, 10).setY(base + 0.76); pl.renderOrder = 4; plates.add(pl);
+    plateGeos.push(plateGeometry(plateAtlas, st.ref, 9, 4.5, stop.clone().addScaledVector(f, 10).setY(base + 0.76), st.headingIn));
   }
   // the terminal surroundings are paved: a ~110 m buffer around every terminal outline (discs at the vertices, wide
   // ribbons along the edges, one flat mesh so the overlaps are invisible)
@@ -71,8 +69,11 @@ export function buildStands(world: World, air: OsmAirport, base: number, fades: 
   const envMat = new THREE.LineBasicMaterial({ color: 0xe8e8e4, transparent: true, opacity: 0.28 });
   g.add(new THREE.LineSegments(envGeo, envMat)); fades.push({ mat: envMat, base: 0.28, near: 350, far: 900 });
   if (barGeos.length) { const bm = new THREE.MeshBasicMaterial({ color: PALETTE.taxiLine, side: THREE.DoubleSide, transparent: true, opacity: 0.9 }); const m = new THREE.Mesh(mergeGeometries(barGeos), bm); m.renderOrder = 3; g.add(m); fades.push({ mat: bm, base: 0.9, near: 400, far: 1100 }); }
-  g.add(plates);
-  fades.push(...[...plateMat.values()].map(m => ({ mat: m, base: 0.9, near: 350, far: 1000 })));
+  if (plateGeos.length) {
+    const pm = new THREE.MeshBasicMaterial({ map: plateAtlas.texture, transparent: true, depthWrite: false, opacity: 0.9 });
+    const plates = new THREE.Mesh(mergeGeometries(plateGeos), pm); plates.renderOrder = 4; g.add(plates);
+    fades.push({ mat: pm, base: 0.9, near: 350, far: 1000 });
+  }
   return g;
 }
 
@@ -169,37 +170,54 @@ export function buildGse(world: World, air: OsmAirport, base: number): THREE.Obj
 // ── floating name labels (taxiways, runway ends) ─────────────────────────────
 export interface LabelHandle { group: THREE.Group; update(camera: THREE.Camera, dist: number, viewportH: number): void }
 
-const labelTexCache = new Map<string, THREE.CanvasTexture>();
-function labelTexture(text: string, kind: 'twy' | 'rwy'): THREE.CanvasTexture {
-  const key = `${kind}:${text}`; const hit = labelTexCache.get(key); if (hit) return hit;
-  const c = document.createElement('canvas'); const ctx = c.getContext('2d')!;
-  const font = `700 ${kind === 'twy' ? 58 : 50}px "DM Sans", "Helvetica Neue", Arial, sans-serif`;
-  ctx.font = font; const tw = ctx.measureText(text).width;
-  const padX = 22, h = 80; c.width = Math.ceil(tw + padX * 2); c.height = h;
-  ctx.font = font; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const r = 16; const w = c.width;
-  ctx.beginPath(); ctx.moveTo(r, 0); ctx.lineTo(w - r, 0); ctx.quadraticCurveTo(w, 0, w, r); ctx.lineTo(w, h - r); ctx.quadraticCurveTo(w, h, w - r, h); ctx.lineTo(r, h); ctx.quadraticCurveTo(0, h, 0, h - r); ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0); ctx.closePath();
+
+/** Draw one sign into a 2D context at (x, y); returns its width (height is SIGN_H). Yellow taxiway signs, dark runway designators. */
+const SIGN_H = 80;
+function signWidth(ctx: CanvasRenderingContext2D, text: string, kind: 'twy' | 'rwy'): number {
+  ctx.font = `700 ${kind === 'twy' ? 58 : 50}px "DM Sans", "Helvetica Neue", Arial, sans-serif`;
+  return Math.ceil(ctx.measureText(text).width + 44);
+}
+function drawSign(ctx: CanvasRenderingContext2D, text: string, kind: 'twy' | 'rwy', x: number, y: number, w: number): void {
+  const h = SIGN_H, r = 16;
+  ctx.font = `700 ${kind === 'twy' ? 58 : 50}px "DM Sans", "Helvetica Neue", Arial, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r); ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
   ctx.fillStyle = kind === 'twy' ? '#f0c33c' : '#111214'; ctx.fill();
   if (kind === 'rwy') { ctx.lineWidth = 4; ctx.strokeStyle = '#e8e8e4'; ctx.stroke(); }
-  ctx.fillStyle = kind === 'twy' ? '#111214' : '#f4f4f0'; ctx.fillText(text, w / 2, h / 2 + 2);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; t.minFilter = THREE.LinearFilter;
-  labelTexCache.set(key, t); return t;
+  ctx.fillStyle = kind === 'twy' ? '#111214' : '#f4f4f0'; ctx.fillText(text, x + w / 2, y + h / 2 + 2);
 }
+
+const SIGN_VERT = `
+  attribute vec2 corner;      // -0.5..0.5 across, 0..1 up (the anchor is the bottom centre)
+  attribute vec4 rect;        // atlas u0, v0, u1, v1
+  attribute vec2 info;        // x: aspect (w / h), y: kind (0 taxiway, 1 runway) + rank * 8
+  uniform float uK;           // world metres per pixel at unit distance (2 tan(fov/2) / viewport px)
+  uniform float uStep;        // taxiway sign thinning: every uStep-th sign along a taxiway
+  uniform vec2 uAlpha;        // x: taxiway signs, y: runway designators
+  varying vec2 vUv; varying float vAlpha;
+  void main() {
+    float kind = mod(info.y, 8.0); float rank = floor(info.y / 8.0);
+    float a = kind < 0.5 ? (mod(rank, uStep) < 0.5 ? uAlpha.x : 0.0) : uAlpha.y;
+    vAlpha = a;
+    vUv = vec2(mix(rect.x, rect.z, corner.x + 0.5), mix(rect.y, rect.w, corner.y));
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    float h = length(mv.xyz) * uK * (kind < 0.5 ? 22.0 : 24.0);   // 22 / 24 px tall on screen
+    mv.xy += vec2(corner.x * h * info.x, corner.y * h);
+    gl_Position = a < 0.01 ? vec4(2.0, 2.0, 2.0, 1.0) : projectionMatrix * mv;   // invisible signs are clipped away
+  }`;
+const SIGN_FRAG = `
+  uniform sampler2D uAtlas; varying vec2 vUv; varying float vAlpha;
+  void main() { vec4 c = texture2D(uAtlas, vUv); gl_FragColor = vec4(c.rgb, c.a * vAlpha); if (gl_FragColor.a < 0.02) discard; }`;
 
 /**
  * Taxiway names as yellow signs along every named taxiway (one per ~350 m of centreline, plus one near each end) and
  * runway designators at the thresholds; billboards kept at a constant screen size, hidden when zoomed far out.
+ * Every sign lives in one texture atlas and one geometry: the whole set is a single draw call, billboarded, sized,
+ * thinned and faded in the vertex shader.
  */
 export function buildLabels(world: World, air: OsmAirport, base: number): LabelHandle {
   const group = new THREE.Group(); group.name = 'labels';
-  const sprites: { sp: THREE.Sprite; aspect: number; kind: 'twy' | 'rwy'; rank: number }[] = [];
-  const mats = new Map<string, THREE.SpriteMaterial>();
-  const add = (text: string, kind: 'twy' | 'rwy', pos: THREE.Vector3, rank = 0) => {
-    const key = `${kind}:${text}`;
-    let m = mats.get(key); if (!m) { m = new THREE.SpriteMaterial({ map: labelTexture(text, kind), transparent: true, depthTest: false, depthWrite: false }); mats.set(key, m); }
-    const sp = new THREE.Sprite(m); sp.position.copy(pos); sp.renderOrder = 20; sp.center.set(0.5, 0);
-    const tex = m.map as THREE.CanvasTexture; sprites.push({ sp, aspect: tex.image.width / tex.image.height, kind, rank }); group.add(sp);
-  };
+  const signs: { text: string; kind: 'twy' | 'rwy'; pos: THREE.Vector3; rank: number }[] = [];
+  const add = (text: string, kind: 'twy' | 'rwy', pos: THREE.Vector3, rank = 0) => { signs.push({ text, kind, pos, rank }); };
   const xy = (id: string) => { const n = air.nodes.get(id)!; return world.toLocal(n.lng, n.lat); };
   // walk each taxiway's edges; drop a sign wherever the running length passes a multiple of 350 m, plus at the start
   for (const name of air.taxiwayNames) {
@@ -225,21 +243,53 @@ export function buildLabels(world: World, air: OsmAirport, base: number): LabelH
     const p = world.toLocal(end.lng, end.lat);
     add(end.name, 'rwy', toV3(p.x, p.y, base + 10));
   }
-  const tmp = new THREE.Vector3();
+  const material = new THREE.ShaderMaterial({
+    uniforms: { uAtlas: { value: null }, uK: { value: 0.001 }, uStep: { value: 1 }, uAlpha: { value: new THREE.Vector2(1, 1) } },
+    vertexShader: SIGN_VERT, fragmentShader: SIGN_FRAG, transparent: true, depthTest: false, depthWrite: false,
+  });
+  if (signs.length) {
+    // atlas: one row per unique sign, packed left to right, wrapped at 2048 px
+    const measure = document.createElement('canvas').getContext('2d')!;
+    const unique = new Map<string, { w: number; x: number; y: number }>();
+    let x = 0, y = 0; const ATLAS_W = 2048;
+    for (const sg of signs) {
+      const key = `${sg.kind}:${sg.text}`; if (unique.has(key)) continue;
+      const w = signWidth(measure, sg.text, sg.kind);
+      if (x + w > ATLAS_W) { x = 0; y += SIGN_H + 4; }
+      unique.set(key, { w, x, y }); x += w + 4;
+    }
+    const atlasH = THREE.MathUtils.ceilPowerOfTwo(y + SIGN_H + 4);
+    const c = document.createElement('canvas'); c.width = ATLAS_W; c.height = atlasH; const ctx = c.getContext('2d')!;
+    for (const [key, u] of unique) { const [kind, ...rest] = key.split(':'); drawSign(ctx, rest.join(':'), kind as 'twy' | 'rwy', u.x, u.y, u.w); }
+    const atlas = new THREE.CanvasTexture(c); atlas.colorSpace = THREE.SRGBColorSpace; atlas.anisotropy = 4; atlas.minFilter = THREE.LinearFilter; atlas.generateMipmaps = false;
+    material.uniforms.uAtlas.value = atlas;
+    const n = signs.length;
+    const pos = new Float32Array(n * 12), corner = new Float32Array(n * 8), rect = new Float32Array(n * 16), info = new Float32Array(n * 8); const index = new Uint32Array(n * 6);
+    signs.forEach((sg, i) => {
+      const u = unique.get(`${sg.kind}:${sg.text}`)!;
+      const u0 = u.x / ATLAS_W, u1 = (u.x + u.w) / ATLAS_W, v1 = 1 - u.y / atlasH, v0 = 1 - (u.y + SIGN_H) / atlasH;   // canvas y grows down, texture v grows up
+      const kindRank = (sg.kind === 'rwy' ? 1 : 0) + sg.rank * 8, aspect = u.w / SIGN_H;
+      const cs: [number, number][] = [[-0.5, 0], [0.5, 0], [0.5, 1], [-0.5, 1]];
+      for (let k = 0; k < 4; k++) {
+        pos.set([sg.pos.x, sg.pos.y, sg.pos.z], (i * 4 + k) * 3); corner.set(cs[k], (i * 4 + k) * 2);
+        rect.set([u0, v0, u1, v1], (i * 4 + k) * 4); info.set([aspect, kindRank], (i * 4 + k) * 2);
+      }
+      index.set([i * 4, i * 4 + 1, i * 4 + 2, i * 4, i * 4 + 2, i * 4 + 3], i * 6);
+    });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('corner', new THREE.BufferAttribute(corner, 2));
+    geo.setAttribute('rect', new THREE.BufferAttribute(rect, 4)); geo.setAttribute('info', new THREE.BufferAttribute(info, 2));
+    geo.setIndex(new THREE.BufferAttribute(index, 1));
+    const mesh = new THREE.Mesh(geo, material); mesh.frustumCulled = false; mesh.renderOrder = 20; group.add(mesh);
+  }
   const update = (camera: THREE.Camera, dist: number, viewportH: number) => {
     // taxiway signs show from ~5 km in, runway names from ~14 km; both fade over the last stretch
     const twyA = 1 - THREE.MathUtils.smoothstep(dist, 3600, 5200), rwyA = 1 - THREE.MathUtils.smoothstep(dist, 11000, 15000);
     group.visible = rwyA > 0.01;
-    for (const [key, m] of mats) m.opacity = key.startsWith('twy') ? twyA * 0.95 : rwyA * 0.95;
-    const camPos = camera.position; const pxH = viewportH || 800;
-    const k = (2 * Math.tan(((camera as THREE.PerspectiveCamera).fov ?? 48) * Math.PI / 360)) / pxH;   // world metres per pixel at unit distance
-    const step = dist < 1500 ? 1 : dist < 2800 ? 2 : 4;
-    for (const s of sprites) {
-      const vis = s.kind === 'twy' ? twyA > 0.01 && s.rank % step === 0 : rwyA > 0.01; s.sp.visible = vis; if (!vis) continue;
-      const d = tmp.copy(s.sp.position).distanceTo(camPos);
-      const h = d * k * (s.kind === 'twy' ? 22 : 24);   // 22 / 24 px tall on screen
-      s.sp.scale.set(h * s.aspect, h, 1);
-    }
+    const pxH = viewportH || 800;
+    material.uniforms.uK.value = (2 * Math.tan(((camera as THREE.PerspectiveCamera).fov ?? 48) * Math.PI / 360)) / pxH;   // world metres per pixel at unit distance
+    material.uniforms.uStep.value = dist < 1500 ? 1 : dist < 2800 ? 2 : 4;
+    (material.uniforms.uAlpha.value as THREE.Vector2).set(twyA * 0.95, rwyA * 0.95);
   };
   return { group, update };
 }

@@ -9,9 +9,10 @@ import * as React from 'react';
 import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
+import { TiltShiftPass } from './dof';
 import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
@@ -24,11 +25,13 @@ import { NOSE_WHEEL, genericLights, instantiate, lightsOf, loadAircraftModel, se
 import { PALETTE, applyFades, buildAirport, buildBuildings, buildRoads, buildTerrain, setSurfaceNight, toV3, type BuildingsHandle, type Fade, type NightHandle } from './terrain';
 import { buildGse, buildJetBridges, buildLabels, buildStands, type LabelHandle } from './apron';
 import { applySky, buildClouds, buildRain, buildSky, lightingFor, sunPosition, weatherLook, type TimeMode } from './sky';
+import { AdaptiveResolution, PRESETS, detectTier, getGraphicsPref, presetFor, publishDetected, subscribeGraphics, type QualityPreset } from './quality';
 import { IconButton, Segmented, Icon, Tooltip } from '@/design';
 import { requestOpenAction } from '@/game/CommandPanel/bus';
 import { stageLabel } from '@/lib/sim/stage';
 
 const FT = 0.3048;
+const CLOUD_TINT = new THREE.Color('#d8dbe0');
 const GRADE = {
   uniforms: { tDiffuse: { value: null }, uVignette: { value: 0.55 }, uSat: { value: 0.82 }, uLift: { value: 0.0 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
@@ -92,6 +95,8 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
   const [status, setStatus] = React.useState<'loading' | 'ready' | 'error'>('loading');
   const [tip, setTip] = React.useState<{ lines: string[] } | null>(null);
   const tipEl = React.useRef<HTMLDivElement>(null); const tipKey = React.useRef('');
+  const statsEl = React.useRef<HTMLDivElement>(null);
+  const [showStats] = React.useState(() => typeof window !== 'undefined' && /[?&]stats=1/.test(window.location.search));
   const [timeMode, setTimeMode] = React.useState<TimeMode>(() => { try { return (localStorage.getItem('skycontrol_world_time') as TimeMode) || 'auto'; } catch { return 'auto'; } });
   const [showLabels, setShowLabels] = React.useState(true);
   const [following, setFollowing] = React.useState(false);
@@ -107,13 +112,23 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const el = host.current; const e = sim.engine;
     if (!el || !e || !icao) return;
     let disposed = false;
-    // lite: test mode / software GL — smaller mesh, no depth-of-field, 1x pixels (the look is unchanged, only the cost)
+    // lite: test mode / software GL — the low preset with an even smaller mesh (the look is unchanged, only the cost)
     const lite = /[?&]lite=1/.test(window.location.search) || (sim.testMode && !/[?&]nolite=1/.test(window.location.search));
-    const renderer = new THREE.WebGLRenderer({ antialias: !lite, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(lite ? 1 : Math.min(window.devicePixelRatio, 1.5));   // 1.5x is plenty with the depth-of-field pass on top
+    // no MSAA on the canvas: everything is drawn through the post-processing chain (FXAA there on the higher tiers)
+    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', stencil: false });
     renderer.setClearColor(PALETTE.bg);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.info.autoReset = false;   // reset once per frame (the stats then cover every pass)
     el.appendChild(renderer.domElement);
+    // ── quality: tier from the device, the player's pin on top, adaptive render scale within the tier ──
+    const detected = detectTier(renderer.getContext()); publishDetected(detected);
+    let preset: QualityPreset = lite ? { ...PRESETS.low, terrainSegments: 192, fpsCap: 0 } : presetFor(getGraphicsPref(), detected.tier);
+    const adaptive = new AdaptiveResolution(Math.min(window.devicePixelRatio || 1, preset.dprMax), Math.min(window.devicePixelRatio || 1, preset.dprMin));
+    const retarget = () => { const cap = preset.fpsCap ? 1000 / preset.fpsCap : 0; adaptive.targetMs = cap ? cap * 1.2 : 22; adaptive.upMs = cap ? cap + 1.5 : 17.5; };
+    retarget();
+    const applyDpr = () => { renderer.setPixelRatio(adaptive.dpr); composer.setPixelRatio(adaptive.dpr); const r = renderer.getSize(new THREE.Vector2()); fxaa.uniforms.resolution.value.set(1 / (r.x * adaptive.dpr), 1 / (r.y * adaptive.dpr)); };
+    const stats = { frames: 0, renderMs: 0, jsMs: 0, at: performance.now(), fps: 0, ms: 0, js: 0 };
+    el.parentElement?.setAttribute('data-quality', preset.tier);
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(PALETTE.bg);
     scene.fog = new THREE.Fog(PALETTE.bg, 9000, 32000);   // rescaled with the camera distance every frame (terrain shader mirrors it)
@@ -122,28 +137,21 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const hemiLight = new THREE.HemisphereLight(0xbfc7d1, 0x1a1c1a, 0.9); scene.add(hemiLight);
     const sun = new THREE.DirectionalLight(0xfff1dc, 1.2); sun.position.set(-5000, 6000, 5000); scene.add(sun);
 
-    const composer = new EffectComposer(renderer);
+    // the render target carries a depth texture so the depth-of-field pass can read the main pass's depth
+    const size0 = renderer.getSize(new THREE.Vector2());
+    const rt = new THREE.WebGLRenderTarget(Math.max(1, size0.x), Math.max(1, size0.y), { type: THREE.HalfFloatType, depthTexture: new THREE.DepthTexture(Math.max(1, size0.x), Math.max(1, size0.y), THREE.UnsignedIntType) });
+    const composer = new EffectComposer(renderer, rt);
     composer.addPass(new RenderPass(scene, camera));
-    // Depth of field as a background effect only: the airfield is always sharp, the blur ramps in beyond it (far
-    // terrain, the bay, the horizon) - a tilt-shift look that does not depend on the zoom level. The stock bokeh
-    // formula blurs symmetrically around the focus distance; patched to blur only past `focus`.
-    // Tilt-shift by WORLD position, not camera depth: each pixel's depth is unprojected to a ground position and the blur
-    // grows with its horizontal distance outside the airfield circle (uField = centre x, z, radius) - so the airport is
-    // sharp and everything around it soft from any camera angle, including the city on the near side of the field.
-    const bokeh = new BokehPass(scene, camera, { focus: 9000, aperture: 0.0000026, maxblur: 0.0065 });
+    // Depth of field as a background effect only (dof.ts): the airfield is always sharp, the blur ramps in beyond it
+    // (far terrain, the bay, the horizon) by WORLD position, so the airport is sharp and everything around it soft from
+    // any camera angle, including the city on the near side of the field - a tilt-shift look independent of the zoom.
+    const bokeh = new TiltShiftPass(camera);
     const fieldCentre = new THREE.Vector3(0, 0, 0);
-    Object.assign(bokeh.uniforms, { uInvProj: { value: new THREE.Matrix4() }, uCamWorld: { value: new THREE.Matrix4() }, uField: { value: new THREE.Vector3(0, 0, 3000) } });
-    bokeh.materialBokeh.fragmentShader = bokeh.materialBokeh.fragmentShader
-      .replace('uniform float focus;', 'uniform float focus;\nuniform mat4 uInvProj, uCamWorld;\nuniform vec3 uField;')
-      .replace('float viewZ = getViewZ( getDepth( vUv ) );', 'float depth = getDepth( vUv ); float viewZ = getViewZ( depth );')
-      .replace('float factor = ( focus + viewZ );', `vec4 clip = vec4( vUv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0 );
-			vec4 view = uInvProj * clip; view /= view.w;
-			vec3 world = ( uCamWorld * vec4( view.xyz, 1.0 ) ).xyz;
-			float factor = max( 0.0, distance( world.xz, uField.xy ) - uField.z );`);
-    bokeh.materialBokeh.needsUpdate = true;
-    if (!lite) composer.addPass(bokeh);
+    bokeh.enabled = preset.bokeh; composer.addPass(bokeh);
+    const fxaa = new ShaderPass(FXAAShader); fxaa.enabled = preset.fxaa; composer.addPass(fxaa);
     const grade = new ShaderPass(GRADE); composer.addPass(grade);
     composer.addPass(new OutputPass());
+    applyDpr();
 
     const markers = new Map<number, Marker>();
     const acGeo = aircraftGeometry();
@@ -153,7 +161,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const traffic = new THREE.Group(); scene.add(traffic);
     const sky = buildSky(); scene.add(sky.mesh);
     const clouds = buildClouds(60000); clouds.mesh.visible = false; scene.add(clouds.mesh);
-    const rain = buildRain(); scene.add(rain.points);
+    let rain = buildRain(preset.rain); scene.add(rain.points);
     const nightHandles: NightHandle[] = [];
     let buildingMat: THREE.MeshLambertMaterial | null = null;
     let buildings: BuildingsHandle | null = null;
@@ -183,6 +191,8 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const routeMat = new LineMaterial({ color: 0xffffff, linewidth: 3, transparent: true, opacity: 0.9, dashed: false });
     let route: Line2 | null = null;
     let terrainUniforms: Record<string, THREE.IUniform> | null = null;
+    let terrainMesh: THREE.Mesh | null = null;
+    let roads: THREE.Group | null = null;
     let world: World | null = null;
     let mapLabels: LabelHandle | null = null;
     let nightAmtRef = 0;                       // last frame's night amount (the lighting block runs after the traffic sync)
@@ -197,9 +207,10 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       world = w;
       const field = [...e.air.nodes.values()].map(nd => w.toLocal(nd.lng, nd.lat));
       w.flatten(field, 120);
-      const t = buildTerrain(w, lite ? 192 : 512); terrainUniforms = t.uniforms; scene.add(t.mesh);
-      scene.add(buildRoads(w, fades));
-      const bl = buildBuildings(w, e.air); buildingMat = bl.material; buildings = bl; scene.add(bl.mesh); scene.add(bl.shadows);
+      const t = buildTerrain(w, preset.terrainSegments); terrainUniforms = t.uniforms; terrainMesh = t.mesh; scene.add(t.mesh);
+      w.landTex.anisotropy = Math.min(preset.anisotropy, renderer.capabilities.getMaxAnisotropy());
+      roads = buildRoads(w, fades, { step: preset.roadStep, minor: preset.minorRoads }); scene.add(roads);
+      const bl = buildBuildings(w, e.air, preset.buildings); buildingMat = bl.material; buildings = bl; scene.add(bl.mesh); scene.add(bl.shadows); bl.shadows.visible = preset.buildingShadows;
       const ap = buildAirport(w, e.air, fades, nightHandles); scene.add(ap);
       const base = ap.userData.base as number;
       scene.add(buildStands(w, e.air, base, fades));
@@ -211,6 +222,29 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       setStatus('ready');
     }).catch((err) => { console.error(err); setStatus('error'); });
 
+    // ── live quality changes (Settings → Graphics): passes, render scale, model distance, rain, terrain density ──
+    const applyPreset = (next: QualityPreset) => {
+      const prev = preset; preset = next;
+      bokeh.enabled = next.bokeh; fxaa.enabled = next.fxaa;
+      adaptive.setRange(Math.min(window.devicePixelRatio || 1, next.dprMax), Math.min(window.devicePixelRatio || 1, next.dprMin)); retarget(); applyDpr();
+      if (world && terrainMesh && next.terrainSegments !== prev.terrainSegments) {
+        scene.remove(terrainMesh); terrainMesh.geometry.dispose(); (terrainMesh.material as THREE.Material).dispose();
+        const t = buildTerrain(world, next.terrainSegments); terrainUniforms = t.uniforms; terrainMesh = t.mesh; scene.add(t.mesh);
+      }
+      if (world) world.landTex.anisotropy = Math.min(next.anisotropy, renderer.capabilities.getMaxAnisotropy());
+      if (world && buildings && (next.buildings !== prev.buildings || next.buildingShadows !== prev.buildingShadows)) {
+        scene.remove(buildings.mesh); scene.remove(buildings.shadows); buildings.mesh.geometry.dispose(); buildings.material.dispose(); (buildings.shadows.material as THREE.Material).dispose();
+        const bl = buildBuildings(world, e.air, next.buildings); buildingMat = bl.material; buildings = bl; scene.add(bl.mesh); scene.add(bl.shadows); bl.shadows.visible = next.buildingShadows;
+      }
+      if (world && roads && (next.roadStep !== prev.roadStep || next.minorRoads !== prev.minorRoads)) {
+        scene.remove(roads); roads.traverse((o) => { const m = o as THREE.LineSegments; if (m.geometry) m.geometry.dispose(); if (m.material) { const idx = fades.findIndex(f => f.mat === m.material); if (idx >= 0) fades.splice(idx, 1); (m.material as THREE.Material).dispose(); } });
+        roads = buildRoads(world, fades, { step: next.roadStep, minor: next.minorRoads }); scene.add(roads);
+      }
+      if (next.rain !== prev.rain) { scene.remove(rain.points); rain.points.geometry.dispose(); rain = buildRain(next.rain); scene.add(rain.points); }
+      el.parentElement?.setAttribute('data-quality', next.tier);
+    };
+    const unsubGraphics = lite ? () => {} : subscribeGraphics(() => { const next = presetFor(getGraphicsPref(), detected.tier); if (next.tier !== preset.tier) applyPreset(next); });
+
     // ── camera ──
     const applyCamera = () => {
       const cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
@@ -221,7 +255,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const resize = () => {
       const w = el.clientWidth || 1, h = el.clientHeight || 1;
       renderer.setSize(w, h, false); composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
-      routeMat.resolution.set(w, h);
+      routeMat.resolution.set(w, h); fxaa.uniforms.resolution.value.set(1 / (w * adaptive.dpr), 1 / (h * adaptive.dpr));
     };
     resize();
     const ro = new ResizeObserver(resize); ro.observe(el);
@@ -262,12 +296,34 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
 
     // ── pointer ──
     let drag: { mode: 'pan' | 'orbit'; x: number; y: number; moved: boolean; start: THREE.Vector3 | null } | null = null;
+    // touch: one finger pans, two fingers pinch (zoom about the midpoint), twist (orbit) and drag up / down (tilt)
+    const pointers = new Map<number, { x: number; y: number }>();
+    let pinch: { dist: number; angle: number; midY: number; camDist: number } | null = null;
+    const pinchState = () => { const [a, b] = [...pointers.values()]; return { dist: Math.hypot(b.x - a.x, b.y - a.y), angle: Math.atan2(b.y - a.y, b.x - a.x), midX: (a.x + b.x) / 2, midY: (a.y + b.y) / 2 }; };
     const onDown = (ev: PointerEvent) => {
       el.setPointerCapture(ev.pointerId);
+      pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (pointers.size === 2) {
+        const p = pinchState(); pinch = { dist: p.dist, angle: p.angle, midY: p.midY, camDist: cam.distGoal };
+        const g = groundAt(p.midX, p.midY); zoomAnchor = g ? { sx: p.midX, sy: p.midY, ground: g } : null;
+        drag = null; if (follow) setFollowRef.current(false); follow = false; camGoal = null;
+        return;
+      }
+      if (pointers.size > 2) return;
       const orbit = ev.button === 2 || ev.altKey || ev.ctrlKey;
       drag = { mode: orbit ? 'orbit' : 'pan', x: ev.clientX, y: ev.clientY, moved: false, start: orbit ? null : groundAt(ev.clientX, ev.clientY) };
     };
     const onMove = (ev: PointerEvent) => {
+      if (pointers.has(ev.pointerId)) pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (pinch && pointers.size >= 2) {
+        const p = pinchState();
+        cam.distGoal = Math.min(38000, Math.max(90, pinch.camDist * pinch.dist / Math.max(1, p.dist)));
+        if (zoomAnchor) { zoomAnchor.sx = p.midX; zoomAnchor.sy = p.midY; }
+        let da = p.angle - pinch.angle; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
+        cam.yaw -= da; cam.pitch = Math.min(1.45, Math.max(0.3, cam.pitch + (p.midY - pinch.midY) * 0.004));
+        pinch.angle = p.angle; pinch.midY = p.midY;
+        return;
+      }
       if (drag) {
         const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
         if (Math.hypot(dx, dy) > 3) drag.moved = true;
@@ -276,6 +332,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         if (follow) setFollowRef.current(false); follow = false; camGoal = null;
         return;
       }
+      if (ev.pointerType === 'touch') return;
       const id = pick(ev.clientX, ev.clientY);
       if (id !== sim.hoveredId) sim.hover(id);
       if (id != null) {
@@ -292,6 +349,12 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       } else { if (tipKey.current) { tipKey.current = ''; setTip(null); } el.style.cursor = drag ? 'grabbing' : 'grab'; }
     };
     const onUp = (ev: PointerEvent) => {
+      pointers.delete(ev.pointerId);
+      if (pinch) {
+        // the pinch ends when a finger lifts; the one still down carries on as a pan from where it is
+        if (pointers.size < 2) { pinch = null; zoomAnchor = null; const rest = [...pointers.values()][0]; drag = rest ? { mode: 'pan', x: rest.x, y: rest.y, moved: true, start: groundAt(rest.x, rest.y) } : null; }
+        return;
+      }
       if (drag && !drag.moved && ev.button === 0) { const id = pick(ev.clientX, ev.clientY); sim.select(id); setMenu(null); if (id != null && follow) { follow = false; setFollowRef.current(false); } }
       if (drag && !drag.moved && ev.button === 2) {
         const id = pick(ev.clientX, ev.clientY); const a = id != null ? e.byId(id) : null;
@@ -305,6 +368,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       }
       drag = null;
     };
+    const onCancel = (ev: PointerEvent) => { pointers.delete(ev.pointerId); if (pointers.size < 2) pinch = null; if (!pointers.size) drag = null; };
     // wheel: the zoom goal moves at once, the distance eases toward it each frame (zoomAnchor keeps the ground point
     // under the pointer fixed while it does)
     let zoomAnchor: { sx: number; sy: number; ground: THREE.Vector3 } | null = null;
@@ -318,7 +382,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       if ((ev.target as HTMLElement)?.tagName === 'INPUT') return;
       if (ev.key === 'Home') { cam.target.set(0, world?.heightAt(0, 0) ?? 0, 0); cam.dist = cam.distGoal = 5200; cam.yaw = -0.35; cam.pitch = 0.95; }
     };
-    el.addEventListener('pointerdown', onDown); el.addEventListener('pointermove', onMove); el.addEventListener('pointerup', onUp);
+    el.addEventListener('pointerdown', onDown); el.addEventListener('pointermove', onMove); el.addEventListener('pointerup', onUp); el.addEventListener('pointercancel', onCancel);
     el.addEventListener('wheel', onWheel, { passive: false }); el.addEventListener('contextmenu', (ev) => ev.preventDefault());
     window.addEventListener('keydown', onKey);
     let follow = false;
@@ -340,12 +404,24 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     // ── frame loop ──
     let raf = 0; const clock = new THREE.Clock();
     const tmp = new THREE.Vector3();
+    const frustum = new THREE.Frustum(); const frustumM = new THREE.Matrix4(); const sphere = new THREE.Sphere();
+    let lastRender = 0; let lastCamKey = '';
     const frame = () => {
       raf = requestAnimationFrame(frame);
       if (document.hidden) return;
+      const now = performance.now();
+      // frame-rate cap (low tier) and a 10 fps idle rate while the sim is paused and the camera rests: the picture
+      // cannot change, so the GPU (and the battery) rest too
+      const camKey = `${cam.target.x.toFixed(1)},${cam.target.z.toFixed(1)},${cam.dist.toFixed(1)},${cam.yaw.toFixed(3)},${cam.pitch.toFixed(3)},${sim.selectedId},${sim.hoveredId},${sim.version}`;
+      const resting = sim.paused && camKey === lastCamKey && !camGoal && Math.abs(cam.distGoal - cam.dist) < 0.5;
+      const minGap = resting ? 100 : preset.fpsCap ? 1000 / preset.fpsCap - 2 : 0;
+      if (minGap && now - lastRender < minGap) { clock.getDelta(); return; }
+      lastCamKey = camKey;
       const dt = clock.getDelta();
       const eng = sim.engine; if (!eng) return;
+      const t0 = now; renderer.info.reset();
       const rect = el.getBoundingClientRect();   // once per frame (layout read)
+      frustumM.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); frustum.setFromProjectionMatrix(frustumM);
       // traffic sync
       const live = new Set<number>();
       for (const a of eng.aircraft) {
@@ -369,13 +445,17 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         m.mesh.rotation.y = -a.heading * Math.PI / 180;
         // ground shadow: the silhouette, flat on the surface, slightly larger and fainter with height; a thin stem from an
         // airborne aircraft down to the ground
-        const useModel = !!m.model && cam.dist < 6500;
+        const useModel = !!m.model && cam.dist < preset.modelDist;
+        // off-screen aircraft cost nothing: the model meshes skip three's per-mesh culling (up to 200 parts on one
+        // airframe), so one sphere test per aircraft decides the whole set
+        sphere.center.copy(m.mesh.position); sphere.radius = Math.max(len, span) * Math.max(1, cam.dist / 2600) * 1.2 + 40;
+        const onScreen = frustum.intersectsSphere(sphere);
         const shScale = useModel ? 1 : scale;
         m.shadow.position.set(a.pos.x, ground + 0.4, -a.pos.y); m.shadow.rotation.y = m.mesh.rotation.y;
         const sh = air ? Math.max(0.8, 1 + (h - ground) / 600) : 1.04;
         m.shadow.scale.set(span * shScale * sh, 0.01, len * shScale * sh);
         (m.shadow.material as THREE.MeshBasicMaterial).opacity = (air ? Math.max(0.04, 0.28 - (h - ground) / 6000) : 0.32) * (0.35 + 0.65 * (1 - nightAmtRef));
-        m.stem.visible = air; if (air) { m.stem.position.set(a.pos.x, ground, -a.pos.y); m.stem.scale.y = Math.max(1, h - ground); }
+        if (air) { m.stem.position.set(a.pos.x, ground, -a.pos.y); m.stem.scale.y = Math.max(1, h - ground); }
         m.mesh.material = a.id === sim.selectedId ? matSel : a.onFrequency === sim.position || sim.position === 'ground' ? matPlane : matGhost;
         // real model (lazy per type); the silhouette stays as the far-zoom symbol and the pick target
         if (!m.modelWanted) {
@@ -386,8 +466,9 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
             const spec = lightsOf(mdl, a.perf.lengthMeters); if (spec) { mk.lightSpec = spec; setLightPositions(mk.lights, spec); }
           });
         }
+        m.mesh.visible = onScreen && !useModel; m.shadow.visible = onScreen; m.stem.visible = onScreen && air;
         if (m.model) {
-          m.model.visible = useModel; m.mesh.visible = !useModel;
+          m.model.visible = onScreen && useModel;
           m.model.position.copy(m.mesh.position); m.model.rotation.y = m.mesh.rotation.y;
           const state = a.id === sim.selectedId ? 'sel' : a.id === sim.hoveredId ? 'hover' : '';
           if (state !== m.tinted) { tint(m.model, state === 'sel' ? PALETTE.orange : state === 'hover' ? new THREE.Color(0x404040) : null); m.tinted = state; }
@@ -412,7 +493,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
           set(3, 1, 0.15, 0.1, beacon ? 20 : 0); set(4, 1, 0.15, 0.1, beacon ? 16 : 0);
           set(5, 1, 0.97, 0.9, taxi ? 18 : 0); set(6, 1, 0.98, 0.92, landing ? 26 : 0); set(7, 1, 0.98, 0.92, landing ? 26 : 0);
           L.geometry.getAttribute('color').needsUpdate = true; L.geometry.getAttribute('size').needsUpdate = true;
-          L.visible = active || air;
+          L.visible = onScreen && (active || air);
         }
         // label
         tmp.copy(m.mesh.position).project(camera);
@@ -504,7 +585,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       const deckY = (world?.heightAt(0, 0) ?? 0) + wx.cloudBaseM;
       const under = 1 - THREE.MathUtils.smoothstep(camera.position.y, deckY - 400, deckY - 50);
       clouds.mesh.visible = wx.cloudCover > 0.05 && under > 0.01; clouds.mesh.position.set(cam.target.x, deckY, cam.target.z);
-      clouds.uniforms.uTime.value += dt; clouds.uniforms.uCover.value = wx.cloudCover * under; clouds.uniforms.uDay.value = L.day; (clouds.uniforms.uTint.value as THREE.Color).copy(L.hemiSky).lerp(new THREE.Color('#d8dbe0'), 0.5);
+      clouds.uniforms.uTime.value += dt; clouds.uniforms.uCover.value = wx.cloudCover * under; clouds.uniforms.uDay.value = L.day; (clouds.uniforms.uTint.value as THREE.Color).copy(L.hemiSky).lerp(CLOUD_TINT, 0.5);
       rain.update(clock.elapsedTime, cam.target, Math.min(2500, cam.dist * 0.6), wx.precip === 'none' ? 0 : wx.precip === 'drizzle' ? 0.5 : 1);
       const nightAmt = 1 - L.day; nightAmtRef = nightAmt;
       for (const nh of nightHandles) nh.setNight(nightAmt);
@@ -527,22 +608,42 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       clampTarget();
       applyCamera(); camera.updateMatrixWorld(); applyFades(fades, cam.dist);
       if (mapLabels) { mapLabels.update(camera, cam.dist, rect.height); if (!labelsRef.current) mapLabels.group.visible = false; }
-      { const u = bokeh.uniforms as Record<string, THREE.IUniform>;
-        (u.uInvProj.value as THREE.Matrix4).copy(camera.projectionMatrixInverse); (u.uCamWorld.value as THREE.Matrix4).copy(camera.matrixWorld);
-        (u.uField.value as THREE.Vector3).set(fieldCentre.x, fieldCentre.z, fieldR);
-        u.maxblur.value = 0.011 + Math.min(0.005, cam.dist / 4e6); u.aperture.value = u.maxblur.value / 1400; }   // full blur 1.4 km past the field
+      bokeh.uniforms.uField.value.set(fieldCentre.x, fieldCentre.z, fieldR);   // full blur 1.4 km past the field (uRamp)
+      const t1 = performance.now();
       composer.render();
+      lastRender = now;
+      // render scale from the measured frame time (not while resting: those frames are throttled on purpose)
+      if (!resting && !lite && adaptive.sample(now)) applyDpr();
+      const t2 = performance.now();
+      stats.frames++; stats.jsMs += t1 - t0; stats.renderMs += t2 - t1;
+      if (t2 - stats.at > 1000) { const secs = (t2 - stats.at) / 1000; stats.fps = stats.frames / secs; stats.js = stats.jsMs / stats.frames; stats.ms = stats.renderMs / stats.frames; stats.frames = 0; stats.jsMs = 0; stats.renderMs = 0; stats.at = t2; if (statsEl.current) statsEl.current.textContent = `${stats.fps.toFixed(0)} fps · js ${stats.js.toFixed(1)} ms · draw ${stats.ms.toFixed(1)} ms · ${renderer.info.render.calls} calls · ${(renderer.info.render.triangles / 1000).toFixed(0)}k tris · ${adaptive.dpr.toFixed(2)}x · ${preset.tier}`; }
     };
+    (window as unknown as { __worldSet?: (o: { bokeh?: boolean; fxaa?: boolean; dpr?: number }) => void }).__worldSet = (o) => { if (o.bokeh != null) bokeh.enabled = o.bokeh; if (o.fxaa != null) fxaa.enabled = o.fxaa; if (o.dpr != null) { adaptive.setRange(o.dpr, o.dpr); applyDpr(); } };
+    (window as unknown as { __worldStats?: () => unknown }).__worldStats = () => ({ tier: preset.tier, detected: detected.tier, gpu: detected.device.gpu, dpr: adaptive.dpr, fps: stats.fps, jsMs: stats.js, drawMs: stats.ms, calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, aircraft: markers.size, models: [...markers.values()].filter(m => m.model?.visible).length, modelMeshes: [...markers.values()].filter(m => m.model?.visible).map(m => { let n = 0; m.model!.traverse(o => { if ((o as THREE.Mesh).isMesh) n++; }); return `${m.model!.userData.type ?? '?'}:${n}`; }), bokeh: bokeh.enabled, fxaa: fxaa.enabled });
     applyCamera(); frame();
 
     return () => {
       disposed = true; cancelAnimationFrame(raf); ro.disconnect(); unregister();
-      el.removeEventListener('pointerdown', onDown); el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerup', onUp); el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('pointerdown', onDown); el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerup', onUp); el.removeEventListener('pointercancel', onCancel); el.removeEventListener('wheel', onWheel);
       window.removeEventListener('keydown', onKey);
       for (const m of markers.values()) m.label.remove();
       for (const m of vehicles.values()) m.label.remove();
-      ctl.current = null; renderer.dispose(); composer.dispose(); if (renderer.domElement.parentNode === el) el.removeChild(renderer.domElement);
-      world?.heightTex.dispose(); world?.landTex.dispose();
+      ctl.current = null; unsubGraphics();
+      // free the GPU: every geometry / material / texture built for this airport, then the context itself (a browser
+      // allows only a handful of live WebGL contexts - navigating between airports must not accumulate them)
+      const seen = new Set<THREE.BufferGeometry | THREE.Material | THREE.Texture>();
+      const freeTex = (v: unknown) => { const t = v as THREE.Texture; if (t?.isTexture && !seen.has(t)) { seen.add(t); t.dispose(); } };
+      const freeMat = (mat: THREE.Material) => {
+        if (seen.has(mat)) return; seen.add(mat);
+        for (const v of Object.values(mat as unknown as Record<string, unknown>)) freeTex(v);
+        for (const u of Object.values((mat as THREE.ShaderMaterial).uniforms ?? {})) freeTex(u?.value);   // atlases / textures held by shader uniforms
+        mat.dispose();
+      };
+      scene.traverse((o) => { const m = o as THREE.Mesh; if (m.geometry && !seen.has(m.geometry)) { seen.add(m.geometry); m.geometry.dispose(); } if (m.material) for (const mat of Array.isArray(m.material) ? m.material : [m.material]) freeMat(mat); });
+      scene.clear();
+      world?.heightTex.dispose(); world?.landTex.dispose(); world?.fieldTex.dispose();
+      for (const pass of composer.passes) pass.dispose(); composer.dispose(); rt.dispose(); renderer.dispose(); renderer.forceContextLoss();
+      if (renderer.domElement.parentNode === el) el.removeChild(renderer.domElement);
     };
   }, [icao, hasEngine]);
 
@@ -550,6 +651,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     <div className={styles.root} data-testid="world-map" data-status={status} data-standalone={standalone ? 'true' : 'false'}>
       <div ref={host} className={styles.canvasHost} data-testid="world-canvas" />
       <div ref={labels} className={styles.labels} aria-hidden="true" />
+      {showStats ? <div ref={statsEl} className={styles.stats} data-testid="world-stats" /> : null}
       {tip ? <div ref={tipEl} className={styles.tip} data-testid="map-tooltip">{tip.lines.map((l, i) => <div key={i} className={i === 0 ? styles.tipHead : styles.tipLine}>{l}</div>)}</div> : null}
       {menu ? (
         <div className={styles.menu} style={{ left: Math.min(menu.x, (host.current?.clientWidth ?? 800) - 240), top: Math.min(menu.y, (host.current?.clientHeight ?? 600) - 40 * (menu.rows.length + 1)) }} data-testid="world-quick-menu" role="menu" onPointerDown={(ev) => ev.stopPropagation()}>

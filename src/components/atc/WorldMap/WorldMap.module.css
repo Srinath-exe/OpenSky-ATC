@@ -64,3 +64,4 @@
 .windText { color: #fff; }
 .windMeta { color: rgba(255, 255, 255, 0.5); }
 .root[data-standalone="false"] .windChip { left: calc(var(--bay-w, 300px) + 2 * var(--float-gap, 12px)); }
+.stats { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 6; pointer-events: none; font: 400 11px / 1 ui-monospace, Menlo, monospace; color: rgba(255, 255, 255, 0.8); background: rgba(0, 0, 0, 0.45); padding: 4px 8px; border-radius: 6px; white-space: nowrap; }

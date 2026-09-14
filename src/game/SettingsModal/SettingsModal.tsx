@@ -16,6 +16,8 @@ import { useShell } from '../shellContext'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { LS } from '../persist'
 import { EV_REPLAY_TIPS } from '../HelpOverlay/OnboardingTips'
+import { PRESETS, setGraphicsPref, useDetected, useGraphicsPref } from '@/components/atc/WorldMap/quality'
+import type { GraphicsPref } from '@/components/atc/WorldMap/quality'
 
 type PilotDelayKey = 'auto' | '1' | '2' | '3' | '4' | '6' | '8'
 const PILOT_DELAY_OPTIONS: MenuOption<PilotDelayKey>[] = [
@@ -101,6 +103,8 @@ export function SettingsModal() {
           </div>
         </div>
 
+        <GraphicsSection />
+
         <LlmSection />
 
         <div className={styles.section}>
@@ -136,6 +140,32 @@ const INTERVAL_OPTIONS: MenuOption<'4' | '8' | '15' | '30'>[] = [
 function fmtAgo(ms: number | null): string { if (ms == null) return '' ; const s = Math.round((Date.now() - ms) / 1000); return s < 60 ? `${s} s ago` : `${Math.round(s / 60)} min ago` }
 
 /** Edge LLM: an OpenAI-compatible model working / advising positions (docs/spec/07-LLM-IO.md). Config lives in its own persisted blob. */
+/** 3D map quality (WorldMap/quality.ts): Auto picks a tier from the device; a pinned tier applies live, no reload. */
+function GraphicsSection() {
+  const pref = useGraphicsPref()
+  const detected = useDetected()
+  const tier = pref === 'auto' ? detected?.tier ?? null : pref
+  const p = tier ? PRESETS[tier] : null
+  const what = p ? `${p.bokeh ? 'Depth of field' : 'No depth of field'} · ${p.fxaa ? 'FXAA' : 'no AA'} · up to ${p.dprMax}× render scale · models within ${(p.modelDist / 1000).toFixed(1)} km${p.fpsCap ? ` · ${p.fpsCap} fps` : ''}` : 'Detected once the map is up'
+  const label = (k: GraphicsPref) => k === 'auto' ? `Auto${detected ? ` (${detected.tier})` : ''}` : k[0].toUpperCase() + k.slice(1)
+  return (
+    <div className={styles.section} data-testid="graphics-section">
+      <span className={styles.sectionTitle}>Graphics</span>
+      <div className={styles.rows}>
+        <ListRow flush title="3D map quality" subtitle={what} trailing={
+          <span className={styles.pillGroup} role="group" aria-label="3D map quality">
+            {(['auto', 'high', 'medium', 'low'] as const).map((k) => (
+              <Pill key={k} size="s" tone="outline" interactive selected={pref === k} aria-pressed={pref === k} onClick={() => setGraphicsPref(k)} testId={`gfx-${k}`}>{label(k)}</Pill>
+            ))}
+          </span>
+        } />
+        {detected ? <ListRow flush title="Device" subtitle={`${detected.device.gpu || 'GPU unknown'} · ${detected.device.cores} cores${detected.device.memoryGB ? ` · ${detected.device.memoryGB} GB` : ''}${detected.device.coarse ? ' · touch' : ''}`} meta={<span data-testid="gfx-detected" data-tier={detected.tier}>{detected.tier}</span>} /> : null}
+        <ListRow flush title="Render scale adapts to the frame rate" subtitle="Slower devices draw fewer pixels instead of dropping frames; the picture sharpens again when there is headroom" />
+      </div>
+    </div>
+  )
+}
+
 function LlmSection() {
   const llm = useSim((s) => s.llm)
   const status = useSim((s) => ({ ...s.llmStatus() }))

@@ -204,17 +204,20 @@ function drapedSegments(world: World, lines: [number, number][][], lift: number,
   return new Float32Array(out);
 }
 
-export function buildRoads(world: World, fades: Fade[]): THREE.Group {
+/** Road detail: metres between relief samples along a line (60 = every bend follows the terrain), and whether the
+ *  secondary streets are drawn at all (the low tier drops them - they fade out beyond 7 km anyway). */
+export interface RoadDetail { step: number; minor: boolean }
+export function buildRoads(world: World, fades: Fade[], detail: RoadDetail = { step: 60, minor: true }): THREE.Group {
   const g = new THREE.Group(); g.name = 'roads';
   const r = world.vectors.roads;
   const add = (lines: [number, number][][], color: THREE.Color, opacity: number, lift: number, near: number, far: number) => {
     if (!lines.length) return;
-    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(drapedSegments(world, lines, lift), 3));
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(drapedSegments(world, lines, lift, detail.step), 3));
     const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false });
     const m = new THREE.LineSegments(geo, mat); m.frustumCulled = false; g.add(m);
     fades.push({ mat, base: opacity, near, far });
   };
-  add(r.secondary, PALETTE.roadMinor, 0.3, 1.2, 2500, 7000);
+  if (detail.minor) add(r.secondary, PALETTE.roadMinor, 0.3, 1.2, 2500, 7000);
   add(r.primary, PALETTE.roadMinor, 0.5, 1.4, 5000, 14000);
   add(r.rail, PALETTE.rail, 0.5, 1.4, 6000, 20000);
   add([...r.trunk, ...r.motorway], PALETTE.road, 0.6, 1.8, 12000, 45000);
@@ -224,14 +227,25 @@ export function buildRoads(world: World, fades: Fade[]): THREE.Group {
 // ── buildings (extruded footprints) ──────────────────────────────────────────
 export interface BuildingsHandle { mesh: THREE.Mesh; material: THREE.MeshLambertMaterial; shadows: THREE.Mesh; setSun(dir: THREE.Vector3, day: number, cloud: number): void }
 
-export function buildBuildings(world: World, air?: OsmAirport): BuildingsHandle {
+/** `maxBuildings`: budget for the world's buildings (the airport's own terminals / hangars are always kept) - the
+ *  biggest and nearest footprints win, so the terminals' surroundings and the skyline stay while a far suburb of small
+ *  houses (KLAX has 3 700 footprints) is dropped on the lower tiers. */
+export function buildBuildings(world: World, air?: OsmAirport, maxBuildings = Infinity): BuildingsHandle {
   const geos: THREE.BufferGeometry[] = [];
   const colors: number[] = []; const info: number[] = [];   // per vertex: base y, height, kind (0 building / 1 terminal / 2 hangar), seed
   // The world layer only carries OSM building WAYS; terminals mapped as relations or tagged aeroway=terminal without
   // building=* are missing from it - yet the gates, bridges and apron are laid out against exactly those outlines. So
   // the airport data's terminal / hangar polygons are extruded too, skipping the ones the world layer already has
   // (same centroid and a similar footprint).
-  const list: { p: [number, number][]; h: number | null; k: 'terminal' | 'hangar' | 'b' }[] = world.vectors.buildings.slice();
+  let list: { p: [number, number][]; h: number | null; k: 'terminal' | 'hangar' | 'b' }[] = world.vectors.buildings.slice();
+  if (list.length > maxBuildings) {
+    const ranked = list.map((b) => {
+      const pts = b.p.map(([lng, lat]) => world.toLocal(lng, lat)); const cx = pts.reduce((q, v) => q + v.x, 0) / pts.length, cy = pts.reduce((q, v) => q + v.y, 0) / pts.length;
+      return { b, score: polyAreaM2(pts) * (b.h ?? 7) / (1 + Math.hypot(cx, cy) / 4000) };
+    });
+    ranked.sort((x, y) => y.score - x.score);
+    list = ranked.slice(0, maxBuildings).map(x => x.b);
+  }
   if (air) {
     const worldC = world.vectors.buildings.map(b => { const pts = b.p.map(([lng, lat]) => world.toLocal(lng, lat)); const cx = pts.reduce((s, q) => s + q.x, 0) / pts.length, cy = pts.reduce((s, q) => s + q.y, 0) / pts.length; return { cx, cy, area: polyAreaM2(pts) }; });
     for (const b of air.buildings) {
@@ -385,6 +399,34 @@ export function designatorTexture(text: string): THREE.CanvasTexture {
   return t;
 }
 
+/**
+ * Every designator (stand numbers, runway names) of a map in ONE texture, 256 x 128 px cells: the plates then share a
+ * material and merge into a single draw call instead of one mesh + one texture each (a big airport has 300 stands).
+ */
+export interface TextAtlas { texture: THREE.CanvasTexture; rect(text: string): [number, number, number, number] }
+export function textAtlas(texts: string[]): TextAtlas {
+  const unique = [...new Set(texts)]; const cols = 8, cw = 256, ch = 128;
+  const rows = Math.max(1, Math.ceil(unique.length / cols));
+  const c = document.createElement('canvas'); c.width = cols * cw; c.height = THREE.MathUtils.ceilPowerOfTwo(rows * ch);
+  const ctx = c.getContext('2d')!; ctx.clearRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#e8e8e4'; ctx.font = '700 104px "DM Sans", "Helvetica Neue", Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const cell = new Map<string, [number, number, number, number]>();
+  unique.forEach((t, i) => {
+    const x = (i % cols) * cw, y = Math.floor(i / cols) * ch;
+    ctx.fillText(t, x + cw / 2, y + ch / 2 + 2, cw - 16);
+    cell.set(t, [x / c.width, 1 - (y + ch) / c.height, (x + cw) / c.width, 1 - y / c.height]);   // u0, v0, u1, v1 (v up)
+  });
+  const texture = new THREE.CanvasTexture(c); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8;
+  return { texture, rect: (t) => cell.get(t) ?? [0, 0, 0, 0] };
+}
+/** A flat text plate (w x h m) at `pos`, glyph tops toward `heading` (deg, 0 = north), UVs from the atlas. */
+export function plateGeometry(atlas: TextAtlas, text: string, w: number, h: number, pos: THREE.Vector3, headingDeg: number): THREE.BufferGeometry {
+  const g = new THREE.PlaneGeometry(w, h); g.rotateX(-Math.PI / 2); g.rotateY(-headingDeg * Math.PI / 180); g.translate(pos.x, pos.y, pos.z);
+  const [u0, v0, u1, v1] = atlas.rect(text); const uv = g.getAttribute('uv') as THREE.BufferAttribute;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, u0 + (u1 - u0) * uv.getX(i), v0 + (v1 - v0) * uv.getY(i));
+  return g;
+}
+
 /** Surfaces lifted by the apron floodlights at night (apron, taxiways, runways). */
 const SURFACE_MATS: THREE.MeshLambertMaterial[] = [];   // aprons: floodlit
 const PAVEMENT_MATS: THREE.MeshLambertMaterial[] = [];  // taxiways / runways: dark, only their own lights
@@ -519,6 +561,7 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
   const lightPos: number[] = []; const lightCol: number[] = [];
   const pushLight = (v: THREE.Vector3, c: THREE.Color) => { lightPos.push(v.x, v.y + 0.6, v.z); lightCol.push(c.r, c.g, c.b); };
   const white = new THREE.Color('#f4f1e6'), green = new THREE.Color('#3ee06a'), red = new THREE.Color('#ff3b30'), amber = new THREE.Color('#ffb020');
+  const plateAtlas = textAtlas(air.runways.flatMap(r => r.ends.map(e => e.name))); const plateGeos: THREE.BufferGeometry[] = [];
   for (const r of air.runways) {
     const rw = runwayWidth(air.icao, r.ref);
     const [e0, e1] = r.ends; const a = world.toLocal(e0.lng, e0.lat), b = world.toLocal(e1.lng, e1.lat);
@@ -526,10 +569,8 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
     const dir = new THREE.Vector3().subVectors(vb, va); const len = dir.length(); dir.normalize(); const side = new THREE.Vector3(-dir.z, 0, dir.x);
     for (const [end, name, sign] of [[va, e0.name, 1], [vb, e1.name, -1]] as [THREE.Vector3, string, number][]) {
       const d = dir.clone().multiplyScalar(sign);
-      const plate = new THREE.Mesh(new THREE.PlaneGeometry(rw * 0.55, rw * 0.28), new THREE.MeshBasicMaterial({ map: designatorTexture(name), transparent: true, side: THREE.DoubleSide, depthWrite: false }));
-      plate.rotation.x = -Math.PI / 2; plate.rotation.z = Math.atan2(-d.x, -d.z);   // top of the glyphs points down the runway (as seen on approach)
-      plate.position.copy(end).addScaledVector(d, 62).setY(base + 0.82); plate.renderOrder = 4;
-      g.add(plate);
+      // top of the glyphs points down the runway (as seen on approach)
+      plateGeos.push(plateGeometry(plateAtlas, name, rw * 0.55, rw * 0.28, end.clone().addScaledVector(d, 62).setY(base + 0.82), Math.atan2(d.x, -d.z) * 180 / Math.PI));
     }
     // edge lights every 60 m (white, amber in the last 600 m), threshold green / end red
     for (let dd = 30; dd < len - 30; dd += 60) {
@@ -541,6 +582,7 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
       pushLight(vb.clone().addScaledVector(side, i * 3), green); pushLight(vb.clone().addScaledVector(dir, 2).addScaledVector(side, i * 3), red);
     }
   }
+  if (plateGeos.length) { const pm = new THREE.Mesh(mergeGeometries(plateGeos), new THREE.MeshBasicMaterial({ map: plateAtlas.texture, transparent: true, side: THREE.DoubleSide, depthWrite: false })); pm.renderOrder = 4; g.add(pm); }
   const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lightPos, 3)); lg.setAttribute('color', new THREE.Float32BufferAttribute(lightCol, 3));
   const dot = dotTexture();
   const lm = new THREE.PointsMaterial({ size: 2.6, vertexColors: true, transparent: true, opacity: 0.95, sizeAttenuation: true, depthWrite: false, map: dot, blending: THREE.AdditiveBlending });
@@ -561,12 +603,14 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
   const tp = new THREE.Points(tg, tm); tp.visible = false; g.add(tp);
   // apron floodlight pools: flat glow discs on the surface (depth-tested, so the buildings sit on top of them)
   const glowMat = new THREE.MeshBasicMaterial({ map: glowTexture(), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
-  const glows: THREE.Mesh[] = []; const glowGeo = new THREE.PlaneGeometry(1, 1); glowGeo.rotateX(-Math.PI / 2);
+  const glowGeos: THREE.BufferGeometry[] = [];
   for (const b of air.buildings) {
     if (b.kind !== 'terminal' && b.kind !== 'apron') continue;
     const c = world.toLocal(b.centroid.lng, b.centroid.lat); const r = Math.sqrt(b.areaM2) * (b.kind === 'apron' ? 0.8 : 1.15);
-    const sp = new THREE.Mesh(glowGeo, glowMat); sp.position.copy(toV3(c.x, c.y, base + 1.2)); sp.scale.set(r, 1, r); sp.visible = false; sp.renderOrder = 6; g.add(sp); glows.push(sp);
+    const gg = new THREE.PlaneGeometry(r, r); gg.rotateX(-Math.PI / 2); const v = toV3(c.x, c.y, base + 1.2); gg.translate(v.x, v.y, v.z); glowGeos.push(gg);
   }
+  const glows: THREE.Mesh[] = [];
+  if (glowGeos.length) { const sp = new THREE.Mesh(mergeGeometries(glowGeos), glowMat); sp.visible = false; sp.renderOrder = 6; sp.frustumCulled = false; g.add(sp); glows.push(sp); }
   let curNight = 0;
   night.push({ setNight: (n) => {
     curNight = n; tm.opacity = 0.95 * n; tp.visible = n > 0.03; glowMat.opacity = 0.5 * n; for (const sp of glows) sp.visible = n > 0.03;

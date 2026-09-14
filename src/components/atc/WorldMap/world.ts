@@ -4,6 +4,8 @@
 */
 import * as THREE from 'three';
 import { LocalProjection } from '@/lib/sim/projection';
+import { hasWorld, WORLD_AIRPORTS, worldUrl } from './worldList';
+export { hasWorld, WORLD_AIRPORTS };
 
 export interface WorldMeta {
   icao: string;
@@ -35,14 +37,14 @@ export interface World {
   fieldTex: THREE.DataTexture;
 }
 
-/** Airports with a baked world (public/world/<ICAO>/meta.json). */
-export const WORLD_AIRPORTS = new Set(['KSFO', 'EGLL', 'KJFK', 'KLAX', 'KBOS', 'VIDP']);
-export function hasWorld(icao: string | null | undefined): boolean { return !!icao && WORLD_AIRPORTS.has(icao.toUpperCase()); }
-
-async function loadImageData(url: string): Promise<ImageData> {
+async function loadImageData(url: string, fallback?: string): Promise<ImageData> {
   const img = new Image();
   img.decoding = 'async';
-  await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(new Error(`image ${url}`)); img.src = url; });
+  await new Promise<void>((res, rej) => {
+    img.onload = () => res();
+    img.onerror = () => { if (fallback && img.src.indexOf(fallback) < 0) { img.src = fallback; } else rej(new Error(`image ${url}`)); };
+    img.src = url;
+  });
   const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
   const ctx = c.getContext('2d', { willReadFrequently: true })!;
   ctx.drawImage(img, 0, 0);
@@ -50,11 +52,13 @@ async function loadImageData(url: string): Promise<ImageData> {
 }
 
 export async function loadWorld(icao: string, refLat: number, refLng: number): Promise<World> {
-  const base = `/world/${icao.toUpperCase()}`;
+  const u = (f: string) => worldUrl(icao, f);
+  // everything in flight at once (the land texture is the largest file); WebP with the original PNGs as the fallback
+  const landP = new THREE.TextureLoader().loadAsync(u('land.webp')).catch(() => new THREE.TextureLoader().loadAsync(u('land.png')));
   const [meta, vectors, hImg] = await Promise.all([
-    fetch(`${base}/meta.json`).then(r => r.json() as Promise<WorldMeta>),
-    fetch(`${base}/vectors.json`).then(r => r.json() as Promise<WorldVectors>),
-    loadImageData(`${base}/height.png`),
+    fetch(u('meta.json')).then(r => r.json() as Promise<WorldMeta>),
+    fetch(u('vectors.json')).then(r => r.json() as Promise<WorldVectors>),
+    loadImageData(u('height.webp'), u('height.png')),
   ]);
   const n = meta.grid;
   const heights = new Float32Array(n * n);
@@ -69,7 +73,7 @@ export async function loadWorld(icao: string, refLat: number, refLng: number): P
   const heightTex = new THREE.DataTexture(tex, n, n, THREE.RedFormat, THREE.FloatType);
   heightTex.magFilter = THREE.LinearFilter; heightTex.minFilter = THREE.LinearFilter;
   heightTex.wrapS = heightTex.wrapT = THREE.ClampToEdgeWrapping; heightTex.needsUpdate = true;
-  const landTex = await new THREE.TextureLoader().loadAsync(`${base}/land.png`);
+  const landTex = await landP;
   landTex.colorSpace = THREE.NoColorSpace; landTex.wrapS = landTex.wrapT = THREE.ClampToEdgeWrapping;
   landTex.minFilter = THREE.LinearMipmapLinearFilter; landTex.magFilter = THREE.LinearFilter; landTex.anisotropy = 8;
 

@@ -11,6 +11,7 @@ Sources (all free / no key): AWS terrain tiles (Mapzen terrarium, SRTM/Copernicu
 The renderer never shows the photo: every pixel is shaded from the height + land values.
 
 Usage: python3 scripts/bake_world.py KSFO [--grid 1024]
+       then python3 scripts/pack_world.py KSFO   (the .webp the game actually downloads; bump WORLD_ASSET_VERSION)
 """
 import io, json, math, sys, time, os
 import numpy as np

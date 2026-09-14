@@ -17,8 +17,7 @@ import type { ShellState } from '../shellContext'
 import { NavBar } from '../NavBar/NavBar'
 import { AlertStack, AlertsDrawer } from '../AlertStack/AlertStack'
 import { RunwayBars } from '../RunwayBars/RunwayBars'
-import { WorldMap } from '@/components/atc/WorldMap/WorldMap'
-import { hasWorld } from '@/components/atc/WorldMap/world'
+import { hasWorld, prefetchWorld } from '@/components/atc/WorldMap/worldList'
 import { AtisWeather } from '../AtisWeather/AtisWeather'
 import { RunwayConfigDialog } from '../AtisWeather/RunwayConfigDialog'
 import { StripBay } from '@/game/StripBay'
@@ -37,6 +36,9 @@ import { LeaveConfirm } from './LeaveConfirm'
 import { useShellHotkeys } from './useShellHotkeys'
 
 const GroundView = dynamic(() => import('@/components/atc/GroundView'), { ssr: false, loading: () => <div className={styles.viewPending}>Loading map</div> })
+// the 3D world (three.js + the map code) is its own chunk: the shell is interactive while it downloads, and its world
+// files are fetched in parallel with it (prefetchWorld)
+const WorldMap = dynamic(() => import('@/components/atc/WorldMap/WorldMap').then((m) => m.WorldMap), { ssr: false, loading: () => <div className={styles.viewPending}>Building the world</div> })
 const ApproachView = dynamic(() => import('@/components/atc/ApproachView'), { ssr: false, loading: () => <div className={styles.viewPending}>Loading radar</div> })
 
 interface PanelPrefs { bay: boolean; log: boolean }
@@ -154,6 +156,7 @@ export function GameShell({ loading = false, loadError = null, onRetry }: GameSh
   })
   // sim.testMode is set by load(), after this component first mounts — read it at render time (the map only mounts once the engine exists)
   const use3d = worldAvailable && (worldPref === '3d' || (worldPref === 'auto' && !sim.testMode))
+  React.useEffect(() => { if (worldAvailable && worldPref !== '2d' && !sim.testMode) prefetchWorld(icao) }, [icao, worldAvailable, worldPref])
 
   return (
     <ShellContext.Provider value={shell}>

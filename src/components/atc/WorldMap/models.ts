@@ -5,21 +5,25 @@
 */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 const loader = new GLTFLoader();
+/** Bumped when the model files change (they are served immutable under this query string). */
+const MODEL_VERSION = '1';
 /** Nose wheel position as a fraction of the length behind the nose (models and the built-in silhouette agree). */
 export const NOSE_WHEEL = 0.12;
 /** Night amount shared by every liveried material (apron floodlighting lifts the paint so aircraft do not go black). */
 const NIGHT = { value: 0 };
 export function setModelNight(n: number): void { NIGHT.value = n; }
 const cache = new Map<string, Promise<THREE.Group | null>>();
+if (typeof window !== 'undefined') (window as unknown as { __acModels?: unknown }).__acModels = { cache, matSignature: (m: THREE.Material) => matSignature(m) };   // debugging hook
 
 /** Normalised template for a type (unit-length: 1 m nose-to-tail — `instantiate` scales it), or null when no model exists. */
 export function loadAircraftModel(type: string): Promise<THREE.Group | null> {
   const key = type.toUpperCase();
   let p = cache.get(key);
   if (!p) {
-    p = loader.loadAsync(`/models/aircraft/${key}.glb`).then((gltf) => { const w = normalise(gltf.scene, 1, key); return w; }).catch(() => null);
+    p = loader.loadAsync(`/models/aircraft/${key}.glb?v=${MODEL_VERSION}`).then((gltf) => { const w = normalise(gltf.scene, 1, key); return w; }).catch(() => null);
     cache.set(key, p);
   }
   return p;
@@ -276,9 +280,70 @@ function normalise(scene: THREE.Group, lengthM: number, type = ''): THREE.Group 
     if (!m.isMesh) return;
     m.castShadow = false; m.receiveShadow = false; m.frustumCulled = false;
     const mats = Array.isArray(m.material) ? m.material : [m.material];
-    for (const mat of mats) { const s = mat as THREE.MeshStandardMaterial; if ('metalness' in s) { s.metalness = Math.min(s.metalness ?? 0, 0.2); s.roughness = Math.max(s.roughness ?? 1, 0.6); } s.side = THREE.DoubleSide; }   // fins / control surfaces are single-sided sheets in several models
+    // one matte finish for every part (the exporters' per-part gloss is invisible at map scale, and identical materials
+    // let mergeParts() collapse the parts into fewer draw calls); fins / control surfaces are single-sided sheets in
+    // several models, hence DoubleSide
+    for (const mat of mats) { const s = mat as THREE.MeshStandardMaterial; if ('metalness' in s) { s.metalness = 0.1; s.roughness = 0.8; } s.side = THREE.DoubleSide; }
   });
   wrap.userData.type = type;
   classify(wrap);
+  mergeParts(wrap);
   return wrap;
+}
+
+/**
+ * Fewer draw calls per aircraft: after classification every mesh that shares a material (and a paint part) is baked
+ * into the wrap frame and merged into one geometry - a 747 comes as 190 meshes, and 40 of them on screen were 8000
+ * draw calls. Instanced meshes and multi-material meshes are left alone.
+ */
+/** Materials that render identically (the exporters leave dozens of same-looking copies per model) share one key. */
+function matSignature(mat: THREE.Material): string {
+  const m = mat as THREE.MeshStandardMaterial;
+  const tex = (t: THREE.Texture | null | undefined) => t ? t.uuid : '-';
+  return [m.type, tex(m.map), tex(m.emissiveMap), tex(m.normalMap), tex(m.roughnessMap), tex(m.metalnessMap), m.color?.getHex(), m.emissive?.getHex(), m.emissiveIntensity, m.metalness, m.roughness,
+    m.transparent, m.opacity, m.alphaTest, m.side, m.blending, m.depthWrite, m.vertexColors].join('|');
+}
+function mergeParts(wrap: THREE.Group): void {
+  wrap.updateMatrixWorld(true);
+  const groups = new Map<string, { mat: THREE.Material; part: number; meshes: THREE.Mesh[] }>();
+  wrap.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh || (m as THREE.InstancedMesh).isInstancedMesh || Array.isArray(m.material) || !m.geometry?.attributes?.position) return;
+    const part = (m.userData.part as number) ?? 0; const key = `${matSignature(m.material as THREE.Material)}:${part}`;
+    let g = groups.get(key); if (!g) { g = { mat: m.material as THREE.Material, part, meshes: [] }; groups.set(key, g); }
+    g.meshes.push(m);
+  });
+  const v = new THREE.Vector3();
+  const toFloat = (a: THREE.BufferAttribute | THREE.InterleavedBufferAttribute, size: number): THREE.BufferAttribute => {
+    const out = new Float32Array(a.count * size);
+    for (let i = 0; i < a.count; i++) { out[i * size] = a.getX(i); if (size > 1) out[i * size + 1] = a.getY(i); if (size > 2) out[i * size + 2] = a.getZ(i); }
+    return new THREE.BufferAttribute(out, size);
+  };
+  for (const g of groups.values()) {
+    if (g.meshes.length < 2) continue;
+    const geos: THREE.BufferGeometry[] = [];
+    for (const m of g.meshes) {
+      const src = m.geometry; const geo = new THREE.BufferGeometry();
+      // float, non-normalised copies (quantised models) with one attribute set, baked into the wrap frame
+      geo.setAttribute('position', toFloat(src.attributes.position, 3));
+      geo.setAttribute('normal', src.attributes.normal ? toFloat(src.attributes.normal, 3) : new THREE.BufferAttribute(new Float32Array(src.attributes.position.count * 3), 3));
+      geo.setAttribute('uv', src.attributes.uv ? toFloat(src.attributes.uv, 2) : new THREE.BufferAttribute(new Float32Array(src.attributes.position.count * 2), 2));
+      const lpos = src.attributes.lpos as THREE.BufferAttribute | undefined;
+      geo.setAttribute('lpos', lpos ? new THREE.BufferAttribute(new Float32Array(lpos.array as Float32Array), 3) : (() => { const a = toFloat(src.attributes.position, 3); for (let i = 0; i < a.count; i++) { v.fromBufferAttribute(a, i).applyMatrix4(m.matrixWorld); a.setXYZ(i, v.x, v.y, v.z - (0.5 - NOSE_WHEEL)); } return a; })());
+      if (src.index) geo.setIndex(src.index.clone()); else { const idx = new Uint32Array(src.attributes.position.count); for (let i = 0; i < idx.length; i++) idx[i] = i; geo.setIndex(new THREE.BufferAttribute(idx, 1)); }
+      if (!src.attributes.normal) geo.computeVertexNormals();
+      geo.applyMatrix4(m.matrixWorld);
+      geos.push(geo);
+    }
+    const merged = mergeGeometries(geos, false);
+    for (const geo of geos) geo.dispose();
+    if (!merged) continue;
+    const mesh = new THREE.Mesh(merged, g.mat);
+    mesh.userData.part = g.part; mesh.castShadow = false; mesh.receiveShadow = false; mesh.frustumCulled = false;
+    for (const m of g.meshes) { m.parent?.remove(m); m.geometry.dispose(); }
+    wrap.add(mesh);
+  }
+  // empty groups left behind by the removed meshes cost a traversal each frame: prune them
+  const prune = (o: THREE.Object3D) => { for (const c of o.children.slice()) { prune(c); if (!(c as THREE.Mesh).isMesh && !(c as THREE.InstancedMesh).isInstancedMesh && c.children.length === 0) o.remove(c); } };
+  prune(wrap);
 }
