@@ -12,7 +12,7 @@ Also bakes in a light blur + contrast/saturation trim so real parked aircraft
 in the photography melt into the apron instead of visually competing with the
 sim's own rendered aircraft.
 """
-import json, math, os
+import json, math, os, sys
 import requests
 from PIL import Image, ImageFilter, ImageEnhance
 from io import BytesIO
@@ -22,7 +22,7 @@ OSM_DIR = os.path.join(ROOT, 'public', 'maps', 'osm')
 OUT_DIR = os.path.join(ROOT, 'public', 'maps', 'satellite')
 os.makedirs(OUT_DIR, exist_ok=True)
 
-AIRPORTS = ['EGLL', 'KLAX', 'KJFK', 'KSFO', 'KBOS', 'VIDP']
+AIRPORTS = ['EGLL', 'KLAX', 'KJFK', 'KSFO', 'KBOS', 'VIDP', 'VHHH', 'YSSY', 'LFPG', 'WSSS', 'RJTT', 'OMDB']
 PAD = 0.35       # extra margin around the tightest OSM bbox (fraction of span)
 MAX_DIM = 4096   # export image longest side, px — keeps close-in zoom levels sharp
 
@@ -82,9 +82,12 @@ def fetch(bbox, max_dim):
             if attempt == 2: raise
             print(f'  retry {attempt+1} after error: {e}')
 
-bounds_out = {}
+# a subset on the command line refreshes only those airports; the others keep their images and bounds
+bounds_path = os.path.join(OUT_DIR, 'bounds.json')
+bounds_out = json.load(open(bounds_path)) if os.path.exists(bounds_path) else {}
+TODO = sys.argv[1:] or AIRPORTS
 
-for icao in AIRPORTS:
+for icao in TODO:
     path = os.path.join(OSM_DIR, f'{icao}.geojson')
     if not os.path.exists(path):
         print(f'{icao}: no OSM geojson, skipping'); continue

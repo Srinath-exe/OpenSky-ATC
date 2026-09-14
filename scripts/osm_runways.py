@@ -20,7 +20,7 @@ R = 6371000.0
 D2R = math.pi / 180
 
 # Fallback magnetic variation, degrees east-positive (same table as osmAirport.ts).
-MAGVAR_FALLBACK = {'EGLL': 0.5, 'KLAX': 11.5, 'KJFK': -12.7, 'KSFO': 13.2, 'KBOS': -14.2, 'VIDP': 0.9}
+MAGVAR_FALLBACK = {'EGLL': 0.5, 'KLAX': 11.5, 'KJFK': -12.7, 'KSFO': 13.2, 'KBOS': -14.2, 'VIDP': 0.9, 'VHHH': -3.4, 'YSSY': 12.7, 'LFPG': 2.0, 'WSSS': 0.2, 'RJTT': -7.7, 'OMDB': 2.0}
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OSM_DIR = os.path.join(ROOT, 'public', 'maps', 'osm')
@@ -78,6 +78,15 @@ def is_rwy_ref(ref):
     return True
 
 
+def canon_ref(ref):
+    """'34R/16L' and '16L/34R' are the same runway: order the designators by number so duplicate ways merge."""
+    if not is_rwy_ref(ref):
+        return ref
+    parts = [p.strip().upper() for p in ref.split('/')]
+    parts.sort(key=lambda p: int(''.join(ch for ch in p if ch.isdigit()) or 0))
+    return '/'.join(parts)
+
+
 def seg_len(cs):
     return sum(dist_m(cs[i][0], cs[i][1], cs[i + 1][0], cs[i + 1][1]) for i in range(len(cs) - 1))
 
@@ -108,7 +117,7 @@ def runways_for(icao, magvar=None, fc=None):
 
     builds = {}
     for f in segs:
-        ref = (f.get('properties') or {}).get('ref')
+        ref = canon_ref((f.get('properties') or {}).get('ref'))
         if not is_rwy_ref(ref):
             continue
         cs = f['geometry']['coordinates']
@@ -133,7 +142,7 @@ def runways_for(icao, magvar=None, fc=None):
         for lng, lat in rb['main']:
             rb['verts'][(round(lng, 6), round(lat, 6))] = (t_of(rb, frame.xy(lng, lat)), lng, lat)
         pool = [f for f in segs if id(f) not in claimed
-                and ((f.get('properties') or {}).get('ref') == rb['ref'] or not is_rwy_ref((f.get('properties') or {}).get('ref')))]
+                and (canon_ref((f.get('properties') or {}).get('ref')) == rb['ref'] or not is_rwy_ref((f.get('properties') or {}).get('ref')))]
         grew = True
         while grew:
             grew = False

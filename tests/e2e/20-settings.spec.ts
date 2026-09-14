@@ -95,7 +95,7 @@ test.describe('settings: defaults and navigation', () => {
     await expect(settings.root()).toHaveAttribute('data-ready', 'true');
     await settings.backLink().click();
     await page.waitForURL(/\/$/);
-    await expect(home.airportCards()).toHaveCount(6);
+    await expect(home.airportCards()).toHaveCount(12);
   });
 
   test('credits: linked rows open their licence page in a new tab, the format row is static @full', async ({ settings, page }) => {

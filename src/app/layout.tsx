@@ -16,7 +16,7 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: { default: 'SKYCONTROL', template: '%s · SKYCONTROL' },
-  description: 'Ground, tower and approach air traffic control at six real airports: push back, taxi, line up, vector, clear to land and handle emergencies.',
+  description: 'Ground, tower and approach air traffic control at twelve real airports: push back, taxi, line up, vector, clear to land and handle emergencies.',
   applicationName: 'SKYCONTROL',
   icons: {
     icon: [

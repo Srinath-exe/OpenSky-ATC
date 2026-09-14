@@ -55,6 +55,8 @@ export const AIRLINE_TELEPHONY: Record<string, string> = {
   KLM: 'KLM', UAE: 'Emirates', QTR: 'Qatari', SIA: 'Singapore', CPA: 'Cathay', QFA: 'Qantas',
   SWR: 'Swiss', EIN: 'Shamrock', RYR: 'Ryanair', EZY: 'Easy', VIR: 'Virgin', JAL: 'Japan Air', ANA: 'All Nippon',
   AIC: 'Air India', IGO: 'IFly', SWA: 'Southwest', JBU: 'JetBlue', ASA: 'Alaska', FDX: 'FedEx', UPS: 'UPS',
+  VOZ: 'Velocity', JST: 'Jetstar', ANZ: 'New Zealand', FDB: 'Sky Dubai', ETD: 'Etihad', THY: 'Turkish', TRA: 'Transavia',
+  SCO: 'Scooter', CES: 'China Eastern', CCA: 'Air China', HKE: 'Hong Kong Express',
 };
 
 const PHONETIC: Record<string, string> = {

@@ -3,7 +3,7 @@
   (and start the downloads) before the map bundle has arrived.
 */
 /** Airports with a baked world (public/world/<ICAO>/meta.json). */
-export const WORLD_AIRPORTS = new Set(['KSFO', 'EGLL', 'KJFK', 'KLAX', 'KBOS', 'VIDP']);
+export const WORLD_AIRPORTS = new Set(['KSFO', 'EGLL', 'KJFK', 'KLAX', 'KBOS', 'VIDP', 'VHHH', 'YSSY', 'LFPG', 'WSSS', 'RJTT', 'OMDB']);
 export function hasWorld(icao: string | null | undefined): boolean { return !!icao && WORLD_AIRPORTS.has(icao.toUpperCase()); }
 
 /** Bumped when the baked files change: the files are served immutable for a year under this query string. */

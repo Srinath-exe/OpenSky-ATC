@@ -22,6 +22,12 @@ export const AIRPORTS: AirportMeta[] = [
   { icao: 'KSFO', iata: 'SFO', name: 'San Francisco Intl', city: 'San Francisco', region: 'United States', elevationFt: 13, wind: { dir: 280, kts: 12 } },
   { icao: 'KBOS', iata: 'BOS', name: 'Logan Intl', city: 'Boston', region: 'United States', elevationFt: 20, wind: { dir: 270, kts: 10 } },
   { icao: 'VIDP', iata: 'DEL', name: 'Indira Gandhi', city: 'Delhi', region: 'India', elevationFt: 777, wind: { dir: 300, kts: 6 } },
+  { icao: 'LFPG', iata: 'CDG', name: 'Charles de Gaulle', city: 'Paris', region: 'France', elevationFt: 392, wind: { dir: 240, kts: 10 } },
+  { icao: 'OMDB', iata: 'DXB', name: 'Dubai Intl', city: 'Dubai', region: 'United Arab Emirates', elevationFt: 62, wind: { dir: 310, kts: 9 } },
+  { icao: 'WSSS', iata: 'SIN', name: 'Changi', city: 'Singapore', region: 'Singapore', elevationFt: 22, wind: { dir: 30, kts: 7 } },
+  { icao: 'VHHH', iata: 'HKG', name: 'Hong Kong Intl', city: 'Hong Kong', region: 'Hong Kong', elevationFt: 28, wind: { dir: 70, kts: 10 } },
+  { icao: 'RJTT', iata: 'HND', name: 'Haneda', city: 'Tokyo', region: 'Japan', elevationFt: 21, wind: { dir: 340, kts: 10 } },
+  { icao: 'YSSY', iata: 'SYD', name: 'Kingsford Smith', city: 'Sydney', region: 'Australia', elevationFt: 21, wind: { dir: 160, kts: 10 } },
 ];
 
 export const AIRPORT_BY_ICAO: Record<string, AirportMeta> = Object.fromEntries(AIRPORTS.map((a) => [a.icao, a]));

@@ -47,6 +47,12 @@ AIRPORTS = {
     'KSFO': {'name': 'San Francisco Intl', 'elev': 13, 'radius': 25, 'magvar': 13.2, 'tower': 120.5, 'climb': 5000, 'core': 'SFO'},
     'KBOS': {'name': 'Boston Logan Intl', 'elev': 20, 'radius': 25, 'magvar': -14.2, 'tower': 128.8, 'climb': 5000, 'core': 'BOS'},
     'VIDP': {'name': 'Indira Gandhi Intl', 'elev': 777, 'radius': 25, 'magvar': 0.9, 'tower': 118.1, 'climb': 6000, 'core': 'IDP'},
+    'VHHH': {'name': 'Hong Kong Intl', 'elev': 28, 'radius': 25, 'magvar': -3.4, 'tower': 118.2, 'climb': 5000, 'core': 'HKG'},
+    'YSSY': {'name': 'Sydney Kingsford Smith', 'elev': 21, 'radius': 25, 'magvar': 12.7, 'tower': 120.5, 'climb': 5000, 'core': 'SSY'},
+    'LFPG': {'name': 'Paris Charles de Gaulle', 'elev': 392, 'radius': 25, 'magvar': 2.0, 'tower': 119.25, 'climb': 5000, 'core': 'CDG'},
+    'WSSS': {'name': 'Singapore Changi', 'elev': 22, 'radius': 25, 'magvar': 0.2, 'tower': 118.6, 'climb': 5000, 'core': 'SIN'},
+    'RJTT': {'name': 'Tokyo Haneda', 'elev': 21, 'radius': 25, 'magvar': -7.7, 'tower': 118.1, 'climb': 5000, 'core': 'HND'},
+    'OMDB': {'name': 'Dubai Intl', 'elev': 62, 'radius': 25, 'magvar': 2.0, 'tower': 118.75, 'climb': 5000, 'core': 'DXB'},
 }
 SECTORS = [('NO', 0), ('NE', 45), ('EA', 90), ('SE', 135), ('SO', 180), ('SW', 225), ('WE', 270), ('NW', 315)]
 SECTOR_WORDS = {'NO': 'north', 'NE': 'north east', 'EA': 'east', 'SE': 'south east', 'SO': 'south', 'SW': 'south west', 'WE': 'west', 'NW': 'north west'}

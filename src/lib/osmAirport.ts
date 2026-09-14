@@ -231,7 +231,7 @@ const ENTRY_HOLD_M = 500;
 /** Runway edge cost multiplier in findPath (taxiways are strongly preferred). */
 const RUNWAY_COST = 40;
 /** Fallback magnetic variation per airport, degrees east-positive (2025 WMM, rounded). */
-const MAGVAR_FALLBACK: Record<string, number> = { EGLL: 0.5, KLAX: 11.5, KJFK: -12.7, KSFO: 13.2, KBOS: -14.2, VIDP: 0.9, VHHH: -3.4, YSSY: 12.7, LFPG: 2.0 };
+const MAGVAR_FALLBACK: Record<string, number> = { EGLL: 0.5, KLAX: 11.5, KJFK: -12.7, KSFO: 13.2, KBOS: -14.2, VIDP: 0.9, VHHH: -3.4, YSSY: 12.7, LFPG: 2.0, WSSS: 0.2, RJTT: -7.7, OMDB: 2.0 };
 
 // ── geo helpers ─────────────────────────────────────────────
 export function meters(aLng: number, aLat: number, bLng: number, bLat: number): number {
@@ -447,8 +447,10 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
   };
   const segLen = (cs: [number, number][]) => { let s = 0; for (let i = 0; i < cs.length - 1; i++) s += meters(cs[i][0], cs[i][1], cs[i + 1][0], cs[i + 1][1]); return s; };
   const builds = new Map<string, RwBuild>();
+  // '34R/16L' and '16L/34R' name the same runway: order the designators by number so duplicate ways merge
+  const canonRef = (r: string | null): string | null => { if (!isRwRef(r)) return r; const parts = r!.split('/').map(x => x.trim().toUpperCase()); parts.sort((x, y) => parseInt(x, 10) - parseInt(y, 10)); return parts.join('/'); };
   for (const f of rwSegs) {
-    const ref = refOf(f);
+    const ref = canonRef(refOf(f));
     if (!isRwRef(ref)) continue;
     const cs = coordsOf(f);
     const prev = builds.get(ref);
@@ -466,7 +468,7 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
   for (const rb of builds.values()) {
     for (const [lng, lat] of rb.main) { const p = frame.xy(lng, lat); rb.verts.set(keyOf(lng, lat), { t: tOf(rb, p), lng, lat }); }
     let grew = true;
-    const pool = rwSegs.filter(f => !claimed.has(f) && (refOf(f) === rb.ref || !isRwRef(refOf(f))));
+    const pool = rwSegs.filter(f => !claimed.has(f) && (canonRef(refOf(f)) === rb.ref || !isRwRef(refOf(f))));
     while (grew) {
       grew = false;
       for (const f of pool) {

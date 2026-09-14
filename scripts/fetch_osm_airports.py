@@ -33,6 +33,9 @@ AIRPORTS = {
     "VHHH": (22.3080,  113.9185, 0.060),   # Hong Kong Chek Lap Kok
     "YSSY": (-33.9399, 151.1753, 0.055),   # Sydney Kingsford Smith
     "LFPG": (49.0097,    2.5479, 0.070),   # Paris Charles de Gaulle
+    "WSSS": (1.3644,   103.9915, 0.060),   # Singapore Changi
+    "RJTT": (35.5494,  139.7798, 0.060),   # Tokyo Haneda
+    "OMDB": (25.2532,   55.3657, 0.060),   # Dubai Intl
 }
 
 # aeroway values we care about

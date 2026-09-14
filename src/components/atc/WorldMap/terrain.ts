@@ -441,8 +441,9 @@ export function apronMaterial(): THREE.MeshLambertMaterial { const m = new THREE
 /** Runway widths (m) by airport, optionally per runway ref ("13R/31L"); anything else is 45 m. */
 const RUNWAY_WIDTH: Record<string, number | Record<string, number>> = {
   KSFO: 61, EGLL: 50, KLAX: { '07R/25L': 61 }, KJFK: { '13L/31R': 46 }, KBOS: { '15L/33R': 30, '14/32': 30 }, VIDP: { '11L/29R': 60, '11/29': 60 },
+  VHHH: 60, WSSS: 60, RJTT: 60, OMDB: 60, LFPG: { '09R/27L': 60, '08L/26R': 60 },
 };
-const DEFAULT_RUNWAY_WIDTH: Record<string, number> = { KLAX: 46, KJFK: 61, KBOS: 46 };
+const DEFAULT_RUNWAY_WIDTH: Record<string, number> = { KLAX: 46, KJFK: 61, KBOS: 46, YSSY: 45, LFPG: 45 };
 function runwayWidth(icao: string, ref: string): number {
   const w = RUNWAY_WIDTH[icao];
   if (typeof w === 'number') return w;

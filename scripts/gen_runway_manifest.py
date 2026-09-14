@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from osm_runways import runways_for, MAGVAR_FALLBACK  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-AIRPORTS = ['EGLL', 'KLAX', 'KJFK', 'KSFO', 'KBOS', 'VIDP']
+AIRPORTS = ['EGLL', 'KLAX', 'KJFK', 'KSFO', 'KBOS', 'VIDP', 'VHHH', 'YSSY', 'LFPG', 'WSSS', 'RJTT', 'OMDB']
 MIN_LENGTH_FT = 3000
 
 

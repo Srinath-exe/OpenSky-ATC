@@ -78,7 +78,29 @@ const AIRLINES = [
   { icao: 'QTR', iata: 'QR', name: 'Qatar' }, { icao: 'SIA', iata: 'SQ', name: 'Singapore' },
   { icao: 'CPA', iata: 'CX', name: 'Cathay Pacific' }, { icao: 'QFA', iata: 'QF', name: 'Qantas' },
   { icao: 'SWR', iata: 'LX', name: 'Swiss' }, { icao: 'EIN', iata: 'EI', name: 'Aer Lingus' },
+  { icao: 'JAL', iata: 'JL', name: 'Japan Airlines' }, { icao: 'ANA', iata: 'NH', name: 'All Nippon' },
+  { icao: 'VOZ', iata: 'VA', name: 'Virgin Australia' }, { icao: 'JST', iata: 'JQ', name: 'Jetstar' }, { icao: 'ANZ', iata: 'NZ', name: 'Air New Zealand' },
+  { icao: 'FDB', iata: 'FZ', name: 'flydubai' }, { icao: 'ETD', iata: 'EY', name: 'Etihad' }, { icao: 'THY', iata: 'TK', name: 'Turkish' },
+  { icao: 'EZY', iata: 'U2', name: 'easyJet' }, { icao: 'RYR', iata: 'FR', name: 'Ryanair' }, { icao: 'TRA', iata: 'HV', name: 'Transavia' },
+  { icao: 'SCO', iata: 'TR', name: 'Scoot' }, { icao: 'CES', iata: 'MU', name: 'China Eastern' }, { icao: 'CCA', iata: 'CA', name: 'Air China' }, { icao: 'HKE', iata: 'UO', name: 'HK Express' },
+  { icao: 'AIC', iata: 'AI', name: 'Air India' }, { icao: 'IGO', iata: '6E', name: 'IndiGo' }, { icao: 'VIR', iata: 'VS', name: 'Virgin Atlantic' },
+  { icao: 'SWA', iata: 'WN', name: 'Southwest' }, { icao: 'JBU', iata: 'B6', name: 'JetBlue' }, { icao: 'ASA', iata: 'AS', name: 'Alaska' },
 ];
+/** Carriers that dominate each field: 65 % of new flights come from the home list, the rest from the world pool. */
+const HOME_CARRIERS: Record<string, string[]> = {
+  EGLL: ['BAW', 'BAW', 'BAW', 'VIR', 'EIN', 'DLH', 'AFR', 'KLM', 'UAE', 'AAL', 'UAL'],
+  LFPG: ['AFR', 'AFR', 'AFR', 'EZY', 'TRA', 'DLH', 'KLM', 'UAE', 'DAL', 'RYR'],
+  KJFK: ['DAL', 'DAL', 'JBU', 'JBU', 'AAL', 'AAL', 'UAL', 'BAW', 'VIR', 'DLH', 'AFR', 'UAE'],
+  KLAX: ['UAL', 'UAL', 'DAL', 'DAL', 'AAL', 'AAL', 'SWA', 'SWA', 'ASA', 'JBU', 'ANA', 'JAL', 'QFA', 'CPA'],
+  KSFO: ['UAL', 'UAL', 'UAL', 'ASA', 'ASA', 'SWA', 'DAL', 'AAL', 'ANA', 'JAL', 'CPA', 'SIA'],
+  KBOS: ['JBU', 'JBU', 'JBU', 'DAL', 'DAL', 'AAL', 'UAL', 'SWA', 'BAW', 'EIN', 'AFR'],
+  VIDP: ['IGO', 'IGO', 'IGO', 'AIC', 'AIC', 'UAE', 'QTR', 'BAW', 'SIA', 'DLH'],
+  OMDB: ['UAE', 'UAE', 'UAE', 'UAE', 'FDB', 'FDB', 'FDB', 'BAW', 'QTR', 'AIC', 'IGO', 'THY', 'DLH'],
+  WSSS: ['SIA', 'SIA', 'SIA', 'SCO', 'SCO', 'CPA', 'QFA', 'UAE', 'BAW', 'ANA', 'JAL', 'CES'],
+  VHHH: ['CPA', 'CPA', 'CPA', 'CPA', 'HKE', 'HKE', 'CCA', 'CES', 'SIA', 'UAE', 'BAW', 'UAL', 'JAL'],
+  RJTT: ['ANA', 'ANA', 'ANA', 'JAL', 'JAL', 'JAL', 'CPA', 'SIA', 'UAL', 'DAL', 'BAW', 'CCA'],
+  YSSY: ['QFA', 'QFA', 'QFA', 'VOZ', 'VOZ', 'JST', 'JST', 'ANZ', 'SIA', 'UAE', 'CPA', 'UAL'],
+};
 const CITIES = ['MUC', 'FRA', 'CDG', 'AMS', 'MAD', 'DXB', 'SIN', 'HKG', 'JFK', 'LAX', 'ORD', 'DEL', 'SYD', 'NRT', 'GVA', 'VIE', 'LIS', 'DUB', 'ZRH', 'IST'];
 const DEFAULT_FREQ: Record<Position, string> = { ground: '121.900', tower: '118.500', departure: '125.200', approach: '119.700', external: '127.100' };
 
@@ -628,10 +650,11 @@ export class SimEngine implements EngineCommandApi, StageCtx {
 
   // ── identity / base ────────────────────────────────────────────────────────
   private newIdentity(type?: string, allowedWeights?: Set<WeightClass> | null, callsign?: string) {
-    const al = rnd(AIRLINES); const fno = 1 + ri(998);
-    let cs = callsign ? upper(callsign) : `${al.icao}${fno}`;
+    const home = HOME_CARRIERS[this.air.icao];
+    const pickAl = () => (home && chance(0.65) ? rnd(home) : rnd(AIRLINES).icao);
+    let cs = callsign ? upper(callsign) : `${pickAl()}${1 + ri(998)}`;
     let guard = 0;
-    while (!callsign && this.aircraft.some(a => a.callsign === cs) && guard++ < 20) cs = `${rnd(AIRLINES).icao}${1 + ri(998)}`;
+    while (!callsign && this.aircraft.some(a => a.callsign === cs) && guard++ < 20) cs = `${pickAl()}${1 + ri(998)}`;
     const m = cs.match(/^([A-Z]{3})(\d+)/);
     const alr = m ? AIRLINES.find(x => x.icao === m[1]) : null;
     const perf = getPerformance(type ?? randomCommercialTypeOf(allowedWeights));

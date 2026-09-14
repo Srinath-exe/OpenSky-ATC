@@ -22,6 +22,12 @@ const AIRPORTS = [
   { icao: 'KSFO', name: 'San Francisco Intl', city: 'San Francisco', wind: { dir: 280, kts: 12 } },
   { icao: 'KBOS', name: 'Logan Intl', city: 'Boston', wind: { dir: 270, kts: 10 } },
   { icao: 'VIDP', name: 'Indira Gandhi', city: 'Delhi', wind: { dir: 300, kts: 6 } },
+  { icao: 'LFPG', name: 'Charles de Gaulle', city: 'Paris', wind: { dir: 240, kts: 10 } },
+  { icao: 'OMDB', name: 'Dubai Intl', city: 'Dubai', wind: { dir: 310, kts: 9 } },
+  { icao: 'WSSS', name: 'Changi', city: 'Singapore', wind: { dir: 30, kts: 7 } },
+  { icao: 'VHHH', name: 'Hong Kong Intl', city: 'Hong Kong', wind: { dir: 70, kts: 10 } },
+  { icao: 'RJTT', name: 'Haneda', city: 'Tokyo', wind: { dir: 340, kts: 10 } },
+  { icao: 'YSSY', name: 'Kingsford Smith', city: 'Sydney', wind: { dir: 160, kts: 10 } },
 ] as const;
 const WEIGHTS: WeightClass[] = ['L', 'M', 'H', 'S'];
 
@@ -45,9 +51,9 @@ const endsOf = (icao: string) => RUNWAY_MANIFEST[icao].flatMap((r) => r.ends.map
 const endByName = (icao: string, name: string) => RUNWAY_MANIFEST[icao].flatMap((r) => r.ends).find((e) => e.name === name)!;
 
 test.describe('home: airport grid and detail', () => {
-  test('H1 airport grid renders six cards, no detail, no resume, no high score @smoke', async ({ home, page }) => {
+  test('H1 airport grid renders every airport card, no detail, no resume, no high score @smoke', async ({ home, page }) => {
     await home.goto();
-    await expect(home.airportCards()).toHaveCount(6);
+    await expect(home.airportCards()).toHaveCount(AIRPORTS.length);
     for (let i = 0; i < AIRPORTS.length; i++) {
       const a = AIRPORTS[i];
       const card = home.airportCards().nth(i);
@@ -74,7 +80,7 @@ test.describe('home: airport grid and detail', () => {
     await settings.backLink().click();
     await page.waitForURL(/\/$/);
     await expect(home.root()).toHaveAttribute('data-ready', 'true');
-    await expect(home.airportCards()).toHaveCount(6);
+    await expect(home.airportCards()).toHaveCount(AIRPORTS.length);
     // the brand on the home page is a home link too (stays on /)
     await home.brand().click();
     await expect(home.root()).toHaveAttribute('data-ready', 'true');
@@ -140,7 +146,7 @@ test.describe('home: airport grid and detail', () => {
       await expect(home.windDir()).toHaveValue(String(a.wind.dir).padStart(3, '0'));
       await expect(home.windKts()).toHaveValue(String(a.wind.kts));
       await home.changeAirport().click();
-      await expect(home.airportCards()).toHaveCount(6);
+      await expect(home.airportCards()).toHaveCount(AIRPORTS.length);
     }
   });
 
@@ -152,7 +158,7 @@ test.describe('home: airport grid and detail', () => {
     await home.pickPosition('approach');
     await home.changeAirport().click();
     await expect(home.detail()).toHaveCount(0);
-    await expect(home.airportCards()).toHaveCount(6);
+    await expect(home.airportCards()).toHaveCount(AIRPORTS.length);
 
     await home.pickAirport('KLAX');
     await expect(home.detailTitle()).toHaveText('Los Angeles Intl');

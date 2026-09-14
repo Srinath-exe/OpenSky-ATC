@@ -80,7 +80,7 @@ function Picker({ onPick }: { onPick: (icao: string) => void }) {
     <>
       <section className={cx(s.hero, 'ds-enter')} aria-labelledby="home-title">
         <h1 id="home-title" className={cx('display-xl', s.wordmark)}>SKYCONTROL</h1>
-        <p className={cx('body-m', s.heroSub)}>Ground, tower and approach control at six real airports. Pick a field, set the runways in use, and take the frequency.</p>
+        <p className={cx('body-m', s.heroSub)}>Ground, tower and approach control at twelve real airports. Pick a field, set the runways in use, and take the frequency.</p>
       </section>
       <ul className={cx(s.grid, 'ds-enter')} aria-label="Airports">
         {AIRPORTS.map((a) => (
