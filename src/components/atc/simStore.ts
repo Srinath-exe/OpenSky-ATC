@@ -24,6 +24,7 @@ import type { OsmAirport } from '../../lib/osmAirport';
 import { loadEndlessAirport, coordToXY } from '../../lib/airspace/eairport';
 import type { EAirport } from '../../lib/airspace/eairport';
 import { setSeed, rf, chance } from '../../lib/sim/rng';
+import { profileOf } from '../../lib/sim/airlines';
 import { advance, headingTo, NM_TO_M } from '../../lib/sim/projection';
 import type { XY } from '../../lib/sim/projection';
 import type { ILSRunway } from '../../lib/sim/ils';
@@ -240,7 +241,7 @@ const SPAWN_TUNING: Record<Settings['difficulty'], { base: number; lo: number; h
   normal: { base: 8, lo: 50, hi: 100, depShare: 0.55 },
   high: { base: 12, lo: 30, hi: 60, depShare: 0.5 },
 };
-const SPAWN_CAP_MAX = 20;
+const SPAWN_CAP_MAX = 24;
 
 const isBrowser = () => typeof window !== 'undefined';
 
@@ -463,10 +464,12 @@ class SimStore implements TestApiHost {
       this.sessionStartedAt = Date.now();
       this.nextSpawnAt = 0;
       this.autoSpawn = !testMode && spawn !== 'none';
+      // the live game starts with the aprons populated (airlines.ts profiles); deterministic test scenarios do not
+      if (!testMode) e.populateParked();
       if (spawn !== 'none') {
         for (let i = 0; i < 4; i++) e.spawnDeparture();
         for (let i = 0; i < 3; i++) e.spawnArrival();
-        this.nextSpawnAt = e.time + rf(SPAWN_TUNING[this.settings.difficulty].lo, SPAWN_TUNING[this.settings.difficulty].hi);
+        this.nextSpawnAt = e.time + rf(SPAWN_TUNING[this.settings.difficulty].lo, SPAWN_TUNING[this.settings.difficulty].hi) / profileOf(icao).busy;
       }
       this.pushLine({ who: 'SYS', at: e.time, text: `${ATC_AIRPORTS[icao]?.name ?? air.icao} — ${air.gates.length} stands, ${air.runways.length} runways${ap ? `, ${ap.airspace.radiusNM} NM TMA` : ', no radar airspace'} online${testMode ? ` · test mode · seed ${seed}` : ''}` });
       this.flushEvents();
@@ -625,7 +628,7 @@ class SimStore implements TestApiHost {
       const ok = dep ? e.spawnDeparture() : e.spawnArrival();
       if (!ok) { if (dep) e.spawnArrival(); else e.spawnDeparture(); }
     }
-    this.nextSpawnAt = e.time + rf(tune.lo, tune.hi);
+    this.nextSpawnAt = e.time + rf(tune.lo, tune.hi) / profileOf(e.air.icao).busy;   // hubs turn traffic faster
   }
 
   private persistHighScore(force: boolean): void {

@@ -19,13 +19,15 @@ import { getPerformance, randomCommercialTypeOf, spokenTypeOf, v1Kt, WeightClass
 import {
   AircraftState, DrivePath, PathHold, SimEvent, SimEventType, SimEventData, FlightKind, FlightPhase, PendingCmd, PendingCondition,
   PilotRequest, PilotRequestKind, Position, PlayerPosition, POSITION_OWNER, NEXT_POSITION, RunwayState, RunwayStatus, RunwayOccupant,
-  RunwayOccupantKind, GateState, SessionStats, ScoreCode, ScoreEvent, SCORE_TABLE, emptySessionStats, Stage, WakeCategory,
+  RunwayOccupantKind, GateState, ParkedAircraft, SessionStats, ScoreCode, ScoreEvent, SCORE_TABLE, emptySessionStats, Stage, WakeCategory,
   WAKE_DEPARTURE_S, WAKE_FINAL_NM, WAKE_CATEGORY_BY_CLASS, newAircraftFields, Emergency, EmergencyType, ReadbackStatus,
   VehicleTarget, VehicleType, WeatherState, Vehicle, Alert, defaultPushback, defaultStartup, EVENT_WHO,
 } from './types';
 import { stepAircraft, isAirborne, StepCtx, HOLD_BUFFER_M, DEP_TURN_FT, TAXI_DECEL, EMERG_DECEL, takeoffAccelKts, approachVal, brakingDistM } from './aircraft';
 import { ILSRunway, canCaptureLoc, overshootsLoc, locTargetHdg, gsAltFt, gsDistM, distAlongFwd, crossTrackM, featherHdg, aboveGlideslope, ilsFromGeometry, ILS_CONST } from './ils';
 import { rng, rnd, ri, rf, chance, subStream } from './rng';
+import { AIRLINE_BY_ICAO, pickCarrier, pickType, profileOf } from './airlines';
+import type { StandSize } from '../osmAirport';
 import { stage as deriveStage, StageCtx, distToThresholdFromPathNM } from './stage';
 import type {
   CommandAST, EngineOutcome, CommandResult, TaxiDest, HoldShortTarget, PushDir, TurnDir, ExitSpec, ExpediteScope, ContactWhen,
@@ -70,37 +72,6 @@ const READBACK_MISMATCH_WINDOW_S = 15;
 const INCIDENT_DEDUPE_S = 60;
 const EVENT_RING = 500;
 
-const AIRLINES = [
-  { icao: 'BAW', iata: 'BA', name: 'British Airways' }, { icao: 'UAL', iata: 'UA', name: 'United' },
-  { icao: 'AAL', iata: 'AA', name: 'American' }, { icao: 'DAL', iata: 'DL', name: 'Delta' },
-  { icao: 'DLH', iata: 'LH', name: 'Lufthansa' }, { icao: 'AFR', iata: 'AF', name: 'Air France' },
-  { icao: 'KLM', iata: 'KL', name: 'KLM' }, { icao: 'UAE', iata: 'EK', name: 'Emirates' },
-  { icao: 'QTR', iata: 'QR', name: 'Qatar' }, { icao: 'SIA', iata: 'SQ', name: 'Singapore' },
-  { icao: 'CPA', iata: 'CX', name: 'Cathay Pacific' }, { icao: 'QFA', iata: 'QF', name: 'Qantas' },
-  { icao: 'SWR', iata: 'LX', name: 'Swiss' }, { icao: 'EIN', iata: 'EI', name: 'Aer Lingus' },
-  { icao: 'JAL', iata: 'JL', name: 'Japan Airlines' }, { icao: 'ANA', iata: 'NH', name: 'All Nippon' },
-  { icao: 'VOZ', iata: 'VA', name: 'Virgin Australia' }, { icao: 'JST', iata: 'JQ', name: 'Jetstar' }, { icao: 'ANZ', iata: 'NZ', name: 'Air New Zealand' },
-  { icao: 'FDB', iata: 'FZ', name: 'flydubai' }, { icao: 'ETD', iata: 'EY', name: 'Etihad' }, { icao: 'THY', iata: 'TK', name: 'Turkish' },
-  { icao: 'EZY', iata: 'U2', name: 'easyJet' }, { icao: 'RYR', iata: 'FR', name: 'Ryanair' }, { icao: 'TRA', iata: 'HV', name: 'Transavia' },
-  { icao: 'SCO', iata: 'TR', name: 'Scoot' }, { icao: 'CES', iata: 'MU', name: 'China Eastern' }, { icao: 'CCA', iata: 'CA', name: 'Air China' }, { icao: 'HKE', iata: 'UO', name: 'HK Express' },
-  { icao: 'AIC', iata: 'AI', name: 'Air India' }, { icao: 'IGO', iata: '6E', name: 'IndiGo' }, { icao: 'VIR', iata: 'VS', name: 'Virgin Atlantic' },
-  { icao: 'SWA', iata: 'WN', name: 'Southwest' }, { icao: 'JBU', iata: 'B6', name: 'JetBlue' }, { icao: 'ASA', iata: 'AS', name: 'Alaska' },
-];
-/** Carriers that dominate each field: 65 % of new flights come from the home list, the rest from the world pool. */
-const HOME_CARRIERS: Record<string, string[]> = {
-  EGLL: ['BAW', 'BAW', 'BAW', 'VIR', 'EIN', 'DLH', 'AFR', 'KLM', 'UAE', 'AAL', 'UAL'],
-  LFPG: ['AFR', 'AFR', 'AFR', 'EZY', 'TRA', 'DLH', 'KLM', 'UAE', 'DAL', 'RYR'],
-  KJFK: ['DAL', 'DAL', 'JBU', 'JBU', 'AAL', 'AAL', 'UAL', 'BAW', 'VIR', 'DLH', 'AFR', 'UAE'],
-  KLAX: ['UAL', 'UAL', 'DAL', 'DAL', 'AAL', 'AAL', 'SWA', 'SWA', 'ASA', 'JBU', 'ANA', 'JAL', 'QFA', 'CPA'],
-  KSFO: ['UAL', 'UAL', 'UAL', 'ASA', 'ASA', 'SWA', 'DAL', 'AAL', 'ANA', 'JAL', 'CPA', 'SIA'],
-  KBOS: ['JBU', 'JBU', 'JBU', 'DAL', 'DAL', 'AAL', 'UAL', 'SWA', 'BAW', 'EIN', 'AFR'],
-  VIDP: ['IGO', 'IGO', 'IGO', 'AIC', 'AIC', 'UAE', 'QTR', 'BAW', 'SIA', 'DLH'],
-  OMDB: ['UAE', 'UAE', 'UAE', 'UAE', 'FDB', 'FDB', 'FDB', 'BAW', 'QTR', 'AIC', 'IGO', 'THY', 'DLH'],
-  WSSS: ['SIA', 'SIA', 'SIA', 'SCO', 'SCO', 'CPA', 'QFA', 'UAE', 'BAW', 'ANA', 'JAL', 'CES'],
-  VHHH: ['CPA', 'CPA', 'CPA', 'CPA', 'HKE', 'HKE', 'CCA', 'CES', 'SIA', 'UAE', 'BAW', 'UAL', 'JAL'],
-  RJTT: ['ANA', 'ANA', 'ANA', 'JAL', 'JAL', 'JAL', 'CPA', 'SIA', 'UAL', 'DAL', 'BAW', 'CCA'],
-  YSSY: ['QFA', 'QFA', 'QFA', 'VOZ', 'VOZ', 'JST', 'JST', 'ANZ', 'SIA', 'UAE', 'CPA', 'UAL'],
-};
 const CITIES = ['MUC', 'FRA', 'CDG', 'AMS', 'MAD', 'DXB', 'SIN', 'HKG', 'JFK', 'LAX', 'ORD', 'DEL', 'SYD', 'NRT', 'GVA', 'VIE', 'LIS', 'DUB', 'ZRH', 'IST'];
 const DEFAULT_FREQ: Record<Position, string> = { ground: '121.900', tower: '118.500', departure: '125.200', approach: '119.700', external: '127.100' };
 
@@ -237,6 +208,12 @@ export class SimEngine implements EngineCommandApi, StageCtx {
   /** Per-END runway state (both ends of a physical runway share status / occupants). */
   runways: RunwayState[] = [];
   gates: GateState[] = [];
+  /** Static parked population (airlines.ts profiles): aircraft on stands that are not in the sim's traffic — they fill
+   *  the aprons, block their stands, and departures are "activated" from them (the parked airframe becomes the flight). */
+  parked: ParkedAircraft[] = [];
+  private parkedByRef = new Map<string, ParkedAircraft>();
+  private parkedEnabled = false;
+  private nextParkedId = -1;
   /** Airspace centre in engine XY (B3). */
   centerXY: XY = { x: 0, y: 0 };
   airspaceRadiusM = 30 * NM_TO_M;
@@ -649,18 +626,23 @@ export class SimEngine implements EngineCommandApi, StageCtx {
   }
 
   // ── identity / base ────────────────────────────────────────────────────────
-  private newIdentity(type?: string, allowedWeights?: Set<WeightClass> | null, callsign?: string) {
-    // the world-pool draw happens first whatever the outcome, so scripted spawns (explicit callsign) consume the same
-    // seeded stream as before the home-carrier mix existed (deterministic scenarios keep their timings)
-    const al = rnd(AIRLINES); const fno = 1 + ri(998);
-    const home = HOME_CARRIERS[this.air.icao];
-    const pickAl = () => (home && chance(0.65) ? rnd(home) : rnd(AIRLINES).icao);
-    let cs = callsign ? upper(callsign) : `${home && chance(0.65) ? rnd(home) : al.icao}${fno}`;
-    let guard = 0;
-    while (!callsign && this.aircraft.some(a => a.callsign === cs) && guard++ < 20) cs = `${pickAl()}${1 + ri(998)}`;
+  private newIdentity(type?: string, allowedWeights?: Set<WeightClass> | null, callsign?: string, stand?: StandSize | null) {
+    // two draws whatever happens, so scripted spawns (explicit callsign) read the same seeded stream as always
+    const r1 = rng(), r2 = rng();
+    let cs = callsign ? upper(callsign) : '';
+    let carrier = cs ? AIRLINE_BY_ICAO[cs.slice(0, 3)] ?? null : null;
+    if (!cs) {
+      carrier = pickCarrier(this.air.icao, r1, r2);
+      const fno = 1 + Math.floor(r2 * 998);
+      cs = `${carrier.icao}${fno}`;
+      let guard = 0;
+      while (this.aircraft.some(a => a.callsign === cs) && guard++ < 20) { carrier = pickCarrier(this.air.icao, rng(), rng()); cs = `${carrier.icao}${1 + ri(998)}`; }
+    }
     const m = cs.match(/^([A-Z]{3})(\d+)/);
-    const alr = m ? AIRLINES.find(x => x.icao === m[1]) : null;
-    const perf = getPerformance(type ?? randomCommercialTypeOf(allowedWeights));
+    const alr = m ? AIRLINE_BY_ICAO[m[1]] ?? null : null;
+    // the type comes from the carrier's fleet when it has one that the runway and the stand allow
+    const fleetType = type ? null : carrier ? pickType(carrier, rng(), { weights: allowedWeights ?? null, stand: stand ?? null }) : null;
+    const perf = getPerformance(type ?? fleetType ?? randomCommercialTypeOf(allowedWeights));
     return { callsign: cs, flightNo: alr ? `${alr.iata}${m![2]}` : cs, airline: alr?.name ?? (m ? m[1] : 'GA'), perf };
   }
   private base(ident: ReturnType<SimEngine['newIdentity']>, kind: FlightKind, pos: XY, heading: number): AircraftState {
@@ -696,8 +678,8 @@ export class SimEngine implements EngineCommandApi, StageCtx {
   // ── stands ─────────────────────────────────────────────────────────────────
   /** A stand that is free (not occupied, not reserved, not closed) and has no aircraft parked within 45 m. */
   private freeStand(opts: { prefer?: string | null; needsPushback?: boolean } = {}): GateState | null {
-    if (opts.prefer) { const g = this.gateByRef(opts.prefer); if (g && !g.closed && g.occupiedBy == null && g.reservedFor == null) return g; }
-    const cands = this.gates.filter(g => !g.closed && g.occupiedBy == null && g.reservedFor == null && (opts.needsPushback == null || g.needsPushback === opts.needsPushback));
+    if (opts.prefer) { const g = this.gateByRef(opts.prefer); if (g && !g.closed && g.occupiedBy == null && g.reservedFor == null) { this.evictParked(g.ref); return g; } }
+    const cands = this.gates.filter(g => !g.closed && g.occupiedBy == null && g.reservedFor == null && !this.parkedByRef.has(g.ref) && (opts.needsPushback == null || g.needsPushback === opts.needsPushback));
     if (!cands.length) return null;
     for (let tries = 0; tries < 12; tries++) {
       const g = rnd(cands);
@@ -709,6 +691,45 @@ export class SimEngine implements EngineCommandApi, StageCtx {
   private reserveStand(g: GateState, a: AircraftState) { g.reservedFor = a.id; a.reservedStand = g.ref; a.plan.gateRef = g.ref; }
   private occupyStand(g: GateState, a: AircraftState) { g.occupiedBy = a.id; g.reservedFor = null; a.reservedStand = g.ref; a.plan.gateRef = g.ref; }
   private releaseStands(a: AircraftState) { for (const g of this.gates) { if (g.occupiedBy === a.id) g.occupiedBy = null; if (g.reservedFor === a.id) g.reservedFor = null; } }
+  // ── static parked population ───────────────────────────────────────────────
+  /** Fill the stands the way the airport's traffic profile says they are at the start of a shift (own RNG stream, so
+   *  scripted scenarios are untouched). Idempotent. */
+  populateParked(scale = 1): void {
+    this.parkedEnabled = true;
+    if (this.parked.length) return;
+    const r = subStream('parked');
+    const prof = profileOf(this.air.icao);
+    const used = new Set(this.aircraft.map(a => a.callsign));
+    for (const g of this.gates) {
+      if (g.closed || g.occupiedBy != null || g.reservedFor != null) continue;
+      const st = this.standOf(g); if (!st) continue;
+      const share = (st.type === 'gate' ? prof.occupancy.gate : st.type === 'stand' ? prof.occupancy.stand : prof.occupancy.remote) * scale;
+      if (r() >= share) continue;
+      const xy = this.gateXY(g);
+      if (this.aircraft.some(a => !isAirborne(a) && dist(a.pos, xy) < 45)) continue;
+      // a carrier whose fleet fits the stand (Emirates has nothing for a code-C stand: try a few times)
+      let carrier = pickCarrier(this.air.icao, r(), r()), type = pickType(carrier, r(), { stand: st.size });
+      for (let t = 0; !type && t < 4; t++) { carrier = pickCarrier(this.air.icao, t < 3 ? r() * 0.65 : r(), r()); type = pickType(carrier, r(), { stand: st.size }); }
+      if (!type) continue;
+      let cs = `${carrier.icao}${1 + Math.floor(r() * 998)}`; let guard = 0;
+      while ((used.has(cs) || this.parkedByRef.size > 0 && this.parked.some(p => p.callsign === cs)) && guard++ < 10) cs = `${carrier.icao}${1 + Math.floor(r() * 998)}`;
+      used.add(cs);
+      this.addParked({ id: this.nextParkedId--, callsign: cs, airline: carrier.name, type, standRef: g.ref, pos: xy, heading: this.standHeading(g) });
+      if (this.parked.length >= 180) break;
+    }
+  }
+  private addParked(p: ParkedAircraft): void { this.parked.push(p); this.parkedByRef.set(p.standRef, p); }
+  private evictParked(ref: string): ParkedAircraft | null {
+    const p = this.parkedByRef.get(ref); if (!p) return null;
+    this.parkedByRef.delete(ref); this.parked = this.parked.filter(x => x !== p); return p;
+  }
+  /** An arrival that has sat at its stand long enough is retired from the traffic but stays on the apron as a parked airframe. */
+  private retireToParked(a: AircraftState): void {
+    if (!this.parkedEnabled || !a.plan.gateRef || this.parkedByRef.has(a.plan.gateRef) || this.parked.length >= 180) return;
+    const g = this.gateByRef(a.plan.gateRef); if (!g) return;
+    const fno = 1 + ri(998); const al = a.callsign.slice(0, 3);
+    this.addParked({ id: this.nextParkedId--, callsign: `${al}${fno}`, airline: a.airline, type: a.perf.icaoCode, standRef: g.ref, pos: this.gateXY(g), heading: this.standHeading(g) });
+  }
   standOccupant(ref: string): string | null {
     const g = this.gateByRef(ref); if (!g) return null;
     const id = g.occupiedBy ?? g.reservedFor; if (id == null) return null;
@@ -725,8 +746,15 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     const arrOn = (name: string) => this.aircraft.filter(x => x.plan.kind === 'arrival' && isAirborne(x) && x.plan.runway === name).length;
     const leastArr = active.length ? active.reduce((b, r) => (arrOn(r.name) < arrOn(b.name) ? r : b)) : null;
     const endName = opts.runway ? upper(opts.runway) : leastArr ? rnd(active.filter(r => arrOn(r.name) === arrOn(leastArr.name))).name : rnd(this.runways).name;
-    const ident = this.newIdentity(opts.type, this.weightsFor(endName), opts.callsign);
-    const gate = this.freeStand({ prefer: opts.stand ?? null }); if (!gate) return null;
+    const weights = this.weightsFor(endName);
+    // a scripted spawn keeps its own identity; free traffic mostly wakes up a parked airframe (its stand, type, airline)
+    let woken: ParkedAircraft | null = null;
+    if (!opts.type && !opts.callsign && !opts.stand && this.parked.length && chance(0.8)) {
+      const cands = this.parked.filter(p => (!weights || weights.has(getPerformance(p.type).weightClass)) && !this.aircraft.some(a => a.callsign === p.callsign));
+      if (cands.length) { woken = rnd(cands); this.evictParked(woken.standRef); }
+    }
+    const ident = woken ? this.newIdentity(woken.type, weights, woken.callsign) : this.newIdentity(opts.type, weights, opts.callsign);
+    const gate = this.freeStand({ prefer: woken?.standRef ?? opts.stand ?? null }); if (!gate) { if (woken) this.addParked(woken); return null; }
     const pos = this.gateXY(gate);
     const a = this.base(ident, 'departure', pos, this.standHeading(gate));
     this.occupyStand(gate, a);
@@ -884,6 +912,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     const ground = ['parked', 'startup', 'pushback', 'taxi', 'hold_short', 'lineup', 'takeoff', 'rollout', 'arrived'].includes(spec.phase);
     if (ground && !spec.posRel && !spec.posLL) {
       const gate = spec.gate ? this.gateByRef(spec.gate) ?? null : (!spec.taxiwayNode && ['parked', 'startup', 'pushback', 'taxi'].includes(spec.phase) ? this.freeStand() : null);
+      if (spec.gate && gate) this.evictParked(gate.ref);
       const pos = gate ? this.gateXY(gate) : spec.taxiwayNode ? this.nodeXY(spec.taxiwayNode) ?? { x: 0, y: 0 } : { x: 0, y: 0 };
       a = this.base(ident, kind, pos, gate ? this.standHeading(gate) : 0);
       a.synthetic = false;
@@ -3482,7 +3511,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       const st = this.stageOf(a);
       if (st !== s.lastStage) { this.emit('stage', a, st, { type: 'stage', from: s.lastStage, to: st }); s.lastStage = st; }
       // despawn
-      if (s.despawnAt != null && this.time >= s.despawnAt) { this.remove(a.id, a.plan.kind === 'arrival' ? 'arrived' : 'departed'); continue; }
+      if (s.despawnAt != null && this.time >= s.despawnAt) { if (a.plan.kind === 'arrival' && a.phase === 'parked') this.retireToParked(a); this.remove(a.id, a.plan.kind === 'arrival' ? 'arrived' : 'departed'); continue; }
       // rotten LUAW: > 180 s on the runway with nobody inbound -> vacates for fuel (03 §A14)
       if (a.phase === 'lineup' && s.luawAt != null && this.time - s.luawAt > 400 && !a.pendingCmds.length && a.plan.runway && !this.arrivalOnFinal(a.plan.runway, 6)) {
         const rs = this.runwayState(a.plan.runway)!; const ex = this.chooseExit(a, rs.ref, rs.headingTrue, 0, null, true);

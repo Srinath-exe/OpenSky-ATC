@@ -738,6 +738,9 @@ export interface RunwayState {
   windCrossKt: number;
 }
 
+/** A parked airframe that is not in the traffic (engine.parked): fills a stand until a departure wakes it up. */
+export interface ParkedAircraft { id: number; callsign: string; airline: string; type: string; standRef: string; pos: XY; heading: number }
+
 export interface GateState {
   ref: string;
   nodeId: string;

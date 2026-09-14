@@ -20,6 +20,7 @@ import styles from './WorldMap.module.css';
 import { sim, useSim } from '../simStore';
 import type { AircraftState } from '@/lib/sim/types';
 import { isAirborne } from '@/lib/sim/aircraft';
+import { getPerformance } from '@/lib/sim/aircraftDB';
 import { loadWorld, type World } from './world';
 import { NOSE_WHEEL, genericLights, instantiate, lightsOf, loadAircraftModel, setModelNight, tint, type LightSpec } from './models';
 import { PALETTE, applyFades, buildAirport, buildBuildings, buildRoads, buildTerrain, setSurfaceNight, toV3, type BuildingsHandle, type Fade, type NightHandle } from './terrain';
@@ -32,6 +33,7 @@ import { stageLabel } from '@/lib/sim/stage';
 
 const FT = 0.3048;
 const CLOUD_TINT = new THREE.Color('#d8dbe0');
+const UP = new THREE.Vector3(0, 1, 0);
 const GRADE = {
   uniforms: { tDiffuse: { value: null }, uVignette: { value: 0.55 }, uSat: { value: 0.82 }, uLift: { value: 0.0 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
@@ -154,6 +156,8 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     applyDpr();
 
     const markers = new Map<number, Marker>();
+    // static parked airframes (engine.parked): silhouette / model + shadow only — no label, lights or strip
+    let modelBudget = 0;   // models instantiated per frame (a populated hub has 150 parked airframes: spread the clones out)
     const acGeo = aircraftGeometry();
     const matPlane = new THREE.MeshLambertMaterial({ color: 0xf2f2ef, emissive: 0x202020 });
     const matSel = new THREE.MeshLambertMaterial({ color: PALETTE.orange, emissive: 0x3a2008 });
@@ -168,6 +172,14 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false });   // aircraft-shaped (acGeo), per-marker opacity
     const stemMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 });
     const decor = new THREE.Group(); scene.add(decor);
+    // silhouettes + shadows of the parked population are two instanced meshes (two draw calls for a whole hub); the
+    // detailed models are per airframe, loaded lazily near the camera
+    const parkedMarkers = new Map<number, { pos: THREE.Vector3; rotY: number; model: THREE.Group | null; modelWanted: boolean; placed: boolean }>();
+    const PARKED_MAX = 200;
+    const parkedSil = new THREE.InstancedMesh(acGeo, matGhost, PARKED_MAX); parkedSil.count = 0; parkedSil.frustumCulled = false; traffic.add(parkedSil);
+    const parkedShadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.32, depthWrite: false });
+    const parkedShadow = new THREE.InstancedMesh(acGeo, parkedShadowMat, PARKED_MAX); parkedShadow.count = 0; parkedShadow.frustumCulled = false; parkedShadow.renderOrder = 5; decor.add(parkedShadow);
+    const instM = new THREE.Matrix4(), instQ = new THREE.Quaternion(), instS = new THREE.Vector3(), instP = new THREE.Vector3(), zeroS = new THREE.Vector3(0, 0, 0);
     // smooth camera moves (centre-on / locate) and the world's pan limits
     let camGoal: THREE.Vector3 | null = null;
     const clampTarget = () => { if (!world) return; const ex = world.extent; cam.target.x = Math.min(ex.maxX - 1500, Math.max(ex.minX + 1500, cam.target.x)); cam.target.z = Math.min(-ex.minY - 1500, Math.max(-ex.maxY + 1500, cam.target.z)); };
@@ -520,6 +532,44 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       const hov = sim.hoveredId != null && sim.hoveredId !== sim.selectedId ? markers.get(sim.hoveredId) : null;
       if (hov) { hoverRing.visible = true; hoverRing.position.copy(hov.mesh.position).setY(hov.mesh.position.y + 0.5); const hr = Math.max(50, cam.dist * 0.024); hoverRing.scale.set(hr, 1, hr); } else hoverRing.visible = false;
       for (const [id, m] of markers) if (!live.has(id)) { traffic.remove(m.mesh); if (m.model) traffic.remove(m.model); traffic.remove(m.lights); m.lights.geometry.dispose(); decor.remove(m.shadow); decor.remove(m.stem); m.stem.geometry.dispose(); m.label.remove(); markers.delete(id); }
+      // parked population
+      modelBudget = 3;
+      const liveP = new Set<number>();
+      let slot = 0;
+      for (const p of eng.parked) {
+        liveP.add(p.id);
+        let m = parkedMarkers.get(p.id);
+        const perf = getPerformance(p.type);
+        if (!m) { m = { pos: new THREE.Vector3(), rotY: -p.heading * Math.PI / 180, model: null, modelWanted: false, placed: false }; parkedMarkers.set(p.id, m); }
+        if (!m.placed) {   // sits on the terrain once the world (its height field) is in
+          if (!world) continue;
+          m.pos.set(p.pos.x, world.heightAt(p.pos.x, p.pos.y) + 1.2, -p.pos.y); m.placed = true;
+        }
+        sphere.center.copy(m.pos); sphere.radius = Math.max(perf.lengthMeters, perf.wingspanMeters) * Math.max(1, cam.dist / 2600) + 40;
+        const onScreen = frustum.intersectsSphere(sphere);
+        // the detailed model only within 60 % of the tier's model distance FROM THE CAMERA (the far side of a hub stays
+        // silhouettes), and only while on screen
+        const near = onScreen && camera.position.distanceTo(m.pos) < preset.modelDist * 0.6;
+        const useModel = !!m.model && near;
+        if (!m.modelWanted && near && modelBudget > 0) {
+          m.modelWanted = true; modelBudget--; const mk = m;
+          loadAircraftModel(p.type).then((mdl) => {
+            if (!mdl || disposed || !parkedMarkers.has(p.id)) return;
+            mk.model = instantiate(mdl, perf.lengthMeters, p.callsign); mk.model.position.copy(mk.pos); mk.model.rotation.y = mk.rotY; traffic.add(mk.model);
+          });
+        }
+        if (m.model) m.model.visible = onScreen && useModel;
+        if (slot < PARKED_MAX) {
+          const scale = Math.max(1, cam.dist / 2600);
+          instQ.setFromAxisAngle(UP, m.rotY);
+          instM.compose(m.pos, instQ, onScreen && !useModel ? instS.set(perf.wingspanMeters * scale, 1, perf.lengthMeters * scale) : zeroS); parkedSil.setMatrixAt(slot, instM);
+          instM.compose(instP.set(m.pos.x, m.pos.y - 0.8, m.pos.z), instQ, onScreen ? instS.set(perf.wingspanMeters * 1.04, 0.01, perf.lengthMeters * 1.04) : zeroS); parkedShadow.setMatrixAt(slot, instM);
+          slot++;
+        }
+      }
+      parkedSil.count = slot; parkedShadow.count = slot; parkedSil.instanceMatrix.needsUpdate = true; parkedShadow.instanceMatrix.needsUpdate = true;
+      parkedShadowMat.opacity = 0.32 * (0.35 + 0.65 * (1 - nightAmtRef));
+      for (const [id, m] of parkedMarkers) if (!liveP.has(id)) { if (m.model) traffic.remove(m.model); parkedMarkers.delete(id); }
       // vehicles (only when away from the station, so the map stays calm)
       const liveV = new Set<string>();
       let fleet: Array<{ id: string; type: string; state: string; pos: { x: number; y: number }; heading: number; path: { pts: { x: number; y: number }[] } | null }> = [];
@@ -619,7 +669,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       if (t2 - stats.at > 1000) { const secs = (t2 - stats.at) / 1000; stats.fps = stats.frames / secs; stats.js = stats.jsMs / stats.frames; stats.ms = stats.renderMs / stats.frames; stats.frames = 0; stats.jsMs = 0; stats.renderMs = 0; stats.at = t2; if (statsEl.current) statsEl.current.textContent = `${stats.fps.toFixed(0)} fps · js ${stats.js.toFixed(1)} ms · draw ${stats.ms.toFixed(1)} ms · ${renderer.info.render.calls} calls · ${(renderer.info.render.triangles / 1000).toFixed(0)}k tris · ${adaptive.dpr.toFixed(2)}x · ${preset.tier}`; }
     };
     (window as unknown as { __worldSet?: (o: { bokeh?: boolean; fxaa?: boolean; dpr?: number }) => void }).__worldSet = (o) => { if (o.bokeh != null) bokeh.enabled = o.bokeh; if (o.fxaa != null) fxaa.enabled = o.fxaa; if (o.dpr != null) { adaptive.setRange(o.dpr, o.dpr); applyDpr(); } };
-    (window as unknown as { __worldStats?: () => unknown }).__worldStats = () => ({ tier: preset.tier, detected: detected.tier, gpu: detected.device.gpu, dpr: adaptive.dpr, fps: stats.fps, jsMs: stats.js, drawMs: stats.ms, calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, aircraft: markers.size, models: [...markers.values()].filter(m => m.model?.visible).length, modelMeshes: [...markers.values()].filter(m => m.model?.visible).map(m => { let n = 0; m.model!.traverse(o => { if ((o as THREE.Mesh).isMesh) n++; }); return `${m.model!.userData.type ?? '?'}:${n}`; }), bokeh: bokeh.enabled, fxaa: fxaa.enabled });
+    (window as unknown as { __worldStats?: () => unknown }).__worldStats = () => ({ tier: preset.tier, detected: detected.tier, gpu: detected.device.gpu, dpr: adaptive.dpr, fps: stats.fps, jsMs: stats.js, drawMs: stats.ms, calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, aircraft: markers.size, models: [...markers.values()].filter(m => m.model?.visible).length, parked: parkedMarkers.size, parkedModels: [...parkedMarkers.values()].filter(m => m.model?.visible).length, modelMeshes: [...markers.values()].filter(m => m.model?.visible).map(m => { let n = 0; m.model!.traverse(o => { if ((o as THREE.Mesh).isMesh) n++; }); return `${m.model!.userData.type ?? '?'}:${n}`; }), bokeh: bokeh.enabled, fxaa: fxaa.enabled });
     applyCamera(); frame();
 
     return () => {

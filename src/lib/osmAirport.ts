@@ -957,7 +957,7 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
     // sizes: ref hints > stand spacing > lead-in length > default C
     const stXY = stands.map(s => frame.xy(s.lng, s.lat));
     const refSet = new Set(stands.map(s => s.ref));
-    const sizeFromSpacing = (d: number): StandSize => d < 32 ? 'B' : d < 46 ? 'C' : d < 60 ? 'D' : d < 76 ? 'E' : 'F';
+    const sizeFromSpacing = (d: number): StandSize => d < 26 ? 'B' : d < 46 ? 'C' : d < 60 ? 'D' : d < 76 ? 'E' : 'F';   // tight rows of narrow-body gates are ~30 m apart (alternate positions), still code C
     for (let i = 0; i < stands.length; i++) {
       const s = stands[i];
       if (/A380|\bF$/i.test(s.ref)) { s.size = 'F'; s.sizeSource = 'ref'; continue; }
