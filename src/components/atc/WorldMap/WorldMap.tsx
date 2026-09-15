@@ -22,7 +22,7 @@ import type { AircraftState } from '@/lib/sim/types';
 import { isAirborne } from '@/lib/sim/aircraft';
 import { getPerformance } from '@/lib/sim/aircraftDB';
 import { loadWorld, type World } from './world';
-import { NOSE_WHEEL, genericLights, instantiate, lightsOf, loadAircraftModel, setModelNight, tint, type LightSpec } from './models';
+import { NOSE_WHEEL, genericLights, instantiate, lightsOf, loadAircraftModel, setGear, setModelNight, tint, type LightSpec } from './models';
 import { PALETTE, applyFades, buildAirport, buildBuildings, buildRoads, buildTerrain, setSurfaceNight, toV3, type BuildingsHandle, type Fade, type NightHandle } from './terrain';
 import { buildGse, buildJetBridges, buildLabels, buildStands, type LabelHandle } from './apron';
 import { applySky, buildClouds, buildRain, buildSky, lightingFor, sunPosition, weatherLook, type TimeMode } from './sky';
@@ -504,6 +504,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         if (m.model) {
           m.model.visible = onScreen && useModel;
           m.model.position.copy(org); m.model.rotation.set(pitch, yaw, bank);
+          setGear(m.model, !air || a.altitude < 400);
           const state = a.id === sim.selectedId ? 'sel' : a.id === sim.hoveredId ? 'hover' : '';
           if (state !== m.tinted) { tint(m.model, state === 'sel' ? PALETTE.orange : state === 'hover' ? new THREE.Color(0x404040) : null); m.tinted = state; }
         }

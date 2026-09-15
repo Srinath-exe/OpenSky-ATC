@@ -952,6 +952,9 @@ export class SimEngine implements EngineCommandApi, StageCtx {
           a.phase = 'taxi';
           const dest = spec.taxiTo ?? runway;
           if (dest) { const g = this.gateByRef(dest); this.execTaxi(a, g ? { kind: 'stand', ref: g.ref } : { kind: 'runway', runway: upper(dest), intersection: null }, [], true, null, [], false); }
+          // already rolling along the lane: pointed down the route when nose-in at the entry node would mean swinging
+          // round (more than 90 deg - the bicycle model creeps through a U-turn on the spot)
+          if (a.path && a.path.total > 5) { const h = sampleAlong(a.path.pts, a.path.cum, 5).heading; if (Math.abs(angleDelta(a.heading, h)) > 90) { a.heading = h; a.targetHeading = h; } }
           break;
         }
         case 'hold_short': if (runway) this.placeAtHold(a, runway); break;

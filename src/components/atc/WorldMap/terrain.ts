@@ -498,8 +498,8 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
   const concrete = apronMaterial();
   const mark = new THREE.MeshBasicMaterial({ color: PALETTE.marking, side: THREE.DoubleSide });
 
-  // Surface stack (metres above the levelled field): taxiway ribbons 0.5 < aprons 0.6 < markings 0.75+. The apron is one
-  // continuous slab, so the taxi lanes that cross it are only their painted centrelines - not asphalt strips.
+  // Surface stack (metres above the levelled field): stand pads 0.55 < aprons 0.6 < taxiway ribbons 0.66 < runways 0.72
+  // < markings 0.78+. Every taxiway and lane is an asphalt strip over the concrete, the same everywhere on the field.
   const apronGeos: THREE.BufferGeometry[] = [];   // one mesh for every apron polygon (Dubai maps 200+ of them)
   for (const b of air.buildings) {
     const pts = b.polygon.map(p => world.toLocal(p.lng, p.lat));
@@ -516,7 +516,7 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
     if (e.type !== 'taxiway' || e.leadIn) continue;
     const key = n.id < e.to ? `${n.id}|${e.to}` : `${e.to}|${n.id}`; if (seen.has(key)) continue; seen.add(key);
     const a = xy(n.id), b = xy(e.to);
-    const va = toV3(a.x, a.y, base + 0.5), vb = toV3(b.x, b.y, base + 0.5);
+    const va = toV3(a.x, a.y, base + 0.66), vb = toV3(b.x, b.y, base + 0.66);
     twyGeos.push(ribbon(va, vb, TAXIWAY_WIDTH));
     centre.push(va.x, va.y + 0.35, va.z, vb.x, vb.y + 0.35, vb.z);
     for (const [id, v] of [[n.id, va], [e.to, vb]] as [string, THREE.Vector3][]) {
@@ -538,7 +538,7 @@ export function buildAirport(world: World, air: OsmAirport, fades: Fade[], night
   for (const r of air.runways) {
     const rw = runwayWidth(air.icao, r.ref);
     const [e0, e1] = r.ends; const a = world.toLocal(e0.lng, e0.lat), b = world.toLocal(e1.lng, e1.lat);
-    const va = toV3(a.x, a.y, base + 0.65), vb = toV3(b.x, b.y, base + 0.65);
+    const va = toV3(a.x, a.y, base + 0.72), vb = toV3(b.x, b.y, base + 0.72);
     const rm = new THREE.Mesh(ribbon(va, vb, rw), flat); rm.renderOrder = 2; g.add(rm);
     const dir = new THREE.Vector3().subVectors(vb, va); const len = dir.length(); dir.normalize();
     const side = new THREE.Vector3(-dir.z, 0, dir.x);

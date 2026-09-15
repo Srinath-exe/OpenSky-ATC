@@ -13,7 +13,7 @@ import type { SimEngine } from '../../src/lib/sim/engine';
 // prevailing winds of the home page's airport cards (src/app/_lib/airports.ts - not importable here: it uses the @/ alias)
 const WINDS: Record<string, [number, number]> = { EGLL: [240, 10], WSSS: [30, 7], YSSY: [160, 10] };
 
-function soak(icao: string, seed: number, minutes: number, cap = 14): { e: SimEngine; losses: string[]; diversions: string[]; goArounds: string[]; ground: string[] } {
+function soak(icao: string, seed: number, minutes: number, cap = 14): { e: SimEngine; worked: { app: boolean; twr: boolean; gnd: boolean }; losses: string[]; diversions: string[]; goArounds: string[]; ground: string[] } {
   // the runway ends the home page puts in use for the field's prevailing wind
   const ends = preferredEnds(RUNWAY_MANIFEST[icao].flatMap(r => r.ends), WINDS[icao][0], WINDS[icao][1]);
   const e = makeEngine(icao, { seed, pilotDelay: null, emergencies: 'off', ends });
@@ -21,13 +21,13 @@ function soak(icao: string, seed: number, minutes: number, cap = 14): { e: SimEn
   const busy = profileOf(icao).busy;
   for (let i = 0; i < 4; i++) e.spawnDeparture(); for (let i = 0; i < 3; i++) e.spawnArrival();
   let next = e.time + rf(50, 100) / busy;
-  const t0 = e.time;
+  const t0 = e.time; const worked = { app: false, twr: false, gnd: false };
   while (e.time - t0 < minutes * 60) {
     if (e.time >= next) { if (e.aircraft.length < cap) { const dep = chance(0.55); const ok = dep ? e.spawnDeparture() : e.spawnArrival(); if (!ok) { if (dep) e.spawnArrival(); else e.spawnDeparture(); } } next = e.time + rf(50, 100) / busy; }
-    e.step(15);
+    for (const ev of e.step(15)) { if (ev.type !== 'transmission') continue; if (/^AI APP: .* cleared ILS/.test(ev.message)) worked.app = true; if (/^AI TWR: .* cleared to land/.test(ev.message)) worked.twr = true; if (/^AI GND: .* taxi to runway/.test(ev.message)) worked.gnd = true; }
   }
   const msgs = (type: string) => evs(e, type as never).map(x => `${Math.round(x.at)} ${x.message}`);
-  return { e, losses: msgs('separation_loss'), diversions: msgs('diversion'), goArounds: msgs('go_around'), ground: msgs('ground_conflict') };
+  return { e, worked, losses: msgs('separation_loss'), diversions: msgs('diversion'), goArounds: msgs('go_around'), ground: msgs('ground_conflict') };
 }
 
 for (const [icao, seed, minArr] of [['EGLL', 3, 3], ['WSSS', 7, 3], ['YSSY', 3, 3], ['YSSY', 7, 3]] as const) {
@@ -39,8 +39,7 @@ for (const [icao, seed, minArr] of [['EGLL', 3, 3], ['WSSS', 7, 3], ['YSSY', 3, 
     assert.ok(r.losses.length <= 1, `separation losses: ${r.losses.join('; ')}`);
     assert.ok(r.goArounds.length <= 1, `go-arounds: ${r.goArounds.join('; ')}`);
     assert.ok(r.ground.length <= 1, `ground conflicts: ${r.ground.join('; ')}`);
-    const tx = evs(r.e, 'transmission').map(x => x.message);
-    assert.ok(tx.some(m => /^AI APP: .* cleared ILS/.test(m)) && tx.some(m => /^AI TWR: .* cleared to land/.test(m)) && tx.some(m => /^AI GND: .* taxi to runway/.test(m)), 'every AI position worked');
+    assert.ok(r.worked.app && r.worked.twr && r.worked.gnd, `every AI position worked (${JSON.stringify(r.worked)})`);
     const stuck = r.e.aircraft.filter(a => !['parked', 'arrived'].includes(a.phase) && a.requests.some(q => q.answeredAt == null && r.e.time - q.at > 180));
     assert.deepEqual(stuck.map(a => `${a.callsign}:${a.requests.map(q => q.kind).join('/')}`), [], 'no request left unanswered for 3 minutes');
   });

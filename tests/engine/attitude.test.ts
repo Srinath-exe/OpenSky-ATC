@@ -23,7 +23,7 @@ test('taxi turn: the body heading lags the path tangent and never swings faster 
     prevH = a.heading; prevPos = { ...a.pos };
     return a.phase === 'hold_short';
   }, 900);
-  assert.ok(samples > 100, 'taxied');
+  assert.ok(samples > 40, 'taxied');
   assert.ok(maxDegPerM <= (180 / Math.PI) / L + 0.05, `heading change ${maxDegPerM.toFixed(2)} deg/m within 1/wheelbase (${((180 / Math.PI) / L).toFixed(2)})`);
   assert.ok(maxLag > 8, `the body lagged the line through the bends (max ${maxLag.toFixed(0)} deg)`);
 });

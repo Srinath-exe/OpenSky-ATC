@@ -975,6 +975,61 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
         if (L >= 90) { s.size = 'E'; s.sizeSource = 'leadin'; }
       }
     }
+    // ── geometry sanity (mapper's alternate positions, positions drawn on taxiways): no stand on a taxiway, and no two
+    //    stands whose parked aircraft would overlap - a position drawn 13 m in front of its parent gate (E10A / E10,
+    //    B11#2 / B11) is the same stand for a different type, a row of small-aircraft positions 35 m apart is not a
+    //    row of code-C stands ──
+    {
+      const ORDER: StandSize[] = ['A', 'B', 'C', 'D', 'E', 'F'];
+      const BOX: Record<StandSize, [number, number]> = { A: [15, 13], B: [24, 24], C: [36, 40], D: [52, 56], E: [65, 70], F: [80, 76] };   // span, length
+      const drop = new Set<number>();
+      // 1. drawn on a taxiway: a stop within 22 m of a designated taxiway, outside every apron polygon and away from the
+      //    terminals - only where the field's aprons are mapped at all (most stands inside one), otherwise "outside
+      //    an apron" means nothing
+      const inApron = (i: number) => apronPolys.some(a => pointInPoly(stXY[i], a.pts));
+      const apronsMapped = stands.length > 0 && stands.filter((_, i) => inApron(i)).length >= stands.length * 0.6;
+      //    (within 22 m of any taxi lane, or within 50 m of a main lettered taxiway - nobody parks beside taxiway A)
+      const mainIdx = new EdgeIndex(collectTaxiEdges().filter(r => /^[A-Z]{1,2}$/.test(r.e.taxiway ?? '')));
+      if (apronsMapped) for (let i = 0; i < stands.length; i++) {
+        const s = stands[i]; if (s.type === 'gate' || inApron(i)) continue;
+        if (terminalPolys.some(t => distToPolyEdge(stXY[i], t.pts) < 60)) continue;
+        const lane = idx.nearest(stXY[i], 22), main = mainIdx.nearest(stXY[i], 50);
+        if ((lane && lane.rec.e.taxiway) || main) drop.add(i);
+      }
+      // 2. overlapping envelopes: nose 4 m ahead of the stop, tail one length behind, 80 % of the code's span wide (a
+      //    little wingtip overlap between neighbours is how tight gate rows are drawn; SAT test)
+      const corners = (i: number): XY[] => {
+        const s = stands[i]; const [span0, len] = BOX[s.size]; const span = span0 * 0.8; const h = s.headingIn * Math.PI / 180;
+        const f = { x: Math.sin(h), y: Math.cos(h) }, l = { x: -f.y, y: f.x }; const c = stXY[i];
+        const at = (a: number, b: number): XY => ({ x: c.x + f.x * a + l.x * b, y: c.y + f.y * a + l.y * b });
+        return [at(4, span / 2), at(4, -span / 2), at(-len, -span / 2), at(-len, span / 2)];
+      };
+      const overlap = (A: XY[], B: XY[]): boolean => {
+        for (const poly of [A, B]) for (let k = 0; k < 4; k++) {
+          const p = poly[k], q = poly[(k + 1) % 4]; const nx = q.y - p.y, ny = p.x - q.x;
+          const pr = (P: XY[]) => { let lo = Infinity, hi = -Infinity; for (const v of P) { const d = v.x * nx + v.y * ny; lo = Math.min(lo, d); hi = Math.max(hi, d); } return [lo, hi]; };
+          const [a0, a1] = pr(A), [b0, b1] = pr(B); if (a1 < b0 + 0.5 || b1 < a0 + 0.5) return false;   // a separating axis
+        }
+        return true;
+      };
+      const alternate = (s: OsmStand) => /#\d+$/.test(s.ref) || /^[A-Z]*\d+[A-Z]$/.test(s.ref) || /^R\d+$/.test(s.ref);
+      for (let i = 0; i < stands.length; i++) for (let j = i + 1; j < stands.length; j++) {
+        if (drop.has(i) || drop.has(j)) continue;
+        if (Math.hypot(stXY[i].x - stXY[j].x, stXY[i].y - stXY[j].y) > 100) continue;
+        // shrink the larger one a code at a time (down to B) until the boxes clear
+        while (overlap(corners(i), corners(j))) {
+          const a = stands[i], b = stands[j];
+          const big = ORDER.indexOf(a.size) >= ORDER.indexOf(b.size) ? a : b;
+          if (ORDER.indexOf(big.size) <= 1) break;
+          big.size = ORDER[ORDER.indexOf(big.size) - 1]; big.sizeSource = 'spacing';
+        }
+        if (!overlap(corners(i), corners(j))) continue;
+        // still on top of each other at code B: the same stand drawn twice - the alternate position goes
+        const ai = alternate(stands[i]), aj = alternate(stands[j]);
+        drop.add(ai && !aj ? i : aj && !ai ? j : stands[i].ref.length > stands[j].ref.length ? i : j);
+      }
+      if (drop.size) { const keep = stands.filter((_, i) => !drop.has(i)); stands.length = 0; stands.push(...keep); }
+    }
     for (const s of stands) s.needsPushback = !(s.type === 'remote' && (s.size === 'A' || s.size === 'B'));
     stands.sort((a, b) => a.ref.localeCompare(b.ref, undefined, { numeric: true }));
   }

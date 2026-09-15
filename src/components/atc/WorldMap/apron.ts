@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import type { World } from './world';
 import type { OsmAirport, OsmStand } from '@/lib/osmAirport';
-import { PALETTE, apronMaterial, mergeGeometries, plateGeometry, ribbon, textAtlas, toV3, type Fade } from './terrain';
+import { PALETTE, TAXIWAY_WIDTH, apronMaterial, mergeGeometries, plateGeometry, ribbon, textAtlas, toV3, type Fade } from './terrain';
 
 /** Parked-aircraft envelope per ICAO stand code (wingspan × length, m). */
 const ENVELOPE: Record<string, [number, number]> = { A: [15, 13], B: [24, 24], C: [36, 40], D: [52, 56], E: [65, 70], F: [80, 76] };
@@ -48,17 +48,77 @@ export function buildStands(world: World, air: OsmAirport, base: number, fades: 
     // the number sits ahead of the nose, on the lead-in, so a parked aircraft never covers it
     plateGeos.push(plateGeometry(plateAtlas, st.ref, 9, 4.5, stop.clone().addScaledVector(f, 10).setY(base + 0.76), st.headingIn));
   }
-  // the terminal surroundings are paved: a ~110 m buffer around every terminal outline (discs at the vertices, wide
-  // ribbons along the edges, one flat mesh so the overlaps are invisible)
-  const disc = new THREE.CircleGeometry(110, 24); disc.rotateX(-Math.PI / 2);
+  // The apron pavement where OSM has no apron polygon is built from the things that define an apron, so its edges run
+  // with the lanes rather than in 110 m arcs round the terminal: (1) a corridor from every stand to the lane it is
+  // entered from, (2) a wide slab along every taxi lane that serves stands (35 m each side - the lane and the stand
+  // rows beside it; parallel stubs 50 m apart merge into one surface), (3) a 45 m band round every terminal outline.
+  const y = base + 0.55;
+  const uvDisc = (d: THREE.BufferGeometry) => { const pos = d.getAttribute('position'); const uv = new Float32Array(pos.count * 2); for (let k = 0; k < pos.count; k++) { uv[k * 2] = pos.getX(k); uv[k * 2 + 1] = pos.getZ(k); } d.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); return d; };
+  const discAt = (v: THREE.Vector3, r: number) => { const d = new THREE.CircleGeometry(r, 20); d.rotateX(-Math.PI / 2); d.translate(v.x, v.y, v.z); return uvDisc(d); };
+  const V = (p: { x: number; y: number }) => toV3(p.x, p.y, y);
+  for (const st of air.stands) {
+    const pts = st.leadInPts.map(p => V(world.toLocal(p.lng, p.lat)));
+    const w = (ENVELOPE[st.size] ?? ENVELOPE.C)[0] + 10;
+    for (let i = 1; i < pts.length; i++) { if (pts[i - 1].distanceTo(pts[i]) < 0.5) continue; padGeos.push(ribbon(pts[i - 1], pts[i], w)); padGeos.push(discAt(pts[i], w / 2)); }
+  }
+  const nodeXY = (id: string) => { const n = air.nodes.get(id)!; return V(world.toLocal(n.lng, n.lat)); };
+  const servesStands = new Set<string>(air.stands.map(st => st.entryNodeId));
+  const near = (v: THREE.Vector3, r: number) => stopsXY.some(q => Math.hypot(q.x - v.x, q.y + v.z) < r);   // toV3 maps y -> -z
+  const SLAB = TAXIWAY_WIDTH + 70;
+  const seenE = new Set<string>();
+  const parallelEdges: { a: THREE.Vector3; b: THREE.Vector3 }[] = [];
+  for (const n of air.nodes.values()) for (const e of n.edges) { if (e.type !== 'taxiway' || e.leadIn || n.id >= e.to) continue; parallelEdges.push({ a: nodeXY(n.id), b: nodeXY(e.to) }); }
+  for (const n of air.nodes.values()) for (const e of n.edges) {
+    if (e.type !== 'taxiway' || e.leadIn) continue;
+    const key = n.id < e.to ? `${n.id}|${e.to}` : `${e.to}|${n.id}`; if (seenE.has(key)) continue; seenE.add(key);
+    const a = nodeXY(n.id), b = nodeXY(e.to);
+    // The apron beside a taxiway runs right up to its edge: an edge with a stand row within 260 m on one side is paved
+    // from the taxiway to that row - never across the next taxiway running alongside (the grass between two parallel
+    // taxiways stays grass). Applies to every taxiway, named or not: at SFO the stretch of A abeam the terminals has no
+    // designator in OSM.
+    {
+      const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz);
+      if (L >= 1) {
+        let left = 0, right = 0, reachL = 0, reachR = 0;
+        for (const q of stopsXY) {
+          const px = q.x - a.x, pz = -q.y - a.z; const along = (px * dx + pz * dz) / L; if (along < -60 || along > L + 60) continue;   // (edges are short: 4-40 m)
+          const cross = (dx * pz - dz * px) / L; if (Math.abs(cross) > 260 || Math.abs(cross) < 12) continue;
+          if (cross > 0) { right++; reachR = Math.max(reachR, cross); } else { left++; reachL = Math.max(reachL, -cross); }
+        }
+        if (left || right) {
+          const toRight = right > left; const sgn = toRight ? 1 : -1;
+          // the nearest roughly parallel taxiway on that side caps the depth
+          const mid = a.clone().add(b).multiplyScalar(0.5);
+          let cap = Infinity;
+          for (const rec of parallelEdges) {
+            const ux = rec.b.x - rec.a.x, uz = rec.b.z - rec.a.z, UL = Math.hypot(ux, uz); if (UL < 1) continue;
+            const cosang = Math.abs((ux * dx + uz * dz) / (UL * L)); if (cosang < 0.94) continue;
+            const px = mid.x - rec.a.x, pz = mid.z - rec.a.z; const along = (px * ux + pz * uz) / UL; if (along < -40 || along > UL + 40) continue;
+            const cross = (dx * (rec.a.z - a.z) - dz * (rec.a.x - a.x)) / L; if (cross * sgn <= 40) continue;   // (the curved ends of stubs joining this taxiway are not a parallel taxiway)
+            cap = Math.min(cap, Math.abs(cross));
+          }
+          const reach = toRight ? reachR : reachL;
+          if (reach > cap) continue;                                                    // the row lies beyond the next taxiway: that one paves it
+          const depth = Math.min(cap - TAXIWAY_WIDTH / 2 - 4, reach + 30);
+          if (depth > 10) {
+            const off = new THREE.Vector3(-dz / L, 0, dx / L).multiplyScalar(sgn * depth / 2);
+            padGeos.push(ribbon(a.clone().add(off), b.clone().add(off), depth));
+          }
+        }
+      }
+    }
+    if (/^[A-Z]{1,2}$/.test(e.taxiway ?? '')) continue;                         // a main taxiway is asphalt, not apron
+    // a lane with stands along it: an entry on it, or stands within reach of both its ends (not a stub that runs on
+    // from the gate area across the next taxiway)
+    if (!(servesStands.has(n.id) || servesStands.has(e.to) || (near(a, 100) && near(b, 100)))) continue;
+    padGeos.push(ribbon(a, b, SLAB)); padGeos.push(discAt(a, SLAB / 2)); padGeos.push(discAt(b, SLAB / 2));
+  }
   for (const b of air.buildings) {
     if (b.kind !== 'terminal') continue;
-    const poly = b.polygon.map(p => { const q = world.toLocal(p.lng, p.lat); return toV3(q.x, q.y, base + 0.55); });
+    const poly = b.polygon.map(p => V(world.toLocal(p.lng, p.lat)));
     for (let i = 0; i < poly.length; i++) {
       const a = poly[i], c = poly[(i + 1) % poly.length];
-      const d = disc.clone(); d.translate(a.x, a.y, a.z); const pos = d.getAttribute('position'); const uv = new Float32Array(pos.count * 2);
-      for (let k = 0; k < pos.count; k++) { uv[k * 2] = pos.getX(k); uv[k * 2 + 1] = pos.getZ(k); } d.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); padGeos.push(d);
-      if (a.distanceTo(c) > 1) padGeos.push(ribbon(a, c, 220));
+      padGeos.push(discAt(a, 45)); if (a.distanceTo(c) > 1) padGeos.push(ribbon(a, c, 90));
     }
   }
   if (padGeos.length) { const pm = new THREE.Mesh(mergeGeometries(padGeos), apronMaterial()); pm.renderOrder = 0; g.add(pm); }

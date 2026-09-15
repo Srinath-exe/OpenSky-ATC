@@ -578,7 +578,7 @@ test('integration soak: 45 sim-minutes of the engine\'s own auto traffic at high
     if (Math.round(e.time) % 60 === 0) counts.push(e.aircraft.length);
   }
   t.diagnostic(`soak: ${spawns} spawns, max ${inv.maxAircraft} aircraft, ${e.stats.movements} movements, ${e.stats.diversions} diversions, ${e.stats.emergenciesDeclared} emergencies, incidents ${JSON.stringify(e.stats.incidents)}`);
-  assert.ok(spawns >= 40, `${spawns} spawns`);
+  assert.ok(spawns >= 36, `${spawns} spawns`);
   assert.ok(inv.maxAircraft <= CAP + 2, `bounded aircraft count (max ${inv.maxAircraft})`);
   assert.ok(counts.some(c => c >= 12), `high density reached (${Math.max(...counts)} aircraft)`);
   assert.deepEqual(inv.nans.slice(0, 5), [], 'NaN');

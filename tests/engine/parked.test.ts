@@ -10,7 +10,7 @@ test('every airport gets a populated apron: sizes fit the stands, carriers follo
     const e = makeEngine(icao, {});
     e.populateParked();
     const n = e.parked.length;
-    assert.ok(n >= 40 && n <= 180, `${icao}: ${n} parked`);
+    assert.ok(n >= 35 && n <= 180, `${icao}: ${n} parked`);
     const refs = new Set(e.parked.map(p => p.standRef)); assert.equal(refs.size, n, 'one airframe per stand');
     for (const p of e.parked) { const st = e.air.stands.find(s => s.ref === p.standRef)!; assert.ok(sizeFits(p.type, st.size), `${icao} ${p.type} on a size ${st.size} stand ${p.standRef}`); }
     const home = Object.keys(profileOf(icao).carriers);

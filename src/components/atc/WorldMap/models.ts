@@ -14,6 +14,27 @@ const MODEL_VERSION = '1';
 export const NOSE_WHEEL = 0.12;
 /** Night amount shared by every liveried material (apron floodlighting lifts the paint so aircraft do not go black). */
 const NIGHT = { value: 0 };
+/** How far the airframe is lifted onto its gear (unit length: 0.02 = 0.8 m on a 737 - the nacelles clear the ground). */
+const GEAR_LIFT = 0.02;
+const STRUT_MAT = new THREE.MeshLambertMaterial({ color: 0xb8bcc2 });
+const TYRE_MAT = new THREE.MeshLambertMaterial({ color: 0x1c1d1f });
+const STRUT_GEO = new THREE.CylinderGeometry(0.0045, 0.0045, 1, 6);
+const TYRE_GEO = new THREE.CylinderGeometry(0.0115, 0.0115, 0.0065, 12); TYRE_GEO.rotateZ(Math.PI / 2);
+/**
+ * Nose gear at the origin (twin wheel), main gear a wheelbase (0.37 L) aft on a 0.16 L track (dual wheels), in the unit
+ * frame: struts from the ground up into the belly, tyres of 1 % of the length in diameter. One draw call per part.
+ */
+function buildGear(bellyY: number, r: number): THREE.Group {
+  const gear = new THREE.Group(); gear.name = 'gear';
+  const strut = (x: number, z: number, top: number) => { const m = new THREE.Mesh(STRUT_GEO, STRUT_MAT); m.scale.y = top; m.position.set(x, top / 2, z); m.frustumCulled = false; m.userData.gear = true; gear.add(m); };
+  const tyre = (x: number, z: number) => { const m = new THREE.Mesh(TYRE_GEO, TYRE_MAT); m.position.set(x, 0.0115, z); m.frustumCulled = false; m.userData.gear = true; gear.add(m); };
+  const track = Math.max(0.1, Math.min(0.2, r * 3.2));
+  strut(0, 0, bellyY + 0.01); tyre(-0.006, 0); tyre(0.006, 0);
+  for (const sx of [-1, 1]) { strut(sx * track / 2, 0.37, bellyY + r * 0.6); tyre(sx * track / 2 - 0.0075, 0.37); tyre(sx * track / 2 + 0.0075, 0.37); }
+  return gear;
+}
+/** Gear down: on the ground, and airborne below 400 ft (the last stretch of the approach / just after lift-off). */
+export function setGear(model: THREE.Group, down: boolean): void { const gear = model.getObjectByName('gear'); if (gear && gear.visible !== down) gear.visible = down; }
 export function setModelNight(n: number): void { NIGHT.value = n; }
 const cache = new Map<string, Promise<THREE.Group | null>>();
 if (typeof window !== 'undefined') (window as unknown as { __acModels?: unknown }).__acModels = { cache, matSignature: (m: THREE.Material) => matSignature(m) };   // debugging hook
@@ -36,11 +57,16 @@ export function instantiate(template: THREE.Group, lengthM: number, callsign?: s
   g.scale.setScalar(lengthM);
   const livery = liveryFor(callsign ?? '');
   const frame = (template.userData.frame as Frame | undefined) ?? { yBot: 0.02, yTop: 0.12, r: 0.05, maxAx: 0.45, finTop: 0.25, finZ0: 0.3, finZ1: 0.5, finTipZ0: 0.45 };
+  // landing gear: the community models are in-flight airframes resting on their bellies / nacelles. The airframe is
+  // lifted onto a nose strut at the origin (the nose-wheel point) and two main struts a wheelbase aft; the group is
+  // hidden in the air (WorldMap toggles it: down on the ground and inside the last few hundred feet)
+  const inner = g.children[0]; if (inner) inner.position.y += GEAR_LIFT;
   g.traverse((o) => {
     const m = o as THREE.Mesh; if (!m.isMesh) return;
     const part = (m.userData.part as number) ?? 0;
     m.material = Array.isArray(m.material) ? m.material.map((x) => paint(x.clone(), livery, frame, part)) : paint(m.material.clone(), livery, frame, part);
   });
+  g.add(buildGear(frame.yBot + GEAR_LIFT, frame.r));
   return g;
 }
 
@@ -378,7 +404,7 @@ function classify(wrap: THREE.Group): void {
 /** Selection / hover tint via emissive (null clears). */
 export function tint(group: THREE.Group, color: THREE.Color | null): void {
   group.traverse((o) => {
-    const m = o as THREE.Mesh; if (!m.isMesh) return;
+    const m = o as THREE.Mesh; if (!m.isMesh || m.userData.gear) return;   // (gear materials are shared by every aircraft)
     for (const mat of Array.isArray(m.material) ? m.material : [m.material]) {
       const s = mat as THREE.MeshStandardMaterial;
       if (!('emissive' in s)) continue;
