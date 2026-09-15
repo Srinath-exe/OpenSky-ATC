@@ -50,7 +50,16 @@ const GRADE = {
 };
 
 interface Cam { target: THREE.Vector3; dist: number; yaw: number; pitch: number; distGoal: number }
-interface Marker { mesh: THREE.Mesh; id: number; label: HTMLDivElement; shadow: THREE.Mesh; stem: THREE.Line; model: THREE.Group | null; modelWanted: boolean; tinted: string; lights: THREE.Points; lightSpec: LightSpec | null }
+interface Marker { mesh: THREE.Mesh; id: number; label: HTMLDivElement; shadow: THREE.Mesh; stem: THREE.Line; model: THREE.Group | null; modelWanted: boolean; tinted: string; lights: THREE.Points; lightSpec: LightSpec | null; sm: Smooth | null }
+/** Rendered state, eased toward the sim state: the sim steps at 30 Hz, the picture at the display's rate, so every
+ *  quantity the eye tracks (position, height, heading, attitude) is filtered with a short time constant instead of
+ *  stepping. Sim x/y (metres, north = +y) and altitude (m); heading / pitch / bank in degrees. */
+interface Smooth { x: number; y: number; h: number; hdg: number; pitch: number; bank: number }
+const SMOOTH_S = 0.09;
+function ease(cur: number, target: number, k: number): number { return cur + (target - cur) * k; }
+function easeAngle(cur: number, target: number, k: number): number { let d = ((target - cur + 540) % 360) - 180; return (cur + d * k + 360) % 360; }
+/** Silhouette / shadow centre: the sim position is the nose wheel (12 % behind the nose), the airframe's middle 38 % of the length aft of it. */
+const MID_FROM_NOSE_WHEEL = 0.38;
 
 function aircraftGeometry(): THREE.BufferGeometry {
   // unit-length airliner silhouette in the XZ plane, nose toward -z (north); scaled per aircraft.
@@ -174,7 +183,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const decor = new THREE.Group(); scene.add(decor);
     // silhouettes + shadows of the parked population are two instanced meshes (two draw calls for a whole hub); the
     // detailed models are per airframe, loaded lazily near the camera
-    const parkedMarkers = new Map<number, { pos: THREE.Vector3; rotY: number; model: THREE.Group | null; modelWanted: boolean; placed: boolean }>();
+    const parkedMarkers = new Map<number, { pos: THREE.Vector3; mid: THREE.Vector3; rotY: number; model: THREE.Group | null; modelWanted: boolean; placed: boolean }>();
     const PARKED_MAX = 200;
     const parkedSil = new THREE.InstancedMesh(acGeo, matGhost, PARKED_MAX); parkedSil.count = 0; parkedSil.frustumCulled = false; traffic.add(parkedSil);
     const parkedShadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.32, depthWrite: false });
@@ -415,7 +424,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
 
     // ── frame loop ──
     let raf = 0; const clock = new THREE.Clock();
-    const tmp = new THREE.Vector3();
+    const tmp = new THREE.Vector3(); const org = new THREE.Vector3();
     const frustum = new THREE.Frustum(); const frustumM = new THREE.Matrix4(); const sphere = new THREE.Sphere();
     let lastRender = 0; let lastCamKey = '';
     const frame = () => {
@@ -445,16 +454,29 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
           const shadow = new THREE.Mesh(acGeo, shadowMat.clone()); shadow.renderOrder = 5; decor.add(shadow);
           const stem = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 1, 0)]), stemMat); decor.add(stem);
           const lights = makeLights(); setLightPositions(lights, genericLights(a.perf.lengthMeters, a.perf.wingspanMeters)); traffic.add(lights);
-          m = { mesh, id: a.id, label, shadow, stem, model: null, modelWanted: false, tinted: '', lights, lightSpec: null }; markers.set(a.id, m); traffic.add(mesh);
+          mesh.rotation.order = 'YXZ';
+          m = { mesh, id: a.id, label, shadow, stem, model: null, modelWanted: false, tinted: '', lights, lightSpec: null, sm: null }; markers.set(a.id, m); traffic.add(mesh);
         }
         const air = isAirborne(a);
-        const ground = world ? world.heightAt(a.pos.x, a.pos.y) : 0;
-        const h = air ? Math.max(a.altitude * FT, ground + 2) : ground + 1.2;
-        m.mesh.position.set(a.pos.x, h, -a.pos.y);
+        // eased picture state (snap on the first frame and after a jump such as a respawn)
+        const k = 1 - Math.exp(-dt / SMOOTH_S);
+        let sm = m.sm;
+        if (!sm || Math.hypot(sm.x - a.pos.x, sm.y - a.pos.y) > 250) sm = m.sm = { x: a.pos.x, y: a.pos.y, h: a.altitude * FT, hdg: a.heading, pitch: a.pitch, bank: a.bank };
+        else { sm.x = ease(sm.x, a.pos.x, k); sm.y = ease(sm.y, a.pos.y, k); sm.h = ease(sm.h, a.altitude * FT, k); sm.hdg = easeAngle(sm.hdg, a.heading, k); sm.pitch = ease(sm.pitch, a.pitch, k); sm.bank = ease(sm.bank, a.bank, k); }
+        const ground = world ? world.heightAt(sm.x, sm.y) : 0;
+        const h = air ? Math.max(sm.h, ground + 2) : ground + 1.2;
         const len = a.perf.lengthMeters, span = a.perf.wingspanMeters;
         const scale = Math.max(1, cam.dist / 2600);            // keep symbols legible when zoomed out
+        const yaw = -sm.hdg * Math.PI / 180, pitch = sm.pitch * Math.PI / 180, bank = sm.bank * Math.PI / 180;
+        // the symbol is centred on the airframe, the model's origin is its nose wheel
+        const midX = sm.x - Math.sin(sm.hdg * Math.PI / 180) * MID_FROM_NOSE_WHEEL * len, midY = sm.y - Math.cos(sm.hdg * Math.PI / 180) * MID_FROM_NOSE_WHEEL * len;
+        m.mesh.position.set(midX, h, -midY);
         m.mesh.scale.set(span * scale, 1, len * scale);
-        m.mesh.rotation.y = -a.heading * Math.PI / 180;
+        m.mesh.rotation.set(pitch, yaw, bank);
+        // model / lights origin = the nose wheel; on the ground a pitched airframe (rotation, de-rotation) rests on its
+        // main gear, so the origin rises off the surface by the wheelbase times sin(pitch)
+        org.set(sm.x, h, -sm.y);
+        if (!air && sm.pitch > 0.05) { const wb = len * 0.37; org.y += Math.sin(pitch) * wb; const back = wb * (1 - Math.cos(pitch)); org.x += Math.sin(sm.hdg * Math.PI / 180) * back; org.z += Math.cos(sm.hdg * Math.PI / 180) * back; }
         // ground shadow: the silhouette, flat on the surface, slightly larger and fainter with height; a thin stem from an
         // airborne aircraft down to the ground
         const useModel = !!m.model && cam.dist < preset.modelDist;
@@ -463,32 +485,32 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         sphere.center.copy(m.mesh.position); sphere.radius = Math.max(len, span) * Math.max(1, cam.dist / 2600) * 1.2 + 40;
         const onScreen = frustum.intersectsSphere(sphere);
         const shScale = useModel ? 1 : scale;
-        m.shadow.position.set(a.pos.x, ground + 0.4, -a.pos.y); m.shadow.rotation.y = m.mesh.rotation.y;
+        m.shadow.position.set(midX, ground + 0.4, -midY); m.shadow.rotation.y = yaw;
         const sh = air ? Math.max(0.8, 1 + (h - ground) / 600) : 1.04;
         m.shadow.scale.set(span * shScale * sh, 0.01, len * shScale * sh);
         (m.shadow.material as THREE.MeshBasicMaterial).opacity = (air ? Math.max(0.04, 0.28 - (h - ground) / 6000) : 0.32) * (0.35 + 0.65 * (1 - nightAmtRef));
-        if (air) { m.stem.position.set(a.pos.x, ground, -a.pos.y); m.stem.scale.y = Math.max(1, h - ground); }
+        if (air) { m.stem.position.set(midX, ground, -midY); m.stem.scale.y = Math.max(1, h - ground); }
         m.mesh.material = a.id === sim.selectedId ? matSel : a.onFrequency === sim.position || sim.position === 'ground' ? matPlane : matGhost;
         // real model (lazy per type); the silhouette stays as the far-zoom symbol and the pick target
         if (!m.modelWanted) {
           m.modelWanted = true; const mk = m;
           loadAircraftModel(a.perf.icaoCode).then((mdl) => {
             if (!mdl || disposed || !markers.has(mk.id)) return;
-            mk.model = instantiate(mdl, a.perf.lengthMeters, a.callsign); mk.model.userData.id = mk.id; traffic.add(mk.model);
+            mk.model = instantiate(mdl, a.perf.lengthMeters, a.callsign); mk.model.userData.id = mk.id; mk.model.rotation.order = 'YXZ'; traffic.add(mk.model);
             const spec = lightsOf(mdl, a.perf.lengthMeters); if (spec) { mk.lightSpec = spec; setLightPositions(mk.lights, spec); }
           });
         }
         m.mesh.visible = onScreen && !useModel; m.shadow.visible = onScreen; m.stem.visible = onScreen && air;
         if (m.model) {
           m.model.visible = onScreen && useModel;
-          m.model.position.copy(m.mesh.position); m.model.rotation.y = m.mesh.rotation.y;
+          m.model.position.copy(org); m.model.rotation.set(pitch, yaw, bank);
           const state = a.id === sim.selectedId ? 'sel' : a.id === sim.hoveredId ? 'hover' : '';
           if (state !== m.tinted) { tint(m.model, state === 'sel' ? PALETTE.orange : state === 'hover' ? new THREE.Color(0x404040) : null); m.tinted = state; }
         }
         // lights: nav (red / green / white) whenever not parked, red beacon blinking with the engines, wingtip strobes
         // on the runway and in the air, landing lights below 10 000 ft / on the roll, taxi light while moving on the ground
         {
-          const L = m.lights; L.position.copy(m.mesh.position); L.rotation.y = m.mesh.rotation.y;
+          const L = m.lights; L.position.copy(org); L.rotation.order = 'YXZ'; L.rotation.set(pitch, yaw, bank);
           const col = L.geometry.getAttribute('color').array as Float32Array, siz = L.geometry.getAttribute('size').array as Float32Array;
           const ph = a.phase; const t = clock.elapsedTime + a.id * 0.37;
           const active = ph !== 'parked' && ph !== 'arrived' && ph !== 'departed';
@@ -540,10 +562,13 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         liveP.add(p.id);
         let m = parkedMarkers.get(p.id);
         const perf = getPerformance(p.type);
-        if (!m) { m = { pos: new THREE.Vector3(), rotY: -p.heading * Math.PI / 180, model: null, modelWanted: false, placed: false }; parkedMarkers.set(p.id, m); }
+        if (!m) { m = { pos: new THREE.Vector3(), mid: new THREE.Vector3(), rotY: -p.heading * Math.PI / 180, model: null, modelWanted: false, placed: false }; parkedMarkers.set(p.id, m); }
         if (!m.placed) {   // sits on the terrain once the world (its height field) is in
           if (!world) continue;
           m.pos.set(p.pos.x, world.heightAt(p.pos.x, p.pos.y) + 1.2, -p.pos.y); m.placed = true;
+          // the stand position is the nose wheel; the silhouette / shadow are centred on the airframe
+          const back = MID_FROM_NOSE_WHEEL * perf.lengthMeters, hr = p.heading * Math.PI / 180;
+          m.mid.set(m.pos.x - Math.sin(hr) * back, m.pos.y, m.pos.z + Math.cos(hr) * back);
         }
         sphere.center.copy(m.pos); sphere.radius = Math.max(perf.lengthMeters, perf.wingspanMeters) * Math.max(1, cam.dist / 2600) + 40;
         const onScreen = frustum.intersectsSphere(sphere);
@@ -562,8 +587,8 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         if (slot < PARKED_MAX) {
           const scale = Math.max(1, cam.dist / 2600);
           instQ.setFromAxisAngle(UP, m.rotY);
-          instM.compose(m.pos, instQ, onScreen && !useModel ? instS.set(perf.wingspanMeters * scale, 1, perf.lengthMeters * scale) : zeroS); parkedSil.setMatrixAt(slot, instM);
-          instM.compose(instP.set(m.pos.x, m.pos.y - 0.8, m.pos.z), instQ, onScreen ? instS.set(perf.wingspanMeters * 1.04, 0.01, perf.lengthMeters * 1.04) : zeroS); parkedShadow.setMatrixAt(slot, instM);
+          instM.compose(m.mid, instQ, onScreen && !useModel ? instS.set(perf.wingspanMeters * scale, 1, perf.lengthMeters * scale) : zeroS); parkedSil.setMatrixAt(slot, instM);
+          instM.compose(instP.set(m.mid.x, m.mid.y - 0.8, m.mid.z), instQ, onScreen ? instS.set(perf.wingspanMeters * 1.04, 0.01, perf.lengthMeters * 1.04) : zeroS); parkedShadow.setMatrixAt(slot, instM);
           slot++;
         }
       }

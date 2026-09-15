@@ -199,7 +199,7 @@ test('tug follows a.pushback.tugId: drives to the aircraft, rides the nose while
   a.pushback.stage = 'pushing';
   a.speed = 3;
   fleet.step(0.5, ctxFor(fleet, air, runways, res.t, { aircraft: [a] }));
-  const nose = { x: gxy.x + Math.sin(Math.PI / 2) * (a.perf.lengthMeters / 2 + 5), y: gxy.y };
+  const nose = { x: gxy.x + Math.sin(Math.PI / 2) * 5.5, y: gxy.y };   // the aircraft position is its nose wheel; the tug sits under the nose
   assert.ok(dist(tug.pos, nose) < 1, 'tug on the nose');
   assert.equal(tug.heading, 90);
   assert.equal(tug.speed, 3);

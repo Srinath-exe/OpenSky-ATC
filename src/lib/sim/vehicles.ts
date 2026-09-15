@@ -767,7 +767,7 @@ export class VehicleFleet {
       return;
     }
     if (st === 'tug_attach' || st === 'pushing' || st === 'paused' || st === 'tug_disconnect') {
-      const nose = advance(a.pos, a.heading, a.perf.lengthMeters / 2 + 5);
+      const nose = advance(a.pos, a.heading, 5.5);   // the aircraft position is its nose wheel; the tug sits under the nose
       v.pos = nose;
       v.heading = a.heading;
       v.speed = st === 'pushing' ? Math.min(a.speed, VEHICLE_CONST.tugPushKt) : 0;

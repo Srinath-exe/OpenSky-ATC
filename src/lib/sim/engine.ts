@@ -23,7 +23,7 @@ import {
   WAKE_DEPARTURE_S, WAKE_FINAL_NM, WAKE_CATEGORY_BY_CLASS, newAircraftFields, Emergency, EmergencyType, ReadbackStatus,
   VehicleTarget, VehicleType, WeatherState, Vehicle, Alert, defaultPushback, defaultStartup, EVENT_WHO,
 } from './types';
-import { stepAircraft, isAirborne, StepCtx, HOLD_BUFFER_M, DEP_TURN_FT, TAXI_DECEL, EMERG_DECEL, takeoffAccelKts, approachVal, brakingDistM } from './aircraft';
+import { stepAircraft, isAirborne, StepCtx, HOLD_BUFFER_M, DEP_TURN_FT, TAXI_DECEL, EMERG_DECEL, takeoffAccelKts, approachVal, brakingDistM, wheelbaseM } from './aircraft';
 import { ILSRunway, canCaptureLoc, overshootsLoc, locTargetHdg, gsAltFt, gsDistM, distAlongFwd, crossTrackM, featherHdg, aboveGlideslope, ilsFromGeometry, ILS_CONST } from './ils';
 import { rng, rnd, ri, rf, chance, subStream } from './rng';
 import { AIRLINE_BY_ICAO, pickCarrier, pickType, profileOf } from './airlines';
@@ -1137,20 +1137,23 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     return { ids, path, runway: goal.runway, stand: goal.stand };
   }
 
-  /** Pushback path: stand -> lead-in (reversed) -> ~35 m along the taxiway in the direction that leaves the nose facing `dir`. */
+  /** Pushback path for the MAIN GEAR (a wheelbase behind the parked nose wheel; aircraft.ts puts the nose a wheelbase
+   *  ahead of the point on the path): stand -> lead-in (reversed) -> along the taxiway in the direction that leaves the
+   *  nose facing `dir`, far enough for the nose wheel to end on the lane too. */
   private pushbackPath(a: AircraftState, dir: PushDir): DrivePath | null {
     const g = a.reservedStand ? this.gateByRef(a.reservedStand) : a.plan.gateRef ? this.gateByRef(a.plan.gateRef) : undefined;
     const stand = g ? this.standOf(g) : undefined;
-    const raw: XY[] = [{ ...a.pos }];
+    const wb = wheelbaseM(a);
+    const raw: XY[] = [advance(a.pos, (a.heading + 180) % 360, wb)];
     let entryId: string | null = null;
     if (stand && stand.leadInPts.length >= 2) {
       const pts = [...stand.leadInPts].reverse().map(p => this.proj.toXY(p.lat, p.lng)); // stand -> entry
-      for (const p of pts) if (dist(raw[raw.length - 1], p) > 2) raw.push(p);
+      for (const p of pts) if (dist(raw[raw.length - 1], p) > 2 && dist(a.pos, p) > wb + 2) raw.push(p);
       entryId = stand.entryNodeId;
     } else {
       const nodeId = g?.nodeId ?? this.nearestNodeId(a.pos, 400); if (!nodeId) return null;
       const nx = this.nodeXY(nodeId)!;
-      if (dist(a.pos, nx) > 3) raw.push(nx); else raw.push(advance(a.pos, (a.heading + 180) % 360, 12));
+      if (dist(a.pos, nx) > wb + 3) raw.push(nx); else raw.push(advance(raw[0], (a.heading + 180) % 360, 12));
       let cur = nodeId, prev: string | null = null, hops = 0;
       while (hops++ < 3) {
         const n = this.air.nodes.get(cur)!;
@@ -1187,12 +1190,14 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       if (bestTo) break;
     }
     if (bestTo) {
-      // Push ~35 m along the lane, walking through short apron segments so the aircraft ends aligned with the lane.
+      // Push along the lane until the nose wheel is ~20 m past the junction too, walking through short apron segments
+      // so the aircraft ends aligned with the lane.
+      const pushM = 20 + wb;
       let prev = entryId, cur = bestTo, acc = 0, guard = 0;
       while (guard++ < 6) {
         const px = this.nodeXY(prev)!, cx = this.nodeXY(cur)!;
         const segLen = dist(px, cx);
-        if (acc + segLen >= 35) { raw.push(advance(px, headingTo(px, cx), 35 - acc)); break; }
+        if (acc + segLen >= pushM) { raw.push(advance(px, headingTo(px, cx), pushM - acc)); break; }
         raw.push(cx); acc += segLen;
         const h0 = headingTo(px, cx);
         const nexts = this.air.nodes.get(cur)!.edges.filter(x => x.to !== prev && x.type !== 'runway');
@@ -1201,7 +1206,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         if (Math.abs(angleDelta(h0, headingTo(cx, this.nodeXY(next.to)!))) > 60) break;
         prev = cur; cur = next.to;
       }
-    } else raw.push(advance(jx, inHdg, 25));
+    } else raw.push(advance(jx, inHdg, 12 + wb));
     const path = this.buildPath(raw, 'pushback');
     return path.total > 5 ? path : null;
   }
@@ -1947,7 +1952,8 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     }
     const along = Math.max(0, alongTrack(entry, thr, rs.headingTrue));
     const onLine = advance(thr, rs.headingTrue, along);
-    const stop = advance(thr, rs.headingTrue, along + LINEUP_ADVANCE_M);
+    // the body straightens behind the nose wheel over a few wheelbases: a heavy rolls further before it is lined up
+    const stop = advance(thr, rs.headingTrue, along + LINEUP_ADVANCE_M + 2.5 * wheelbaseM(a));
     const raw = [{ ...a.pos }, onLine, stop];
     if (dist(entry, onLine) > 8) raw.splice(1, 0, entry);
     const p = this.buildPath(raw, 'runway', true);
@@ -3127,6 +3133,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     }
   }
   private trLineup(a: AircraftState, s: Scratch) {
+    if (s.luawAt != null && a.speed >= 0.5) s.luawAt = this.time;   // the wait counts from the moment the aircraft stops in position
     if (s.luawAt != null && a.speed < 0.5 && this.time - s.luawAt > LUAW_QUERY_S && !a.requests.length && !a.rto && !a.pendingCmds.some(c => c.kind === 'takeoff')) {
       this.raiseRequest(a, 'ready', null, `${this.telephony(a.callsign)}, holding in position runway ${a.plan.runway}, are we cleared for takeoff?`);
       s.luawAt = this.time;
@@ -3258,10 +3265,14 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       }
       if (!plan && a.speed < 0.3) {
         // Stopped on the runway (emergency / no exit found / LAHSO)
-        if (a.emergency && a.emergency.stopOnRunway && a.emergency.stoppedAt == null) {
-          a.emergency.stoppedAt = this.time; a.emergency.status = 'stopped';
+        // (the emergencies system may already have marked the stop from the motion - below 1 kt - a tick earlier;
+        // the closure, the occupant and the checklist item are booked here either way)
+        if (a.emergency && a.emergency.stopOnRunway && a.emergency.status !== 'resolved' && a.emergency.checklist.runway_closed == null) {
+          if (a.emergency.stoppedAt == null) {
+            a.emergency.stoppedAt = this.time; a.emergency.status = 'stopped';
+            this.emit('emergency', a, `${a.callsign} stopped on runway ${rs.name}`, { type: 'emergency', emergency: a.emergency, change: 'stopped' }, 'SYS');
+          }
           this.addOccupant(rs.name, a, 'stopped');
-          this.emit('emergency', a, `${a.callsign} stopped on runway ${rs.name}`, { type: 'emergency', emergency: a.emergency, change: 'stopped' }, 'SYS');
           if (a.emergency.closureMin > 0 && rs.status !== 'closed') this.setRunwayStatus(rs.name, 'closed', `${a.callsign} disabled on the runway`);
           for (const r of this.bothEnds(rs.ref)) r.statusUntil = this.time + a.emergency.closureMin * 60;
           this.checklist(a, 'runway_closed');

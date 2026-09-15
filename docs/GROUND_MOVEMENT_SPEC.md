@@ -234,6 +234,19 @@ function applyHeadingPhysics(current: number, target: number, speed: number, per
 - This simulates differential braking / nosewheel steering
 - Widebody aircraft have wider turn radius (slower turn rate)
 
+**As built (`aircraft.ts` `trailBody`)** — bicycle kinematics rather than a turn-rate cap. The point on the path
+is the **nose wheel** (the model origin, 12 % of the length behind the nose: it follows the yellow line and stops at
+the stop mark). The main gear, a wheelbase `L = 0.37 × length` behind it, cannot slip sideways, so the body heading
+`θ` trails the nose wheel's direction of travel `φ`:
+
+    dθ = (ds / L) · sin(φ − θ)          (ds = nose-wheel travel, capped at 8°/m and 100°/s)
+
+The airframe rotates about its main gear, the tail follows the nose round the corner and the main gear cuts inside
+the line; a 777 (L ≈ 27 m) straightens over a longer run than an A320 (L ≈ 14 m). A path that leads straight back
+(|φ − θ| > 150°) turns the short way as if the nose wheel were at full lock. Line-ups run `50 m + 2.5 L` along the
+runway so the body is on the centreline before the roll. Taxi speed drops toward 0.8 × `taxiTurnSpeed` as the bend
+ahead (14 / 28 / 45 m) grows.
+
 ### 3.4 Position Movement
 
 Use **great-circle distance** for realism:
@@ -485,6 +498,13 @@ Pushback is fundamentally different from taxiing:
 - **No steering** — tug follows a pre-defined pushback curve
 - Slower speed: max 3 m/s (6 knots)
 - Curved pushbacks: follow a circular arc then straight
+
+**As built** — the tug steers the nose wheel, so the **main gear** is the point on the pushback path (the engine
+starts the path a wheelbase behind the parked nose wheel, so nothing jumps when the push begins) and the body lies
+along the path tangent, tail first; the nose wheel sits a wheelbase ahead of it and swings wide of the line in the
+bend, exactly as a tug driver sees it. 3 kt on the straight, 2 kt while the tail is swung round (bend over the next
+6–20 m). The path runs `20 m + L` along the taxiway past the junction so the nose wheel ends on the lane too. The tug
+vehicle sits 5.5 m ahead of the nose wheel (under the nose).
 
 ```typescript
 interface PushbackRoute {

@@ -430,6 +430,9 @@ export interface AircraftState {
 
   // ── NEW (Wave 0). All initialised by newAircraftFields(). ──────────────────
 
+  /** Attitude for the picture (deg): pitch nose-up positive, bank right positive (aircraft.ts settles both). */
+  pitch: number;
+  bank: number;
   /** ICAO wake category derived from perf.weightClass at spawn. */
   wakeCategory: WakeCategory;
   /** Pilot requests; at most ONE open request at a time (a new one replaces the old, UX §G8). */
@@ -511,7 +514,7 @@ export interface AircraftState {
  * so a new field only ever has to be added HERE (and in AircraftState).
  */
 export function newAircraftFields(weightClass: WeightClass, time: number): Pick<AircraftState,
-  | 'wakeCategory' | 'requests' | 'emergency' | 'clearance' | 'reservedStand' | 'needsPushback'
+  | 'pitch' | 'bank' | 'wakeCategory' | 'requests' | 'emergency' | 'clearance' | 'reservedStand' | 'needsPushback'
   | 'startup' | 'pushback' | 'holdShortNode' | 'holdShortRunway' | 'holdShortTaxiway'
   | 'landingCleared' | 'landingClearedAt' | 'lahsoHoldShortOf' | 'exitTaxiway' | 'exitDir'
   | 'goAround' | 'goAroundCount' | 'onFrequency' | 'handedTo' | 'handoffAt'
@@ -521,6 +524,7 @@ export function newAircraftFields(weightClass: WeightClass, time: number): Pick<
   | 'heldByEmergency' | 'rto' | 'fuelMin' | 'note' | 'synthetic'> {
   void time;
   return {
+    pitch: 0, bank: 0,
     wakeCategory: WAKE_CATEGORY_BY_CLASS[weightClass],
     requests: [],
     emergency: null,

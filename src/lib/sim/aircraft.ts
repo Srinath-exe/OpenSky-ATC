@@ -3,15 +3,24 @@
 //
 //  Ground movement: ARC-LENGTH PATH FOLLOWING on a Chaikin-smoothed polyline
 //  with hold-short PLACES (DrivePath.holds — the next unreleased hold is the
-//  only place the aircraft stops for a clearance; B4/B5).
-//  Pushback: the aircraft follows a short pushback path TAIL FIRST at 3 kt
-//  while the engine sequences tug attach / push / disconnect.
+//  only place the aircraft stops for a clearance; B4/B5). The point on the
+//  path is the NOSE WHEEL (it follows the yellow line and stops at the stop
+//  mark); the body heading trails it with bicycle kinematics - the main gear
+//  cannot slip sideways, so the airframe swings round a corner about its main
+//  gear, the tail following the nose, never pivoting on the nose wheel.
+//  Pushback: the tug steers the nose wheel; the MAIN GEAR follows the short
+//  pushback path tail first at 3 kt (2 kt in the turn) and the nose swings
+//  wide of it, while the engine sequences tug attach / push / disconnect.
 //  Takeoff: runway roll with class acceleration, rotation at Vr minus the
-//  headwind component, initial climb on runway heading to 400 ft AGL.
+//  headwind component (nose up at 3 deg/s, wheels off at ~8 deg), initial
+//  climb on runway heading to 400 ft AGL.
 //  Airborne flight: free integration toward autopilot targets; motion is
 //  along the wind-corrected track at ground speed (weather.applyWind).
-//  Landing: glideslope with 50 ft TCH, flare, touchdown 300-450 m past the
-//  threshold, rollout deceleration profile to a planned exit speed.
+//  Attitude for the picture: pitch = flight-path angle + angle of attack,
+//  bank from the turn rate (coordinated), both rate-limited.
+//  Landing: glideslope with 50 ft TCH, flare (sink easing, nose rising),
+//  touchdown 300-450 m past the threshold, de-rotation, rollout deceleration
+//  profile to a planned exit speed.
 //
 //  Altitude throughout this module is in FEET AGL. Distances in metres.
 //  Speed knots (ground speed on the ground, IAS-ish in the air).
@@ -29,10 +38,16 @@ export const TAXI_ACCEL = 1.2 / KTS_TO_MPS;     // 2.33 kt/s
 export const TAXI_DECEL = 2.5 / KTS_TO_MPS;     // 4.86 kt/s
 export const EMERG_DECEL = 3.0 / KTS_TO_MPS;    // 5.83 kt/s
 const HEADING_DAMP = 100;                       // deg/s ceiling
-const GROUND_DEG_PER_M = 5.5;                  // curvature limit → no pivots when stopped
+const GROUND_DEG_PER_M = 8;                    // curvature limit → no pivots when stopped
+/** Rotation / flare pitch rate, roll rate and the general pitch rate (deg/s). */
+const ROTATE_DEG_S = 3, ROLL_DEG_S = 6, PITCH_DEG_S = 3;
+/** Wheels leave the runway at this pitch (deg); initial-climb attitude; flare attitude at touchdown. */
+const LIFTOFF_PITCH = 8, CLIMB_PITCH = 15, FLARE_PITCH = 5;
 /** Nose stops this far before the hold line node (03 §1.5: stop < 10 m before the line). */
 export const HOLD_BUFFER_M = 7;
 export const PUSHBACK_KT = 3;
+/** Pushback speed while the tug swings the tail round (kt). */
+export const PUSHBACK_TURN_KT = 2;
 /** Turns allowed / phase climb from this AGL (03 §2.2). */
 export const DEP_TURN_FT = 400;
 /** Initial climb rate to 1500 ft AGL (03 §2.2). */
@@ -105,9 +120,49 @@ export function nextStopAt(a: AircraftState): number | null {
   return null;
 }
 
+/** Nose wheel to main gear (m): the model origin is the nose wheel (12 % behind the nose), the main gear sits at
+ *  about half the length (A320 12.6 m, 737-800 15.6 m, 777-300 32 m, A380 30 m). */
+export function wheelbaseM(a: AircraftState): number { return Math.max(2.5, a.perf.lengthMeters * 0.37); }
+
+/**
+ * Body heading after the nose wheel moved `movedM` in direction `moveHdg` (bicycle kinematics): the main gear rolls
+ * only along the body axis, so the heading swings toward the direction of travel at sin(offset) / wheelbase per metre.
+ * A nose wheel rounding a corner takes the tail round after it - the airframe rotates about its main gear, never about
+ * the nose wheel, and a heavy needs a longer run to straighten than a regional. A path leading straight back
+ * (offset near 180 deg) turns the short way as if the nose wheel were at full lock.
+ */
+export function trailBody(a: AircraftState, moveHdg: number, movedM: number, dt: number): void {
+  if (movedM <= 0) return;
+  const d = angleDelta(a.heading, moveHdg);
+  const s = Math.abs(d) > 150 ? 0.5 * (d < 0 ? -1 : 1) : Math.sin(d * Math.PI / 180);
+  const step = Math.min(HEADING_DAMP * dt, GROUND_DEG_PER_M * movedM, Math.abs(s) * (movedM / wheelbaseM(a)) * 180 / Math.PI);
+  a.heading = (a.heading + Math.sign(s) * Math.min(Math.abs(d), step) + 360) % 360;
+}
+
+/** Bank for a coordinated turn at `degS` (deg/s) and `kt`: tan(bank) = V * omega / g. */
+function coordinatedBank(degS: number, kt: number): number {
+  return Math.atan((Math.max(60, kt) * KTS_TO_MPS) * (degS * Math.PI / 180) / 9.81) * 180 / Math.PI;
+}
+/** Angle of attack (deg) for a speed relative to Vapp: ~2 deg fast, ~5 at Vapp, 7 when slow. */
+function aoaDeg(a: AircraftState, kt: number): number {
+  const vapp = a.perf.approachSpeed;
+  return 2 + 5 * Math.min(1, Math.max(0, (1.3 * vapp - kt) / (0.5 * vapp)));
+}
+/** Pitch from vertical speed (ft/s) and ground speed (kt) plus the angle of attack, rate-limited. */
+function settlePitch(a: AircraftState, vsFtS: number, gsKt: number, dt: number, rate = PITCH_DEG_S): void {
+  const fpa = Math.atan2(vsFtS * FT_TO_M, Math.max(30, gsKt) * KTS_TO_MPS) * 180 / Math.PI;
+  a.pitch = approachVal(a.pitch, fpa + aoaDeg(a, a.speed), rate * dt);
+}
+/** Bank from this step's heading change, rate-limited to the roll rate. */
+function settleBank(a: AircraftState, dHdgDeg: number, dt: number): void {
+  const want = dt > 0 ? coordinatedBank(dHdgDeg / dt, a.speed) : 0;
+  a.bank = approachVal(a.bank, want, ROLL_DEG_S * dt);
+}
+
 /**
  * Advance along the path at `targetSpeed` (kt) honouring traffic holds and
- * the next stop point. `reverse` = tail-first (pushback). Returns true at the
+ * the next stop point. `reverse` = tail-first (pushback: the main gear is the
+ * point on the path, the body lies along the tangent). Returns true at the
  * path end.
  */
 function follow(a: AircraftState, dt: number, targetSpeed: number, accel: number, decel: number, reverse = false): boolean {
@@ -134,22 +189,30 @@ function follow(a: AircraftState, dt: number, targetSpeed: number, accel: number
 
   const s = sampleAlong(p.pts, p.cum, a.distAlong);
   a.pos = s.pos;
-  const want = reverse ? (s.heading + 180) % 360 : s.heading;
-  const d = angleDelta(a.heading, want);
-  const maxStep = Math.min(HEADING_DAMP * dt, GROUND_DEG_PER_M * movedM + 0.05);
-  a.heading = (a.heading + Math.sign(d) * Math.min(Math.abs(d), maxStep) + 360) % 360;
+  if (reverse) {
+    const d = angleDelta(a.heading, (s.heading + 180) % 360);
+    const maxStep = Math.min(HEADING_DAMP * dt, GROUND_DEG_PER_M * movedM + 0.05);
+    a.heading = (a.heading + Math.sign(d) * Math.min(Math.abs(d), maxStep) + 360) % 360;
+  } else trailBody(a, s.heading, movedM, dt);
   return atEnd;
+}
+
+/** Heading change the path makes over the next `lookM` metres (deg). */
+function bendAhead(a: AircraftState, lookM: number[]): number {
+  const p = a.path!;
+  const h0 = sampleAlong(p.pts, p.cum, a.distAlong).heading;
+  let bend = 0;
+  for (const look of lookM) {
+    const h = sampleAlong(p.pts, p.cum, Math.min(a.distAlong + look, p.total)).heading;
+    bend = Math.max(bend, Math.abs(angleDelta(h0, h)));
+  }
+  return bend;
 }
 
 /** Progressive taxi speed: straight -> maxTaxiSpeed, bends -> taxiTurnSpeed, into a stand -> creep. */
 function taxiTargetSpeed(a: AircraftState, capKt: number): number {
   const p = a.path!;
-  const h0 = sampleAlong(p.pts, p.cum, a.distAlong).heading;
-  let bend = 0;
-  for (const look of [14, 28, 45]) {
-    const h = sampleAlong(p.pts, p.cum, Math.min(a.distAlong + look, p.total)).heading;
-    bend = Math.max(bend, Math.abs(angleDelta(h0, h)));
-  }
+  const bend = bendAhead(a, [14, 28, 45]);
   const t = Math.min(1, bend / 32);
   const slow = a.perf.taxiTurnSpeed * 0.8;
   let v = a.perf.maxTaxiSpeed + (slow - a.perf.maxTaxiSpeed) * t;
@@ -162,17 +225,24 @@ function taxiTargetSpeed(a: AircraftState, capKt: number): number {
 
 // ── pushback ─────────────────────────────────────────────────────────────────
 function stepPushback(a: AircraftState, dt: number) {
+  a.pitch = 0; a.bank = 0;
   if (a.pushback.stage !== 'pushing' || !a.path) {
     a.speed = approachVal(a.speed, 0, TAXI_DECEL * dt);
     return;
   }
-  const end = follow(a, dt, PUSHBACK_KT, TAXI_ACCEL, TAXI_DECEL, true);
+  // the main gear is on the path (the engine starts it a wheelbase behind the parked nose wheel); the tug takes the
+  // tail round the bend at walking pace and the nose wheel swings wide, a wheelbase ahead of the main gear
+  const bend = bendAhead(a, [6, 12, 20]);
+  const kt = PUSHBACK_KT + (PUSHBACK_TURN_KT - PUSHBACK_KT) * Math.min(1, bend / 25);
+  const end = follow(a, dt, kt, TAXI_ACCEL, TAXI_DECEL, true);
+  a.pos = advance(a.pos, a.heading, wheelbaseM(a));
   a.pushback.pushedM = a.distAlong;
   if (end) { a.speed = 0; }
 }
 
 // ── taxi (path-follow with hold places) ────────────────────────────────────────
 function stepTaxi(a: AircraftState, dt: number, ctx: StepCtx) {
+  a.pitch = 0; a.bank = 0;
   if (!a.path) { a.speed = approachVal(a.speed, 0, TAXI_DECEL * dt); return; }
   const p = a.path;
   const atEnd = follow(a, dt, taxiTargetSpeed(a, ctx.taxiSpeedCapKt(a)), TAXI_ACCEL, TAXI_DECEL);
@@ -212,6 +282,7 @@ function stepTaxi(a: AircraftState, dt: number, ctx: StepCtx) {
 
 // ── lineup: taxi onto the runway and stop aligned ──────────────────────────────
 function stepLineup(a: AircraftState, dt: number, ctx: StepCtx) {
+  a.pitch = 0; a.bank = 0;
   if (!a.path) { a.speed = approachVal(a.speed, 0, TAXI_DECEL * dt); return; }
   const cap = Math.min(a.perf.taxiTurnSpeed, ctx.taxiSpeedCapKt(a));
   const end = follow(a, dt, cap, TAXI_ACCEL, TAXI_DECEL);
@@ -248,8 +319,12 @@ function stepTakeoff(a: AircraftState, dt: number, ctx: StepCtx) {
   const head = ctx.headwindKt(a.targetHeading);
   const vrGround = Math.max(40, a.perf.takeoffRotationSpeed - head);
   const end = follow(a, dt, vrGround + 40, accel, TAXI_DECEL);
-  if (a.speed >= vrGround || end) {
-    // Rotation / liftoff
+  a.bank = 0;
+  // Rotation: from Vr the nose comes up at ~3 deg/s while the roll continues; the wheels leave at ~8 deg, 2-3 s and
+  // some 10 kt later (Vlof).
+  if (a.speed >= vrGround) a.pitch = Math.min(LIFTOFF_PITCH, a.pitch + ROTATE_DEG_S * dt); else a.pitch = 0;
+  if (a.pitch >= LIFTOFF_PITCH - 1e-6 || end) {
+    // Liftoff
     a.path = null; a.distAlong = 0;
     a.altitude = 5;
     a.targetHeading = a.heading;
@@ -267,6 +342,9 @@ function stepInitialClimb(a: AircraftState, dt: number, ctx: StepCtx) {
   a.altitude += (Math.min(INITIAL_CLIMB_FPM, a.perf.maxClimbRate * 1.2) / 60) * dt * climbFactor(a);
   const w = ctx.wind(a.heading, a.speed);
   a.pos = advance(a.pos, w.trackTrue, w.gsKt * KTS_TO_MPS * dt);
+  // pitch on up to the initial-climb attitude, wings level
+  a.pitch = approachVal(a.pitch, Math.min(CLIMB_PITCH, 1.5 * LIFTOFF_PITCH + 1), ROTATE_DEG_S * dt);
+  a.bank = approachVal(a.bank, 0, ROLL_DEG_S * dt);
 }
 
 function climbFactor(a: AircraftState): number {
@@ -298,13 +376,17 @@ export function stepAirborneFree(a: AircraftState, dt: number, ctx: StepCtx) {
   let turnDh = dh;
   if (a.turnDir === 'R') turnDh = (a.targetHeading - a.heading + 360) % 360;
   else if (a.turnDir === 'L') turnDh = -(((a.heading - a.targetHeading) + 360) % 360);
-  a.heading = (a.heading + Math.sign(turnDh) * Math.min(Math.abs(turnDh), rate * dt) + 360) % 360;
+  const dHdg = Math.sign(turnDh) * Math.min(Math.abs(turnDh), rate * dt);
+  a.heading = (a.heading + dHdg + 360) % 360;
   if (Math.abs(dh) < 1) a.turnDir = null; // reached target — clear forced direction
 
   const climb = rateUp / 60, desc = rateDn / 60;
+  const alt0 = a.altitude;
   a.altitude = approachVal(a.altitude, a.targetAltitude, (a.targetAltitude >= a.altitude ? climb : desc) * dt);
   const w = ctx.wind(a.heading, a.speed);
   a.pos = advance(a.pos, w.trackTrue, w.gsKt * KTS_TO_MPS * dt);
+  settleBank(a, dHdg, dt);
+  settlePitch(a, dt > 0 ? (a.altitude - alt0) / dt : 0, w.gsKt, dt);
 
   // Phase relabel: go_around is sticky until the controller re-vectors; ILS capture pins `approach`.
   if (a.phase === 'go_around' || a.phase === 'departed') return;
@@ -337,18 +419,24 @@ function stepLanding(a: AircraftState, dt: number, ctx: StepCtx) {
   const s = sampleAlong(p.pts, p.cum, a.distAlong);
   a.pos = s.pos;
   const d = angleDelta(a.heading, s.heading);
-  a.heading = (a.heading + Math.sign(d) * Math.min(Math.abs(d), 12 * dt) + 360) % 360;
+  const dHdg = Math.sign(d) * Math.min(Math.abs(d), 12 * dt);
+  a.heading = (a.heading + dHdg + 360) % 360;
+  settleBank(a, dHdg, dt);
 
   // Glideslope: 3 deg to a 50 ft TCH; touchdown zone 300-450 m past the threshold.
   const remain = a.thresholdDist - a.distAlong;            // + before threshold, - past it
   const tdzM = TCH_FT / (Math.tan(3 * Math.PI / 180) * FT_PER_M);
   const gsAlt = Math.max(0, (remain + tdzM) * Math.tan(3 * Math.PI / 180) * FT_PER_M);
+  const alt0 = a.altitude;
   if (a.altitude > TCH_FT || remain > 0) {
     // Follow the slope; if still above it (captured within the tolerance) converge down at the descent rate, never below.
     a.altitude = a.altitude > gsAlt + 1 ? Math.max(gsAlt, a.altitude - (a.perf.maxDescentRate * 1.4 / 60) * dt) : gsAlt;
+    settlePitch(a, dt > 0 ? (a.altitude - alt0) / dt : 0, gs, dt);
   } else {
-    // Flare from the 50 ft TCH: ~550 fpm sink -> touchdown 300-450 m past the threshold at jet approach speeds (03 §2.5).
-    a.altitude = Math.max(0, a.altitude - (550 / 60) * dt);
+    // Flare from the 50 ft TCH: the sink eases from ~700 to ~400 fpm as the nose comes up to ~5 deg -> touchdown
+    // 300-450 m past the threshold at jet approach speeds (03 §2.5).
+    a.altitude = Math.max(0, a.altitude - ((400 + 300 * Math.min(1, a.altitude / TCH_FT)) / 60) * dt);
+    a.pitch = approachVal(a.pitch, FLARE_PITCH, ROTATE_DEG_S * dt);
   }
   if (a.altitude <= 0.01 && remain <= 0) {
     a.altitude = 0;
@@ -386,9 +474,9 @@ function stepRollout(a: AircraftState, dt: number, ctx: StepCtx) {
   a.distAlong = Math.min(p.total, a.distAlong + movedM);
   const s = sampleAlong(p.pts, p.cum, a.distAlong);
   a.pos = s.pos;
-  const d = angleDelta(a.heading, s.heading);
-  const maxStep = Math.min(HEADING_DAMP * dt, GROUND_DEG_PER_M * movedM + 0.05);
-  a.heading = (a.heading + Math.sign(d) * Math.min(Math.abs(d), maxStep) + 360) % 360;
+  trailBody(a, s.heading, movedM, dt);
+  // de-rotation: the nose wheel comes down over the first seconds of the roll
+  a.pitch = approachVal(a.pitch, 0, 2 * dt); a.bank = approachVal(a.bank, 0, ROLL_DEG_S * dt);
 }
 
 // ── trail ──────────────────────────────────────────────────────────────────────
