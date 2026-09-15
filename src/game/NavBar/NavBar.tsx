@@ -166,7 +166,20 @@ function RateControl() {
           <Icon name="zap" size={16} />
         </button>
       </Tooltip>
+      <AutopilotButton />
     </div>
+  )
+}
+
+/** Autopilot: the AI works every position, including yours — the game plays itself (Settings → AI assist has the
+ *  per-position switches; this is the one-click "watch it run" form). */
+function AutopilotButton() {
+  const all = useSim((s) => s.settings.autoApproach && s.settings.autoTower && s.settings.autoGround)
+  const toggle = () => sim.updateSettings(all ? { autoApproach: false, autoTower: false, autoGround: false, autoMode: false } : { autoApproach: true, autoTower: true, autoGround: true, autoMode: true })
+  return (
+    <Tooltip content={all ? 'Autopilot on — the AI is working every position. Click to take over.' : 'Autopilot — let the AI work every position (watch mode)'} placement="bottom">
+      <IconButton size={36} variant="ghost" label={all ? 'Autopilot on' : 'Autopilot'} icon={<Icon name="sparkles" size={16} />} active={all} accentIcon={all} aria-pressed={all} onClick={toggle} testId="nav-autopilot" data-state={all ? 'on' : 'off'} />
+    </Tooltip>
   )
 }
 
