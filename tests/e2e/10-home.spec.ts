@@ -11,6 +11,7 @@
 */
 import { test, expect, LS_KEYS, readLocalStorage, readLocalStorageJson, seedSettings } from './fixtures/test';
 import { RUNWAY_MANIFEST } from '@/lib/runwayManifest';
+import { preferredEnds } from '@/lib/sim/weather';
 import type { WeightClass } from '@/lib/sim/aircraftDB';
 import type { Settings } from '@/components/atc/simStore';
 
@@ -30,6 +31,12 @@ const AIRPORTS = [
   { icao: 'YSSY', name: 'Kingsford Smith', city: 'Sydney', wind: { dir: 160, kts: 10 } },
 ] as const;
 const WEIGHTS: WeightClass[] = ['L', 'M', 'H', 'S'];
+
+/** The ends on by default: the family in use for the field's prevailing wind (src/app/page.tsx initialCfg). */
+function defaultEnds(icao: string): string[] {
+  const a = AIRPORTS.find((x) => x.icao === icao)!;
+  return preferredEnds(RUNWAY_MANIFEST[icao].flatMap((r) => r.ends), a.wind.dir, a.wind.kts);
+}
 
 /** src/app/page.tsx defaultWeights (05 §4.1 H3). */
 function defaultWeights(lengthFt: number): WeightClass[] {
@@ -101,13 +108,15 @@ test.describe('home: airport grid and detail', () => {
       await expect(row).toHaveAttribute('data-ref', p.ref);
       await expect(row).toHaveAttribute('data-active', 'true');
       for (const e of p.ends) {
-        await expect(home.runwayEnd(e.name)).toHaveAttribute('aria-pressed', 'true');
+        // the into-wind end of each runway is on (westerlies: 27L / 27R), the reciprocal off
+        const on = defaultEnds('EGLL').includes(e.name);
+        await expect(home.runwayEnd(e.name)).toHaveAttribute('aria-pressed', on ? 'true' : 'false');
         expect(await home.weightsOn(e.name)).toEqual(defaultWeights(p.lengthFt));
-        for (const w of WEIGHTS) await expect(home.weight(e.name, w)).toBeEnabled();
+        for (const w of WEIGHTS) if (on) await expect(home.weight(e.name, w)).toBeEnabled(); else await expect(home.weight(e.name, w)).toBeDisabled();
       }
     }
-    expect(await home.activeEnds()).toEqual(endsOf('EGLL'));
-    await expect(home.activeCount()).toContainText(String(endsOf('EGLL').length));
+    expect((await home.activeEnds()).sort()).toEqual(defaultEnds('EGLL').sort());
+    await expect(home.activeCount()).toContainText(String(defaultEnds('EGLL').length));
 
     // shift panel defaults: tower, normal (settings default), empty seed, sound on, voice off
     await expect(home.positionTab('tower')).toHaveAttribute('aria-pressed', 'true');
@@ -135,14 +144,15 @@ test.describe('home: airport grid and detail', () => {
       const pairs = RUNWAY_MANIFEST[a.icao];
       await expect(home.runwayRows()).toHaveCount(pairs.length);
       await expect(home.runwayEnds()).toHaveCount(pairs.length * 2);
+      const on = defaultEnds(a.icao);
       for (const p of pairs) {
-        await expect(home.runwayRow(sanitiseRef(p.ref))).toHaveAttribute('data-active', 'true');
+        await expect(home.runwayRow(sanitiseRef(p.ref))).toHaveAttribute('data-active', p.ends.some((e) => on.includes(e.name)) ? 'true' : 'false');
         for (const e of p.ends) {
-          await expect(home.runwayEnd(e.name)).toHaveAttribute('aria-pressed', 'true');
+          await expect(home.runwayEnd(e.name)).toHaveAttribute('aria-pressed', on.includes(e.name) ? 'true' : 'false');
           expect(await home.weightsOn(e.name), `${a.icao} ${e.name} (${p.lengthFt} ft)`).toEqual(defaultWeights(p.lengthFt));
         }
       }
-      await expect(home.activeCount()).toContainText(String(pairs.length * 2));
+      await expect(home.activeCount()).toContainText(String(on.length));
       await expect(home.windDir()).toHaveValue(String(a.wind.dir).padStart(3, '0'));
       await expect(home.windKts()).toHaveValue(String(a.wind.kts));
       await home.changeAirport().click();
@@ -153,7 +163,7 @@ test.describe('home: airport grid and detail', () => {
   test('H4 change airport returns to the grid and resets the runway config @full', async ({ home }) => {
     await home.goto();
     await home.pickAirport('EGLL');
-    await home.toggleEnd('09L', false);
+    await home.toggleEnd('27L', false);
     await home.toggleWeight('27R', 'S', false);
     await home.pickPosition('approach');
     await home.changeAirport().click();
@@ -170,7 +180,7 @@ test.describe('home: airport grid and detail', () => {
     // the detail is keyed by airport: coming back to EGLL starts from the defaults again
     await home.changeAirport().click();
     await home.pickAirport('EGLL');
-    await expect(home.runwayEnd('09L')).toHaveAttribute('aria-pressed', 'true');
+    await expect(home.runwayEnd('27L')).toHaveAttribute('aria-pressed', 'true');
     await expect(home.weight('27R', 'S')).toHaveAttribute('aria-pressed', 'true');
     await expect(home.positionTab('tower')).toHaveAttribute('aria-pressed', 'true');
   });
@@ -181,6 +191,7 @@ test.describe('home: runway configuration', () => {
     await home.goto();
     await home.pickAirport('EGLL');
     const all = endsOf('EGLL');
+    for (const end of all) await home.toggleEnd(end, true);   // start from every end on
     for (const end of all) {
       await home.toggleEnd(end);
       await expect(home.runwayEnd(end)).toHaveAttribute('aria-pressed', 'false');
@@ -231,6 +242,7 @@ test.describe('home: runway configuration', () => {
   test('H7 every weight class toggles per end; other chips unchanged; order is kept @full', async ({ home }) => {
     await home.goto();
     await home.pickAirport('EGLL');
+    for (const end of endsOf('EGLL')) await home.toggleEnd(end, true);   // chips are enabled on active ends only
     for (const end of endsOf('EGLL')) {
       for (const w of WEIGHTS) {
         await home.toggleWeight(end, w);
@@ -497,7 +509,7 @@ test.describe('home: start and boot', () => {
   });
 
   for (const a of AIRPORTS) {
-    test(`H10 ${a.icao} starts from the home page and boots with every manifest end active @full`, async ({ home, game, sim, page }) => {
+    test(`H10 ${a.icao} starts from the home page and boots with the into-wind ends active @full`, async ({ home, game, sim, page }) => {
       await home.goto({ testMode: { spawn: 'default', seed: 7 } });
       await home.pickAirport(a.icao);
       await expect(home.detailTitle()).toHaveText(a.name);
@@ -508,20 +520,22 @@ test.describe('home: start and boot', () => {
       expect(snap.icao).toBe(a.icao);
       expect(snap.stats.total).toBeGreaterThan(0);
       expect(snap.stats.dep + snap.stats.arr).toBe(snap.stats.total);
-      // every end the home page offers exists in the engine and is active; an OSM runway the manifest leaves out
-      // (KBOS 15L/33R, 2,500 ft) is not in the config and therefore inactive
+      // every end the home page offers exists in the engine; the ends on by default (the family in use for the
+      // prevailing wind) are active, the rest inactive with no weight config - as is an OSM runway the manifest leaves
+      // out (KBOS 15L/33R, 2,500 ft)
       const rws = await sim.runways();
       const names = rws.map((r) => r.name);
-      const offered = endsOf(a.icao);
+      const offered = endsOf(a.icao), on = defaultEnds(a.icao);
+      expect(on.length).toBeGreaterThan(0);
       for (const end of offered) expect(names, `${a.icao}: home end ${end} unknown to the engine`).toContain(end);
-      for (const r of rws) expect(r.active, `${a.icao} ${r.name} active`).toBe(offered.includes(r.name));
-      // the page's default weight classes (by runway length) are what the engine allows on each offered end
+      for (const r of rws) expect(r.active, `${a.icao} ${r.name} active`).toBe(on.includes(r.name));
+      // the page's default weight classes (by runway length) are what the engine allows on each active end
       for (const p of RUNWAY_MANIFEST[a.icao]) for (const e of p.ends) {
-        expect(rws.find((r) => r.name === e.name)?.weights, `${a.icao} ${e.name} weights`).toEqual(defaultWeights(p.lengthFt));
+        if (on.includes(e.name)) expect(rws.find((r) => r.name === e.name)?.weights, `${a.icao} ${e.name} weights`).toEqual(defaultWeights(p.lengthFt));
       }
-      for (const r of rws.filter((r) => !offered.includes(r.name))) expect(r.weights, `${a.icao} ${r.name} (not offered)`).toBeNull();
+      for (const r of rws.filter((r) => !on.includes(r.name))) expect(r.weights, `${a.icao} ${r.name} (not active)`).toBeNull();
       const st = await sim.storeState();
-      expect(st.lastConfig?.ends?.slice().sort()).toEqual(endsOf(a.icao).slice().sort());
+      expect(st.lastConfig?.ends?.slice().sort()).toEqual(on.slice().sort());
       expect(await readLocalStorage(page, LS_KEYS.startConfig)).toBeNull();
       // the shift is live in the singleton: the home page now offers "Resume shift"
       await sim.advance(2);
@@ -532,7 +546,7 @@ test.describe('home: start and boot', () => {
   test('resume shift: leaving keeps the engine; "Resume shift" / "Back to shift" return to the same session @full', async ({ home, game, sim, settings, page }) => {
     await home.goto({ testMode: { spawn: 'none', seed: 7 } });
     await home.pickAirport('EGLL');
-    await home.toggleEnd('09L', false);
+    await home.toggleEnd('09R', true);
     await home.start();
     await game.waitReady();
     await sim.advance(30);

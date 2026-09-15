@@ -461,15 +461,18 @@ function stepRollout(a: AircraftState, dt: number, ctx: StepCtx) {
   const exitAt = p.holdAt ?? p.total;
   const exitSpd = a.cmdIas != null && a.cmdIas < 60 ? a.cmdIas : 0; // engine stores the planned exit speed in cmdIas during rollout
   const remain = Math.max(0, exitAt - a.distAlong);
-  // Highest speed we may still carry here and reach exitSpd at the exit with `decel`.
-  const vAllowed = Math.sqrt(Math.max(0, (exitSpd * KTS_TO_MPS) ** 2 + 2 * decel * KTS_TO_MPS * remain)) / KTS_TO_MPS;
+  // Firmer braking (up to 1.5x) when the planned exit needs it - a short runway or a fast touchdown - never gentler.
+  const needMps2 = remain > 1 ? Math.max(0, ((a.speed * KTS_TO_MPS) ** 2 - (exitSpd * KTS_TO_MPS) ** 2) / (2 * remain)) : 0;
+  const decelUse = Math.min(decel * 1.5, Math.max(decel, needMps2 / KTS_TO_MPS));
+  // Highest speed we may still carry here and reach exitSpd at the exit with `decelUse`.
+  const vAllowed = Math.sqrt(Math.max(0, (exitSpd * KTS_TO_MPS) ** 2 + 2 * decelUse * KTS_TO_MPS * remain)) / KTS_TO_MPS;
   let tgt = Math.min(a.speed, vAllowed);
   // On the exit path (kind 'taxi') the aircraft taxis at turn speed to the end - also when it left the runway from a
   // standstill (cancelled line-up / rejected takeoff), where a pure deceleration profile would never move it.
   if (p.kind === 'taxi') tgt = Math.min(vAllowed, Math.max(a.speed, a.perf.taxiTurnSpeed));
   a.targetSpeed = tgt;
-  a.speed = approachVal(a.speed, tgt, (tgt > a.speed ? TAXI_ACCEL : decel) * dt);
-  if (a.trafficHold) a.speed = approachVal(a.speed, 0, decel * dt);
+  a.speed = approachVal(a.speed, tgt, (tgt > a.speed ? TAXI_ACCEL : decelUse) * dt);
+  if (a.trafficHold) a.speed = approachVal(a.speed, 0, decelUse * dt);
   const movedM = a.speed * KTS_TO_MPS * dt;
   a.distAlong = Math.min(p.total, a.distAlong + movedM);
   const s = sampleAlong(p.pts, p.cum, a.distAlong);

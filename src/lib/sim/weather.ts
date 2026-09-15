@@ -92,6 +92,15 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
  *   headwind - 0.25|crosswind| - (tailwind > 5 ? 40 : 0) - (tailwind > 10 ? 1e6 : 0)
  *   + noisePref + calmPref (+50 when wind < 5 kt and end is the preferred calm config) + hysteresis (+20 current)
  */
+/** Runway ends a controller would put in use for a wind: the best-scoring end and its parallels (within 15 deg) -
+ *  the home page's default configuration, so a field with six ends does not start with opposite directions active. */
+export function preferredEnds(ends: RunwayEnd[], windDirTrue: number, windKt: number): string[] {
+  if (!ends.length) return [];
+  const scored = ends.map(e => ({ end: e, score: runwayScore(windDirTrue, windKt, 0, e) })).sort((a, b) => b.score - a.score);
+  const best = scored[0];
+  return scored.filter(s => Math.abs(signedDelta(s.end.hdg, best.end.hdg)) <= 15).map(s => s.end.name);
+}
+
 export function runwayScore(windDirTrue: number, windKt: number, gustKt: number, end: RunwayEnd, opts: { current?: boolean; calmPreferred?: boolean; noisePref?: number } = {}): number {
   const w = Math.max(windKt, gustKt);
   const { headKt, crossKt } = windComponents(windDirTrue, w, end.hdg);

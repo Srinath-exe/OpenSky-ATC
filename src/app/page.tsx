@@ -7,6 +7,7 @@ import {
 } from '@/design';
 import type { WeightClass } from '@/lib/sim/aircraftDB';
 import type { RunwayEnd, RunwayPair } from '@/lib/runwayManifest';
+import { preferredEnds } from '@/lib/sim/weather';
 import { PageFrame, StateMirror } from './_lib/PageFrame';
 import {
   AIRPORTS, AIRPORT_BY_ICAO, runwaysOf, longestRunwayFt, satelliteUrl, sanitiseRef, windComponents, MAX_TAILWIND_KT, formatFeet, feetToMetres,
@@ -36,7 +37,10 @@ type RunwayCfg = Record<string, EndCfg>; // keyed by end name
 
 function initialCfg(icao: string): RunwayCfg {
   const cfg: RunwayCfg = {};
-  for (const r of runwaysOf(icao)) for (const e of r.ends) cfg[e.name] = { on: true, weights: defaultWeights(r.lengthFt) };
+  // the ends in use for the field's prevailing wind (the rest can be switched on by hand)
+  const meta = AIRPORTS.find((a) => a.icao === icao);
+  const on = new Set(meta ? preferredEnds(runwaysOf(icao).flatMap((r) => r.ends), meta.wind.dir, meta.wind.kts) : []);
+  for (const r of runwaysOf(icao)) for (const e of r.ends) cfg[e.name] = { on: on.size ? on.has(e.name) : true, weights: defaultWeights(r.lengthFt) };
   return cfg;
 }
 
