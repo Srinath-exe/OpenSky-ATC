@@ -787,6 +787,24 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
   }
 
   // ── 4. buildings ──
+  // A multipolygon's outer ring split over member ways that do not meet end to end comes out of the fetch as a few
+  // fragments, each shut by a chord: a curved facade closed into an eyelash, two wings closed into a wedge across the
+  // forecourt. Such a ring has one long edge with nothing running back the other way and little area for that edge
+  // (L^2 > 3 x area); a real thin block (a pier, a hall) always has the opposite side. Aprons are left alone: a
+  // curved apron edge has no single straight opposite side either.
+  const chordClosed = (pts: { x: number; y: number }[]): boolean => {
+    const n = pts.length - 1; if (n < 3) return false;
+    let L = 0, li = 0;
+    for (let i = 0; i < n; i++) { const d = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y); if (d > L) { L = d; li = i; } }
+    if (L < 50 || L * L < 3 * polyArea(pts)) return false;
+    const ux = (pts[li + 1].x - pts[li].x) / L, uy = (pts[li + 1].y - pts[li].y) / L;
+    for (let i = 0; i < n; i++) {
+      if (i === li) continue;
+      const dx = pts[i + 1].x - pts[i].x, dy = pts[i + 1].y - pts[i].y, d = Math.hypot(dx, dy);
+      if (d >= 0.4 * L && (dx * ux + dy * uy) / d < -0.94) return false;   // an opposite side (within 20 deg) at least 40 % as long
+    }
+    return true;
+  };
   const buildings: OsmBuilding[] = [];
   for (const f of features) {
     const aw = aerowayOf(f);
@@ -798,6 +816,7 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
       if (!ring || ring.length < 3) continue;
       const poly = ring.map(c => ({ lng: c[0], lat: c[1] }));
       const pts = poly.map(p => frame.xy(p.lng, p.lat));
+      if (gt === 'MultiPolygon' && aw !== 'apron' && chordClosed(pts)) continue;   // a fragment of a split outer ring shut by a straight chord (KSFO main hall)
       const c = polyCentroid(pts);
       buildings.push({ kind: aw, name: nameOf(f), polygon: poly, centroid: frame.ll(c), areaM2: polyArea(pts), osmId: idOf(f) });
     }
