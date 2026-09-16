@@ -17,15 +17,17 @@ export function applyFades(fades: Fade[], dist: number): void {
 // ── palette (design 01 §1 / the TheTrail reference: muted greens, neutral greys, near-black water, orange accent) ──
 export const PALETTE = {
   bg: 0x0b0b0c,
-  water: new THREE.Color('#10161b'),
-  waterDeep: new THREE.Color('#0b0f13'),
-  vegDark: new THREE.Color('#2a4224'),
-  veg: new THREE.Color('#41703a'),
-  vegLight: new THREE.Color('#6e8b52'),
-  field: new THREE.Color('#4a5740'),
+  water: new THREE.Color('#16303a'),
+  waterDeep: new THREE.Color('#0b171f'),
+  waterShallow: new THREE.Color('#2b5a58'),
+  vegDark: new THREE.Color('#223a1d'),
+  veg: new THREE.Color('#3f7434'),
+  vegLight: new THREE.Color('#7c9e4f'),
+  field: new THREE.Color('#4c7238'),
   urban: new THREE.Color('#4b4d4b'),
   urbanLight: new THREE.Color('#7f817e'),
   bare: new THREE.Color('#6b6558'),
+  scrub: new THREE.Color('#8a7b57'),
   rock: new THREE.Color('#4f4d49'),
   road: new THREE.Color('#d9d9d6'),
   roadMinor: new THREE.Color('#8f9190'),
@@ -65,18 +67,16 @@ const TERRAIN_FRAG = /* glsl */ `
   uniform float uFogNear, uFogFar;
   uniform vec3 uFog;
   uniform vec4 uEdge;        // world extent in three space: minX, minZ, maxX, maxZ
-  uniform vec3 cWater, cWaterDeep, cVegDark, cVeg, cVegLight, cUrban, cUrbanLight, cBare, cRock;
+  uniform vec3 cWater, cWaterDeep, cWaterShallow, cScrub, cVegDark, cVeg, cVegLight, cUrban, cUrbanLight, cBare, cRock;
   uniform float uTime;
   uniform sampler2D uFieldMask;   // 1 inside the levelled airfield: grass between the surfaces, whatever the imagery says
   uniform vec3 cField;
+  uniform sampler2D uGrass;       // tiling detail: r patches, g mown streaks (along +x), b blade grain, a tree crowns
+  uniform vec2 uMow;              // unit vector of the mowing direction (the main runway), world xz
   varying vec2 vUv;
   varying vec3 vWorld;
 
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-  float noise(vec2 p) {
-    vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-    return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
-  }
 
   void main() {
     // normal from the height field (central differences at texture resolution)
@@ -85,31 +85,58 @@ const TERRAIN_FRAG = /* glsl */ `
     float hd = texture2D(uHeight, vUv - vec2(0.0, uTexel.y)).r;
     float hu = texture2D(uHeight, vUv + vec2(0.0, uTexel.y)).r;
     // height field h(east, north); three's z = -north, so a slope rising to the north tilts the normal to +z
-    vec3 n = normalize(vec3((hl - hr) / (2.0 * uMetersPerTexel.x), 1.0, (hu - hd) / (2.0 * uMetersPerTexel.y)));
+    // relief exaggerated x2 so gentle hills still read as shaded slopes from the map's steep viewing angles
+    vec3 n = normalize(vec3((hl - hr) / uMetersPerTexel.x, 1.0, (hu - hd) / uMetersPerTexel.y));
     float slope = 1.0 - n.y;
 
     float night = 1.0 - uDay;
     vec4 land = texture2D(uLand, vUv);
-    float veg = land.r, bright = land.g, water = land.b, grain = land.a;
+    float veg = land.r, bright = land.g, water = land.b, warm = land.a;   // warm: 0.5 neutral, above = tan scrub / soil
     float h = vWorld.y;
     float field = texture2D(uFieldMask, vUv).r;
+
+    // grass detail: one small tiling texture read at three scales (patches of drier grass ~200 m, mown streaks
+    // along the runway ~25 m, blade grain ~6 m) - a handful of texture fetches, no per-fragment noise maths
+    float d = distance(uCam, vWorld);
+    vec2 mowUv = vec2(dot(vWorld.xz, uMow), dot(vWorld.xz, vec2(-uMow.y, uMow.x)));
+    vec3 gM = texture2D(uGrass, vWorld.xz / 210.0).rgb;
+    float gM2 = texture2D(uGrass, mowUv / 730.0 + 0.37).r;       // second, rotated scale hides the tile repeat
+    vec4 gS = texture2D(uGrass, mowUv / 26.0);
+    float gF = texture2D(uGrass, vWorld.xz / 6.0).b;
+    float gPatch = 0.6 * gM.r + 0.4 * gM2;
+    float near = 1.0 - smoothstep(500.0, 2600.0, d);
 
     // land colour: vegetation ramps, urban greys keyed by brightness, bare/rock on steep or high ground
     vec3 vegCol = mix(cVegDark, cVeg, smoothstep(0.15, 0.6, veg));
     vegCol = mix(vegCol, cVegLight, smoothstep(0.55, 0.95, veg) * 0.6);
+    // drier straw-coloured swathes where the cover is thin, dark tree crowns where it is dense
+    vec3 straw = vec3(0.58, 0.54, 0.33);
+    vegCol = mix(vegCol, mix(vegCol, straw, 0.55), smoothstep(0.5, 0.85, gPatch) * (1.0 - smoothstep(0.5, 0.8, veg)) * 0.75);
+    float canopy = gS.a * smoothstep(0.55, 0.9, veg);
+    vegCol *= 1.0 - 0.42 * canopy;
+    vegCol *= 0.92 + 0.16 * gS.g * (1.0 - smoothstep(0.55, 0.9, veg));   // faint field lines in open grassland
+    // unvegetated ground: grey streets and roofs where the imagery is neutral, tan scrub and bare soil where it is warm
     vec3 urbanCol = mix(cUrban, cUrbanLight, smoothstep(0.2, 0.75, bright) * 0.25);
+    vec3 scrubCol = cScrub * (0.75 + 0.5 * bright) * (0.9 + 0.2 * gPatch);
+    scrubCol = mix(scrubCol, vegCol, 0.35 * smoothstep(0.02, 0.12, veg));                 // thin dry grass keeps a green cast
+    urbanCol = mix(urbanCol, scrubCol, smoothstep(0.54, 0.7, warm));
     vec3 col = mix(urbanCol, vegCol, smoothstep(0.08, 0.45, veg));
-    col = mix(col, cField * (0.9 + 0.2 * veg), field * 0.85);
+    // airfield grass: mown in strips along the runway, patchy where it has dried out, uneven in tone
+    vec3 fieldCol = cField * (0.9 + 0.2 * veg);
+    fieldCol = mix(fieldCol, fieldCol * vec3(1.18, 1.1, 0.8), smoothstep(0.45, 0.85, gPatch) * 0.5);
+    fieldCol *= 0.86 + 0.28 * gS.g;
+    fieldCol *= 1.0 - 0.18 * gS.a * step(0.55, gPatch);                 // odd darker clump
+    col = mix(col, fieldCol, field * 0.85);
     col = mix(col, cBare, smoothstep(0.35, 0.7, slope * 2.2) * (1.0 - veg) * 0.7);
     col = mix(col, cRock, smoothstep(320.0, 560.0, h) * 0.35);
-    // fine texture so flats do not read as plastic
-    float detail = noise(vWorld.xz * 0.06) * 0.5 + noise(vWorld.xz * 0.31) * 0.5;
-    col *= 0.95 + 0.07 * detail;
+    // fine texture so flats do not read as plastic: blade grain on grass (fades with distance), coarse mottle elsewhere
+    float grassy = max(field, smoothstep(0.08, 0.45, veg));
+    col *= 1.0 + (gF - 0.5) * 0.3 * grassy * near + (gM.g - 0.5) * 0.12;
 
     // lighting: sun + hemisphere, slopes toward the light lit, away in cool shadow
     float ndl = clamp(dot(n, uLight), 0.0, 1.0);
     float hemi = 0.55 + 0.45 * n.y;
-    vec3 lit = vec3(0.4 * hemi * uHemiI) + uSunColor * (ndl * uSunI);
+    vec3 lit = vec3(0.33 * hemi * uHemiI) + uSunColor * (ndl * uSunI);
     col *= lit;
     // shadow-side tint (cooler)
     col = mix(col, col * vec3(0.85, 0.9, 1.05), (1.0 - ndl) * 0.35 * uDay);
@@ -123,22 +150,35 @@ const TERRAIN_FRAG = /* glsl */ `
     col += vec3(1.0, 0.72, 0.42) * lamp * dot2 * urban * night * 1.4;
     col += vec3(0.32, 0.22, 0.12) * urban * night * 0.16;
 
-    // water: dark, slightly deeper further from shore, faint moving sheen
+    // water: deep teal, paler and greener in the shallows along the shore (the mask read at a coarse mip level is a
+    // cheap distance-to-shore), slow large-scale tone variation (sediment), a wind-ruffled surface from two scrolling
+    // reads of the detail texture bending the normal, sun glitter on the ripples, sky reflection at grazing angles
     vec3 viewDir = normalize(uCam - vWorld);
+    float waterWide = texture2D(uLand, vUv, 3.5).b;
+    float shallow = 1.0 - smoothstep(0.55, 1.0, waterWide);
+    vec2 w1 = texture2D(uGrass, vWorld.xz / 110.0 + vec2(uTime * 0.010, uTime * 0.004)).bg;
+    vec2 w2 = texture2D(uGrass, vWorld.xz / 27.0 - vec2(uTime * 0.018, -uTime * 0.026)).gb;
+    vec2 slopeW = (w1 + w2 - 1.0) * (0.05 + 0.07 * near);
+    vec3 nW = normalize(vec3(slopeW.x, 1.0, slopeW.y));
     vec3 hv = normalize(viewDir + uLight);
-    float spec = pow(clamp(dot(vec3(0.0, 1.0, 0.0), hv), 0.0, 1.0), 180.0);
-    float ripple = noise(vWorld.xz * 0.004 + vec2(uTime * 0.02, 0.0)) * 0.5 + noise(vWorld.xz * 0.015 - vec2(0.0, uTime * 0.03)) * 0.5;
-    vec3 waterCol = (mix(cWater, cWaterDeep, 0.5 + 0.5 * ripple) + ripple * 0.006) * (0.35 + 0.65 * uDay) + uSunColor * spec * (0.25 + 0.2 * night);
+    float ndh = clamp(dot(nW, hv), 0.0, 1.0);
+    float spec = pow(ndh, 220.0), sheen = pow(ndh, 10.0);
+    float murk = texture2D(uGrass, mowUv / 900.0 + 0.61).r;
+    vec3 waterCol = mix(cWaterDeep, cWater, 0.3 + 0.7 * murk);
+    waterCol = mix(waterCol, cWaterShallow, shallow * (0.5 + 0.3 * murk));
+    waterCol *= 1.0 + (w1.x + w2.y - 1.0) * 0.12;
+    waterCol *= 0.3 + 0.7 * uDay;
+    waterCol += uSunColor * (spec * 0.3 + sheen * 0.012) * uSunI * (0.6 + 0.4 * uDay);
     // the water reflects the sky at grazing angles (Fresnel): dark from above, a pale sheet toward the horizon
     float fres = pow(1.0 - clamp(viewDir.y, 0.0, 1.0), 3.0);
-    waterCol = mix(waterCol, uFog, (0.08 + 0.55 * fres) * (0.3 + 0.7 * uDay));
-    // soft shoreline: the mask is bilinear so the edge blends over ~1 texel
+    waterCol = mix(waterCol, uFog, 0.5 * fres * (0.3 + 0.7 * uDay));
+    // soft shoreline: the mask is bilinear so the edge blends over ~1 texel; a pale sandy rim on the land side
     float shore = smoothstep(0.2, 0.5, water) * (1.0 - smoothstep(0.5, 0.8, water));
+    col = mix(col, mix(col, vec3(0.55, 0.52, 0.42), 0.35), smoothstep(0.0, 0.35, water) * (1.0 - field) * 0.8);
     col = mix(col, waterCol, smoothstep(0.35, 0.65, water));
-    col += shore * vec3(0.05, 0.06, 0.06);   // faint pale rim where land meets water
+    col += shore * vec3(0.05, 0.06, 0.06);
 
     // distance fog to the page background + a soft fade at the world's edge (no hard rectangle)
-    float d = distance(uCam, vWorld);
     float fog = smoothstep(uFogNear, uFogFar, d);
     vec2 e = min(vWorld.xz - uEdge.xy, uEdge.zw - vWorld.xz);
     float edge = 1.0 - smoothstep(600.0, 3200.0, min(e.x, e.y));
@@ -148,7 +188,48 @@ const TERRAIN_FRAG = /* glsl */ `
 
 export interface TerrainHandle { mesh: THREE.Mesh; uniforms: Record<string, THREE.IUniform> }
 
-export function buildTerrain(world: World, segments = 512): TerrainHandle {
+/**
+ * Tiling grass detail (256 px, built once per page): r = gPatch noise (drier / greener swathes), g = streaks stretched
+ * along +x (mowing lines), b = fine blade grain, a = soft round clumps (tree crowns). Periodic value noise, so the
+ * tile wraps without a seam; the terrain shader reads it at three world scales.
+ */
+let grassTex: THREE.CanvasTexture | null = null;
+function grassTexture(size = 256): THREE.CanvasTexture {
+  if (grassTex) return grassTex;
+  let seed = 4242;
+  const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  // periodic value noise with a px x py lattice, smoothstep-interpolated
+  const lattice = (px: number, py: number) => { const g = new Float32Array(px * py); for (let i = 0; i < g.length; i++) g[i] = rnd(); return g; };
+  const sample = (g: Float32Array, px: number, py: number, x: number, y: number) => {
+    const fx = x * px, fy = y * py; const ix = Math.floor(fx), iy = Math.floor(fy);
+    let tx = fx - ix, ty = fy - iy; tx = tx * tx * (3 - 2 * tx); ty = ty * ty * (3 - 2 * ty);
+    const at = (i: number, j: number) => g[((j % py) + py) % py * px + ((i % px) + px) % px];
+    return (at(ix, iy) * (1 - tx) + at(ix + 1, iy) * tx) * (1 - ty) + (at(ix, iy + 1) * (1 - tx) + at(ix + 1, iy + 1) * tx) * ty;
+  };
+  const p4 = lattice(4, 4), p8 = lattice(8, 8), p16 = lattice(16, 16);
+  const s1 = lattice(48, 3), s2 = lattice(96, 7);
+  const f64 = lattice(64, 64), f128 = lattice(128, 128);
+  const c12 = lattice(12, 12), c24 = lattice(24, 24);
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const ctx = c.getContext('2d')!; const img = ctx.createImageData(size, size);
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v * 255)));
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const u = x / size, v = y / size, i = (y * size + x) * 4;
+    const gPatch = sample(p4, 4, 4, u, v) * 0.5 + sample(p8, 8, 8, u, v) * 0.3 + sample(p16, 16, 16, u, v) * 0.2;
+    const streak = sample(s1, 48, 3, u, v) * 0.6 + sample(s2, 96, 7, u, v) * 0.4;
+    const grain = sample(f64, 64, 64, u, v) * 0.45 + sample(f128, 128, 128, u, v) * 0.35 + rnd() * 0.2;
+    const cl = sample(c12, 12, 12, u, v) * 0.6 + sample(c24, 24, 24, u, v) * 0.4;
+    const clump = Math.max(0, Math.min(1, (cl - 0.56) / 0.14));
+    img.data[i] = clamp(gPatch); img.data[i + 1] = clamp(streak); img.data[i + 2] = clamp(grain); img.data[i + 3] = clamp(clump);
+  }
+  ctx.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; t.colorSpace = THREE.NoColorSpace;
+  t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter; t.premultiplyAlpha = false;
+  grassTex = t; return t;
+}
+
+/** @param mowDeg direction the airfield grass is mown in (the main runway's true heading), degrees. */
+export function buildTerrain(world: World, segments = 512, mowDeg = 0): TerrainHandle {
   const { extent } = world;
   const w = extent.maxX - extent.minX, hgt = extent.maxY - extent.minY;
   const geo = new THREE.PlaneGeometry(w, hgt, segments, segments);
@@ -166,7 +247,8 @@ export function buildTerrain(world: World, segments = 512): TerrainHandle {
     uEdge: { value: new THREE.Vector4(extent.minX, -extent.maxY, extent.maxX, -extent.minY) },
     uTime: { value: 0 },
     uFieldMask: { value: world.fieldTex }, cField: { value: PALETTE.field },
-    cWater: { value: PALETTE.water }, cWaterDeep: { value: PALETTE.waterDeep }, cVegDark: { value: PALETTE.vegDark }, cVeg: { value: PALETTE.veg },
+    uGrass: { value: grassTexture() }, uMow: { value: new THREE.Vector2(Math.sin(mowDeg * Math.PI / 180), -Math.cos(mowDeg * Math.PI / 180)) },
+    cWater: { value: PALETTE.water }, cWaterDeep: { value: PALETTE.waterDeep }, cWaterShallow: { value: PALETTE.waterShallow }, cScrub: { value: PALETTE.scrub }, cVegDark: { value: PALETTE.vegDark }, cVeg: { value: PALETTE.veg },
     cVegLight: { value: PALETTE.vegLight }, cUrban: { value: PALETTE.urban }, cUrbanLight: { value: PALETTE.urbanLight }, cBare: { value: PALETTE.bare }, cRock: { value: PALETTE.rock },
   };
   const mat = new THREE.ShaderMaterial({ uniforms, vertexShader: TERRAIN_VERT, fragmentShader: TERRAIN_FRAG });

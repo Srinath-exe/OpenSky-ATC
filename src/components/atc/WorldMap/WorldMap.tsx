@@ -35,7 +35,7 @@ const FT = 0.3048;
 const CLOUD_TINT = new THREE.Color('#d8dbe0');
 const UP = new THREE.Vector3(0, 1, 0);
 const GRADE = {
-  uniforms: { tDiffuse: { value: null }, uVignette: { value: 0.55 }, uSat: { value: 0.82 }, uLift: { value: 0.0 } },
+  uniforms: { tDiffuse: { value: null }, uVignette: { value: 0.55 }, uSat: { value: 0.96 }, uLift: { value: 0.0 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: `
     uniform sampler2D tDiffuse; uniform float uVignette, uSat, uLift; varying vec2 vUv;
@@ -228,7 +228,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       world = w;
       const field = [...e.air.nodes.values()].map(nd => w.toLocal(nd.lng, nd.lat));
       w.flatten(field, 120);
-      const t = buildTerrain(w, preset.terrainSegments); terrainUniforms = t.uniforms; terrainMesh = t.mesh; scene.add(t.mesh);
+      const t = buildTerrain(w, preset.terrainSegments, e.air.runways[0]?.ends[0]?.trueHdg ?? 0); terrainUniforms = t.uniforms; terrainMesh = t.mesh; scene.add(t.mesh);
       w.landTex.anisotropy = Math.min(preset.anisotropy, renderer.capabilities.getMaxAnisotropy());
       roads = buildRoads(w, fades, { step: preset.roadStep, minor: preset.minorRoads }); scene.add(roads);
       const bl = buildBuildings(w, e.air, preset.buildings); buildingMat = bl.material; buildings = bl; scene.add(bl.mesh); scene.add(bl.shadows); bl.shadows.visible = preset.buildingShadows;
@@ -250,7 +250,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       adaptive.setRange(Math.min(window.devicePixelRatio || 1, next.dprMax), Math.min(window.devicePixelRatio || 1, next.dprMin)); retarget(); applyDpr();
       if (world && terrainMesh && next.terrainSegments !== prev.terrainSegments) {
         scene.remove(terrainMesh); terrainMesh.geometry.dispose(); (terrainMesh.material as THREE.Material).dispose();
-        const t = buildTerrain(world, next.terrainSegments); terrainUniforms = t.uniforms; terrainMesh = t.mesh; scene.add(t.mesh);
+        const t = buildTerrain(world, next.terrainSegments, e.air.runways[0]?.ends[0]?.trueHdg ?? 0); terrainUniforms = t.uniforms; terrainMesh = t.mesh; scene.add(t.mesh);
       }
       if (world) world.landTex.anisotropy = Math.min(next.anisotropy, renderer.capabilities.getMaxAnisotropy());
       if (world && buildings && (next.buildings !== prev.buildings || next.buildingShadows !== prev.buildingShadows)) {

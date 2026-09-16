@@ -2,7 +2,7 @@
 """
 Bake a procedural "world" for the 3D airport map (src/components/atc/WorldMap):
   public/world/<ICAO>/height.png   heightmap, 16-bit value split over R/G bytes (h = hMin + v * (hMax-hMin)/65535)
-  public/world/<ICAO>/land.png     RGBA land data: R = vegetation 0..255, G = brightness 0..255, B = water 0..255 (feathered), A = 255
+  public/world/<ICAO>/land.png     RGBA land data: R = vegetation 0..255, G = brightness 0..255, B = water 0..255 (feathered), A = warmth (red minus blue, 128 neutral: tan scrub / bare soil above, grey urban / rock below)
   public/world/<ICAO>/vectors.json roads (by class), rail, water polygons, buildings near the field — lng/lat polylines
   public/world/<ICAO>/meta.json    bbox, grid size, elevation range, centre
 
@@ -10,7 +10,7 @@ Sources (all free / no key): AWS terrain tiles (Mapzen terrarium, SRTM/Copernicu
 (public/maps/satellite/<ICAO>_wide.jpg) used ONLY as a land-cover classifier, OpenStreetMap via Overpass.
 The renderer never shows the photo: every pixel is shaded from the height + land values.
 
-Usage: python3 scripts/bake_world.py KSFO [--grid 1024]
+Usage: python3 scripts/bake_world.py KSFO [--grid 1024] [--land-only]
        then python3 scripts/pack_world.py KSFO   (the .webp the game actually downloads; bump WORLD_ASSET_VERSION)
 """
 import io, json, math, sys, time, os
@@ -108,7 +108,8 @@ def land_from_imagery(icao, bbox, grid, height):
     # tidy the mask: close small gaps, drop specks
     wm = Image.fromarray((water * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.MinFilter(5))
     water = np.asarray(wm) > 127
-    return exg, bright, water
+    warm = np.clip((r - b) * 4 + 0.5, 0.2, 1)                                # dry scrub and soil read warm, streets and roofs grey
+    return exg, bright, water, warm
 
 def rasterize_polys(polys, bbox, grid):
     minlng, minlat, maxlng, maxlat = bbox
@@ -153,7 +154,12 @@ def main():
     lgrid = grid * 2   # land detail at ~16 m; the height field stays at `grid`
     from scipy.ndimage import zoom as _zoom
     height_l = _zoom(height, 2, order=1)
-    veg, bright, water = land_from_imagery(icao, bbox, lgrid, height_l)
+    veg, bright, water, warm = land_from_imagery(icao, bbox, lgrid, height_l)
+    if '--land-only' in sys.argv:   # re-classify the imagery only (no Overpass): land.png from the existing height.png
+        water_f = gaussian_filter(water.astype(np.float32), 1.0)
+        land = np.stack([veg * 255, bright * 255, water_f * 255, warm * 255], -1).astype(np.uint8)
+        Image.fromarray(land, 'RGBA').save(os.path.join(out, 'land.png'), optimize=True)
+        print('land.png rewritten (veg', round(float(veg.mean()), 2), 'warm', round(float(warm.mean()), 2), ')'); return
 
     print('OSM water / roads / rail / buildings …')
     bb = f'{minlat},{minlng},{maxlat},{maxlng}'
@@ -209,7 +215,7 @@ def main():
     hrgb = np.stack([h16 >> 8, h16 & 255, np.zeros_like(h16)], -1).astype(np.uint8)
     Image.fromarray(hrgb, 'RGB').save(os.path.join(out, 'height.png'), optimize=True)
     water_f = gaussian_filter(water.astype(np.float32), 1.0)   # feathered shoreline
-    land = np.stack([veg * 255, bright * 255, water_f * 255, np.full((lgrid, lgrid), 255, np.float32)], -1).astype(np.uint8)
+    land = np.stack([veg * 255, bright * 255, water_f * 255, warm * 255], -1).astype(np.uint8)
     Image.fromarray(land, 'RGBA').save(os.path.join(out, 'land.png'), optimize=True)
     json.dump({'roads': roads, 'buildings': buildings}, open(os.path.join(out, 'vectors.json'), 'w'), separators=(',', ':'))
     json.dump({'icao': icao, 'bbox': {'minLng': minlng, 'minLat': minlat, 'maxLng': maxlng, 'maxLat': maxlat}, 'grid': grid, 'landGrid': lgrid,

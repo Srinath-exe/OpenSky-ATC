@@ -7,7 +7,7 @@ export const WORLD_AIRPORTS = new Set(['KSFO', 'EGLL', 'KJFK', 'KLAX', 'KBOS', '
 export function hasWorld(icao: string | null | undefined): boolean { return !!icao && WORLD_AIRPORTS.has(icao.toUpperCase()); }
 
 /** Bumped when the baked files change: the files are served immutable for a year under this query string. */
-export const WORLD_ASSET_VERSION = '2';
+export const WORLD_ASSET_VERSION = '3';
 export function worldUrl(icao: string, file: string): string { return `/world/${icao.toUpperCase()}/${file}?v=${WORLD_ASSET_VERSION}`; }
 export const WORLD_FILES = ['meta.json', 'vectors.json', 'height.webp', 'land.webp'] as const;
 
