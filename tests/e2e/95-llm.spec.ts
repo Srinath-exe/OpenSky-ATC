@@ -101,7 +101,10 @@ test.describe('edge LLM', () => {
     expect(seen.bodies[seen.bodies.length - 1].messages[1].content).toMatch(/^YOUR LAST ACTIONS\n- "AFR851 CLEARED FOR TAKEOFF 99" → REJECTED: .+/m);
   });
 
-  test('settings modal: the Edge LLM section edits and persists its own blob; the proxy refuses foreign endpoints @full', async ({ openGame, game, page }) => {
+  test('settings modal: the Edge LLM section edits and persists its own blob; the proxy refuses foreign endpoints @full', async ({ openGame, game, page, browserConsole }) => {
+    // the moment in control mode lets the agent call the configured local endpoint; on a machine with a model server
+    // that lacks the test's model it answers 404 through the proxy - not what this test is about
+    browserConsole.allow(/api\/llm\/chat/);
     await openGame(APP);
     await game.settingsBtn().click();
     const section = page.getByTestId('llm-section');
@@ -116,9 +119,9 @@ test.describe('edge LLM', () => {
     expect(stored).toMatchObject({ mode: 'advise', positions: ['ground', 'tower'], endpoint: 'http://127.0.0.1:11434/v1', model: 'qwen2.5:3b' });
     // the position tabs show the AI dot for LLM-controlled positions only in control mode
     await page.getByTestId('llm-mode-control').click();
-    await expect(page.getByTestId('mode-tab-ground')).toHaveAttribute('data-ai', 'true');
+    await expect(page.getByTestId('mode-tab-tower')).toHaveAttribute('data-ai', 'true');      // ground + tower: the Tower job
     await page.getByTestId('llm-mode-off').click();
-    await expect(page.getByTestId('mode-tab-ground')).toHaveAttribute('data-ai', 'false');
+    await expect(page.getByTestId('mode-tab-tower')).toHaveAttribute('data-ai', 'false');
     // reload keeps the config
     await page.reload();
     await expect.poll(() => page.evaluate(() => window.__atcSim?.llm.model ?? null)).toBe('qwen2.5:3b');

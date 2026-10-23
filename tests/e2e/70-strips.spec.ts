@@ -78,15 +78,18 @@ test.describe('strip bay', () => {
     await expect(game.strip('BAW1').getByTestId('strip-kind')).toHaveText('D');
     await expect(game.strip('EZY8').getByTestId('strip-kind')).toHaveText('A');
 
-    // TOWER: AT_HOLD / LINED_UP (bays sorted by the fixed order)
+    // TOWER (ground + runway, one controller): the ground bays plus AT_HOLD / LINED_UP, in flow order
     await game.setPosition('tower');
     await expect(game.stripBay()).toHaveAttribute('data-position', 'tower');
-    await expect(game.bayTotal()).toHaveAttribute('data-value', '2');
+    await expect(game.bayTotal()).toHaveAttribute('data-value', '5');
+    expect(await game.bayCallsigns('PENDING')).toEqual(['BAW1']);
+    expect(await game.bayCallsigns('TAXI_OUT')).toEqual(['DLH2']);
+    expect(await game.bayCallsigns('AT_STAND')).toEqual(['EZY8']);
     expect(await game.bayCallsigns('AT_HOLD')).toEqual(['AFR3']);
     expect(await game.bayCallsigns('LINED_UP')).toEqual(['KLM4']);
     await expect(game.strip('AFR3')).toHaveAttribute('data-bay', 'AT_HOLD');
     await expect(game.strip('KLM4')).toHaveAttribute('data-stage', 'lineup');
-    for (const cs of ['BAW1', 'DLH2', 'EZY8', 'UAL9']) await expect(game.strip(cs)).toHaveCount(0);
+    for (const cs of ['UAL9', 'SWR7']) await expect(game.strip(cs)).toHaveCount(0);
     expect(await sim.stage('AFR3')).toBe('hold_short_dep');
     expect(await sim.stage('KLM4')).toBe('lineup');
 
@@ -504,7 +507,7 @@ test.describe('strip bay', () => {
     await expect(game.stripPhase('UAL9')).toHaveText('RLT');
     await sim.advanceUntilOk("s => s.aircraft.find(a => a.callsign === 'UAL9')?.phase === 'taxi'", 240);
     expect(await sim.stage('UAL9')).toBe('taxi_in');
-    await expect(game.strip('UAL9')).toHaveAttribute('data-bay', 'TO_GROUND');
+    await expect(game.strip('UAL9')).toHaveAttribute('data-bay', 'TAXI_IN');
     await expect(game.stripPhase('UAL9')).toHaveText('TAXI IN');
     await expect(page.getByTestId('strip-UAL9-box-E')).toHaveAttribute('data-done', 'true');
 

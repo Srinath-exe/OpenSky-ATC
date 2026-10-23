@@ -47,6 +47,7 @@ function PositionTabs() {
 }
 
 const SECTOR_LABEL: Record<Sector, string> = { airfield: 'Tower', approach: 'Approach' }
+const SECTOR_SHORT: Record<Sector, string> = { airfield: 'TWR', approach: 'APP' }
 const SECTOR_JOB: Record<Sector, string> = { airfield: 'ground and runway', approach: 'arrivals and departures on radar' }
 /** View tabs, one per job: TOWER (ground + runway, the 3D field) and APPROACH (the radar). */
 const TAB_LABEL: Record<PlayerPosition, string> = { ground: 'GROUND', tower: 'TOWER', approach: 'APPROACH' }
@@ -59,7 +60,7 @@ function SectorChips() {
   const chip = (sector: Sector, ai: boolean) => (
     <Tooltip key={sector} content={ai ? `AI is running ${SECTOR_LABEL[sector]} (${SECTOR_JOB[sector]}). Click to take it over.` : `You are running ${SECTOR_LABEL[sector]} (${SECTOR_JOB[sector]}). Click to hand it to the AI.`} placement="bottom">
       <Pill size="s" tone={ai ? 'orange' : 'outline'} interactive selected={ai} aria-pressed={ai} onClick={() => sim.setSectorAi(sector, !ai)} testId={`sector-${sector}`} data-state={ai ? 'ai' : 'you'}>
-        {SECTOR_LABEL[sector]} · {ai ? 'AI' : 'You'}
+        <span className={styles.sectorFull}>{SECTOR_LABEL[sector]}</span><span className={styles.sectorShort}>{SECTOR_SHORT[sector]}</span> · {ai ? 'AI' : 'You'}
       </Pill>
     </Tooltip>
   )

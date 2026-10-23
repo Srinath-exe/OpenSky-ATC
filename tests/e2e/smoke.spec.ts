@@ -62,9 +62,8 @@ test.describe('smoke', () => {
     expect(await game.page.evaluate(() => !!document.createElement('canvas').getContext('webgl2'))).toBe(true);
     await expect(game.page.locator('.maplibregl-canvas')).toHaveCount(1);
 
-    await game.setPosition('ground');
+    await game.setPosition('ground');                                              // (no tab: part of the Tower job)
     await expect(game.groundMap()).toBeVisible();
-    await expect(game.modeTab('ground')).toHaveAttribute('aria-pressed', 'true');
 
     await game.setPosition('approach');
     await expect(game.radarCanvas()).toBeVisible();
@@ -73,8 +72,8 @@ test.describe('smoke', () => {
     expect(box?.width ?? 0).toBeGreaterThan(400);
     expect(box?.height ?? 0).toBeGreaterThan(300);
 
-    // keyboard: F2 -> tower, back on the ground map
-    await game.hotkey('F2');
+    // keyboard: F1 -> tower, back on the ground map
+    await game.hotkey('F1');
     await expect(game.shell()).toHaveAttribute('data-mode', 'tower');
     await expect(game.groundMap()).toBeVisible();
     await expect(game.pauseBtn()).toHaveAttribute('data-state', 'running');

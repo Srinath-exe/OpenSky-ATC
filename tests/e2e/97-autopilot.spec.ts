@@ -10,7 +10,7 @@ test('autopilot button switches every AI position on and off @full', async ({ op
   await expect(btn).toHaveAttribute('data-state', 'on');
   expect(await page.evaluate(() => { const s = window.__atcSim!.settings; return [s.autoApproach, s.autoTower, s.autoGround, s.autoMode]; })).toEqual([true, true, true, false]);
   for (const c of ['airfield', 'approach']) await expect(page.getByTestId(`sector-${c}`)).toHaveAttribute('data-state', 'ai');
-  for (const p of ['ground', 'tower', 'approach']) await expect(page.getByTestId(`mode-tab-${p}`)).toHaveAttribute('data-ai', 'true');
+  for (const p of ['tower', 'approach']) await expect(page.getByTestId(`mode-tab-${p}`)).toHaveAttribute('data-ai', 'true');
   await btn.click();
   await expect(btn).toHaveAttribute('data-state', 'off');
   expect(await page.evaluate(() => { const s = window.__atcSim!.settings; return [s.autoApproach, s.autoTower, s.autoGround]; })).toEqual([false, false, false]);
@@ -24,10 +24,10 @@ test('sector chips: airfield (ground + tower) and approach go to the AI independ
   await expect(page.getByTestId('sector-approach')).toHaveAttribute('data-state', 'ai');
   expect(await settingsOf()).toEqual([false, false, true]);
   await expect(page.getByTestId('mode-tab-approach')).toHaveAttribute('data-ai', 'true');
-  await expect(page.getByTestId('mode-tab-ground')).toHaveAttribute('data-ai', 'false');
+  await expect(page.getByTestId('mode-tab-tower')).toHaveAttribute('data-ai', 'false');
   await page.getByTestId('sector-approach').click();
   await page.getByTestId('sector-airfield').click();
   expect(await settingsOf()).toEqual([true, true, false]);
-  for (const p of ['ground', 'tower']) await expect(page.getByTestId(`mode-tab-${p}`)).toHaveAttribute('data-ai', 'true');
+  await expect(page.getByTestId('mode-tab-tower')).toHaveAttribute('data-ai', 'true');
   await expect(page.getByTestId('mode-tab-approach')).toHaveAttribute('data-ai', 'false');
 });

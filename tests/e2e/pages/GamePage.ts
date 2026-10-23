@@ -3,7 +3,7 @@
   naming), not the legacy table in 05 §3.1 — the full list is in tests/e2e/testids.txt. The ones used here:
 
     page-atc[data-ready] · game-shell[data-mode|data-paused|data-has-panel] · load-overlay · view-{ground|radar}
-    Nav:      brand-home, airport-badge, position-tabs, mode-tab-{ground|tower|approach} (aria-selected + aria-pressed),
+    Nav:      brand-home, airport-badge, position-tabs, mode-tab-{tower|approach} (aria-selected + aria-pressed; ground is reached via setPosition / the store),
               atis-chip, wind, clock, clock-utc, rate-pause[data-state=paused|running], rate-1x/2x/4x (aria-pressed),
               rate-ff, score-chip, score[data-value], score-hi, alerts-bell[data-count], settings-btn, help-btn
     Strips:   strip-bay, bay-total[data-value], bay-collapse, bay-search, bay-filter-{id}, strip-bay-{BAY}, bay-count-{BAY},
@@ -144,7 +144,7 @@ export class GamePage {
   cmdSend = () => this.page.getByTestId('cmd-send');
   cmdParseError = () => this.page.getByTestId('cmd-parse-error');
   cmdReview = () => this.page.getByTestId('cmd-review');
-  logFilter = (f: 'gnd' | 'twr' | 'app' | 'all') => this.page.getByTestId(`log-filter-${f}`);
+  logFilter = (f: 'twr' | 'app' | 'all') => this.page.getByTestId(`log-filter-${f}`);
 
   // ── ATIS / runway config (AtisWeather.tsx, RunwayConfigDialog.tsx) ───────
   atisPanel = () => this.page.getByTestId('atis-panel');
@@ -385,10 +385,14 @@ export class GamePage {
     return (await this.shell().getAttribute('data-mode')) as PlayerPosition;
   }
 
-  /** Switch position tab via the nav and wait for the matching view to mount. */
+  /** Switch position via the nav tab and wait for the matching view to mount. Ground has no tab of its own any more
+   *  (it is part of the Tower job); test mode still reaches the ground-only board through the store. */
   async setPosition(p: PlayerPosition): Promise<void> {
-    await this.modeTab(p).click();
-    await expect(this.modeTab(p)).toHaveAttribute('aria-selected', 'true');
+    if (p === 'ground') await this.page.evaluate(() => (window as unknown as { __atcSim: { setPosition(p: string): void } }).__atcSim.setPosition('ground'));
+    else {
+      await this.modeTab(p).click();
+      await expect(this.modeTab(p)).toHaveAttribute('aria-selected', 'true');
+    }
     await expect(this.shell()).toHaveAttribute('data-mode', p);
     await expect(this.view(p === 'approach' ? 'radar' : 'ground')).toBeVisible();
   }

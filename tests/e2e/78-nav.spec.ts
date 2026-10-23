@@ -1,7 +1,7 @@
 /*
   Top bar + shell chrome (src/game/NavBar/NavBar.tsx, GameShell/useShellHotkeys.ts, HelpOverlay, PauseMenu,
   SettingsModal, StatsPanel, AtisWeather, AlertStack, TxIndicator; UX 04 §2.1 top bar, §G6 hotkeys, §10 ids):
-    - position tabs (click, F1-F3, [ ]) with aria-pressed / aria-selected and the shell data-mode
+    - position tabs TOWER / APPROACH (click, F1 / F2, [ ]) with aria-pressed / aria-selected and the shell data-mode
     - pause (button, Space) with data-state=paused|running; the sim clock is frozen while paused
     - rates 1x / 2x / 4x (aria-pressed, data-state) + hotkeys 1 / 2 / 4 , . ; the store rate scales real time
     - ATIS chip -> panel (letter, wind, QNH, active runways match the store ATIS; setWind advances the letter)
@@ -24,15 +24,15 @@ async function spawnArrival(sim: SimApi, cs = 'UAL9'): Promise<void> {
 const pad = (n: number, w: number) => String(Math.round(n)).padStart(w, '0');
 
 test.describe('nav bar and shell chrome', () => {
-  test('position tabs: click, F1 / F2 / F3 and [ ] switch the position (aria-pressed, data-mode, view) @smoke', async ({ openGame, sim, page }) => {
-    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'ground', settings: { strictFrequencies: true } });
+  test('position tabs: click, F1 / F2 and [ ] switch between TOWER and APPROACH (aria-pressed, data-mode, view) @smoke', async ({ openGame, sim, page }) => {
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'tower', settings: { strictFrequencies: true } });
     let changed = false;                                                                   // aria-pressed is asserted after the first change (see the fixme below for boot)
-    const expectPos = async (p: 'ground' | 'tower' | 'approach') => {
+    const expectPos = async (p: 'tower' | 'approach') => {
       await expect(game.modeTab(p)).toHaveAttribute('aria-selected', 'true');
-      for (const q of ['ground', 'tower', 'approach'] as const) if (q !== p) await expect(game.modeTab(q)).toHaveAttribute('aria-selected', 'false');
+      for (const q of ['tower', 'approach'] as const) if (q !== p) await expect(game.modeTab(q)).toHaveAttribute('aria-selected', 'false');
       if (changed) {
         await expect(game.modeTab(p)).toHaveAttribute('aria-pressed', 'true');
-        for (const q of ['ground', 'tower', 'approach'] as const) if (q !== p) await expect(game.modeTab(q)).toHaveAttribute('aria-pressed', 'false');
+        for (const q of ['tower', 'approach'] as const) if (q !== p) await expect(game.modeTab(q)).toHaveAttribute('aria-pressed', 'false');
       }
       await expect(game.shell()).toHaveAttribute('data-mode', p);
       await expect(page.locator('body')).toHaveAttribute('data-mode', p);
@@ -40,57 +40,49 @@ test.describe('nav bar and shell chrome', () => {
       await expect(game.stripBay()).toHaveAttribute('data-position', p);
       expect((await sim.storeState()).position).toBe(p);
     };
-    await expectPos('ground');
-    await expect(page.getByTestId('position-tabs')).toBeVisible();
-
-    await game.modeTab('tower').click();
-    changed = true;
     await expectPos('tower');
+    await expect(page.getByTestId('position-tabs')).toBeVisible();
+    await expect(page.getByTestId('mode-tab-ground')).toHaveCount(0);                       // ground is part of the Tower job
+
     await game.modeTab('approach').click();
+    changed = true;
     await expectPos('approach');
     await expect(game.radarCanvas()).toBeVisible();
-    await game.modeTab('ground').click();
-    await expectPos('ground');
+    await game.modeTab('tower').click();
+    await expectPos('tower');
     await expect(game.groundMap()).toBeVisible();
 
     await game.hotkey('F2');
-    await expectPos('tower');
-    await game.hotkey('F3');
     await expectPos('approach');
     await game.hotkey('F1');
-    await expectPos('ground');
-    await game.hotkey(']');
     await expectPos('tower');
     await game.hotkey(']');
     await expectPos('approach');
     await game.hotkey(']');                                                            // wraps
-    await expectPos('ground');
+    await expectPos('tower');
     await game.hotkey('[');
     await expectPos('approach');
-    await game.hotkey('[');
-    await expectPos('tower');
-    // the engine follows: under strict frequencies a parked departure (ground frequency) is off-frequency for TOWER (R13)
+    // the engine follows: under strict frequencies a parked departure (ground frequency) is off-frequency for APPROACH
+    // (R13) and on the player's own frequencies for TOWER (ground + tower are one job)
     const gates = await sim.gates();
     await sim.spawnAt({ callsign: 'BAW1', type: A320, kind: 'departure', phase: 'parked', gate: gates[0], plan: { runway: '27L' } });
     const push = async () => (await sim.actions('BAW1')).find((r) => r.id === 'action-pushback')!;
     expect((await push()).state).toBe('disabled');
     expect((await push()).reason).toBe('R13');
     await game.hotkey('F1');
+    await expectPos('tower');
     expect((await push()).state).toBe('enabled');
-    await game.selectStrip('BAW1');
+    await game.selectStrip('BAW1');                                                    // in the Tower board (PENDING)
     await expect(game.actionBtn('action-pushback')).toHaveAttribute('data-state', 'enabled');
     await game.hotkey('F2');
-    await expectPos('tower');
-    await expect(game.strip('BAW1')).toHaveCount(0);                                             // not in a TOWER bay
-    await game.hotkey('F1');
-    await expect(game.actionBtn('action-pushback')).toHaveAttribute('data-state', 'enabled');
+    await expectPos('approach');
+    await expect(game.strip('BAW1')).toHaveCount(0);                                             // not in an APPROACH bay
   });
 
   test('position tabs mirror aria-pressed already at boot @full', async ({ openGame }) => {
-    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'ground' });
-    await expect(game.modeTab('ground')).toHaveAttribute('aria-selected', 'true');
-    await expect(game.modeTab('ground')).toHaveAttribute('aria-pressed', 'true');
-    await expect(game.modeTab('tower')).toHaveAttribute('aria-pressed', 'false');
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'tower' });
+    await expect(game.modeTab('tower')).toHaveAttribute('aria-selected', 'true');
+    await expect(game.modeTab('tower')).toHaveAttribute('aria-pressed', 'true');
     await expect(game.modeTab('approach')).toHaveAttribute('aria-pressed', 'false');
   });
 
@@ -570,9 +562,9 @@ test.describe('nav bar and shell chrome', () => {
     // the function keys stay global
     await game.cmdInput().focus();
     await page.keyboard.press('F2');
-    await expect(game.shell()).toHaveAttribute('data-mode', 'tower');
+    await expect(game.shell()).toHaveAttribute('data-mode', 'approach');
     await page.keyboard.press('F1');
-    await expect(game.shell()).toHaveAttribute('data-mode', 'ground');
+    await expect(game.shell()).toHaveAttribute('data-mode', 'tower');
 
     // Escape: blur first (nothing else happens), then the shell keys are live again
     await game.cmdInput().focus();

@@ -20,8 +20,8 @@ async function spawnArrival(sim: SimApi, cs = 'UAL9'): Promise<void> {
 }
 
 test.describe('comm log', () => {
-  test('filter tabs GND / TWR / APP / ALL gate lines by frequency and follow the position @smoke', async ({ openGame, sim, page }) => {
-    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'ground' });
+  test('filter tabs TOWER / APPROACH / ALL gate lines by job (TOWER = ground + tower frequencies) and follow the position @smoke', async ({ openGame, sim, page }) => {
+    const game = await openGame({ icao: 'EGLL', spawn: 'none', position: 'tower' });
     const gates = await sim.gates();
     await sim.spawnAt({ callsign: 'BAW1', type: A320, kind: 'departure', phase: 'parked', gate: gates[0], plan: { runway: '27L' } });   // ground
     await sim.spawnAt({ callsign: 'AFR3', type: A320, kind: 'departure', phase: 'hold_short', runway: '27L' });                       // tower
@@ -32,30 +32,27 @@ test.describe('comm log', () => {
     expect(posOf('AFR3')).toBe('tower');
     expect(posOf('UAL9')).toBe('approach');
 
-    // default filter = the position's own frequency; the boot line (no frequency) shows everywhere
-    await expect(game.logFilter('gnd')).toHaveAttribute('aria-selected', 'true');
-    await expect(game.logFilter('gnd')).toHaveAttribute('data-state', 'on');
-    await expect(game.logFilter('all')).toHaveAttribute('data-state', 'off');
-    const shown = async () => (await game.radioRows()).map((r) => r.callsign ?? 'SYS');
-    await expect.poll(shown).toEqual(['SYS', 'BAW1']);
-
-    await game.logFilter('twr').click();
+    // default filter = the position's own job; the boot line (no frequency) shows everywhere
     await expect(game.logFilter('twr')).toHaveAttribute('aria-selected', 'true');
-    await expect.poll(shown).toEqual(['SYS', 'AFR3']);
+    await expect(game.logFilter('twr')).toHaveAttribute('data-state', 'on');
+    await expect(game.logFilter('all')).toHaveAttribute('data-state', 'off');
+    await expect(page.getByTestId('log-filter-gnd')).toHaveCount(0);
+    const shown = async () => (await game.radioRows()).map((r) => r.callsign ?? 'SYS');
+    await expect.poll(shown).toEqual(['SYS', 'BAW1', 'AFR3']);
+
     await game.logFilter('app').click();
+    await expect(game.logFilter('app')).toHaveAttribute('aria-selected', 'true');
     await expect.poll(shown).toEqual(['SYS', 'UAL9']);
     await game.showAllFrequencies();
     await expect.poll(shown).toEqual(['SYS', 'BAW1', 'AFR3', 'UAL9']);
     expect((await game.radioRows()).map((r) => r.text)).toEqual(all.map((l) => l.text));
 
     // the choice is per position and persisted; other positions keep their own default
-    await expect.poll(() => page.evaluate(() => localStorage.getItem('skycontrol_log_filter'))).toBe(JSON.stringify({ ground: 'all' }));
-    await game.setPosition('tower');
-    await expect(game.logFilter('twr')).toHaveAttribute('aria-selected', 'true');
-    await expect.poll(shown).toEqual(['SYS', 'AFR3']);
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('skycontrol_log_filter'))).toBe(JSON.stringify({ tower: 'all' }));
     await game.setPosition('approach');
     await expect(game.logFilter('app')).toHaveAttribute('aria-selected', 'true');
-    await game.setPosition('ground');
+    await expect.poll(shown).toEqual(['SYS', 'UAL9']);
+    await game.setPosition('tower');
     await expect(game.logFilter('all')).toHaveAttribute('aria-selected', 'true');
     await page.reload();
     await game.waitReady();

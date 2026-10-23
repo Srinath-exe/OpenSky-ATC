@@ -425,18 +425,16 @@ test.describe('tower', () => {
     expect((await sim.events()).some((e) => e.type === 'score' && e.data?.type === 'score' && e.data.score.code === 'LANDED' && e.data.score.primary === 'DAL6')).toBe(true);
     await expect(game.score()).toHaveAttribute('data-value', /^[1-9]\d*$/);
 
-    // taxi-in request once stopped clear of the runway (on ground frequency), strip in TO_GROUND with the REQ chip
+    // taxi-in request once stopped clear of the runway (on ground frequency), strip in TAXI_IN with the REQ chip
     await sim.advanceUntilOk(`s => { const a = ${findSrc('DAL6')}; return !!a && a.requests.some(r => r.kind === 'taxi_in'); }`, 120);
     const a = await sim.aircraftOrFail('DAL6');
     expect(a.phase).toBe('taxi');
     expect(a.stage).toBe('taxi_in');
     expect(a.onFrequency).toBe('ground');
     expect(a.speed).toBeLessThan(0.5);
-    // the request is made on the ground frequency: hidden by the TWR filter, visible under ALL
-    expect((await game.radioRows()).some((l) => /runway vacated, request taxi/.test(l.text))).toBe(false);
-    await game.showAllFrequencies();
+    // the request is made on the ground frequency: part of the Tower job, so the TOWER filter shows it
     await game.waitRadio(/Heathrow Ground, .*runway vacated, request taxi/i, { who: 'PILOT', callsign: 'DAL6' });
-    await expect(game.strip('DAL6')).toHaveAttribute('data-bay', 'TO_GROUND');
+    await expect(game.strip('DAL6')).toHaveAttribute('data-bay', 'TAXI_IN');
     await expect(game.stripReq('DAL6')).toHaveAttribute('data-kind', 'taxi_in');
     await expect(game.page.getByTestId('strip-DAL6-box-E')).toHaveAttribute('aria-pressed', 'true');
     await expect(game.page.getByTestId('strip-DAL6-box-F')).toHaveAttribute('aria-pressed', 'true');
@@ -462,7 +460,7 @@ test.describe('tower', () => {
     await game.waitRadio(/exiting via N/, { who: 'PILOT', callsign: 'DAL9' });
     expect((await sim.runways()).find((r) => r.name === RWY)?.occupied).toBe(false);
     await sim.advanceUntilOk(`s => { const a = ${findSrc('DAL9')}; return !!a && a.requests.some(r => r.kind === 'taxi_in'); }`, 120);
-    await expect(game.strip('DAL9')).toHaveAttribute('data-bay', 'TO_GROUND');
+    await expect(game.strip('DAL9')).toHaveAttribute('data-bay', 'TAXI_IN');
   });
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -790,7 +788,7 @@ test.describe('tower', () => {
     expect(await game.actionState('action-takeoff')).toEqual({ state: 'enabled', reason: '' });
   });
 
-  test('hand off to ground by clicks after vacating (auto handoff off): blocked on the runway (X11), position picker, strip ghosts to TO_GROUND @full', async ({ openGame, sim }) => {
+  test('hand off to ground by clicks after vacating (auto handoff off): blocked on the runway (X11), position picker, strip stays in the Tower board (TAXI IN) @full', async ({ openGame, sim }) => {
     const game = await openGame({ icao: ICAO, spawn: 'none', position: 'tower', settings: { autoHandoff: false } });
     await sim.spawnAt({ callsign: 'DAL9', type: 'A320', kind: 'arrival', phase: 'rollout', runway: RWY, onFrequency: 'tower' });
     await sim.advance(1);
@@ -807,7 +805,7 @@ test.describe('tower', () => {
     expect(a.handedTo).toBeNull();
     expect(a.stage).toBe('taxi_in');
     await game.waitRadio(/Heathrow Tower, .*runway vacated, request taxi/i, { who: 'PILOT', callsign: 'DAL9' });
-    await expect(game.strip('DAL9')).toHaveAttribute('data-bay', 'TO_GROUND');
+    await expect(game.strip('DAL9')).toHaveAttribute('data-bay', 'TAXI_IN');
     await expect(game.strip('DAL9')).toHaveAttribute('data-onfreq', 'tower');
     await expect(game.page.getByTestId('strip-DAL9-box-F')).toHaveAttribute('aria-pressed', 'false');
     expect(await game.actionState('action-handoff')).toEqual({ state: 'enabled', reason: '' });
@@ -829,10 +827,10 @@ test.describe('tower', () => {
     a = await sim.aircraftOrFail('DAL9');
     expect(a.handedTo).toBeNull();
     expect(a.requests.some((r) => r.kind === 'taxi_in' && r.answeredAt == null)).toBe(true);   // the taxi request is ground's now
-    // tower keeps a ghost in TO_GROUND; the SYS line is stamped on the new frequency
+    // still the Tower job's (ground + tower are one controller): no ghost, TAXI IN; the SYS line is stamped on the new frequency
     await expect(game.strip('DAL9')).toHaveAttribute('data-onfreq', 'ground');
-    await expect(game.strip('DAL9')).toHaveAttribute('data-bay', 'TO_GROUND');
-    await expect(game.page.getByTestId('strip-DAL9-ghost')).toBeVisible();
+    await expect(game.strip('DAL9')).toHaveAttribute('data-bay', 'TAXI_IN');
+    await expect(game.page.getByTestId('strip-DAL9-ghost')).toHaveCount(0);
     await game.showAllFrequencies();
     await game.waitRadio(/DAL9 contact Heathrow Ground 121\.900/, { who: 'SYS', callsign: 'DAL9' });
     await game.setPosition('ground');

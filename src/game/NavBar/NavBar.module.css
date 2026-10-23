@@ -19,6 +19,7 @@
    keep the ATIS chip readable in the middle (the shell column is fixed at the viewport width). */
 @media (max-width: 1365px) {
   .nav { gap: var(--s-2); padding: 0 var(--s-3) 0 var(--s-4); }
+  .brandSub { display: none; }   /* the airport name: the ICAO badge beside it says the same (the sector chips need the room) */
   .left { gap: var(--s-2); }
   .right { gap: var(--s-1); }
   .clockSim { display: none; }
@@ -36,6 +37,12 @@
 .left { display: inline-flex; align-items: center; gap: var(--s-3); }
 .tabs { display: inline-flex; align-items: center; }
 .sectors { display: inline-flex; align-items: center; gap: var(--s-1); margin-left: var(--s-2); white-space: nowrap; }
+.sectorShort { display: none; }
+/* narrower than 1500 px: TWR · AI / APP · You, so the right-hand controls keep their room (1280 px laptops) */
+@media (max-width: 1499px) {
+  .sectorFull { display: none; } .sectorShort { display: inline; } .sectors { margin-left: var(--s-1); gap: 2px; }
+  .sectors button { padding-left: 7px; padding-right: 7px; font-size: 11px; letter-spacing: 0; }
+}
 .center { display: flex; align-items: center; justify-content: center; gap: var(--s-3); min-width: 0; overflow: hidden; }
 .right { display: inline-flex; align-items: center; gap: var(--s-2); }
 

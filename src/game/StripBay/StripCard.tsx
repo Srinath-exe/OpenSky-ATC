@@ -12,6 +12,7 @@ import type { ActionId } from '@/lib/sim/commandTree'
 import type { AircraftState, Alert, PlayerPosition, Stage } from '@/lib/sim/types'
 import type { BayId } from '@/lib/sim/stage'
 import { stageLabel, isAirStage } from '@/lib/sim/stage'
+import { SECTOR_OF } from '@/lib/sim/types'
 import { describe } from '@/lib/sim/commandAst'
 import { sim } from '../CommandPanel/store'
 import { requestOpenAction } from '../CommandPanel/bus'
@@ -69,7 +70,8 @@ export const StripCard = React.memo(function StripCard(p: StripCardProps) {
   const reqOpen = req && time >= a.standbyUntil ? req : null
   const emergency = a.emergency && a.emergency.status !== 'resolved' ? a.emergency : null
   const owner = ownerTab(a.onFrequency)
-  const ghost = owner != null && owner !== position
+  // another job's aircraft (the ground and tower frequencies are both the Tower job's - its board is one controller's)
+  const ghost = owner != null && SECTOR_OF[owner] !== SECTOR_OF[position]
   const conflict = !!a.conflict || alerts.some((al) => al.severity !== 'info')
   const acked = alerts.length > 0 && alerts.every((al) => al.ack)
   const finished = stage === 'arrived' || stage === 'departed'

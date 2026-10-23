@@ -477,7 +477,7 @@ test.describe('start config, sessions, fresh state', () => {
     await expect(game.scoreHi()).toHaveCount(0);
     await expect(page.getByTestId('ground-view')).toHaveAttribute('data-theme', 'satellite');
     await expect(page.locator('html')).toHaveAttribute('data-hotkey-badges', 'on');
-    await expect(game.logFilter('gnd')).toHaveAttribute('aria-selected', 'true');
+    await expect(game.logFilter('twr')).toHaveAttribute('aria-selected', 'true');
     await expect(game.stripBay()).toHaveAttribute('data-collapsed', 'false');
     // the shell still works: a command line entry and the presets popover (which reads the garbage presets key)
     await sim.spawnAt({ callsign: 'BAW1', type: 'A320', kind: 'departure', phase: 'parked', gate: '512', plan: { runway: '27L' } });
