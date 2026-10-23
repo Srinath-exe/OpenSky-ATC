@@ -10,6 +10,7 @@ import {
   useSettings, updateSettings, usePrefs, updatePrefs, useHighScore, resetHighScore, useHistory, clearHistory, useSessionRunning, sessionIcao, resetAllSettings,
   type Settings, type UiPrefs, type EmergencyRate, type Difficulty, type DataBlockDensity, type SessionRecord, type Region,
 } from '../_lib/persist';
+import { sectorAi, sectorPatch } from '@/components/atc/simStore';
 import pkg from '../../../package.json';
 import s from './settings.module.css';
 
@@ -93,17 +94,11 @@ export default function SettingsPage() {
         {/* ---------------- Simulation ---------------- */}
         <GlassPanel variant="solid" title="Simulation" testId="set-section-simulation" as="section">
           <div className={s.rows}>
-            <ListRow title="Auto mode" subtitle="AI controllers work every position you are not on — play ground while the AI runs tower and approach, or the other way round" trailing={
-              <StateMirror state={settings.autoMode ? 'on' : 'off'}><Toggle checked={settings.autoMode} onChange={(v) => set({ autoMode: v })} testId="set-automode" /></StateMirror>
+            <ListRow title="Tower" subtitle="Ground and runway, worked by one controller: start-up, pushback, taxi, take-off and landing clearances. Set it to AI to play approach only." trailing={
+              <Segmented ariaLabel="Tower controller" items={[{ id: 'you', label: 'You' }, { id: 'ai', label: 'AI' }]} value={sectorAi(settings, 'airfield') ? 'ai' : 'you'} onChange={(v) => set(sectorPatch('airfield', v === 'ai'))} testId="set-sector-airfield" />
             } />
-            <ListRow title="AI tower assist" subtitle="Routine tower clearances go out on their own once they are safe" trailing={
-              <StateMirror state={settings.autoTower ? 'on' : 'off'}><Toggle checked={settings.autoTower} onChange={(v) => set({ autoTower: v })} testId="set-autotower" /></StateMirror>
-            } />
-            <ListRow title="AI approach assist" subtitle="Arrivals on the approach frequency are sequenced onto the ILS for you — radar contact, descent, spacing vectors, approach clearance" trailing={
-              <StateMirror state={settings.autoApproach ? 'on' : 'off'}><Toggle checked={settings.autoApproach} onChange={(v) => set({ autoApproach: v })} testId="set-autoapproach" /></StateMirror>
-            } />
-            <ListRow title="Auto taxi-in" subtitle="Arrivals taxi to their stand after vacating without a ground clearance" trailing={
-              <StateMirror state={settings.autoGround ? 'on' : 'off'}><Toggle checked={settings.autoGround} onChange={(v) => set({ autoGround: v })} testId="set-autoground" /></StateMirror>
+            <ListRow title="Approach" subtitle="Radar: arrivals sequenced onto the ILS, departures climbed out. Set it to AI to play tower only." trailing={
+              <Segmented ariaLabel="Approach controller" items={[{ id: 'you', label: 'You' }, { id: 'ai', label: 'AI' }]} value={sectorAi(settings, 'approach') ? 'ai' : 'you'} onChange={(v) => set(sectorPatch('approach', v === 'ai'))} testId="set-sector-approach" />
             } />
             <ListRow title="Automatic handoffs" subtitle="Frequency changes at 1,000 ft on departure and 10 NM established" trailing={
               <StateMirror state={settings.autoHandoff ? 'on' : 'off'}><Toggle checked={settings.autoHandoff} onChange={(v) => set({ autoHandoff: v })} testId="set-auto-handoff" /></StateMirror>

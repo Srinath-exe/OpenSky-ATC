@@ -18,12 +18,13 @@ import { parseCommand } from '@/lib/sim/commands'
 import { describe } from '@/lib/sim/commandAst'
 import type { Position as FreqPosition } from '@/lib/sim/types'
 
-type Filter = 'gnd' | 'twr' | 'app' | 'all'
+/** One filter per job: TOWER = ground + tower frequencies, APPROACH = approach + departure. */
+type Filter = 'twr' | 'app' | 'all'
 const FILTERS: Array<{ id: Filter; label: string }> = [
-  { id: 'gnd', label: 'GND' }, { id: 'twr', label: 'TWR' }, { id: 'app', label: 'APP' }, { id: 'all', label: 'ALL' },
+  { id: 'all', label: 'ALL' }, { id: 'twr', label: 'TOWER' }, { id: 'app', label: 'APPROACH' },
 ]
-const DEFAULT_FILTER: Record<Position, Filter> = { ground: 'gnd', tower: 'twr', approach: 'app' }
-const FILTER_POSITIONS: Record<Exclude<Filter, 'all'>, FreqPosition[]> = { gnd: ['ground'], twr: ['tower'], app: ['approach', 'departure'] }
+const DEFAULT_FILTER: Record<Position, Filter> = { ground: 'twr', tower: 'twr', approach: 'app' }
+const FILTER_POSITIONS: Record<Exclude<Filter, 'all'>, FreqPosition[]> = { twr: ['ground', 'tower'], app: ['approach', 'departure'] }
 const CHARS_PER_S = 40
 const MAX_SUGGESTIONS = 8
 const HISTORY_MAX = 30
@@ -119,7 +120,7 @@ const LogLine = React.memo(function LogLine({ line, now, animate, undoable, repe
       data-selected={selected}
     >
       <span className={styles.time}>{formatMmSs(line.at)}</span>
-      <span className={styles.who}>{line.who}</span>
+      <span className={styles.who}>{line.aiPos ? `AI·${line.aiPos}` : line.who}</span>
       <span className={styles.text} data-testid="radio-text"><TypedText text={line.text} animate={animate} />{line.status === 'undone' ? <span className={styles.superseded}> · disregarded</span> : null}</span>
       <span className={styles.chips}>
         {undoable ? <UndoChip line={line} /> : null}
@@ -159,7 +160,8 @@ export function CommLog() {
   const testMode = useSim((s) => s.testMode)
 
   const [filters, setFilters] = usePersistedState<Partial<Record<Position, Filter>>>(LS.logFilter, {})
-  const filter: Filter = filters[position] ?? DEFAULT_FILTER[position]
+  const stored = filters[position]
+  const filter: Filter = stored && FILTERS.some((f) => f.id === stored) ? stored : DEFAULT_FILTER[position]   // old 'gnd' choices fall back
   const setFilter = (f: Filter) => setFilters((m) => ({ ...m, [position]: f }))
 
   const lines = React.useMemo(() => {
@@ -314,7 +316,7 @@ export function CommLog() {
         <Segmented ariaLabel="Frequency filter" small value={filter} onChange={(id) => setFilter(id as Filter)} items={FILTERS.map((f) => ({ id: f.id, label: f.label, testId: `log-filter-${f.id}` }))} testId="log-filter" />
         {collapsed && last ? (
           <span className={styles.lastLine} data-testid="log-last-line">
-            <span className={styles.who} data-who={last.who}>{last.who}</span>
+            <span className={styles.who} data-who={last.who}>{last.aiPos ? `AI·${last.aiPos}` : last.who}</span>
             <span className={styles.text}>{last.callsign ? `${last.callsign} · ` : ''}{last.text}</span>
           </span>
         ) : <span className={styles.headerSpacer} />}

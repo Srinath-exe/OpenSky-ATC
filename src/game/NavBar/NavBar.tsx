@@ -4,14 +4,15 @@ import * as React from 'react'
 import Link from 'next/link'
 import styles from './NavBar.module.css'
 import { Tabs, Pill, IconButton, Segmented, Tooltip, LogoMark, IconPause, IconPlay, IconBell, IconSettings, Icon, cx, useCountUp, formatThousands } from '@/design'
-import type { PlayerPosition } from '@/lib/sim/types'
+import type { PlayerPosition, Sector } from '@/lib/sim/types'
+import { sectorAi, sectorPatch } from '@/components/atc/simStore'
 import { sim, useSim } from '../hooks/useSimSelector'
 import { formatSimClock } from '../hooks/useSimSelector'
 import { useUtcClock } from '../hooks/useClock'
 import { useShell } from '../shellContext'
 import { TxIndicator } from '../TxIndicator/TxIndicator'
 
-const POSITIONS: PlayerPosition[] = ['ground', 'tower', 'approach']
+const POSITIONS: PlayerPosition[] = ['tower', 'approach']
 
 /** Position tabs: the design-system Tabs primitive plus `aria-pressed` mirrored from `aria-selected` (05 §3.1 convention). */
 function PositionTabs() {
@@ -30,12 +31,12 @@ function PositionTabs() {
       b.setAttribute('aria-pressed', b.getAttribute('aria-selected') === 'true' ? 'true' : 'false')
       // a dot on positions an AI assist is working (settings: AI assist)
       const id = b.dataset.testid ?? ''
-      const on = (id.endsWith('ground') && ai.includes('g')) || (id.endsWith('tower') && ai.includes('t')) || (id.endsWith('approach') && ai.includes('a'))
+      const on = (id.endsWith('tower') && ai.includes('g') && ai.includes('t')) || (id.endsWith('approach') && ai.includes('a'))
       b.setAttribute('data-ai', on ? 'true' : 'false')
       b.title = on ? (ai.includes('|llm') ? 'An AI assist or the edge LLM is working this position' : 'AI assist is active on this position') : ''
     })
   }, [position, hasRadar, ai])
-  const items = POSITIONS.map((p) => ({ id: p, label: p.toUpperCase(), testId: `mode-tab-${p}`, disabled: p === 'approach' && !hasRadar }))
+  const items = POSITIONS.map((p) => ({ id: p, label: TAB_LABEL[p], testId: `mode-tab-${p}`, disabled: p === 'approach' && !hasRadar }))
   const tabs = (
     <div ref={ref} className={styles.tabs} data-testid="position-tabs">
       <Tabs ariaLabel="Position" items={items} value={position} onChange={(id) => sim.setPosition(id as PlayerPosition)} />
@@ -43,6 +44,31 @@ function PositionTabs() {
   )
   if (hasRadar) return tabs
   return <Tooltip content={`No radar airspace for ${icao || 'this airport'}`} placement="bottom">{tabs}</Tooltip>
+}
+
+const SECTOR_LABEL: Record<Sector, string> = { airfield: 'Tower', approach: 'Approach' }
+const SECTOR_JOB: Record<Sector, string> = { airfield: 'ground and runway', approach: 'arrivals and departures on radar' }
+/** View tabs, one per job: TOWER (ground + runway, the 3D field) and APPROACH (the radar). */
+const TAB_LABEL: Record<PlayerPosition, string> = { ground: 'GROUND', tower: 'TOWER', approach: 'APPROACH' }
+
+/** Who works each sector — click to hand it to the AI or take it back, mid-shift included. */
+function SectorChips() {
+  const hasRadar = useSim((s) => !!s.radar)
+  const airfield = useSim((s) => sectorAi(s.settings, 'airfield'))
+  const approach = useSim((s) => sectorAi(s.settings, 'approach'))
+  const chip = (sector: Sector, ai: boolean) => (
+    <Tooltip key={sector} content={ai ? `AI is running ${SECTOR_LABEL[sector]} (${SECTOR_JOB[sector]}). Click to take it over.` : `You are running ${SECTOR_LABEL[sector]} (${SECTOR_JOB[sector]}). Click to hand it to the AI.`} placement="bottom">
+      <Pill size="s" tone={ai ? 'orange' : 'outline'} interactive selected={ai} aria-pressed={ai} onClick={() => sim.setSectorAi(sector, !ai)} testId={`sector-${sector}`} data-state={ai ? 'ai' : 'you'}>
+        {SECTOR_LABEL[sector]} · {ai ? 'AI' : 'You'}
+      </Pill>
+    </Tooltip>
+  )
+  return (
+    <div className={styles.sectors} data-testid="sector-chips">
+      {chip('airfield', airfield)}
+      {hasRadar ? chip('approach', approach) : null}
+    </div>
+  )
 }
 
 function AtisChip() {
@@ -171,11 +197,11 @@ function RateControl() {
   )
 }
 
-/** Autopilot: the AI works every position, including yours — the game plays itself (Settings → AI assist has the
- *  per-position switches; this is the one-click "watch it run" form). */
+/** Autopilot: the AI works both sectors — the game plays itself (the sector chips hand over one sector at a time;
+ *  this is the one-click "watch it run" form). */
 function AutopilotButton() {
-  const all = useSim((s) => s.settings.autoApproach && s.settings.autoTower && s.settings.autoGround)
-  const toggle = () => sim.updateSettings(all ? { autoApproach: false, autoTower: false, autoGround: false, autoMode: false } : { autoApproach: true, autoTower: true, autoGround: true, autoMode: true })
+  const all = useSim((s) => sectorAi(s.settings, 'airfield') && sectorAi(s.settings, 'approach'))
+  const toggle = () => sim.updateSettings({ ...sectorPatch('airfield', !all), ...sectorPatch('approach', !all) })
   return (
     <Tooltip content={all ? 'Autopilot on — the AI is working every position. Click to take over.' : 'Autopilot — let the AI work every position (watch mode)'} placement="bottom">
       <IconButton size={36} variant="ghost" label={all ? 'Autopilot on' : 'Autopilot'} icon={<Icon name="sparkles" size={16} />} active={all} accentIcon={all} aria-pressed={all} onClick={toggle} testId="nav-autopilot" data-state={all ? 'on' : 'off'} />
@@ -260,6 +286,7 @@ export function NavBar() {
         <Pill size="s" tone="outline" interactive tabular onClick={() => shell.show('runwayConfig')} testId="airport-badge" title="Airport and runway configuration">{icao || '—'}</Pill>
         <span className={styles.divider} aria-hidden="true" />
         <PositionTabs />
+        <SectorChips />
       </div>
       <div className={styles.center}>
         <AtisChip />

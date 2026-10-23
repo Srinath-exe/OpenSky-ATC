@@ -13,7 +13,7 @@ import { useHotkeys, keyChord, isEditableTarget, isPickerTarget } from '../hooks
 import type { ShellState } from '../shellContext'
 import { cycleStrip } from './stripCycle'
 
-const POSITIONS: PlayerPosition[] = ['ground', 'tower', 'approach']
+const POSITIONS: PlayerPosition[] = ['tower', 'approach']
 const RATES: Array<1 | 2 | 4> = [1, 2, 4]
 
 /** Buttons, links, tabs, switches: Space / Enter belong to them, never to the shell. */
@@ -64,9 +64,8 @@ export function useShellHotkeys(shell: ShellState, { hasRadar, openPause }: Shel
 
     // ---- always on (F5 / F6 / F7 / F11 / F12 are never bound) ----
     switch (chord) {
-      case 'F1': sim.setPosition('ground'); return true
-      case 'F2': sim.setPosition('tower'); return true
-      case 'F3': if (hasRadar) sim.setPosition('approach'); return true
+      case 'F1': sim.setPosition('tower'); return true
+      case 'F2': if (hasRadar) sim.setPosition('approach'); return true
       case 'F4': s.toggleBay(); return true
       case 'F8': s.toggleLog(); return true
       case 'F9': s.toggle('atis'); return true

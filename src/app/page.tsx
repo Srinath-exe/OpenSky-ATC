@@ -17,11 +17,18 @@ import {
   useSettings, updateSettings, useHighScore, useSessionRunning, writeStartConfig,
   type Difficulty, type Position, type StartConfig,
 } from './_lib/persist';
+import { sectorAi, sectorPatch } from '@/components/atc/simStore';
 import s from './home.module.css';
 
 const WEIGHTS: WeightClass[] = ['L', 'M', 'H', 'S'];
 const WEIGHT_LABEL: Record<WeightClass, string> = { L: 'Light', M: 'Medium', H: 'Heavy', S: 'Super' };
-const POSITIONS: { id: Position; label: string }[] = [{ id: 'ground', label: 'Ground' }, { id: 'tower', label: 'Tower' }, { id: 'approach', label: 'Approach' }];
+/** What the player works; the other sector goes to the AI (Tower = ground + runway, the 'airfield' sector). */
+type Role = 'both' | 'airfield' | 'approach';
+const ROLES: { id: Role; label: string; hint: string }[] = [
+  { id: 'both', label: 'Both', hint: 'you run tower and approach' },
+  { id: 'airfield', label: 'Tower', hint: 'you run ground and runway, AI runs approach' },
+  { id: 'approach', label: 'Approach', hint: 'you run approach, AI runs ground and runway' },
+];
 const DIFFICULTIES: { id: Difficulty; label: string }[] = [{ id: 'low', label: 'Low' }, { id: 'normal', label: 'Normal' }, { id: 'high', label: 'High' }];
 
 /** Default weight classes per end by runway length (05 §4.1 H3). */
@@ -137,7 +144,11 @@ function Detail({ airport, onBack }: { airport: AirportMeta; onBack: () => void 
   const runways = runwaysOf(airport.icao);
   const [cfg, setCfg] = React.useState<RunwayCfg>(() => initialCfg(airport.icao));
   const [wind, setWind] = React.useState(airport.wind);
-  const [position, setPosition] = React.useState<Position>('tower');
+  const [role, setRole] = React.useState<Role>(() => {
+    const air = sectorAi(settings, 'airfield'), app = sectorAi(settings, 'approach');
+    return air && !app ? 'approach' : app && !air ? 'airfield' : 'both';
+  });
+  const position: Position = role === 'approach' ? 'approach' : 'tower';
   const [difficulty, setDifficulty] = React.useState<Difficulty>(settings.difficulty);
   const [seed, setSeed] = React.useState('');
   const [starting, setStarting] = React.useState(false);
@@ -179,7 +190,7 @@ function Detail({ airport, onBack }: { airport: AirportMeta; onBack: () => void 
       wind: { dir: wind.dir, kts: wind.kts },
       ...(seedNum !== undefined ? { seed: seedNum } : {}),
     };
-    updateSettings({ difficulty });
+    updateSettings({ difficulty, ...sectorPatch('airfield', role === 'approach'), ...sectorPatch('approach', role === 'airfield') });
     writeStartConfig(startCfg);
     setStarting(true);
     router.push('/play');
@@ -227,8 +238,9 @@ function Detail({ airport, onBack }: { airport: AirportMeta; onBack: () => void 
         <aside className={s.side}>
           <GlassPanel variant="solid" title="Shift" testId="home-shift">
             <div className={s.field}>
-              <span className={cx('body-s', s.fieldLabel)}>Start at position</span>
-              <Segmented ariaLabel="Starting position" value={position} onChange={(v) => setPosition(v as Position)} items={POSITIONS} testId="home-position" />
+              <span className={cx('body-s', s.fieldLabel)}>You control</span>
+              <Segmented ariaLabel="You control" value={role} onChange={(v) => setRole(v as Role)} items={ROLES} testId="home-role" />
+              <span className={cx('body-s', s.startHint)} data-testid="home-role-hint">{ROLES.find((r) => r.id === role)?.hint}. Switch any time from the top bar.</span>
             </div>
             <div className={s.field}>
               <span className={cx('body-s', s.fieldLabel)}>Traffic difficulty</span>
@@ -273,7 +285,7 @@ function Detail({ airport, onBack }: { airport: AirportMeta; onBack: () => void 
               </Button>
               <p id="home-start-hint" className={cx('body-s', s.startHint)} data-testid="home-start-hint">
                 {anyOn
-                  ? <>{airport.icao} · {activeEnds.join(' ')} · {DIFFICULTIES.find((d) => d.id === difficulty)?.label.toLowerCase()} traffic · {POSITIONS.find((p) => p.id === position)?.label.toLowerCase()}</>
+                  ? <>{airport.icao} · {activeEnds.join(' ')} · {DIFFICULTIES.find((d) => d.id === difficulty)?.label.toLowerCase()} traffic · {role === 'both' ? 'tower + approach' : role === 'airfield' ? 'tower' : 'approach'}</>
                   : 'Switch on at least one runway end to start.'}
               </p>
             </div>

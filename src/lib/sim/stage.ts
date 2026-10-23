@@ -171,19 +171,9 @@ export function bayFor(a: AircraftState, s: Stage, position: PlayerPosition): Ba
     }
   }
   if (position === 'tower') {
-    switch (s) {
-      case 'hold_short_dep': return 'AT_HOLD';
-      case 'taxi_out': return onTower && dep ? 'AT_HOLD' : null;   // still with tower (e.g. vacated after a cancelled line-up)
-      case 'lineup': return 'LINED_UP';
-      case 'takeoff_roll': case 'takeoff_air': return 'ROLLING_AIRBORNE';
-      case 'dep_climb': case 'dep_level': return onApp ? null : 'ROLLING_AIRBORNE';
-      case 'arr_established': case 'arr_final': case 'arr_short_final': return onTower ? 'FINAL' : null;
-      case 'go_around': return onTower ? 'FINAL' : null;
-      case 'rollout': return 'LANDED_ROLLOUT';
-      case 'taxi_in': return dep ? null : 'TO_GROUND';
-      case 'hold_short_cross': return dep ? (onTower ? 'AT_HOLD' : null) : 'TO_GROUND';
-      default: return null;
-    }
+    // one controller works ground and runway: runway bays first, everything else on the field from the ground board
+    const t = towerBay(s, dep, onTower, onApp);
+    return t && t !== 'TO_GROUND' ? t : bayFor(a, s, 'ground');
   }
   switch (s) {
     case 'dep_climb': case 'dep_level': case 'takeoff_air': return onApp ? 'CLIMB_OUT' : null;
@@ -193,6 +183,22 @@ export function bayFor(a: AircraftState, s: Stage, position: PlayerPosition): Ba
     case 'arr_established': return onTower ? 'TO_TOWER' : 'ESTABLISHED';
     case 'arr_final': case 'arr_short_final': return 'TO_TOWER';
     case 'go_around': return onTower ? null : 'SEQUENCE';
+    default: return null;
+  }
+}
+
+function towerBay(s: Stage, dep: boolean, onTower: boolean, onApp: boolean): BayId | null {
+  switch (s) {
+    case 'hold_short_dep': return 'AT_HOLD';
+    case 'taxi_out': return onTower && dep ? 'AT_HOLD' : null;   // still with tower (e.g. vacated after a cancelled line-up)
+    case 'lineup': return 'LINED_UP';
+    case 'takeoff_roll': case 'takeoff_air': return 'ROLLING_AIRBORNE';
+    case 'dep_climb': case 'dep_level': return onApp ? null : 'ROLLING_AIRBORNE';
+    case 'arr_established': case 'arr_final': case 'arr_short_final': return onTower ? 'FINAL' : null;
+    case 'go_around': return onTower ? 'FINAL' : null;
+    case 'rollout': return 'LANDED_ROLLOUT';
+    case 'taxi_in': return dep ? null : 'TO_GROUND';
+    case 'hold_short_cross': return dep ? (onTower ? 'AT_HOLD' : null) : 'TO_GROUND';
     default: return null;
   }
 }

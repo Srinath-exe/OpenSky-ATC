@@ -40,6 +40,7 @@ import type { CommandAST, CommandResult } from '../../lib/sim/commandAst';
 import { bayFor } from '../../lib/sim/stage';
 import type { BayId } from '../../lib/sim/stage';
 import { EVENT_WHO } from '../../lib/sim/types';
+import type { Sector } from '../../lib/sim/types';
 import type {
   AircraftState, Alert, AlertSeverity, Atis, EmergencyType, PilotRequest, PlayerPosition, RunwayState, RunwayStatus,
   SessionStats, SimEvent, Stage, Vehicle, VehicleTarget, VehicleType, WeatherState, Position as FreqPosition,
@@ -76,6 +77,8 @@ export type Position = PlayerPosition;
 export interface RadioLine {
   key: number;
   who: 'ATC' | 'PILOT' | 'SYS' | 'AI' | 'LLM';
+  /** AI lines: the position that spoke (TWR / APP / GND) - shown as the badge instead of repeating "AI APP:" in the text. */
+  aiPos?: string;
   text: string;
   /** Sim seconds. */
   at: number;
@@ -131,6 +134,14 @@ export interface Settings {
   instantVectors: boolean;
   /** Typed command line transmits without confirm. */
   typedInstant: boolean;
+}
+
+/** Who works a sector: true = the AI, false = the player. Airfield = ground + tower (one controller), approach = approach + departure. */
+export function sectorAi(s: Pick<Settings, 'autoGround' | 'autoTower' | 'autoApproach'>, sector: Sector): boolean {
+  return sector === 'airfield' ? s.autoGround && s.autoTower : s.autoApproach;
+}
+export function sectorPatch(sector: Sector, ai: boolean): Partial<Settings> {
+  return sector === 'airfield' ? { autoGround: ai, autoTower: ai, autoMode: false } : { autoApproach: ai, autoMode: false };
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -196,7 +207,7 @@ const BAY_TITLES: Record<BayId, string> = {
 };
 const BAY_ORDER: Record<Position, BayId[]> = {
   ground: ['PENDING', 'PUSH_START', 'TAXI_OUT', 'AT_HOLD', 'TAXI_IN', 'AT_STAND', 'VEHICLES'],
-  tower: ['AT_HOLD', 'LINED_UP', 'ROLLING_AIRBORNE', 'FINAL', 'LANDED_ROLLOUT', 'TO_GROUND', 'VEHICLES'],
+  tower: ['PENDING', 'PUSH_START', 'TAXI_OUT', 'AT_HOLD', 'LINED_UP', 'ROLLING_AIRBORNE', 'FINAL', 'LANDED_ROLLOUT', 'TAXI_IN', 'AT_STAND', 'VEHICLES'],
   approach: ['INBOUND', 'SEQUENCE', 'ESTABLISHED', 'TO_TOWER', 'CLIMB_OUT', 'HANDED_OFF'],
 };
 /** Bays sorted by distance to threshold (arrival flow). */
@@ -214,6 +225,9 @@ function sanitizeSettings(s: Settings): Settings {
   if (!['low', 'normal', 'high'].includes(out.difficulty)) out.difficulty = DEFAULT_SETTINGS.difficulty;
   if (!['satellite', 'chart'].includes(out.groundTheme)) out.groundTheme = DEFAULT_SETTINGS.groundTheme;
   if (typeof out.volume === 'number') out.volume = Math.min(1, Math.max(0, out.volume));
+  // control is per sector now: the old per-tab auto mode is retired, ground and tower go to the AI together
+  out.autoMode = false;
+  if (out.autoGround !== out.autoTower) out.autoGround = out.autoTower = out.autoGround || out.autoTower;
   return out;
 }
 
@@ -426,7 +440,7 @@ class SimStore implements TestApiHost {
     this.loadError = null;
     this.lastConfig = { ...cfg, icao, seed, spawn, test: testMode };
     if (cfg.difficulty && cfg.difficulty !== this.settings.difficulty) this.updateSettings({ difficulty: cfg.difficulty }, { silent: true });
-    if (cfg.position) this.position = cfg.position;
+    if (cfg.position) this.position = cfg.position === 'ground' && !this.testMode ? 'tower' : cfg.position;
     this.emit();
 
     let fc: unknown; let ap: EAirport | null = null;
@@ -674,9 +688,10 @@ class SimStore implements TestApiHost {
       case 'transmission': {
         if (d?.type === 'transmission') {
           const res = d.result;
+          const aiTag = who === 'AI' ? /^AI (APP|TWR|GND): ([^]*)$/.exec(ev.message) : null;
           const undoOpen = res.ok && res.applyAt != null && res.applyAt > ev.at && undoable(d.ast);
           this.pushLine({
-            who: who === 'AI' ? 'AI' : this.commandWho === 'LLM' ? 'LLM' : 'ATC', at: ev.at, text: ev.message, callsign: ev.callsign !== 'SYSTEM' ? ev.callsign : undefined, position: ev.position,
+            who: who === 'AI' ? 'AI' : this.commandWho === 'LLM' ? 'LLM' : 'ATC', aiPos: aiTag?.[1], at: ev.at, text: aiTag ? aiTag[2] : ev.message, callsign: ev.callsign !== 'SYSTEM' ? ev.callsign : undefined, position: ev.position,
             result: res, ast: d.ast, undoUntil: undoOpen ? res.applyAt : undefined,
             status: res.ok ? (res.code === 'partial' ? 'partial' : 'ok') : res.code.startsWith('unable') ? 'unable' : res.code === 'queried' ? 'ok' : 'error',
           });
@@ -936,6 +951,7 @@ class SimStore implements TestApiHost {
     this.emit();
   }
   setPosition(p: Position): void {
+    if (p === 'ground' && !this.testMode) p = 'tower';   // ground is part of the Tower job (no separate tab)
     if (this.position === p) return;
     this.position = p;
     if (this.engine) this.engine.playerPosition = p;
@@ -973,6 +989,8 @@ class SimStore implements TestApiHost {
     if (this.engine) this.applySettingsToEngine(this.engine);
     if (!opts.silent) this.emit();
   }
+  /** Hand a sector to the AI or take it back, mid-shift included. */
+  setSectorAi(sector: Sector, ai: boolean): void { this.updateSettings(sectorPatch(sector, ai)); }
   private applySettingsToEngine(e: SimEngine): void {
     const s = this.settings;
     e.settings.autoTower = s.autoTower;
@@ -980,6 +998,7 @@ class SimStore implements TestApiHost {
     e.settings.autoApproach = s.autoApproach;
     e.settings.autoMode = s.autoMode;
     e.settings.autoHandoff = s.autoHandoff;
+    e.settings.arrivalFlow = !this.testMode;   // the centre meters arrivals in a real session; test scenarios spawn what they ask for
     e.settings.strictFrequencies = s.strictFrequencies;
     if (!this.testMode) {
       e.settings.emergencyRate = s.emergencyRate;

@@ -23,7 +23,7 @@ const DEFAULTS: Settings = {
 };
 /** Toggle id -> Settings key (store-owned toggles). `set-reduced-motion` is a UI pref (skycontrol_prefs). */
 const TOGGLE_KEY: Record<Exclude<ToggleId, 'set-reduced-motion'>, keyof Settings> = {
-  'set-autotower': 'autoTower', 'set-autoground': 'autoGround', 'set-autoapproach': 'autoApproach', 'set-automode': 'autoMode', 'set-auto-handoff': 'autoHandoff',
+  'set-auto-handoff': 'autoHandoff',
   'set-strict-frequencies': 'strictFrequencies', 'set-readback-errors': 'readbackErrors', 'set-instant-vectors': 'instantVectors',
   'set-typed-instant': 'typedInstant', 'set-show-rings': 'showRings', 'set-sound': 'sound', 'set-tts': 'tts',
 };
@@ -128,10 +128,11 @@ test.describe('settings: defaults and navigation', () => {
 });
 
 test.describe('settings: every control round-trips to storage and survives reload', () => {
-  test('S2 AI tower assist and pilot voice: data-state, settings blob and legacy mirrors @smoke', async ({ settings, page }) => {
+  test('S2 airfield AI and pilot voice: data-state, settings blob and legacy mirrors @smoke', async ({ settings, page }) => {
     await settings.goto();
-    await settings.setToggle('set-autotower', true);
-    await expect(settings.autoTower()).toHaveAttribute('aria-checked', 'true');
+    await settings.pickSegmented('set-sector-airfield', 'ai');
+    await expect(settings.airfieldAi()).toHaveAttribute('aria-pressed', 'true');
+    expect((await readLocalStorageJson<Settings>(page, LS_KEYS.settings))?.autoGround).toBe(true);
     expect(await readLocalStorage(page, LS_KEYS.autoTower)).toBe('1');
     expect((await readLocalStorageJson<Settings>(page, LS_KEYS.settings))?.autoTower).toBe(true);
     await settings.setToggle('set-tts', true);
@@ -140,10 +141,10 @@ test.describe('settings: every control round-trips to storage and survives reloa
 
     await page.reload();
     await expect(settings.root()).toHaveAttribute('data-ready', 'true');
-    await expect(settings.autoTower()).toHaveAttribute('data-state', 'on');
+    await expect(settings.airfieldAi()).toHaveAttribute('data-state', 'on');
     await expect(settings.tts()).toHaveAttribute('data-state', 'on');
 
-    await settings.setToggle('set-autotower', false);
+    await settings.pickSegmented('set-sector-airfield', 'you');
     expect(await readLocalStorage(page, LS_KEYS.autoTower)).toBe('0');
     await settings.setToggle('set-tts', false);
     expect(await readLocalStorage(page, LS_KEYS.tts)).toBe('0');
@@ -416,7 +417,7 @@ test.describe('settings: score, history, reset', () => {
   test('reset all: settings and prefs back to defaults, mirrors cleared, high score kept @full', async ({ settings, page }) => {
     await seedForNextLoad(page, { [LS_KEYS.highScore]: '500' });
     await settings.goto();
-    await settings.setToggle('set-autotower', true);
+    await settings.pickSegmented('set-sector-airfield', 'ai');
     await settings.setToggle('set-tts', true);
     await settings.setToggle('set-auto-handoff', false);
     await settings.pickTheme('chart');
@@ -468,9 +469,8 @@ test.describe('settings: live session', () => {
     await expect(settings.resumeBtn()).toBeVisible();
     await expect(settings.resumeBtn()).toContainText('EGLL');
 
-    await settings.setToggle('set-autotower', true);
-    await settings.setToggle('set-autoground', true);
-    await settings.setToggle('set-autoapproach', true);
+    await settings.pickSegmented('set-sector-airfield', 'ai');
+    await settings.pickSegmented('set-sector-approach', 'ai');
     await settings.setToggle('set-auto-handoff', false);
     await settings.setToggle('set-strict-frequencies', true);
     await settings.pickSelect('set-phraseology', /^FAA/);

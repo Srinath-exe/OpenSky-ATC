@@ -21,7 +21,7 @@
 import type {
   AircraftState, NavMode, PilotRequest, PlayerPosition, Position, RunwayStatus, Stage, VehicleState, VehicleTarget, VehicleType,
 } from './types';
-import { ALL_STAGES, NEXT_POSITION } from './types';
+import { ALL_STAGES, NEXT_POSITION, SECTOR_OF } from './types';
 import type {
   ApproachType, CommandAST, ContactWhen, CorrectionField, EmergencyInfoKind, ExitSpec, HoldAllScope, HoldShortTarget,
   PushDir, ReportKind, ResultCode, SingleAircraftCommand, TaxiDest, TurnDir, UnableReason,
@@ -833,7 +833,7 @@ export const REQUEST_ANSWER: Partial<Record<PilotRequest['kind'], ActionId>> = {
  */
 export function actionsFor(a: AircraftState, ctx: ActionCtx): ActionRow[] {
   const rows: ActionRow[] = [];
-  const offFreq = ctx.strictFrequencies && a.onFrequency !== 'external' && ownerOf(a.onFrequency) !== ctx.position;
+  const offFreq = ctx.strictFrequencies && a.onFrequency !== 'external' && !sameSector(ownerOf(a.onFrequency), ctx.position);
   let primaryId: ActionId | null = ctx.pendingRequest ? (ctx.pendingRequest.suggestedAction ?? REQUEST_ANSWER[ctx.pendingRequest.kind] ?? null) : (a.emergency && a.emergency.status === 'declared' ? 'emerg-ack' : null);
   // §G8: "ready for departure" -> line up when the runway is occupied.
   if (primaryId === 'action-takeoff' && ctx.pendingRequest?.kind === 'ready') {
@@ -867,6 +867,9 @@ export function actionsFor(a: AircraftState, ctx: ActionCtx): ActionRow[] {
   return rows.sort((x, y) => x.order - y.order);
 }
 
+function sameSector(owner: PlayerPosition | null, pos: PlayerPosition): boolean {
+  return owner != null && SECTOR_OF[owner] === SECTOR_OF[pos];
+}
 function ownerOf(p: Position): PlayerPosition | null {
   return p === 'ground' ? 'ground' : p === 'tower' ? 'tower' : p === 'approach' || p === 'departure' ? 'approach' : null;
 }
@@ -1166,7 +1169,7 @@ export function validate(id: ActionId, params: ActionParams, a: AircraftState, c
   const errors: ValidationIssue[] = [];
   const warnings: ValidationIssue[] = [];
   let cell = evaluateCell(id, a, ctx);
-  const offFreq = ctx.strictFrequencies && a.onFrequency !== 'external' && ownerOf(a.onFrequency) !== ctx.position;
+  const offFreq = ctx.strictFrequencies && a.onFrequency !== 'external' && !sameSector(ownerOf(a.onFrequency), ctx.position);
   if (cell.state === 'enabled') {
     if (ctx.paused) cell = disabled('X12');
     else if (offFreq) cell = disabled('R13');

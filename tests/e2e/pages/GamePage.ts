@@ -348,7 +348,7 @@ export class GamePage {
   settingsClose = () => this.page.getByTestId('set-close');
   settingsOpenFull = () => this.page.getByTestId('set-open-full');
   /** In-game settings toggle (role=switch, aria-checked). */
-  settingsToggle = (id: 'set-sound' | 'set-tts' | 'set-autotower' | 'set-autoground' | 'set-auto-handoff' | 'set-strict-frequencies' | 'set-readback-errors' | 'set-instant-vectors' | 'set-typed-instant' | 'set-show-rings' | 'set-reduced-motion' | 'set-hotkey-badges') => this.page.getByTestId(id);
+  settingsToggle = (id: 'set-sound' | 'set-tts' | 'set-auto-handoff' | 'set-strict-frequencies' | 'set-readback-errors' | 'set-instant-vectors' | 'set-typed-instant' | 'set-show-rings' | 'set-reduced-motion' | 'set-hotkey-badges') => this.page.getByTestId(id);
 
   // ── lifecycle ────────────────────────────────────────────────────────────
   /** Build the /play URL for a config (test mode on by default). */

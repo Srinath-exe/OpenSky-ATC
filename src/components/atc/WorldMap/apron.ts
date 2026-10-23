@@ -223,6 +223,23 @@ export function buildGse(world: World, air: OsmAirport, base: number): THREE.Obj
 }
 
 // ── floating name labels (taxiways, runway ends) ─────────────────────────────
+/**
+ * Close-up declutter (0..1): zoomed in AND looking across the field at a low angle, where every label out to the
+ * horizon piles up at the same screen size. 0 for top-down or zoomed-out views - those keep every label.
+ */
+const _dir = new THREE.Vector3();
+export function closeUpFade(camera: THREE.Camera, dist: number): number {
+  camera.getWorldDirection(_dir);
+  const downDeg = Math.asin(Math.min(1, Math.max(-1, -_dir.y))) * 180 / Math.PI;   // 90 = straight down
+  return (1 - THREE.MathUtils.smoothstep(downDeg, 32, 58)) * (1 - THREE.MathUtils.smoothstep(dist, 1200, 2800));
+}
+/** Label opacity / scale for a label `d` metres from the camera when the view is `ref` metres from its target. */
+export function closeUpLabel(fade: number, d: number, ref: number): { alpha: number; scale: number } {
+  if (fade <= 0) return { alpha: 1, scale: 1 };
+  const far = 1 - THREE.MathUtils.smoothstep(d, ref * 1.8, ref * 3.0);
+  return { alpha: 1 - fade * (1 - far), scale: 1 + fade * (Math.min(1.3, Math.max(0.6, ref / Math.max(1, d))) - 1) };
+}
+
 export interface LabelHandle { group: THREE.Group; update(camera: THREE.Camera, dist: number, viewportH: number): void }
 
 
@@ -248,6 +265,8 @@ const SIGN_VERT = `
   uniform float uK;           // world metres per pixel at unit distance (2 tan(fov/2) / viewport px)
   uniform float uStep;        // taxiway sign thinning: every uStep-th sign along a taxiway
   uniform vec3 uAlpha;        // x: taxiway signs, y: runway designators, z: short-stub taxiway signs
+  uniform float uFade;        // close-up declutter 0..1 (closeUpFade): signs far beyond the view target fade out
+  uniform float uRef;         // camera -> view target (m)
   varying vec2 vUv; varying float vAlpha;
   void main() {
     float kind = mod(info.y, 8.0); float rank = floor(info.y / 8.0);
@@ -255,7 +274,12 @@ const SIGN_VERT = `
     vAlpha = a;
     vUv = vec2(mix(rect.x, rect.z, corner.x + 0.5), mix(rect.y, rect.w, corner.y));
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    float h = length(mv.xyz) * uK * (kind < 1.5 && kind > 0.5 ? 24.0 : 22.0);   // 22 / 24 px tall on screen
+    float d = length(mv.xyz);
+    // close up at a low angle: nearer signs larger, farther smaller, and nothing beyond ~3x the target distance
+    a *= 1.0 - uFade * smoothstep(uRef * 1.8, uRef * 3.0, d);
+    vAlpha = a;
+    float sc = mix(1.0, clamp(uRef / max(d, 1.0), 0.6, 1.3), uFade);
+    float h = d * uK * sc * (kind < 1.5 && kind > 0.5 ? 24.0 : 22.0);   // 22 / 24 px tall on screen
     mv.xy += vec2(corner.x * h * info.x, corner.y * h);
     gl_Position = a < 0.01 ? vec4(2.0, 2.0, 2.0, 1.0) : projectionMatrix * mv;   // invisible signs are clipped away
   }`;
@@ -304,7 +328,7 @@ export function buildLabels(world: World, air: OsmAirport, base: number): LabelH
     add(end.name, 'rwy', toV3(p.x, p.y, base + 10));
   }
   const material = new THREE.ShaderMaterial({
-    uniforms: { uAtlas: { value: null }, uK: { value: 0.001 }, uStep: { value: 1 }, uAlpha: { value: new THREE.Vector3(1, 1, 1) } },
+    uniforms: { uAtlas: { value: null }, uK: { value: 0.001 }, uStep: { value: 1 }, uAlpha: { value: new THREE.Vector3(1, 1, 1) }, uFade: { value: 0 }, uRef: { value: 1000 } },
     vertexShader: SIGN_VERT, fragmentShader: SIGN_FRAG, transparent: true, depthTest: false, depthWrite: false,
   });
   if (signs.length) {
@@ -350,6 +374,7 @@ export function buildLabels(world: World, air: OsmAirport, base: number): LabelH
     material.uniforms.uK.value = (2 * Math.tan(((camera as THREE.PerspectiveCamera).fov ?? 48) * Math.PI / 360)) / pxH;   // world metres per pixel at unit distance
     material.uniforms.uStep.value = dist < 1500 ? 1 : dist < 2800 ? 2 : 4;
     (material.uniforms.uAlpha.value as THREE.Vector3).set(twyA * 0.95, rwyA * 0.95, stubA * 0.95);
+    material.uniforms.uFade.value = closeUpFade(camera, dist); material.uniforms.uRef.value = dist;
   };
   return { group, update };
 }

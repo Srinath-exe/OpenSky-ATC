@@ -118,10 +118,10 @@ test.describe('home: airport grid and detail', () => {
     expect((await home.activeEnds()).sort()).toEqual(defaultEnds('EGLL').sort());
     await expect(home.activeCount()).toContainText(String(defaultEnds('EGLL').length));
 
-    // shift panel defaults: tower, normal (settings default), empty seed, sound on, voice off
-    await expect(home.positionTab('tower')).toHaveAttribute('aria-pressed', 'true');
-    await expect(home.positionTab('ground')).toHaveAttribute('aria-pressed', 'false');
-    await expect(home.positionTab('approach')).toHaveAttribute('aria-pressed', 'false');
+    // shift panel defaults: you control both sectors, normal (settings default), empty seed, sound on, voice off
+    await expect(home.roleTab('both')).toHaveAttribute('aria-pressed', 'true');
+    await expect(home.roleTab('airfield')).toHaveAttribute('aria-pressed', 'false');
+    await expect(home.roleTab('approach')).toHaveAttribute('aria-pressed', 'false');
     await expect(home.difficultyTab('normal')).toHaveAttribute('aria-pressed', 'true');
     await expect(home.seedInput()).toHaveValue('');
     await expect(home.seedError()).toHaveCount(0);
@@ -165,7 +165,7 @@ test.describe('home: airport grid and detail', () => {
     await home.pickAirport('EGLL');
     await home.toggleEnd('27L', false);
     await home.toggleWeight('27R', 'S', false);
-    await home.pickPosition('approach');
+    await home.pickRole('approach');
     await home.changeAirport().click();
     await expect(home.detail()).toHaveCount(0);
     await expect(home.airportCards()).toHaveCount(AIRPORTS.length);
@@ -182,7 +182,7 @@ test.describe('home: airport grid and detail', () => {
     await home.pickAirport('EGLL');
     await expect(home.runwayEnd('27L')).toHaveAttribute('aria-pressed', 'true');
     await expect(home.weight('27R', 'S')).toHaveAttribute('aria-pressed', 'true');
-    await expect(home.positionTab('tower')).toHaveAttribute('aria-pressed', 'true');
+    await expect(home.roleTab('both')).toHaveAttribute('aria-pressed', 'true');
   });
 });
 
@@ -330,19 +330,19 @@ test.describe('home: runway configuration', () => {
 });
 
 test.describe('home: shift setup', () => {
-  test('position and difficulty segmented controls mirror aria-pressed and the start hint @full', async ({ home }) => {
+  test('role and difficulty segmented controls mirror aria-pressed and the start hint @full', async ({ home }) => {
     await home.goto();
     await home.pickAirport('EGLL');
-    for (const p of ['ground', 'approach', 'tower'] as const) {
-      await home.pickPosition(p);
-      await expect(home.positionTab(p)).toHaveAttribute('aria-pressed', 'true');
-      await expect(home.positionTab(p)).toHaveAttribute('aria-selected', 'true');
-      await expect(home.positionTab(p)).toHaveAttribute('data-state', 'on');
-      for (const o of (['ground', 'tower', 'approach'] as const).filter((x) => x !== p)) {
-        await expect(home.positionTab(o)).toHaveAttribute('aria-pressed', 'false');
-        await expect(home.positionTab(o)).toHaveAttribute('data-state', 'off');
+    for (const p of ['airfield', 'approach', 'both'] as const) {
+      await home.pickRole(p);
+      await expect(home.roleTab(p)).toHaveAttribute('aria-pressed', 'true');
+      await expect(home.roleTab(p)).toHaveAttribute('aria-selected', 'true');
+      await expect(home.roleTab(p)).toHaveAttribute('data-state', 'on');
+      for (const o of (['both', 'airfield', 'approach'] as const).filter((x) => x !== p)) {
+        await expect(home.roleTab(o)).toHaveAttribute('aria-pressed', 'false');
+        await expect(home.roleTab(o)).toHaveAttribute('data-state', 'off');
       }
-      await expect(home.startHint()).toContainText(new RegExp(`${p}$`));
+      await expect(home.startHint()).toContainText(new RegExp(`${p === 'both' ? 'tower \\+ approach' : p === 'airfield' ? 'tower' : p}$`));
     }
     for (const d of ['low', 'high', 'normal'] as const) {
       await home.pickDifficulty(d);
@@ -428,7 +428,7 @@ test.describe('home: start and boot', () => {
     await home.toggleWeight('27R', 'L', false);
     await home.toggleWeight('27R', 'S', false);
     await home.toggleWeight('27L', 'S', false);
-    await home.pickPosition('approach');
+    await home.pickRole('approach');
     await home.pickDifficulty('high');
     await home.setSeed(123);
     await expect(home.startHint()).toContainText('EGLL');

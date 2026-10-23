@@ -42,16 +42,16 @@
   --w-85: rgba(255, 255, 255, 0.85);
 
   /* ---------- 1.2 Glass ---------- */
-  --glass-fill: rgba(34, 36, 42, 0.16);            /* liquid glass: a thin smoky tint, the blurred map is the material */
-  --glass-fill-strong: rgba(16, 18, 22, 0.30);
+  --glass-fill: rgba(22, 24, 29, 0.72);            /* frosted dark glass: mostly opaque so text stays readable over the bright map */
+  --glass-fill-strong: rgba(14, 16, 20, 0.86);
   --glass-fill-fallback: rgba(24, 24, 26, 0.92);   /* A16 no-backdrop-filter fallback */
   --glass-border: rgba(255, 255, 255, 0.12);
   --glass-border-hover: rgba(255, 255, 255, 0.20);
   --glass-border-lit: rgba(255, 255, 255, 0.24);
   --glass-highlight: rgba(255, 255, 255, 0.26);   /* 1px inner top edge (specular) */
-  --glass-blur: 18px;                              /* enough to abstract the map, little enough to keep its shapes */
-  --glass-saturate: 1.9;
-  --glass-brightness: 1.18;                        /* the material is luminous: the backdrop is lifted, not dimmed */
+  --glass-blur: 28px;                              /* the map behind a panel is a soft wash, no runway lines through the text */
+  --glass-saturate: 1.2;
+  --glass-brightness: 0.75;                        /* the backdrop is dimmed so white text keeps its contrast */
   --glass-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.30);
   /* the thick-glass rim: a bright bevel on the lit (top-left) edge, a fainter one opposite, a faint inner glow */
   --glass-rim: inset 1.5px 1.5px 0 -0.5px rgba(255, 255, 255, 0.50), inset -1.5px -1.5px 0 -0.5px rgba(255, 255, 255, 0.18), inset 0 0 28px rgba(255, 255, 255, 0.07), inset 0 -1px 0 rgba(0, 0, 0, 0.30);

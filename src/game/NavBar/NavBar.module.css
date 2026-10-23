@@ -35,6 +35,7 @@
 
 .left { display: inline-flex; align-items: center; gap: var(--s-3); }
 .tabs { display: inline-flex; align-items: center; }
+.sectors { display: inline-flex; align-items: center; gap: var(--s-1); margin-left: var(--s-2); white-space: nowrap; }
 .center { display: flex; align-items: center; justify-content: center; gap: var(--s-3); min-width: 0; overflow: hidden; }
 .right { display: inline-flex; align-items: center; gap: var(--s-2); }
 

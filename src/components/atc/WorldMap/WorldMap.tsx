@@ -24,7 +24,7 @@ import { getPerformance } from '@/lib/sim/aircraftDB';
 import { loadWorld, type World } from './world';
 import { NOSE_WHEEL, genericLights, instantiate, lightsOf, loadAircraftModel, setGear, setModelNight, tint, type LightSpec } from './models';
 import { PALETTE, applyFades, buildAirport, buildBuildings, buildRoads, buildTerrain, setSurfaceNight, toV3, type BuildingsHandle, type Fade, type NightHandle } from './terrain';
-import { buildGse, buildJetBridges, buildLabels, buildStands, type LabelHandle } from './apron';
+import { buildGse, buildJetBridges, buildLabels, buildStands, closeUpFade, closeUpLabel, type LabelHandle } from './apron';
 import { applySky, buildClouds, buildRain, buildSky, lightingFor, sunPosition, weatherLook, type TimeMode } from './sky';
 import { AdaptiveResolution, PRESETS, detectTier, getGraphicsPref, presetFor, publishDetected, subscribeGraphics, type QualityPreset } from './quality';
 import { IconButton, Segmented, Icon, Tooltip } from '@/design';
@@ -279,7 +279,8 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       routeMat.resolution.set(w, h); fxaa.uniforms.resolution.value.set(1 / (w * adaptive.dpr), 1 / (h * adaptive.dpr));
     };
     resize();
-    const ro = new ResizeObserver(resize); ro.observe(el);
+    // a resize clears the canvas; draw again at once so opening a panel (which resizes the map) does not blink it
+    const ro = new ResizeObserver(() => { resize(); applyCamera(); composer.render(); }); ro.observe(el);
 
     // ground point under a screen position (ray vs the height field, iterative)
     const groundAt = (sx: number, sy: number): THREE.Vector3 | null => {
@@ -445,6 +446,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       frustumM.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); frustum.setFromProjectionMatrix(frustumM);
       // traffic sync
       const live = new Set<number>();
+      const declutter = closeUpFade(camera, cam.dist);   // close up at a low angle: far labels fade (apron.ts)
       for (const a of eng.aircraft) {
         live.add(a.id);
         let m = markers.get(a.id);
@@ -490,7 +492,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         m.shadow.scale.set(span * shScale * sh, 0.01, len * shScale * sh);
         (m.shadow.material as THREE.MeshBasicMaterial).opacity = (air ? Math.max(0.04, 0.28 - (h - ground) / 6000) : 0.32) * (0.35 + 0.65 * (1 - nightAmtRef));
         if (air) { m.stem.position.set(midX, ground, -midY); m.stem.scale.y = Math.max(1, h - ground); }
-        m.mesh.material = a.id === sim.selectedId ? matSel : a.onFrequency === sim.position || sim.position === 'ground' ? matPlane : matGhost;
+        m.mesh.material = a.id === sim.selectedId ? matSel : a.onFrequency === sim.position || sim.position === 'ground' || (sim.position === 'tower' && a.onFrequency === 'ground') ? matPlane : matGhost;
         // real model (lazy per type); the silhouette stays as the far-zoom symbol and the pick target
         if (!m.modelWanted) {
           m.modelWanted = true; const mk = m;
@@ -541,6 +543,11 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
           const txt = `${a.callsign} ${a.perf.icaoCode}\n${alt}`;
           if (m.label.dataset.txt !== txt) { m.label.dataset.txt = txt; m.label.innerHTML = `<b>${a.callsign}</b> <span>${a.perf.icaoCode}</span><br><em>${alt}</em>`; }
           if (!labelsRef.current && a.id !== sim.selectedId) m.label.style.display = 'none';
+          // close up at a low angle: far tags fade out and shrink (the selected / hovered one always shows)
+          const cl = a.id === sim.selectedId || a.id === sim.hoveredId ? null : closeUpLabel(declutter, m.mesh.position.distanceTo(camera.position), cam.dist);
+          if (cl && cl.alpha < 0.03) m.label.style.display = 'none';
+          m.label.style.opacity = cl ? cl.alpha.toFixed(2) : '';
+          m.label.style.transform += cl && cl.scale !== 1 ? ` scale(${cl.scale.toFixed(2)})` : '';
           m.label.dataset.selected = a.id === sim.selectedId ? 'true' : 'false';
           m.label.dataset.hover = a.id === sim.hoveredId ? 'true' : 'false';
         }
@@ -614,7 +621,12 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         const sc = Math.max(1, cam.dist / 1800); m.mesh.scale.set(sc, sc, sc);
         tmp.copy(m.mesh.position).project(camera); const r = rect;
         if (tmp.z > 1 || Math.abs(tmp.x) > 1.1 || Math.abs(tmp.y) > 1.1) m.label.style.display = 'none';
-        else { m.label.style.display = ''; m.label.style.transform = `translate(${((tmp.x + 1) / 2 * r.width + 10).toFixed(1)}px, ${((1 - tmp.y) / 2 * r.height - 8).toFixed(1)}px)`; const t = `${v.id} · ${v.state.replace('_', ' ')}`; if (m.label.textContent !== t) m.label.textContent = t; }
+        else {
+          const cl = closeUpLabel(declutter, m.mesh.position.distanceTo(camera.position), cam.dist);
+          m.label.style.display = cl.alpha < 0.03 ? 'none' : ''; m.label.style.opacity = cl.alpha < 1 ? cl.alpha.toFixed(2) : '';
+          m.label.style.transform = `translate(${((tmp.x + 1) / 2 * r.width + 10).toFixed(1)}px, ${((1 - tmp.y) / 2 * r.height - 8).toFixed(1)}px)${cl.scale !== 1 ? ` scale(${cl.scale.toFixed(2)})` : ''}`;
+          const t = `${v.id} · ${v.state.replace('_', ' ')}`; if (m.label.textContent !== t) m.label.textContent = t;
+        }
       }
       for (const [id, m] of vehicles) if (!liveV.has(id)) { vehGroup.remove(m.mesh); m.label.remove(); vehicles.delete(id); }
       // vehicle routes (en route / returning) as thin orange lines on the ground
@@ -685,11 +697,13 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       applyCamera(); camera.updateMatrixWorld(); applyFades(fades, cam.dist);
       if (mapLabels) { mapLabels.update(camera, cam.dist, rect.height); if (!labelsRef.current) mapLabels.group.visible = false; }
       bokeh.uniforms.uField.value.set(fieldCentre.x, fieldCentre.z, fieldR);   // full blur 1.4 km past the field (uRamp)
+      // render scale from the measured frame time (not while resting: those frames are throttled on purpose). Applied
+      // BEFORE drawing: a pixel-ratio change resizes (and so clears) the canvas, and a resize after the draw shows the
+      // browser an empty canvas for a frame - the map blinked whenever the camera moved and the scale stepped.
+      if (!resting && !lite && adaptive.sample(now)) applyDpr();
       const t1 = performance.now();
       composer.render();
       lastRender = now;
-      // render scale from the measured frame time (not while resting: those frames are throttled on purpose)
-      if (!resting && !lite && adaptive.sample(now)) applyDpr();
       const t2 = performance.now();
       stats.frames++; stats.jsMs += t1 - t0; stats.renderMs += t2 - t1;
       if (t2 - stats.at > 1000) { const secs = (t2 - stats.at) / 1000; stats.fps = stats.frames / secs; stats.js = stats.jsMs / stats.frames; stats.ms = stats.renderMs / stats.frames; stats.frames = 0; stats.jsMs = 0; stats.renderMs = 0; stats.at = t2; if (statsEl.current) statsEl.current.textContent = `${stats.fps.toFixed(0)} fps · js ${stats.js.toFixed(1)} ms · draw ${stats.ms.toFixed(1)} ms · ${renderer.info.render.calls} calls · ${(renderer.info.render.triangles / 1000).toFixed(0)}k tris · ${adaptive.dpr.toFixed(2)}x · ${preset.tier}`; }

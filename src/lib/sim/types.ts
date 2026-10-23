@@ -58,6 +58,9 @@ export type PlayerPosition = 'ground' | 'tower' | 'approach';
 export const POSITION_OWNER: Record<Position, PlayerPosition | null> = {
   ground: 'ground', tower: 'tower', departure: 'approach', approach: 'approach', external: null,
 };
+/** The two jobs a player (or the AI) takes on: the airfield (ground + tower, one controller) and approach (approach + departure radar). */
+export type Sector = 'airfield' | 'approach';
+export const SECTOR_OF: Record<PlayerPosition, Sector> = { ground: 'airfield', tower: 'airfield', approach: 'approach' };
 /** Next logical position for a handoff (UX §G4 picker-position). */
 export const NEXT_POSITION: Record<FlightKind, Partial<Record<Position, Position>>> = {
   departure: { ground: 'tower', tower: 'departure', departure: 'external', approach: 'external' },

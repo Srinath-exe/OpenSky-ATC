@@ -125,6 +125,7 @@ export class AdaptiveResolution {
   dpr: number;
   private samples: number[] = [];
   private cooldown = 0;
+  private upHold = 0;
   private last = 0;
   /** Frame interval that is too slow (scale down) / fast enough to scale back up (below the display's vsync interval
    *  so a locked 60 Hz counts as headroom). */
@@ -135,14 +136,17 @@ export class AdaptiveResolution {
     const dt = this.last ? now - this.last : 0; this.last = now;
     if (dt <= 0 || dt > 250) return false;
     this.samples.push(dt); if (this.samples.length > 40) this.samples.shift();
+    if (this.upHold > 0) this.upHold--;
     if (this.cooldown > 0) { this.cooldown--; return false; }
     if (this.samples.length < 30) return false;
     const avg = this.samples.reduce((s, x) => s + x, 0) / this.samples.length;
     let next = this.dpr;
     if (avg > this.targetMs && this.dpr > this.min) next = Math.max(this.min, +(this.dpr - this.stepPx).toFixed(2));
-    else if (avg < this.upMs && this.dpr < this.max) next = Math.min(this.max, +(this.dpr + this.stepPx).toFixed(2));
+    else if (avg < this.upMs && this.dpr < this.max && this.upHold === 0) next = Math.min(this.max, +(this.dpr + this.stepPx).toFixed(2));
     if (next === this.dpr) return false;
-    const down = next < this.dpr; this.dpr = next; this.cooldown = down ? 45 : 90; this.samples.length = 0;
+    // slow to come back up after a drop (~5 s at 60 fps): a pan drops the scale, and stepping straight back up when it
+    // stops made the resolution pump on every drag
+    const down = next < this.dpr; this.dpr = next; this.cooldown = down ? 45 : 90; if (down) this.upHold = 300; this.samples.length = 0;
     return true;
   }
 }

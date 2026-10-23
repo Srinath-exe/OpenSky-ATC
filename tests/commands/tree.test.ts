@@ -191,7 +191,7 @@ test('actionsFor: policy layers — paused X12, strict frequency R13, hold-all R
   const a = mkAircraft({ onFrequency: 'ground', plan: { kind: 'departure', runway: '27R' } });
   const paused = actionsFor(a, mkActionCtx('hold_short_dep', { paused: true }));
   assert.ok(paused.length > 0 && paused.every(r => r.state === 'disabled' && r.reason === 'X12'));
-  const off = actionsFor(a, mkActionCtx('hold_short_dep', { strictFrequencies: true, position: 'tower' }));
+  const off = actionsFor(a, mkActionCtx('hold_short_dep', { strictFrequencies: true, position: 'approach' }));
   assert.ok(off.every(r => r.state === 'disabled' && r.reason === 'R13'));
   const on = actionsFor(a, mkActionCtx('hold_short_dep', { strictFrequencies: true, position: 'ground' }));
   assert.ok(on.some(r => r.state === 'enabled'));

@@ -112,7 +112,7 @@ home-highscore
 home-leave-confirm
 home-leave-confirm-no
 home-leave-confirm-yes
-home-position
+home-role
 home-resume
 home-runways
 home-seed
@@ -363,8 +363,10 @@ scroll-log
 seg-range
 select-runway
 set-auto-handoff
-set-autoground
-set-autotower
+set-sector-airfield
+set-sector-approach
+sector-airfield
+sector-approach
 set-back
 set-clear-history
 set-close
@@ -603,7 +605,7 @@ vehicle-recall-${v.id}                                                   src/gam
 view-${view}                                                             src/game/GameShell/GameShell.tsx
 #
 # ---- 3. derived families (ids built by primitives or from domain enums) ----
-home-position-{ground|tower|approach}                                    src/app/page.tsx (Segmented testId=home-position)
+home-role-{both|airfield|approach}                                       src/app/page.tsx (Segmented testId=home-role)
 home-difficulty-{low|normal|high}                                        src/app/page.tsx (Segmented testId=home-difficulty)
 set-difficulty-{low|normal|high}                                         src/app/settings/page.tsx (Segmented testId=set-difficulty)
 set-datablock-{compact|normal|full}                                      src/app/settings/page.tsx (Segmented testId=set-datablock)

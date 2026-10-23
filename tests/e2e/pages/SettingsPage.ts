@@ -2,7 +2,7 @@
   Settings page object (`/settings`, src/app/settings/page.tsx). Test ids (see tests/e2e/testids.txt):
     page-settings, set-home (brand), set-back, set-resume,
     set-section-{simulation|display|audio|data|about},
-    toggles (role=switch, aria-checked, data-state="on|off"): set-autotower, set-autoground, set-auto-handoff,
+    sector controls (Segmented You/AI): set-sector-airfield, set-sector-approach; toggles (role=switch, aria-checked, data-state="on|off"): set-auto-handoff,
       set-strict-frequencies, set-readback-errors, set-instant-vectors, set-typed-instant, set-show-rings,
       set-reduced-motion, set-sound, set-tts,
     selects: set-emergency-rate, set-pilot-delay, set-phraseology,
@@ -14,7 +14,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 export type ToggleId =
-  | 'set-autotower' | 'set-autoground' | 'set-autoapproach' | 'set-automode' | 'set-auto-handoff' | 'set-strict-frequencies' | 'set-readback-errors'
+  | 'set-auto-handoff' | 'set-strict-frequencies' | 'set-readback-errors'
   | 'set-instant-vectors' | 'set-typed-instant' | 'set-show-rings' | 'set-reduced-motion' | 'set-sound' | 'set-tts';
 export type SelectId = 'set-emergency-rate' | 'set-pilot-delay' | 'set-phraseology';
 
@@ -27,7 +27,7 @@ export class SettingsPage {
   resumeBtn = () => this.page.getByTestId('set-resume');
   section = (id: 'simulation' | 'display' | 'audio' | 'data' | 'about') => this.page.getByTestId(`set-section-${id}`);
   toggle = (id: ToggleId) => this.page.getByTestId(id);
-  autoTower = () => this.toggle('set-autotower');
+  airfieldAi = () => this.page.getByTestId('set-sector-airfield-ai');
   tts = () => this.toggle('set-tts');
   sound = () => this.toggle('set-sound');
   theme = (t: 'satellite' | 'chart') => this.page.getByTestId(`set-theme-${t}`);
@@ -89,7 +89,7 @@ export class SettingsPage {
     }
     return null;
   }
-  async pickSegmented(id: 'set-difficulty' | 'set-datablock', item: string): Promise<void> {
+  async pickSegmented(id: 'set-difficulty' | 'set-datablock' | 'set-sector-airfield' | 'set-sector-approach', item: string): Promise<void> {
     const el = this.page.getByTestId(`${id}-${item}`);
     await el.click();
     await expect(el).toHaveAttribute('aria-pressed', 'true');

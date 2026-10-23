@@ -44,7 +44,7 @@ const CHECKLIST_LABEL: Record<EmergencyChecklistItem, string> = {
   acknowledge: 'Ack', souls_fuel: 'POB / fuel', priority_runway: 'Priority rwy', arff: 'ARFF', ambulance: 'Ambulance',
   hold_traffic: 'Hold traffic', runway_closed: 'Rwy closed', runway_reopened: 'Rwy reopened', inspection: 'Inspection',
 }
-const GROUP_LABEL: Record<ActionRow['group'], string> = { ground: 'Ground', tower: 'Tower', approach: 'Approach', meta: 'Radio', emergency: 'Emergency' }
+const GROUP_LABEL: Record<ActionRow['group'], string> = { ground: 'Ground', tower: 'Runway', approach: 'Approach', meta: 'Radio', emergency: 'Emergency' }
 const GROUP_ORDER: ActionRow['group'][] = ['ground', 'tower', 'approach', 'meta']
 const EMERGENCY_TYPE_LABEL: Record<string, string> = {
   engine_fire: 'engine fire', engine_failure: 'engine failure', medical: 'medical', fuel: 'fuel', depressurization: 'depressurization',
@@ -335,7 +335,7 @@ function PanelBody({ a, position, pinned, onPin, className }: { a: AircraftState
   const emergency = a.emergency && a.emergency.status !== 'resolved' ? a.emergency : null
   const owner = ownerTab(a.onFrequency)
   const inMyBay = sim.bayOf(a, position) != null
-  const viewIn = !inMyBay ? (PLAYER_POSITIONS.find((p) => p !== position && (p !== 'approach' || hasRadar) && sim.bayOf(a, p) != null) ?? null) : null
+  const viewIn = !inMyBay ? (PLAYER_POSITIONS.find((p) => p !== position && p !== 'ground' && (p !== 'approach' || hasRadar) && sim.bayOf(a, p) != null) ?? null) : null
   const offFreq = owner != null && owner !== position
   const llmPositions = useSim((s) => (s.llm.mode === 'control' ? s.llm.positions : []))
   const aiFor = (p: 'ground' | 'tower' | 'approach') => (p === 'ground' ? settings.autoGround : p === 'tower' ? settings.autoTower : settings.autoApproach) || (settings.autoMode && position !== p) || llmPositions.includes(p)

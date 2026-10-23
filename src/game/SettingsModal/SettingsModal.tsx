@@ -4,8 +4,8 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import styles from './SettingsModal.module.css'
-import { Modal, ListRow, Toggle, Select, Pill, Button, Icon, Input } from '@/design'
-import { sim, useSim } from '@/components/atc/simStore'
+import { Modal, ListRow, Toggle, Select, Pill, Button, Icon, Input, Segmented } from '@/design'
+import { sim, useSim, sectorAi, sectorPatch } from '@/components/atc/simStore'
 import { probeEndpoint } from '@/lib/llm/client'
 import type { LlmConfig } from '@/lib/llm/client'
 import type { PlayerPosition } from '@/lib/sim/types'
@@ -94,12 +94,10 @@ export function SettingsModal() {
         </div>
 
         <div className={styles.section}>
-          <span className={styles.sectionTitle}>AI assist</span>
+          <span className={styles.sectionTitle}>Who controls</span>
           <div className={styles.rows}>
-            <ListRow flush title="Auto mode" subtitle="AI works every position you are not on" trailing={<Mirror state={settings.autoMode ? 'on' : 'off'}><Toggle checked={settings.autoMode} onChange={(v) => set({ autoMode: v })} testId="set-automode-modal" /></Mirror>} />
-            <ListRow flush title="Approach" subtitle="Arrivals sequenced onto the ILS for you" trailing={<Mirror state={settings.autoApproach ? 'on' : 'off'}><Toggle checked={settings.autoApproach} onChange={(v) => set({ autoApproach: v })} testId="set-autoapproach-modal" /></Mirror>} />
-            <ListRow flush title="Tower" subtitle="Routine clearances once they are safe" trailing={<Mirror state={settings.autoTower ? 'on' : 'off'}><Toggle checked={settings.autoTower} onChange={(v) => set({ autoTower: v })} testId="set-autotower-modal" /></Mirror>} />
-            <ListRow flush title="Ground" subtitle="Arrivals taxi to their stand after vacating" trailing={<Mirror state={settings.autoGround ? 'on' : 'off'}><Toggle checked={settings.autoGround} onChange={(v) => set({ autoGround: v })} testId="set-autoground-modal" /></Mirror>} />
+            <ListRow flush title="Tower" subtitle="Ground and runway: start-up, pushback, taxi, take-off and landing clearances" trailing={<Segmented small ariaLabel="Tower controller" items={[{ id: 'you', label: 'You' }, { id: 'ai', label: 'AI' }]} value={sectorAi(settings, 'airfield') ? 'ai' : 'you'} onChange={(v) => set(sectorPatch('airfield', v === 'ai'))} testId="set-sector-airfield-modal" />} />
+            <ListRow flush title="Approach" subtitle="Radar: arrivals sequenced onto the ILS, departures climbed out" trailing={<Segmented small ariaLabel="Approach controller" items={[{ id: 'you', label: 'You' }, { id: 'ai', label: 'AI' }]} value={sectorAi(settings, 'approach') ? 'ai' : 'you'} onChange={(v) => set(sectorPatch('approach', v === 'ai'))} testId="set-sector-approach-modal" />} />
           </div>
         </div>
 

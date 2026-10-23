@@ -4,7 +4,7 @@
     airport-card-{ICAO}, home-detail, home-detail-title, home-change-airport, home-active-count,
     rwy-row-{ref}, rwy-end-{end} (aria-pressed), rwy-weight-{end}-{L|M|H|S} (aria-pressed), rwy-wind-{end},
     home-wind-dir, home-wind-kts, home-wind-apply,
-    home-position (Segmented: home-position-{ground|tower|approach}), home-difficulty (home-difficulty-{low|normal|high}),
+    home-role (Segmented: home-role-{both|airfield|approach}), home-difficulty (home-difficulty-{low|normal|high}),
     home-seed, home-sound, home-tts, home-start, home-start-hint, home-tip.
 */
 import { expect, type Locator, type Page } from '@playwright/test';
@@ -46,7 +46,7 @@ export class HomePage {
   windDir = () => this.page.getByTestId('home-wind-dir');
   windKts = () => this.page.getByTestId('home-wind-kts');
   windApply = () => this.page.getByTestId('home-wind-apply');
-  positionTab = (p: Position) => this.page.getByTestId(`home-position-${p}`);
+  roleTab = (r: 'both' | 'airfield' | 'approach') => this.page.getByTestId(`home-role-${r}`);
   difficultyTab = (d: Difficulty) => this.page.getByTestId(`home-difficulty-${d}`);
   seedInput = () => this.page.getByTestId('home-seed');
   soundToggle = () => this.page.getByTestId('home-sound');
@@ -122,7 +122,7 @@ export class HomePage {
     }
     return out;
   }
-  pickPosition(p: Position) { return this.positionTab(p).click(); }
+  pickRole(r: 'both' | 'airfield' | 'approach') { return this.roleTab(r).click(); }
   pickDifficulty(d: Difficulty) { return this.difficultyTab(d).click(); }
   setSeed(seed: number | '') { return this.seedInput().fill(seed === '' ? '' : String(seed)); }
   /** Type raw text into the seed input (validation cases: '-1', '1.5', 'abc'). */
