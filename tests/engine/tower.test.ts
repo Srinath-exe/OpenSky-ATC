@@ -346,6 +346,9 @@ test('rollout ahead: a preceding arrival still on the runway forces the follower
   const e = makeEngine('EGLL', { ends: ['27R', '27L'] });
   const lead = e.spawnAt({ callsign: 'LEAD', type: 'A320', kind: 'arrival', phase: 'rollout', runway: '27L', speedKts: 40, onFrequency: 'tower' });
   lead.cmdIas = 0; if (lead.path) lead.path.holdAt = lead.path.total; // never exits: sits on the runway
+  // (and no exit to find on the way: the spliced exit lead-ins put one within its stopping distance)
+  const E = e as unknown as { sc(a: unknown): { exitPlan: unknown }; exitsCache: Map<string, unknown[]> };
+  E.sc(lead).exitPlan = null; E.exitsCache.set(e.runwayState('27L')!.ref, []);
   const f = spawnOnFinal(e, 'FOLO', '27L', 3, { landingCleared: true });
   run(e, 1);
   assert.equal(f.landingCleared, true);
@@ -444,7 +447,9 @@ test('the crew skips an exit blocked by an aircraft holding short of the runway 
   assert.ok(plan, 'has a default exit');
   // park a blocker just off the runway on that exit taxiway
   const rs = e.runwayState('27L')!;
-  const ex = e.runwayExits(rs.ref).find(x => x.taxiway === plan.taxiway)!;
+  // (the exit actually planned: a taxiway crossing the runway gives an exit each side under one name)
+  const planned = (e as unknown as { sc(a: unknown): { exitPlan: { twyNodeId: string } | null } }).sc(a).exitPlan;
+  const ex = e.runwayExits(rs.ref).find(x => planned ? x.twyNodeId === planned.twyNodeId : x.taxiway === plan.taxiway)!;
   const twy = e.nodeXY(ex.twyNodeId)!;
   const b = e.spawnAt({ callsign: 'BLK', type: 'A320', kind: 'departure', phase: 'hold_short', runway: '27L', onFrequency: 'tower' });
   const len = dist(ex.xy, twy); b.pos = { x: ex.xy.x + ((twy.x - ex.xy.x) / len) * 70, y: ex.xy.y + ((twy.y - ex.xy.y) / len) * 70 }; b.path = null; b.speed = 0;   // 70 m down the exit: at the hold line

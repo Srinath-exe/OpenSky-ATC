@@ -487,6 +487,41 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
     }
     if (!rb.members.some(f => coordsOf(f) === rb.main)) { const mf = rwSegs.find(f => coordsOf(f) === rb.main); if (mf) { claimed.add(mf); rb.members.push(mf); } }
   }
+  // taxiways that meet the centreline without sharing a vertex with the runway way (crossing it, or ending on it a few
+  // metres off): spliced into the runway chain. Otherwise the runway had no exits there - JFK 04R/22L showed 5 of its
+  // ~20, Sydney 16L/34R 4 (all near one end), and arrivals rolled to a stop on the runway with nowhere to turn off.
+  for (const rb of builds.values()) {
+    const signed = (p: XY) => (p.x - rb.origin.x) * -rb.axis.y + (p.y - rb.origin.y) * rb.axis.x;
+    const within = (t: number) => t >= rb.minT - 10 && t <= rb.maxT + 10;
+    for (const n of Array.from(nodes.values())) for (const e of [...n.edges]) {
+      if (e.type !== 'taxiway' || e.leadIn || n.id > e.to) continue;
+      const m = nodes.get(e.to); if (!m) continue;
+      const p = frame.xy(n.lng, n.lat), q = frame.xy(m.lng, m.lat);
+      const sp = signed(p), sq = signed(q);
+      if (sp * sq >= 0 || Math.abs(sp) <= 10 || Math.abs(sq) <= 10) continue;            // not a clean crossing (ends on the line: below)
+      const k = sp / (sp - sq), x = { x: p.x + (q.x - p.x) * k, y: p.y + (q.y - p.y) * k };
+      if (!within(tOf(rb, x))) continue;
+      const mid = splitEdge(n, m, frame.ll(x));
+      rb.verts.set(mid.id, { t: tOf(rb, frame.xy(mid.lng, mid.lat)), lng: mid.lng, lat: mid.lat });
+    }
+    // a taxiway ending on the runway pavement short of the centreline (within 32 m, every taxiway neighbour further out):
+    // joined by a short link to its foot on the centreline (the runway line stays straight; a taxiway drawn along the
+    // runway has neighbours as close as itself and is left alone)
+    for (const n of Array.from(nodes.values())) {
+      if (rb.verts.has(n.id)) continue;
+      const tw = n.edges.filter(e => e.type === 'taxiway' && !e.leadIn); if (!tw.length || n.edges.some(e => e.type === 'runway')) continue;
+      const p = frame.xy(n.lng, n.lat), t = tOf(rb, p), d = Math.abs(signed(p));
+      if (d > 32 || !within(t)) continue;
+      // (a dead end on the pavement always joins - exit lead-ins painted onto the runway end 1 m off the line after
+      // running along it - Sydney 16L's)
+      if (n.edges.length > 1 && !tw.every(e => { const m = nodes.get(e.to); return !!m && Math.abs(signed(frame.xy(m.lng, m.lat))) > d + 3; })) continue;
+      if (d <= 5) { rb.verts.set(n.id, { t, lng: n.lng, lat: n.lat }); continue; }   // on the line already (a few metres off: no sideways stub)
+      const foot = { x: rb.origin.x + rb.axis.x * t, y: rb.origin.y + rb.axis.y * t };
+      const ll = frame.ll(foot); const f = node(ll.lng, ll.lat);
+      link(n, f, 'taxiway', { taxiway: tw[0].taxiway });
+      rb.verts.set(f.id, { t, lng: f.lng, lat: f.lat });
+    }
+  }
 
   const runways: OsmRunway[] = [];
   const runwayNodeRefs = new Map<string, string[]>();
