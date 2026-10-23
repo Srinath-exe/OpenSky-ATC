@@ -1425,6 +1425,13 @@ export interface FindPathOpts {
   allowRunway?: string;
   /** Iteration guard (default 200 000). */
   maxIter?: number;
+  /** Direction-aware search: no step may turn more than `maxTurnDeg` from the direction of travel - an airliner
+   *  cannot reverse on a taxiway, it has to go forward and round. */
+  maxTurnDeg?: number;
+  /** Heading (deg true) the aircraft arrives at `startId` with; the first step is held to `maxTurnDeg` of it. */
+  startHeading?: number;
+  /** Extra cost multiplier for travelling the edge from -> to (e.g. against the flow of other taxiing traffic). */
+  edgeMult?: (from: string, to: string) => number;
 }
 
 /**
@@ -1451,6 +1458,7 @@ export function findPath(air: OsmAirport, startId: string, goalId: string, opts:
   const c = air.center; const kx = R * Math.cos(c.lat * D2R) * D2R, ky = R * D2R;
   const gx = (goal.lng - c.lng) * kx, gy = (goal.lat - c.lat) * ky;
   const h = (n: OsmNode) => Math.hypot((n.lng - c.lng) * kx - gx, (n.lat - c.lat) * ky - gy);
+  if (opts.maxTurnDeg != null) return findPathDirected(air, startId, goalId, opts.maxTurnDeg, opts.startHeading, { avoidRw, avoidNodes, prefer, runwayCost, allowRef, maxIter, kx, ky, h, edgeMult: opts.edgeMult });
 
   const open = new MinHeap();
   const came = new Map<string, string>();
@@ -1480,12 +1488,67 @@ export function findPath(air: OsmAirport, startId: string, goalId: string, opts:
       } else if (e.taxiway && prefer.size) {
         mult = prefer.has(e.taxiway) ? 0.55 : 1;
       }
+      if (opts.edgeMult) mult *= opts.edgeMult(cur, e.to);
       const tentative = gCur + e.meters * mult;
       if (tentative < (g.get(e.to) ?? Infinity)) {
         came.set(e.to, cur);
         g.set(e.to, tentative);
         const nb = nodes.get(e.to);
         if (nb) open.push(e.to, tentative + h(nb));
+      }
+    }
+  }
+  return null;
+}
+
+/** A* over directed states (the edge the aircraft arrived by), so a turn sharper than `maxTurn` - a reversal on the
+ *  spot above all - is never part of the route. */
+function findPathDirected(air: OsmAirport, startId: string, goalId: string, maxTurn: number, startHeading: number | undefined,
+  k: { avoidRw: Set<string>; avoidNodes: Set<string>; prefer: Set<string>; runwayCost: number; allowRef: string | null; maxIter: number; kx: number; ky: number; h: (n: OsmNode) => number; edgeMult?: (from: string, to: string) => number }): string[] | null {
+  const { nodes } = air;
+  const bearing = (a: OsmNode, b: OsmNode): number | null => {
+    const dx = (b.lng - a.lng) * k.kx, dy = (b.lat - a.lat) * k.ky;
+    return Math.hypot(dx, dy) < 0.5 ? null : (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;
+  };
+  const turn = (a: number, b: number) => { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
+  // state = "prev>cur"; the heading of arrival at cur rides along (a zero-length edge keeps the previous one)
+  const hdgIn = new Map<string, number | undefined>([[`>${startId}`, startHeading]]);
+  const nodeOf = new Map<string, string>([[`>${startId}`, startId]]);
+  const came = new Map<string, string>();
+  const g = new Map<string, number>([[`>${startId}`, 0]]);
+  const closed = new Set<string>();
+  const open = new MinHeap();
+  open.push(`>${startId}`, k.h(nodes.get(startId)!));
+  let guard = 0;
+  while (open.size && guard++ < k.maxIter) {
+    const { id: st, key } = open.pop()!;
+    if (closed.has(st)) continue;
+    const cur = nodeOf.get(st)!;
+    const gCur = g.get(st) ?? Infinity;
+    if (key > gCur + k.h(nodes.get(cur)!) + 1e-6) continue;
+    if (cur === goalId) {
+      const path = [cur]; let p = st;
+      while (came.has(p)) { p = came.get(p)!; path.push(nodeOf.get(p)!); }
+      return path.reverse();
+    }
+    closed.add(st);
+    const node = nodes.get(cur)!, inH = hdgIn.get(st);
+    for (const e of node.edges) {
+      if (k.avoidNodes.has(e.to)) continue;
+      const nb = nodes.get(e.to); if (!nb) continue;
+      const out = bearing(node, nb);
+      if (out != null && inH != null && turn(inH, out) > maxTurn) continue;
+      let mult = 1;
+      if (e.type === 'runway') {
+        if (e.runway && k.avoidRw.has(e.runway)) continue;
+        mult = e.runway && e.runway === k.allowRef ? 1 : k.runwayCost;
+      } else if (e.taxiway && k.prefer.size) mult = k.prefer.has(e.taxiway) ? 0.55 : 1;
+      if (k.edgeMult) mult *= k.edgeMult(cur, e.to);
+      const ns = `${cur}>${e.to}`;
+      const tentative = gCur + e.meters * mult;
+      if (tentative < (g.get(ns) ?? Infinity)) {
+        came.set(ns, st); g.set(ns, tentative); nodeOf.set(ns, e.to); hdgIn.set(ns, out ?? inH);
+        open.push(ns, tentative + k.h(nb));
       }
     }
   }
@@ -1500,6 +1563,13 @@ export function findPath(air: OsmAirport, startId: string, goalId: string, opts:
 export function routeVia(air: OsmAirport, startId: string, via: string[], goalId: string, opts: FindPathOpts = {}): string[] | null {
   let cur = startId; const out: string[] = [startId];
   const from = air.nodes.get(startId); if (!from) return null;
+  // a direction-aware route carries the heading of the last leg into the next one (no reversal at a waypoint)
+  const arriveHdg = (): number | undefined => {
+    if (out.length < 2) return opts.startHeading;
+    const a = air.nodes.get(out[out.length - 2])!, b = air.nodes.get(out[out.length - 1])!;
+    const kx = Math.cos(a.lat * D2R);
+    return (Math.atan2((b.lng - a.lng) * kx, b.lat - a.lat) * 180 / Math.PI + 360) % 360;
+  };
   for (const raw of via) {
     const name = raw.toUpperCase();
     const onTw = air.taxiwayNodes.get(name); if (!onTw || !onTw.length) return null;
@@ -1517,10 +1587,10 @@ export function routeVia(air: OsmAirport, startId: string, via: string[], goalId
       if (d < bd) { bd = d; target = id; }
     }
     if (target === cur) continue;
-    const seg = findPath(air, cur, target, { ...opts, prefer: [...(opts.prefer ?? []), name] }); if (!seg) return null;
+    const seg = findPath(air, cur, target, { ...opts, prefer: [...(opts.prefer ?? []), name], startHeading: arriveHdg() }); if (!seg) return null;
     out.push(...seg.slice(1)); cur = target;
   }
-  const last = findPath(air, cur, goalId, opts); if (!last) return null;
+  const last = findPath(air, cur, goalId, { ...opts, startHeading: arriveHdg() }); if (!last) return null;
   out.push(...last.slice(1));
   return out;
 }
