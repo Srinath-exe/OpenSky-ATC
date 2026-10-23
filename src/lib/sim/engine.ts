@@ -3999,8 +3999,19 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         // still not clear just before the crew's own no-clearance limits: the tower sends it around (the crew going around on its own at minimums with no
         // clearance is an unhandled go-around)
         if ((d <= FORCED_GA.noClearanceNM + 0.3 || a.altitude <= FORCED_GA.noClearanceFt + 150) && (occ || crossBusy) && !a.pendingCmds.length) {
-          const r = this.cmdGoAround(a, 'runway', 3000, 'approach');
-          if (r.ok) this.emit('transmission', a, `AI TWR: ${a.callsign} go around, fly runway heading, climb 3000, contact approach`, { type: 'transmission', ast: makeAst('goAround', a.callsign, { heading: 'runway', alt: 3000, contact: 'approach' }), result: { ok: true, code: r.code, transmission: '', readback: '' }, who: 'ai' }, 'AI');
+          // a departure climbing out of a runway alongside (same direction, within 6 NM, below 5,000 ft): the missed
+          // approach turns 30 degrees away from it (straight ahead it climbed into one turning across from the parallel)
+          const rwyHdg = rsL.headingTrue;
+          // (off a parallel runway, whatever its heading now: its departure route may already be turning across)
+          const dep = this.aircraft.find(b => { if (b.plan.kind !== 'departure' || !(isAirborne(b) || b.phase === 'takeoff') || b.altitude >= 5000 || !b.plan.runway || b.plan.runway === a.plan.runway || dist(a.pos, b.pos) >= 6 * NM_TO_M) return false; const br = this.runwayState(b.plan.runway); return !!br && Math.abs(angleDelta(br.headingTrue, rwyHdg)) < 20; });
+          // away from the way it will turn (toward its exit fix - still on the roll it has not turned yet), else from where it is
+          const fix = dep ? this.beacons.find(x => x.id === dep.plan.fix) : undefined;
+          const depTo = dep ? (fix ? headingTo(dep.pos, fix) : dep.targetHeading) : rwyHdg;
+          const side = dep ? (Math.abs(angleDelta(rwyHdg, depTo)) > 15 ? (angleDelta(rwyHdg, depTo) > 0 ? -1 : 1) : (crossTrack(dep.pos, a.pos, rwyHdg) > 0 ? -1 : 1)) : 0;
+          const gaHdg: number | 'runway' = dep ? Math.round((rwyHdg + side * 30 + 360) % 360) : 'runway';
+          const r = this.cmdGoAround(a, gaHdg, 3000, 'approach');
+          const said = gaHdg === 'runway' ? 'fly runway heading' : `turn ${side < 0 ? 'left' : 'right'} heading ${hdg3(((gaHdg - this.magVar) % 360 + 360) % 360)}`;
+          if (r.ok) this.emit('transmission', a, `AI TWR: ${a.callsign} go around, ${said}, climb 3000, contact approach`, { type: 'transmission', ast: makeAst('goAround', a.callsign, { heading: gaHdg, alt: 3000, contact: 'approach' }), result: { ok: true, code: r.code, transmission: '', readback: '' }, who: 'ai' }, 'AI');
           continue;
         }
         if (d <= 5 && !crossBusy && !occ && !a.pendingCmds.some(c => c.kind === 'clearedLand')) {
