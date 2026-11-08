@@ -6,7 +6,7 @@
   line (what the command bar shows and the player can edit). When it does not, the tidied transcript comes back with
   the parser's reason, and the learned model (L1) is the next step; until it ships, the player fixes the line by hand.
 */
-import { parseCommand } from '../sim/commands';
+import { parseCommand, tokenize, resolveCallsign } from '../sim/commands';
 import type { ParseCtx } from '../sim/commands';
 import { canonicalLine } from './context';
 
@@ -49,12 +49,21 @@ export async function understandVoice(raw: string, ctx: ParseCtx, magVar: number
   let r: { line: string; confidence: number; ms: number; sayAgain: boolean };
   try { r = await l1.complete(u.transcript, state.callsigns, state.text); }
   catch (e) { return { ...u, error: `${u.error} (voice model unavailable: ${String(e)})`, confidence: null, sayAgain: false, modelMs: null }; }
-  if (r.sayAgain) return { ...u, ok: false, source: 'L1', error: `Say again: “${u.transcript}” did not match an aircraft`, confidence: r.confidence, sayAgain: true, modelMs: r.ms };
-  const p = parseCommand(r.line, ctx);
-  if (!p.ok || !p.ast) return { ...u, ok: false, line: r.line || u.line, source: 'L1', error: `Model suggestion did not parse: ${p.errors[0]?.message ?? '?'}`, confidence: r.confidence, sayAgain: false, modelMs: r.ms };
-  const sure = r.confidence >= minConfidence;
+  // Rules + model: when the rules can resolve the callsign from what was said (exact, telephony, or unique last digits)
+  // but not the rest of the sentence, their callsign wins over the model's guess; the model keeps the instruction.
+  let line = r.line; let fused = false;
+  const rc = resolveCallsign(tokenize(u.transcript), 0, ctx);
+  const modelCs = line.split(/\s+/)[0] ?? '';
+  if (rc.callsign && /^[A-Z]{2,3}\d/.test(modelCs) && rc.callsign !== modelCs) { line = `${rc.callsign}${line.slice(modelCs.length)}`; fused = true; }
+  if (r.sayAgain && !rc.callsign) return { ...u, ok: false, source: 'L1', error: `Say again: “${u.transcript}” did not match an aircraft`, confidence: r.confidence, sayAgain: true, modelMs: r.ms };
+  if (r.sayAgain) return { ...u, ok: false, source: 'L1', error: `Say again: the instruction for ${rc.callsign} was not understood`, confidence: r.confidence, sayAgain: true, modelMs: r.ms };
+  const p = parseCommand(line, ctx);
+  if (!p.ok || !p.ast) return { ...u, ok: false, line: line || u.line, source: 'L1', error: `Model suggestion did not parse: ${p.errors[0]?.message ?? '?'}`, confidence: r.confidence, sayAgain: false, modelMs: r.ms };
+  // a callsign the rules had to correct means the model was unsure of the aircraft: the player checks it before it is sent
+  const sure = r.confidence >= minConfidence && !fused;
   return { ok: sure, line: canonicalLine(p.ast, magVar), transcript: u.transcript, source: 'L1',
-    error: sure ? null : `Not sure (${Math.round(r.confidence * 100)}%): check the command and press Enter`, confidence: r.confidence, sayAgain: false, modelMs: r.ms };
+    error: sure ? null : fused ? `Callsign taken from what you said (${rc.callsign}, the model guessed ${modelCs}): check and press Enter` : `Not sure (${Math.round(r.confidence * 100)}%): check the command and press Enter`,
+    confidence: r.confidence, sayAgain: false, modelMs: r.ms };
 }
 
 export function understand(raw: string, ctx: ParseCtx, magVar = 0): Understood {

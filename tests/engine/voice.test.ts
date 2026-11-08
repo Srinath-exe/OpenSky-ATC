@@ -115,3 +115,15 @@ test('understandVoice(): rules first, then the model; confident -> send, unsure 
   const r5 = await understandVoice('blah blah', ctx, 0, fake('DAL421 Fly to the moon', 0.99), state);
   assert.equal(r5.ok, false); assert.match(r5.error ?? '', /did not parse/);
 });
+
+test('understandVoice(): when the rules can resolve the callsign the model got wrong, the rules win and the player checks it', async () => {
+  const { understandVoice } = await import('../../src/lib/voice/understand');
+  const e = makeEngine('KJFK', { seed: 1 } as never);
+  e.spawnDeparture({ callsign: 'UPS973' } as never); e.spawnDeparture({ callsign: 'BAW963' } as never);
+  const ctx = fromEngine(e) as never;
+  const state = { text: '@APP 31L', callsigns: ['UPS973', 'BAW963'] };
+  const fake = { complete: async () => ({ line: 'BAW963 Fly heading 102', confidence: 0.97, ms: 1, sayAgain: false }) };
+  const r = await understandVoice('973 uh fly heading one zero two please', ctx, 0, fake, state);
+  assert.equal(r.ok, false, 'not sent: the aircraft was corrected');
+  assert.match(r.line, /^UPS973 /); assert.match(r.error ?? '', /UPS973/);
+});
