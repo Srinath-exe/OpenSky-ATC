@@ -1,0 +1,2 @@
+# CPU modules (data, tokenizer, s1) need only torch. GPU modules add their own requirements.
+torch>=2.4

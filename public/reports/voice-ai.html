@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>OpenATC Voice AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one 960px column read like a controller's log: status first, then evidence, then the plan. Dark-first, like the game. */
+:root {
+  --bg: #0e0f11; --surface: #141416; --raise: #1c1c1e; --line: rgba(255,255,255,.09); --line-strong: rgba(255,255,255,.16);
+  --ink-1: #f4f4f5; --ink-2: #c4c5c8; --ink-3: #a0a1a6; --ink-4: #7f8086;
+  --accent: #f5933f; --accent-tint: rgba(245,147,63,.14);
+  --s-before: #5b8fd6; --s-after: #d97626;
+  --good: #57cd50; --good-tint: rgba(87,205,80,.13); --warn-tint: rgba(245,147,63,.14); --neutral-tint: rgba(255,255,255,.07);
+  --font: "DM Sans", "Helvetica Neue", Arial, sans-serif; --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12);
+  --s-before: #3f78c2; --s-after: #c8661a;
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --warn-tint: rgba(200,102,26,.12); --neutral-tint: rgba(20,20,24,.06);
+  color-scheme: light;
+} }
+:root[data-theme="light"] {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12);
+  --s-before: #3f78c2; --s-after: #c8661a;
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --warn-tint: rgba(200,102,26,.12); --neutral-tint: rgba(20,20,24,.06);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+body { background: var(--bg); color: var(--ink-2); font-family: var(--font); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 72px; }
+.wrap { max-width: 960px; margin: 0 auto; display: grid; gap: 56px; }
+h1, h2, h3 { color: var(--ink-1); text-wrap: balance; margin: 0; font-weight: 600; letter-spacing: -.01em; }
+h1 { font-size: clamp(28px, 4.4vw, 40px); line-height: 1.12; }
+h2 { font-size: 22px; line-height: 1.25; }
+h3 { font-size: 15px; line-height: 1.35; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, [tabindex]:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+code, .mono { font-family: var(--mono); font-size: .9em; }
+.eyebrow { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+section { display: grid; gap: 18px; min-width: 0; }
+.lede { font-size: 17px; color: var(--ink-2); max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--ink-3); font-size: 13px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; letter-spacing: .02em; padding: 2px 9px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--line-strong); color: var(--ink-2); background: var(--neutral-tint); }
+.pill.done { color: var(--good); background: var(--good-tint); border-color: transparent; }
+.pill.next { color: var(--accent); background: var(--accent-tint); border-color: transparent; }
+.pill.gpu { color: var(--ink-2); }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* hero */
+header { display: grid; gap: 16px; }
+.headline { display: grid; grid-template-columns: auto 1fr; gap: 20px 28px; align-items: end; padding: 22px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.big { font-size: clamp(44px, 8vw, 68px); line-height: 1; font-weight: 600; color: var(--ink-1); font-variant-numeric: tabular-nums; letter-spacing: -.03em; white-space: nowrap; }
+.big .from { color: var(--ink-4); }
+.big .arrow { color: var(--ink-4); font-weight: 400; padding: 0 .12em; }
+.headline p { color: var(--ink-2); }
+@media (max-width: 620px) { .headline { grid-template-columns: 1fr; } }
+
+/* bar charts (HTML, drawn to one 0-100 scale) */
+.chart { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px 20px 14px; display: grid; gap: 14px; min-width: 0; }
+.chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; align-items: baseline; }
+.legend { display: flex; gap: 16px; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 12px; height: 8px; border-radius: 2px; display: inline-block; }
+.rows { display: grid; gap: 14px; }
+.group { display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: center; }
+.group .lab { font-size: 13px; color: var(--ink-1); font-weight: 600; line-height: 1.25; }
+.group .lab small { display: block; font-weight: 400; color: var(--ink-3); font-size: 11.5px; }
+.pair { display: grid; gap: 2px; }
+.bar-row { position: relative; display: grid; grid-template-columns: 1fr 52px; gap: 8px; align-items: center; cursor: default; }
+.track { position: relative; height: 11px; }
+.fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 4px 4px 0; min-width: 2px; }
+.val { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; text-align: right; font-family: var(--mono); }
+.tip { position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 3; background: var(--raise); color: var(--ink-1); border: 1px solid var(--line-strong); border-radius: 8px; padding: 6px 10px; font-size: 12.5px; line-height: 1.4; white-space: nowrap; pointer-events: none; opacity: 0; transform: translateY(3px); transition: opacity .12s, transform .12s; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.bar-row:hover .tip, .bar-row:focus-visible .tip { opacity: 1; transform: none; }
+.bar-row:hover .fill, .bar-row:focus-visible .fill { filter: brightness(1.12); }
+.axis { display: grid; grid-template-columns: 92px 1fr; gap: 12px; }
+.axis .ticks { position: relative; height: 16px; margin-right: 60px; font-size: 11px; color: var(--ink-4); font-variant-numeric: tabular-nums; }
+.axis .ticks span { position: absolute; transform: translateX(-50%); }
+.axis .ticks span:first-child { transform: none; } .axis .ticks span:last-child { transform: translateX(-100%); }
+.gridlines { position: absolute; inset: 0 60px 0 104px; pointer-events: none; }
+.gridlines b { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
+.plot { position: relative; }
+.note { font-size: 13px; color: var(--ink-3); }
+details.table { border-top: 1px solid var(--line); padding-top: 10px; }
+details.table summary { cursor: pointer; font-size: 13px; color: var(--ink-2); font-weight: 500; }
+.scroll { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); font-weight: 600; }
+td.n { text-align: right; font-family: var(--mono); font-size: 12.5px; }
+td strong { color: var(--ink-1); font-weight: 600; }
+
+/* radio transcript examples */
+.radio { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 6px 0; }
+.tx { display: grid; grid-template-columns: 64px 1fr; gap: 4px 14px; padding: 12px 20px; border-bottom: 1px solid var(--line); }
+.tx:last-child { border-bottom: 0; }
+.who { font-size: 11px; letter-spacing: .1em; font-weight: 600; color: var(--ink-3); padding-top: 3px; }
+.said { color: var(--ink-1); }
+.line { grid-column: 2; font-family: var(--mono); font-size: 13px; color: var(--accent); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; min-width: 0; overflow-wrap: anywhere; }
+.line em { font-style: normal; color: var(--ink-3); font-family: var(--font); font-size: 12px; }
+
+/* pipeline diagram */
+.flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px 26px; counter-reset: none; }
+.node { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 4px; min-width: 0; }
+.node h3 { font-size: 14px; }
+.node p { font-size: 12.5px; color: var(--ink-3); line-height: 1.45; }
+.node .tag { font-family: var(--mono); font-size: 11px; color: var(--ink-4); }
+.node.key { border-color: var(--accent); background: linear-gradient(var(--accent-tint), var(--accent-tint)), var(--surface); }
+.node:not(.end)::after { content: "→"; position: absolute; right: -20px; top: 50%; transform: translateY(-50%); color: var(--ink-4); font-size: 15px; }
+.node.rowend::after { content: "↓"; right: auto; left: 50%; top: auto; bottom: -24px; transform: translateX(-50%); }
+.flow .row2 { direction: rtl; display: contents; }
+@media (max-width: 760px) {
+  .flow { grid-template-columns: 1fr; gap: 26px; }
+  .node:not(.end)::after, .node.rowend::after { content: "↓"; right: auto; left: 24px; top: auto; bottom: -23px; transform: none; }
+}
+.gate { display: flex; flex-wrap: wrap; gap: 10px 20px; font-size: 13px; color: var(--ink-2); padding: 12px 16px; border: 1px dashed var(--line-strong); border-radius: 12px; }
+.gate b { color: var(--ink-1); font-weight: 600; }
+
+/* skills grid */
+.skills { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.skill { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.skill .top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.skill .num { font-family: var(--mono); font-size: 12px; color: var(--ink-4); }
+.skill p { font-size: 13px; color: var(--ink-3); line-height: 1.5; }
+.skill code { color: var(--ink-2); font-size: 12px; }
+
+/* timeline */
+.days { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.day { border-top: 2px solid var(--line-strong); padding-top: 12px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.day.now { border-top-color: var(--accent); }
+.day ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.day li { font-size: 13.5px; line-height: 1.45; display: grid; grid-template-columns: 16px 1fr; gap: 8px; }
+.day li::before { content: "○"; color: var(--ink-4); font-size: 12px; line-height: 1.6; }
+.day li.ok::before { content: "✓"; color: var(--good); font-weight: 700; }
+.day li.go::before { content: "●"; color: var(--accent); font-size: 10px; line-height: 2; }
+
+.asks { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.ask { border: 1px solid var(--line-strong); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; }
+.ask p { font-size: 13.5px; }
+.sources { font-size: 13px; color: var(--ink-3); columns: 2 280px; column-gap: 28px; margin: 0; padding-left: 18px; }
+.sources li { break-inside: avoid; margin-bottom: 6px; }
+@media (prefers-reduced-motion: reduce) { .tip { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">OpenATC · AI engineering log · 8 Nov 2026</div>
+  <h1>Voice AI: plan and first results</h1>
+  <p class="lede">Goal: talk to the traffic. The player holds push-to-talk and speaks like a controller. The command lands in the command bar where they can edit it, the aircraft does it, and the pilot reads it back. It runs in the browser, on phones and on cloud GPUs, and each part is built so you learn one AI-engineering skill doing it.</p>
+  <div class="meta"><span>Plan: <code>docs/spec/11-VOICE-MODEL.md</code></span><span>Learning roadmap: <code>ml/README.md</code></span><span>Test: <code>tests/engine/voice.test.ts</code></span><span><a href="/reports/ai-paths.html">Learning report: every path and how we chose</a></span></div>
+</header>
+
+<section aria-labelledby="h-result">
+  <div class="eyebrow">First result · rule layer L0</div>
+  <div class="headline">
+    <div class="big"><span class="from">41%</span><span class="arrow">→</span>99.8%</div>
+    <p>of spoken AI-controller commands now parse back to exactly the command that was meant (1,951 of 1,955, six airports, 30 sim-minutes each). Before today, every US airport scored 0%: the engine says callsigns the FAA way ("Air France eight sixty-five") and the parser only joined digit-by-digit numbers.</p>
+  </div>
+
+  <div class="chart" id="chart-airports">
+    <div class="chart-head">
+      <h2 id="h-result">Spoken commands understood, per airport</h2>
+      <div class="legend" aria-hidden="true"><span><i style="background:var(--s-before)"></i>Before</span><span><i style="background:var(--s-after)"></i>After</span></div>
+    </div>
+    <div class="plot">
+      <div class="gridlines" aria-hidden="true"><b style="left:0%"></b><b style="left:25%"></b><b style="left:50%"></b><b style="left:75%"></b><b style="left:100%"></b></div>
+      <div class="rows" id="rows-airports" role="list"></div>
+    </div>
+    <div class="axis" aria-hidden="true"><span></span><div class="ticks"><span style="left:0%">0%</span><span style="left:25%">25%</span><span style="left:50%">50%</span><span style="left:75%">75%</span><span style="left:100%">100%</span></div></div>
+    <p class="note">Method: every command the rule-based AI issues in a full-auto session is rendered to the words the engine speaks, then fed back through the typed-command parser. "Understood" means the parsed command equals the original (headings within 1.5°, since speech is magnetic and the engine is true). The probe drops 4 cancel-approach commands where the speech names a turn direction the AI left open.</p>
+    <details class="table">
+      <summary>Show as a table, with the dropped-words test</summary>
+      <div class="scroll"><table>
+        <thead><tr><th>Airport</th><th>Phrasing</th><th style="text-align:right">Commands</th><th style="text-align:right">Before</th><th style="text-align:right">After</th><th style="text-align:right">After, filler words dropped</th></tr></thead>
+        <tbody id="tbl-airports"></tbody>
+      </table></div>
+    </details>
+  </div>
+  <p>The "filler words dropped" column is the reason a learned model is still needed. Remove "and maintain", "runway", "degrees" and "knots" the way people actually talk, and the rules fall to 93–99%. Speech-recognition mistakes cost more again. Rules are the fast path for clean phrasing, and the model has to handle everything messier.</p>
+</section>
+
+<section aria-labelledby="h-fixes">
+  <div class="eyebrow">What changed in the parser</div>
+  <h2 id="h-fixes">Seven gaps, each found by the probe</h2>
+  <div class="radio">
+    <div class="tx"><div class="who">ATC</div><div class="said">Delta four twenty-one, climb flight level two forty</div><div class="line">DAL421 CLIMB FL240 <em>grouped numbers: "four twenty-one", "two forty", "fifteen"</em></div></div>
+    <div class="tx"><div class="who">ATC</div><div class="said">American 791, John F. Kennedy Intl Approach, radar contact, altimeter 3033</div><div class="line">AAL791 RADAR CONTACT <em>facility name and altimeter tail skipped</em></div></div>
+    <div class="tx"><div class="who">ATC</div><div class="said">Speedbird 205, wind 239 degrees 7 knots, runway 27 right, cleared for takeoff</div><div class="line">BAW205 CLEARED FOR TAKEOFF 27R <em>wind before or after the clearance belongs to it</em></div></div>
+    <div class="tx"><div class="who">ATC</div><div class="said">Sierra Kilo Whiskey nine seventy-two, roger</div><div class="line">SKW972 ROGER <em>phonetic callsigns, taxiways ("via alpha bravo") and stands ("India 48")</em></div></div>
+    <div class="tx"><div class="who">ATC</div><div class="said">Delta 76, unable, traffic, standby</div><div class="line">DAL76 UNABLE TRAFFIC <em>one command, not two</em></div></div>
+    <div class="tx"><div class="who">PILOT</div><div class="said">Delta one zero eight</div><div class="line">DAL108 <em>the engine used to say "Delta one eight" for 108, which means 18</em></div></div>
+  </div>
+  <p class="note">All 710 command tests, 78 engine tests (including the new voice test) and the data and systems suites pass. Typecheck is clean.</p>
+</section>
+
+<section aria-labelledby="h-arch">
+  <div class="eyebrow">Architecture</div>
+  <h2 id="h-arch">From the player's voice to the pilot's readback</h2>
+  <p>The model never writes game state. It produces the same command line a player would type. The engine checks it and applies it, then the pilot reads it back word for word, so any misunderstanding is heard straight away, like on a real frequency.</p>
+  <div class="flow" role="list">
+    <div class="node" role="listitem"><span class="tag">input</span><h3>Push-to-talk</h3><p>Hold a key or the on-screen button. Releasing it ends the utterance, so no end-of-speech wait.</p></div>
+    <div class="node" role="listitem"><span class="tag">STT</span><h3>Streaming speech-to-text</h3><p>Transcribes while you talk, primed with the callsigns, taxiways and fixes on frequency.</p></div>
+    <div class="node key" role="listitem"><span class="tag">L0 · &lt;1 ms</span><h3>Rules</h3><p>Normaliser plus the parser above. Takes clean phrasing.</p></div>
+    <div class="node key rowend" role="listitem"><span class="tag">L1 · the model</span><h3>System-1 model</h3><p>Game state plus transcript in, command line out. Handles messy speech.</p></div>
+    <div class="node" role="listitem"><span class="tag">editable</span><h3>Command bar</h3><p>Shows the command line with a confidence chip. You can edit it.</p></div>
+    <div class="node" role="listitem"><span class="tag">engine</span><h3>Validate and apply</h3><p>The same path as typed commands: frequency checks, scoring, replay.</p></div>
+    <div class="node" role="listitem"><span class="tag">phraseology</span><h3>Readback text</h3><p>Generated from the command itself. No model needed.</p></div>
+    <div class="node end" role="listitem"><span class="tag">TTS</span><h3>Pilot voice</h3><p>One stable voice per aircraft plus a radio filter. The pilot's reply delay hides the generation time.</p></div>
+  </div>
+  <div class="gate"><span><b>Confident</b> and legal → execute.</span><span><b>Unsure</b>, two similar callsigns on frequency, or rejected by the engine → the pilot says "say again".</span><span><b>Target</b>: under 0.5% of commands executed wrong with high confidence.</span></div>
+</section>
+
+<section aria-labelledby="h-exp">
+  <div class="eyebrow">Experiments</div>
+  <h2 id="h-exp">Five ways to build the model box, measured the same way</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Experiment</th><th>Model</th><th>Size</th><th>Latency target after release</th><th>You learn</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><strong>E0 Rules</strong></td><td>Normaliser + parser</td><td>0</td><td>&lt;1 ms</td><td>Building the baseline and the evaluation first</td><td><span class="pill done">Done</span></td></tr>
+      <tr><td><strong>E1 Tiny System-1</strong></td><td>5–60 M transformer, trained from scratch, own tokenizer</td><td>15–40 MB</td><td>2–10 ms in the browser</td><td>Tokenization, pre-training, KV cache, constrained decoding</td><td><span class="pill next">Next, on CPU</span></td></tr>
+      <tr><td><strong>E2 Small LLM</strong></td><td>LFM2-350M · Qwen3.5-0.8B · Gemma 3 270M, fine-tuned</td><td>200–600 MB</td><td>80–200 ms desktop, 200–400 ms phone</td><td>SFT, LoRA vs full fine-tune, DPO, GRPO with the engine as verifier</td><td><span class="pill gpu">Needs GPU</span></td></tr>
+      <tr><td><strong>E3 Speech → command</strong></td><td>Moonshine v2 or Whisper, decoder trained to emit the command line</td><td>40–250 MB</td><td>50–150 ms, one pass</td><td>Speech models, end-to-end training, audio data</td><td><span class="pill gpu">Needs GPU</span></td></tr>
+      <tr><td><strong>E4 Diffusion</strong></td><td>Small masked diffusion LM, whole line in a few parallel steps</td><td>15–60 MB</td><td>to be measured against E1</td><td>Diffusion text models, parallel decoding trade-offs</td><td><span class="pill">Later</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Latencies and sizes are targets from the plan, not measurements. Each experiment is scored on the same real-voice gold set: exact command, callsign accuracy, confident-wrong rate, say-again rate, latency p50/p95.</p>
+</section>
+
+<section aria-labelledby="h-data">
+  <div class="eyebrow">Training data</div>
+  <h2 id="h-data">The teacher talks mostly about headings</h2>
+  <p>The rule-based AI is a free teacher: run the sim headless and every decision is a labelled (game state, command) pair. It is lopsided, though. Headings are 55% of everything it says, and it never issues holds, directs, go-arounds or conditional clearances. The dataset exporter adds a sampler that picks from each aircraft's currently valid actions, so the model sees every command kind.</p>
+  <div class="chart" id="chart-kinds">
+    <div class="chart-head"><h3>Commands the AI issued, 6 airports, 3 sim-hours</h3><span class="note">1,955 commands</span></div>
+    <div class="plot"><div class="rows" id="rows-kinds" role="list" style="gap:6px"></div></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-skills">
+  <div class="eyebrow">Learning map</div>
+  <h2 id="h-skills">Thirteen skills, each one a real part of the product</h2>
+  <p>Each module is built from scratch first, then with the production tool, and ends with measured numbers. That doubles as the portfolio for an AI-engineering role.</p>
+  <div class="skills" id="skills"></div>
+</section>
+
+<section aria-labelledby="h-plan">
+  <div class="eyebrow">Plan</div>
+  <h2 id="h-plan">What happens next</h2>
+  <div class="days">
+    <div class="day now"><h3>Day 0 · this host, no GPU</h3><ul>
+      <li class="ok">Spoken-phrasing fixes in the parser, 41% → 99.8%</li>
+      <li class="ok">Permanent voice round-trip test</li>
+      <li class="ok">Plan, learning roadmap, these reports</li>
+      <li class="ok">Dataset exporter: 15,566 commands, 31 kinds, 0 rejected labels</li>
+      <li class="ok">BPE tokenizer from scratch (1,349 tokens)</li>
+      <li class="ok">Tiny model trained, then scaled on a GPU: 94% exact, 87% at an unseen airport</li>
+      <li class="ok">Shipped in the game: 2 MB model running in the browser behind the rules</li>
+      <li class="ok">Push-to-talk voice in the game: browser recogniser, plus on-device Moonshine as an option</li>
+      <li class="ok">First on-device speech benchmark: not accurate enough yet on ATC words</li>
+    </ul></div>
+    <div class="day"><h3>Day 1 · 128 GB GPU</h3><ul>
+      <li>Synthesise hours of ATC speech with many voices</li>
+      <li>Compare speech-to-text models and fine-tune the best</li>
+      <li>Train E1, E2 (three base models) and E3</li>
+      <li>Score everything on the real-voice gold set</li>
+    </ul></div>
+    <div class="day"><h3>Day 2 · ship</h3><ul>
+      <li>Winners in the browser: WebGPU with a WASM fallback</li>
+      <li>Cloud voice service on EC2 g6e, several replicas</li>
+      <li>Phone app that downloads the model on first run</li>
+      <li>Pilot voices and the radio filter</li>
+    </ul></div>
+    <div class="day"><h3>After that</h3><ul>
+      <li>Tool-calling AI controller (System 2)</li>
+      <li>RL against the game score</li>
+      <li>Diffusion experiment E4</li>
+      <li>Load tests, KV-cache tuning, cost per 1,000 commands</li>
+    </ul></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-asks">
+  <div class="eyebrow">Needed from you</div>
+  <h2 id="h-asks">Two answers unblock Day 1</h2>
+  <div class="asks">
+    <div class="ask"><h3>GPU access</h3><p>How do I reach the 128 GB GPU (SSH host?) and what is it (DGX Spark, H200, something else)? Also, which AWS account and region for g6e?</p></div>
+    <div class="ask"><h3>Commercial or not?</h3><p>Some public ATC speech sets (UWB-ATCC, for example) are non-commercial only. If OpenATC is commercial, they are used only for testing and the model trains on synthetic speech plus our own recordings.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-src">
+  <div class="eyebrow">Sources</div>
+  <h2 id="h-src">Research behind the model choices</h2>
+  <ul class="sources">
+    <li><a href="https://arxiv.org/html/2602.12241" rel="noopener">Moonshine v2: streaming encoder ASR</a></li>
+    <li><a href="https://www.onresonant.com/resources/local-stt-models-2026" rel="noopener">Local STT 2026: Moonshine vs Parakeet vs Whisper</a></li>
+    <li><a href="https://arxiv.org/pdf/2305.01155" rel="noopener">ATCO2: 5000 hours of ATC speech, callsign boosting</a></li>
+    <li><a href="https://arxiv.org/pdf/2606.22399" rel="noopener">ATCCaps: call-sign-aware ATC speech dataset</a></li>
+    <li><a href="https://offlinetts.pages.dev/blog/browser-tts-showdown-kokoro-piper-kitten/" rel="noopener">Browser TTS: Kokoro vs Piper vs Kitten</a></li>
+    <li><a href="https://www.distillabs.ai/blog/what-small-language-model-is-best-for-fine-tuning/" rel="noopener">Distil Labs: best small model to fine-tune</a></li>
+    <li><a href="https://vdf.ai/blog/best-small-language-models/" rel="noopener">Small language models compared, 2026</a></li>
+    <li><a href="https://dev.to/john-rocky/on-device-llm-on-iphone-which-runtime-is-fastest-mlx-vs-llamacpp-vs-litert-lm-vs-coreml-1b42" rel="noopener">On-device runtimes on iPhone</a></li>
+    <li><a href="https://www.huggingface.co/blog/transformersjs-v3" rel="noopener">Transformers.js with WebGPU</a></li>
+    <li><a href="https://arxiv.org/pdf/2411.15100" rel="noopener">XGrammar: structured generation</a></li>
+    <li><a href="https://aiwiki.ai/wiki/helix_vla" rel="noopener">Helix: System 1 / System 2</a></li>
+    <li><a href="https://arxiv.org/html/2406.15209v1" rel="noopener">Whisper for spoken language understanding</a></li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+const AIRPORTS = [
+  { icao: 'KJFK', style: 'FAA', n: 384, before: 0, after: 384, drop: 367 },
+  { icao: 'KLAX', style: 'FAA', n: 389, before: 0, after: 388, drop: 373 },
+  { icao: 'KSFO', style: 'FAA', n: 290, before: 0, after: 289, drop: 270 },
+  { icao: 'EGLL', style: 'ICAO', n: 222, before: 198, after: 221, drop: 219 },
+  { icao: 'LFPG', style: 'ICAO', n: 246, before: 214, after: 246, drop: 243 },
+  { icao: 'YSSY', style: 'ICAO', n: 424, before: 388, after: 423, drop: 422 },
+];
+const KINDS = [['heading', 1070], ['altitude', 234], ['speed', 123], ['roger', 105], ['radar contact', 61], ['taxi', 60], ['cross runway', 54], ['unable', 50], ['takeoff', 37], ['pushback', 36], ['contact', 32], ['cleared ILS', 26], ['hold position', 25], ['cleared to land', 20], ['start-up', 17], ['cancel approach', 4], ['continue approach', 1]];
+const SKILLS = [
+  ['Data and synthetic data', 'ml/data', 'Export state, command and spoken forms from the headless sim. The rule AI is the teacher.', 'next', 'Next'],
+  ['Tokenization', 'ml/tokenizer', 'Byte-level BPE from scratch on ATC text, compared with the Qwen and Gemma tokenizers.', 'next', 'Next'],
+  ['Pre-training', 'ml/s1', 'A small GPT-style transformer trained from random weights on the synthetic corpus.', 'next', 'Next'],
+  ['Inference internals', 'ml/s1/infer.py', 'Sampling, a KV cache written by hand, prefix caching of the game state, grammar-constrained decoding.', 'next', 'Next'],
+  ['Fine-tuning: SFT and LoRA', 'ml/slm', 'LFM2, Qwen3.5 and Gemma fine-tuned on state plus transcript to command line.', 'gpu', 'Needs GPU'],
+  ['Preference tuning and RL', 'ml/slm/rl', 'DPO on good and bad commands; GRPO with the game engine checking every answer.', 'gpu', 'Needs GPU'],
+  ['Function and tool calling', 'ml/tools', 'The 66 command kinds as JSON-schema tools, and a tool-calling AI controller.', '', 'Later'],
+  ['Diffusion text models', 'ml/diffusion', 'A masked diffusion model that writes the whole command line in a few parallel steps.', '', 'Later'],
+  ['Speech models', 'ml/stt, ml/tts', 'Compare and fine-tune speech-to-text on synthetic ATC audio; pilot voices.', 'gpu', 'Needs GPU'],
+  ['Edge: browser', 'ml/edge-web', 'ONNX Runtime Web on WebGPU with a WASM fallback; WebLLM; download once, cache.', '', 'Later'],
+  ['Edge: phone app', 'ml/edge-mobile', 'An app that downloads the model on first run and runs it on the device.', '', 'Later'],
+  ['Cloud inference', 'ml/serve', 'vLLM or SGLang on EC2 g6e: replicas, a router, KV-cache and prefix-cache management, load tests.', 'gpu', 'Needs GPU'],
+  ['Productization', 'ml/product', 'Model versions, an eval gate in CI, a download manager, latency telemetry, licence audit.', '', 'Ongoing'],
+];
+const pct = (a, n) => (n ? 100 * a / n : 0);
+const fmt = v => (v === 100 ? '100' : v.toFixed(1)) + '%';
+function barRow(color, value, label, tip) {
+  return `<div class="bar-row" role="listitem" tabindex="0" aria-label="${label}"><div class="track"><div class="fill" style="width:${value}%;background:${color}"></div><div class="tip">${tip}</div></div><div class="val">${label.split(': ').pop()}</div></div>`;
+}
+document.getElementById('rows-airports').innerHTML = AIRPORTS.map(a => {
+  const b = pct(a.before, a.n), f = pct(a.after, a.n);
+  return `<div class="group"><div class="lab">${a.icao}<small>${a.style} phrasing</small></div><div class="pair">
+    ${barRow('var(--s-before)', b, `${a.icao} before: ${fmt(b)}`, `<b>${a.icao} before</b> · ${a.before} of ${a.n} commands`)}
+    ${barRow('var(--s-after)', f, `${a.icao} after: ${fmt(f)}`, `<b>${a.icao} after</b> · ${a.after} of ${a.n} commands`)}
+  </div></div>`;
+}).join('');
+document.getElementById('tbl-airports').innerHTML = AIRPORTS.map(a => `<tr><td><strong>${a.icao}</strong></td><td>${a.style}</td><td class="n">${a.n}</td><td class="n">${fmt(pct(a.before, a.n))}</td><td class="n">${fmt(pct(a.after, a.n))}</td><td class="n">${fmt(pct(a.drop, a.n))}</td></tr>`).join('')
+  + (() => { const t = AIRPORTS.reduce((s, a) => ({ n: s.n + a.n, b: s.b + a.before, f: s.f + a.after, d: s.d + a.drop }), { n: 0, b: 0, f: 0, d: 0 }); return `<tr><td><strong>All</strong></td><td></td><td class="n">${t.n.toLocaleString()}</td><td class="n">${fmt(pct(t.b, t.n))}</td><td class="n">${fmt(pct(t.f, t.n))}</td><td class="n">${fmt(pct(t.d, t.n))}</td></tr>`; })();
+const maxK = KINDS[0][1];
+document.getElementById('rows-kinds').innerHTML = KINDS.map(([k, n]) => `<div class="group" style="grid-template-columns:128px 1fr"><div class="lab" style="font-weight:500;color:var(--ink-2)">${k}</div>${barRow('var(--s-after)', 100 * n / maxK, `${k}: ${n.toLocaleString()}`, `<b>${k}</b> · ${n.toLocaleString()} commands, ${(100 * n / 1955).toFixed(1)}% of all`)}</div>`).join('');
+document.getElementById('skills').innerHTML = SKILLS.map(([name, mod, what, cls, status], i) => `<div class="skill"><div class="top"><span class="num">${String(i + 1).padStart(2, '0')}</span><span class="pill ${cls}">${status}</span></div><h3>${name}</h3><p>${what}</p><code>${mod}</code></div>`).join('');
+</script>
+
+</body>
+</html>
