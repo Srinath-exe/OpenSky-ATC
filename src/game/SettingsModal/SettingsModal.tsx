@@ -14,7 +14,7 @@ import { useSettings, updateSettings } from '@/app/_lib/persist'
 import type { Settings } from '@/components/atc/simStore'
 import { useShell } from '../shellContext'
 import { usePersistedState } from '../hooks/usePersistedState'
-import { LS } from '../persist'
+import { LS, EV_VOICE_ENGINE } from '../persist'
 import { EV_REPLAY_TIPS } from '../HelpOverlay/OnboardingTips'
 import { PRESETS, setGraphicsPref, useDetected, useGraphicsPref } from '@/components/atc/WorldMap/quality'
 import type { GraphicsPref } from '@/components/atc/WorldMap/quality'
@@ -47,6 +47,8 @@ export function SettingsModal() {
   const open = !!shell.open.settings
   const settings = useSettings()
   const [hotkeyBadges, setHotkeyBadges] = usePersistedState<boolean>(LS.hotkeyBadges, true)
+  const [voiceEngine, setVoiceEngineState] = usePersistedState<'browser' | 'local'>(LS.voiceEngine, 'browser')
+  const setVoiceEngine = (v: 'browser' | 'local') => { setVoiceEngineState(v); window.setTimeout(() => window.dispatchEvent(new Event(EV_VOICE_ENGINE)), 0) }
   const set = (patch: Partial<Settings>) => updateSettings(patch)
   const close = React.useCallback(() => shell.hide('settings'), [shell])
   React.useEffect(() => { document.documentElement.setAttribute('data-hotkey-badges', hotkeyBadges ? 'on' : 'off') }, [hotkeyBadges])
@@ -110,6 +112,7 @@ export function SettingsModal() {
           <div className={styles.rows}>
             <ListRow flush title="Instant vectors" subtitle="Drag-to-heading transmits without a confirm step" trailing={<Mirror state={settings.instantVectors ? 'on' : 'off'}><Toggle checked={settings.instantVectors} onChange={(v) => set({ instantVectors: v })} testId="set-instant-vectors" /></Mirror>} />
             <ListRow flush title="Typed commands transmit on Enter" subtitle="Off shows the parsed command for review first" trailing={<Mirror state={settings.typedInstant ? 'on' : 'off'}><Toggle checked={settings.typedInstant} onChange={(v) => set({ typedInstant: v })} testId="set-typed-instant" /></Mirror>} />
+            <ListRow flush title="Voice recognition" subtitle={voiceEngine === 'local' ? 'On-device: a 28 MB model downloads once, audio never leaves this device' : 'Browser: the built-in recogniser (Chrome sends audio to Google)'} trailing={<Segmented small ariaLabel="Voice recognition" items={[{ id: 'browser', label: 'Browser' }, { id: 'local', label: 'On-device' }]} value={voiceEngine} onChange={(v) => setVoiceEngine(v as 'browser' | 'local')} testId="set-voice-engine" />} />
             <ListRow flush title="Hotkey badges" subtitle="Show the key letter on every action button" trailing={<Mirror state={hotkeyBadges ? 'on' : 'off'}><Toggle checked={hotkeyBadges} onChange={setHotkeyBadges} testId="set-hotkey-badges" /></Mirror>} />
           </div>
         </div>

@@ -12,10 +12,15 @@ import type { RadioLine, Position } from '../hooks/useSimSelector'
 import { sim, useSim, formatMmSs } from '../hooks/useSimSelector'
 import { useShell } from '../shellContext'
 import { usePersistedState } from '../hooks/usePersistedState'
-import { LS, readJson, writeJson } from '../persist'
+import { LS, readJson, writeJson, EV_VOICE_ENGINE } from '../persist'
 import { isSilent, fromEngine } from '@/lib/sim/dispatch'
 import { parseCommand } from '@/lib/sim/commands'
 import { describe } from '@/lib/sim/commandAst'
+import { createBrowserRecognizer, createLocalRecognizer, browserSpeechAvailable, localSpeechAvailable } from '@/lib/voice/recognizer'
+import type { Recognizer, VoiceEngine } from '@/lib/voice/recognizer'
+import { understandVoice } from '@/lib/voice/understand'
+import { L1Client } from '@/lib/voice/l1'
+import { voiceContext, positionOf } from '@/lib/voice/context'
 import type { Position as FreqPosition } from '@/lib/sim/types'
 
 /** One filter per job: TOWER = ground + tower frequencies, APPROACH = approach + departure. */
@@ -248,15 +253,17 @@ export function CommLog() {
     setHistoryIdx(-1)
   }
 
-  const send = () => {
-    const text = value.trim()
+  /** Transmit the command line (or `override`, e.g. a spoken command): review step first when "typed = instant" is off. */
+  const send = (override?: string) => {
+    const text = (override ?? value).trim()
     if (!text) return
+    if (override != null) setValue(text)
     if (!typedInstant && review == null) {
       // Review step: show what was parsed; the second Enter transmits (UX §9 "typed = instant" off).
       const e = sim.engine
       if (!e) return
       const p = parseCommand(text, fromEngine(e, { lastCallsign: sim.lastCallsign, position: sim.position }))
-      if (p.ok && p.ast) { setReview(describe(p.ast)); setError(null); return }
+      if (p.ok && p.ast) { setReview(describe(p.ast)); setError(null); if (override != null) focus(); return }
       const err = p.errors[0]
       setError({ text: err?.message ?? 'Unable to parse', token: err?.token ?? null })
       setShakeKey((k) => k + 1)
@@ -304,6 +311,64 @@ export function CommLog() {
   }
 
   const onCorrect = React.useCallback((line: RadioLine) => { if (line.callsign) focus(`${line.callsign} correction `) }, [focus])
+
+  // ---- voice (docs/spec/11-VOICE-MODEL.md): hold PTT, talk, release -> the command line, sent when it parses ----
+  const [voiceAvail, setVoiceAvail] = React.useState(false)
+  const recs = React.useRef<Partial<Record<VoiceEngine, Recognizer>>>({})
+  const engineRef = React.useRef<VoiceEngine>('browser')
+  const recognizerFor = React.useCallback((engine: VoiceEngine): Recognizer | null => {
+    const have = recs.current[engine]; if (have) return have
+    const r = engine === 'local' ? createLocalRecognizer() : createBrowserRecognizer()
+    if (r) recs.current[engine] = r
+    return r
+  }, [])
+  React.useEffect(() => {
+    const sync = () => {
+      const want = readJson<VoiceEngine>(LS.voiceEngine, 'browser')
+      engineRef.current = want === 'local' && localSpeechAvailable() ? 'local' : browserSpeechAvailable() ? 'browser' : localSpeechAvailable() ? 'local' : 'browser'
+      setVoiceAvail(browserSpeechAvailable() || localSpeechAvailable())
+      if (want === 'local' && engineRef.current === 'local') recognizerFor('local')   // chosen in settings: download now, not at the first PTT
+    }
+    sync()
+    window.addEventListener(EV_VOICE_ENGINE, sync)
+    return () => window.removeEventListener(EV_VOICE_ENGINE, sync)
+  }, [recognizerFor])
+  const [heard, setHeard] = React.useState('')
+  const sendRef = React.useRef(send); sendRef.current = send
+  // in-browser voice model (L1): created on the first push-to-talk; the game state is prefilled while the player talks
+  const l1Ref = React.useRef<L1Client | null>(null)
+  const stateRef = React.useRef<{ text: string; callsigns: string[] } | null>(null)
+  React.useEffect(() => {
+    if (!shell.ptt || !voiceAvail) return
+    const rec = recognizerFor(engineRef.current)
+    if (!rec) return
+    setHeard('')
+    try {
+      const eng = sim.engine
+      if (eng) {
+        l1Ref.current = l1Ref.current ?? new L1Client()
+        stateRef.current = voiceContext(eng, positionOf(sim.position) ?? 'tower')
+        l1Ref.current.prefill(stateRef.current.text)
+      }
+    } catch { /* the rules path still works without the model */ }
+    rec.onPartial = setHeard
+    rec.onError = (m) => setError({ text: m, token: null })
+    rec.start()
+    return () => {   // PTT released
+      void rec.stop().then((text) => {
+        setHeard('')
+        const e = sim.engine
+        if (!e || !text) return
+        void understandVoice(text, fromEngine(e, { lastCallsign: sim.lastCallsign, position: sim.position }), e.magVar ?? 0, l1Ref.current, stateRef.current)
+          .then((u) => {
+            if (u.ok) { sendRef.current(u.line); return }
+            focus(u.line)
+            setError({ text: u.source === 'L1' ? (u.error ?? 'Not understood') : `Heard “${u.transcript}”: ${u.error}`, token: null })
+            setShakeKey((k) => k + 1)
+          })
+      })
+    }
+  }, [shell.ptt, voiceAvail, focus, recognizerFor])
 
   const menuOptions: MenuOption[] = suggestions.map((s, i) => ({ value: `${i}:${s.text}`, label: s.label, description: s.kind, testId: `cmd-autocomplete-${i}` }))
 
@@ -416,7 +481,13 @@ export function CommLog() {
             PTT
             <span className={styles.pttHint}>hold · Ctrl+Space</span>
           </button>
-          {shell.ptt ? <span className={styles.transcript} data-testid="cmd-ptt-transcript">Listening… <span data-testid="cmd-ptt-unsupported">speech input is not available in this build; type the command instead</span></span> : null}
+          {shell.ptt ? (
+            <span className={styles.transcript} data-testid="cmd-ptt-transcript">
+              {voiceAvail
+                ? (heard ? <span data-testid="cmd-ptt-heard">{heard}</span> : 'Listening…')
+                : <>Listening… <span data-testid="cmd-ptt-unsupported">speech input is not available in this browser; type the command instead</span></>}
+            </span>
+          ) : null}
         </span>
       </footer>
     </section>

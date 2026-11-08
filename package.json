@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "bash scripts/build-voice.sh",
     "build": "next build",
     "start": "node .next/standalone/server.js",
     "lint": "next lint",

@@ -1,0 +1,22 @@
+{
+ "fp32": {
+  "exact": 0.95,
+  "callsign": 0.9667,
+  "say_again_tp": 13,
+  "say_again_fp": 0,
+  "say_again_fn": 0,
+  "ms_p50": 40.3,
+  "ms_p95": 89.1,
+  "n": 300
+ },
+ "int8-rowwise": {
+  "exact": 0.9533,
+  "callsign": 0.97,
+  "say_again_tp": 13,
+  "say_again_fp": 0,
+  "say_again_fn": 0,
+  "ms_p50": 43.7,
+  "ms_p95": 143.8,
+  "n": 300
+ }
+}

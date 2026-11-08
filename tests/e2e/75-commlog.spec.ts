@@ -625,7 +625,8 @@ test.describe('comm log', () => {
     await expect(game.txIndicator()).toHaveAttribute('data-state', 'tx');
     await expect(page.locator('body')).toHaveAttribute('data-ptt', 'true');
     await expect(page.getByTestId('cmd-ptt-transcript')).toBeVisible();
-    await expect(page.getByTestId('cmd-ptt-unsupported')).toContainText(/type the command/i);
+    // with the Web Speech API the strip listens; without it, it says to type instead
+    await expect(page.getByTestId('cmd-ptt-transcript')).toContainText(/listening|type the command/i);
     await page.mouse.up();
     await expect(ptt).toHaveAttribute('data-state', 'off');
     await expect(game.txIndicator()).toHaveAttribute('data-state', 'idle');

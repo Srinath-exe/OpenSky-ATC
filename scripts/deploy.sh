@@ -3,7 +3,7 @@
 # openatc systemd service (127.0.0.1:3005 behind nginx).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-npm run build
+npm run build    # prebuild compiles the browser voice engine (scripts/build-voice.sh)
 rm -rf .next/standalone/.next/static .next/standalone/public
 cp -r .next/static .next/standalone/.next/static
 cp -r public .next/standalone/public

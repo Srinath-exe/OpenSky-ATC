@@ -92,8 +92,10 @@ export function groupNumber(s: string): string {
   const n = parseInt(s, 10);
   if (!isFinite(n)) return spokenDigits(s, 'FAA');
   if (s.length <= 2) return smallNumber(n);
-  if (s.length === 3) return `${DIGITS[+s[0]]} ${smallNumber(parseInt(s.slice(1), 10))}`;
-  if (s.length === 4) return `${smallNumber(parseInt(s.slice(0, 2), 10))} ${smallNumber(parseInt(s.slice(2), 10))}`;
+  // a zero in the tens place is said ("one zero eight", never "one eight" = 18); round hundreds are "hundred"
+  const tail = (t: string) => (t === '00' ? 'hundred' : t[0] === '0' ? `zero ${DIGITS[+t[1]]}` : smallNumber(parseInt(t, 10)));
+  if (s.length === 3) return `${DIGITS[+s[0]]} ${tail(s.slice(1))}`;
+  if (s.length === 4 && s[0] !== '0') return `${smallNumber(parseInt(s.slice(0, 2), 10))} ${tail(s.slice(2))}`;
   return spokenDigits(s, 'FAA');
 }
 const TEENS = ['ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];

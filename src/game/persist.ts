@@ -10,7 +10,12 @@ export const LS = {
   hotkeyBadges: 'skycontrol_hotkey_badges',
   logFilter: 'skycontrol_log_filter',
   cmdHistory: 'skycontrol_cmd_history',
+  /** Speech recognition engine for push-to-talk: 'browser' (Web Speech API) | 'local' (on-device model). */
+  voiceEngine: 'skycontrol_voice_engine',
 } as const
+
+/** Fired on window when the voice engine setting changes (same-tab listeners; `storage` only fires in other tabs). */
+export const EV_VOICE_ENGINE = 'skycontrol:voice-engine'
 
 export function readJson<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback

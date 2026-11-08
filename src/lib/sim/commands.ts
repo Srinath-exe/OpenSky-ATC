@@ -128,6 +128,16 @@ const DIGIT_WORDS: Record<string, string> = {
   ZERO: '0', OH: '0', ONE: '1', WUN: '1', TWO: '2', TOO: '2', THREE: '3', TREE: '3', FOUR: '4', FOWER: '4', FIVE: '5', FIFE: '5',
   SIX: '6', SEVEN: '7', EIGHT: '8', AIT: '8', NINE: '9', NINER: '9',
 };
+const TEEN_WORDS: Record<string, string> = { TEN: '10', ELEVEN: '11', TWELVE: '12', THIRTEEN: '13', FOURTEEN: '14', FIFTEEN: '15', SIXTEEN: '16', SEVENTEEN: '17', EIGHTEEN: '18', NINETEEN: '19' };
+const TENS_WORDS: Record<string, number> = { TWENTY: 20, THIRTY: 30, FORTY: 40, FIFTY: 50, SIXTY: 60, SEVENTY: 70, EIGHTY: 80, NINETY: 90 };
+/** One spoken number group at raw[j]: a digit word (1 char), a teen (2), or a tens word with an optional unit ("sixty five" -> 65, "twenty" -> 20). */
+function numberGroup(raw: string[], j: number): { digits: string; n: number } | null {
+  const w = raw[j];
+  if (DIGIT_WORDS[w] !== undefined) return { digits: DIGIT_WORDS[w], n: 1 };
+  if (TEEN_WORDS[w]) return { digits: TEEN_WORDS[w], n: 1 };
+  if (TENS_WORDS[w] !== undefined) { const u = DIGIT_WORDS[raw[j + 1]]; return u !== undefined && u !== '0' ? { digits: String(TENS_WORDS[w] + Number(u)), n: 2 } : { digits: String(TENS_WORDS[w]), n: 1 }; }
+  return null;
+}
 const RUNWAY_RE = /^(0?[1-9]|[12]\d|3[0-6])([LRC])?$/;
 const CALLSIGN_RE = /^[A-Z]{1,3}\d{1,4}[A-Z]{0,2}$/;
 const FIX_RE = /^[A-Z]{2,5}$/;
@@ -151,11 +161,11 @@ export function tokenize(text: string): Token[] {
   const out: Token[] = [];
   for (let i = 0; i < raw.length; i++) {
     let t = raw[i];
-    // spoken digits run
-    if (DIGIT_WORDS[t] !== undefined && !(t === 'A' || t === 'OH' && i === 0)) {
+    // spoken digits run: digit by digit ("two four zero") or grouped ("eight sixty-five" -> 865, "one twenty" -> 120)
+    if ((DIGIT_WORDS[t] !== undefined || TEEN_WORDS[t] || TENS_WORDS[t] !== undefined) && !(t === 'A' || t === 'OH' && i === 0)) {
       let digits = '';
       let j = i;
-      while (j < raw.length && DIGIT_WORDS[raw[j]] !== undefined) { digits += DIGIT_WORDS[raw[j]]; j++; }
+      for (let g = numberGroup(raw, j); g && j < raw.length; g = numberGroup(raw, j)) { digits += g.digits; j += g.n; }
       // "<d> THOUSAND [<d> HUNDRED]" / "<d> HUNDRED"
       if (j < raw.length && raw[j] === 'THOUSAND') {
         let v = parseInt(digits, 10) * 1000; j++;
@@ -172,10 +182,10 @@ export function tokenize(text: string): Token[] {
       i = j - 1;
       continue;
     }
-    if (t === 'FLIGHT' && raw[i + 1] === 'LEVEL' && raw[i + 2] && NUM_RE.test(normDigits(raw[i + 2]))) {
+    if (t === 'FLIGHT' && raw[i + 1] === 'LEVEL' && raw[i + 2] && (NUM_RE.test(normDigits(raw[i + 2])) || numberGroup(raw, i + 2))) {
       let j = i + 2; let digits = '';
       if (/^\d+$/.test(raw[j])) { digits = raw[j]; j++; }
-      else while (j < raw.length && DIGIT_WORDS[raw[j]] !== undefined) { digits += DIGIT_WORDS[raw[j]]; j++; }
+      else for (let g = numberGroup(raw, j); g && j < raw.length; g = numberGroup(raw, j)) { digits += g.digits; j += g.n; }
       out.push({ text: `FL${digits}`, raw: raw.slice(i, j).join(' '), index: out.length });
       i = j - 1; continue;
     }
@@ -353,9 +363,14 @@ class Parser {
       if (side) { m = [`${t}${side}`, t, side] as unknown as RegExpMatchArray; consumed = 2; }
     }
     if (!m) return null;
-    const name = `${m[1].padStart(2, '0')}${m[2] ?? ''}`;
     this.i += consumed;
-    return name;
+    return this.airportRunway(`${m[1].padStart(2, '0')}${m[2] ?? ''}`);
+  }
+  /** The airport's own spelling of a runway: Boston names it "4L", JFK "04L"; typed "4L", "04L" and "four left" all match either. */
+  private airportRunway(name: string): string {
+    const key = (s: string) => s.toUpperCase().replace(/^0+(?=\d)/, '');
+    const hit = (this.ctx.runways ?? []).find(x => key(x) === key(name));
+    return hit ? hit.toUpperCase() : name;
   }
   runway(required = true, defaultRunway: string | null = null): string {
     this.skip('RUNWAY', 'RWY');
@@ -369,10 +384,30 @@ class Parser {
     if (this.strict.runway && !this.ctx.runways!.map(x => x.toUpperCase()).includes(r)) { this.i = save; this.fail('unknown_runway', `Unknown runway ${r}`, ['<runway>']); }
     return r;
   }
-  isRunwayAhead(offset = 0): boolean { const t = this.peek(offset); return !!t && RUNWAY_RE.test(t) && (this.strict.runway ? this.ctx.runways!.some(x => x.toUpperCase() === `${t.match(RUNWAY_RE)![1].padStart(2, '0')}${t.match(RUNWAY_RE)![2] ?? ''}`) : true); }
-  isTaxiwayAhead(offset = 0): boolean { const t = this.peek(offset); return !!t && (this.strict.taxiway ? this.ctx.taxiways!.some(x => x.toUpperCase() === t) : TAXIWAY_RE.test(t) && !RUNWAY_RE.test(t)); }
+  isRunwayAhead(offset = 0): boolean {
+    const t = this.peek(offset); if (!t || !RUNWAY_RE.test(t)) return false;
+    if (!this.strict.runway) return true;
+    const m = t.match(RUNWAY_RE)!; const key = (s: string) => s.toUpperCase().replace(/^0+(?=\d)/, '');
+    return this.ctx.runways!.some(x => key(x) === key(`${m[1]}${m[2] ?? ''}`));
+  }
+  isTaxiwayAhead(offset = 0): boolean {
+    const raw = this.peek(offset); const t = PHONETIC_LETTER[raw] ?? raw;    // "ALPHA" -> A
+    return !!t && (this.strict.taxiway ? this.ctx.taxiways!.some(x => x.toUpperCase() === t || PHONETIC_LETTER[raw] && x.toUpperCase().startsWith(t)) : TAXIWAY_RE.test(t) && !RUNWAY_RE.test(t));
+  }
+  /** Spoken identifier: phonetic letters + digits ("INDIA 48" -> I48, "KILO ALPHA" -> KA, "ALPHA 3" -> A3), longest form `ok` accepts. Consumes it. */
+  private phoneticRef(ok: (s: string) => boolean): string | null {
+    const L: string[] = [];
+    for (let k = 0; k < 2 && PHONETIC_LETTER[this.peek(k)]; k++) L.push(PHONETIC_LETTER[this.peek(k)]);
+    if (!L.length) return null;
+    const num = /^\d{1,3}[A-Z]?$/.test(this.peek(L.length)) ? this.peek(L.length) : '';
+    for (const [txt, n] of [[L.join('') + num, L.length + (num ? 1 : 0)], [L.join(''), L.length], [L[0] + (L.length === 1 ? num : ''), L.length === 1 && num ? 2 : 1]] as [string, number][]) {
+      if (txt && ok(txt)) { this.i += n; return txt; }
+    }
+    return null;
+  }
   taxiway(): string {
     this.skip('TAXIWAY', 'TWY');
+    { const ph = this.phoneticRef(x => (this.strict.taxiway ? this.ctx.taxiways!.some(y => y.toUpperCase() === x) : TAXIWAY_RE.test(x))); if (ph) return ph; }
     const t = this.peek();
     if (!t) this.fail('missing_param', 'Taxiway required', ['<taxiway>']);
     if (this.strict.taxiway) { if (!this.ctx.taxiways!.some(x => x.toUpperCase() === t)) this.fail('unknown_taxiway', `Unknown taxiway ${t}`, ['<taxiway>']); }
@@ -391,6 +426,7 @@ class Parser {
   isFixAhead(offset = 0): boolean { const t = this.peek(offset); return !!t && (this.strict.fix ? this.ctx.fixes!.some(x => x.toUpperCase() === t) : FIX_RE.test(t) && !VERB_STARTERS.has(t)); }
   stand(): string {
     this.skip('STAND', 'GATE');
+    { const ph = this.phoneticRef(x => (this.strict.stand ? this.ctx.stands!.some(y => y.toUpperCase() === x) : STAND_RE.test(x))); if (ph) return ph; }
     const t = this.peek();
     if (!t) this.fail('missing_param', 'Stand required', ['<stand>']);
     if (this.strict.stand) { if (!this.ctx.stands!.some(x => x.toUpperCase() === t)) this.fail('unknown_stand', `Unknown stand ${t}`, ['<stand>']); }
@@ -467,6 +503,7 @@ class Parser {
 // ──────────────────────────────────────────────────────────────────────────────
 //  Callsign resolution
 // ──────────────────────────────────────────────────────────────────────────────
+const PHONETIC_LETTER: Record<string, string> = Object.fromEntries(['ALFA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT', 'GOLF', 'HOTEL', 'INDIA', 'JULIETT', 'KILO', 'LIMA', 'MIKE', 'NOVEMBER', 'OSCAR', 'PAPA', 'QUEBEC', 'ROMEO', 'SIERRA', 'TANGO', 'UNIFORM', 'VICTOR', 'WHISKEY', 'XRAY', 'YANKEE', 'ZULU'].map(w => [w, w[0]]).concat([['ALPHA', 'A'], ['JULIET', 'J'], ['X-RAY', 'X']]));
 const TELEPHONY_TO_ICAO: Record<string, string> = Object.fromEntries(Object.entries(AIRLINE_TELEPHONY).map(([k, v]) => [v.toUpperCase().replace(/\s+/g, ''), k]));
 
 export interface CallsignMatch { callsign: string | null; consumed: number; ambiguous: string[] }
@@ -499,6 +536,11 @@ export function resolveCallsign(toks: Token[], i: number, ctx: ParseCtx, exclude
       if (!list.length) return { callsign: icao + num, consumed: words + 1, ambiguous: [] };
     }
   }
+  // 3b. spelled with the phonetic alphabet ("SIERRA KILO WHISKEY 972" -> SKW972)
+  { let k = i, letters = '';
+    while (k < toks.length && letters.length < 3 && PHONETIC_LETTER[toks[k].text]) { letters += PHONETIC_LETTER[toks[k].text]; k++; }
+    const num = toks[k]?.text ?? '';
+    if (letters.length >= 2 && /^\d{1,4}[A-Z]{0,2}$/.test(num)) { a = byCs(letters + num); if (a) return { callsign: a.callsign, consumed: k - i + 1, ambiguous: [] }; } }
   // 4. last 2-3 digits when unique
   if (/^\d{2,4}$/.test(t0) && list.length) {
     const hits = list.filter(x => { const d = x.callsign.replace(/[^0-9]/g, ''); return d.endsWith(t0) || (x.flightNo ?? '').replace(/[^0-9]/g, '').endsWith(t0); });
@@ -601,7 +643,7 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       if (rwy) {
         if (p.at('TAXI')) { p.next(); return done(parseTaxiBody(p, mk, { kind: 'runway', runway: rwy, intersection: null }, self)); }
         if (p.at('LINE|LINEUP|LUAW')) return done(parseLineup(p, mk, rwy, pending));
-        if (p.at('CLEARED FOR') || p.at('CLEARED TAKEOFF') || p.at('CLEARED IMMEDIATE')) { p.next(); p.skip('FOR'); const imm = !!p.accept('IMMEDIATE'); p.accept('TAKEOFF', 'TAKE OFF', 'DEPARTURE'); return done(mk('takeoff', { runway: rwy, immediate: imm })); }
+        if (p.at('CLEARED FOR') || p.at('CLEARED TAKEOFF') || p.at('CLEARED IMMEDIATE')) { p.next(); p.skip('FOR'); const imm = !!p.accept('IMMEDIATE'); p.accept('TAKEOFF', 'TAKE OFF', 'DEPARTURE'); return done(mk('takeoff', { runway: rwy, immediate: imm, ...(windTail(p) ? { wind: true } : {}) })); }
         if (p.at('CLEARED TO LAND') || p.at('CLEARED LAND')) { p.next(); p.skip('TO'); p.next(); return done(parseLandBody(p, mk, rwy)); }
         if (p.accept('HEADING')) return done(runwayHeadingPart(mk, runwayHeading(p, rwy)));
       } else if (p.accept('HEADING')) {
@@ -682,7 +724,7 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
         p.skip(',');
         const imm = !!p.accept('IMMEDIATE');
         p.accept('REPORT ROLLING', 'REPORT AIRBORNE');
-        return done(mk('takeoff', { runway: rwy, immediate: imm }));
+        return done(mk('takeoff', { runway: rwy, immediate: imm, ...(windTail(p) ? { wind: true } : {}) }));
       }
       if (p.accept('TO LAND', 'LAND', 'FOR LANDING', 'LANDING')) { const rwy = p.runway(false, plannedRunway); return done(parseLandBody(p, mk, rwy)); }
       p.skip('FOR', 'THE');
@@ -891,7 +933,7 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       for (;;) {
         if (p.accept('DESCEND', 'DESCEND TO', 'DESCEND AND MAINTAIN')) { ast.descendTo = p.altitude(); p.skip(','); continue; }
         if (p.accept('QNH', 'ALTIMETER')) { p.number(); p.skip(','); continue; }
-        if (p.accept('EXPECT')) { p.accept('ILS', 'RUNWAY', 'ILS RUNWAY'); ast.expectRunway = p.runway(); p.skip(','); continue; }
+        if (p.accept('EXPECT')) { p.accept('ILS APPROACH RUNWAY', 'ILS RUNWAY', 'ILS APPROACH', 'ILS', 'RUNWAY'); ast.expectRunway = p.runway(); p.accept('APPROACH'); p.skip(','); continue; }
         break;
       }
       return done(ast);
@@ -925,6 +967,7 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       let reason: UnableReason = 'traffic';
       const w = p.peek();
       if (UNABLE_WORDS[w]) { reason = UNABLE_WORDS[w]; p.next(); p.accept('CLOSED'); }
+      p.skip(','); p.accept('STANDBY', 'STAND BY');
       restText(p);
       return done(mk('unable', { reason }));
     }
@@ -1171,6 +1214,14 @@ function parseLineup(p: Parser, mk: Mk, rwy: string | null, pending: Pending, pl
   }
   return ast;
 }
+/** "wind 263 [degrees] [at] 4 [knots] [gusting 20]" read out with a takeoff / landing clearance -> true (consumed). */
+function windTail(p: Parser): boolean {
+  p.skip(',');
+  if (p.peek() !== 'WIND' || !/^\d+$/.test(p.peek(1))) return false;
+  p.next(); p.number(); p.accept('DEGREES'); p.accept('AT'); p.number(); p.accept('KNOTS', 'KT', 'KTS');
+  if (p.accept('GUSTING', 'GUSTS', 'GUST')) { p.number(); p.accept('KNOTS', 'KT', 'KTS'); }
+  return true;
+}
 function parseLandBody(p: Parser, mk: Mk, rwy: string): Part {
   const ast = mk('clearedLand', { runway: rwy });
   for (;;) {
@@ -1184,7 +1235,7 @@ function parseLandBody(p: Parser, mk: Mk, rwy: string): Part {
     }
     if (p.accept('NEXT EXIT LEFT', 'NEXT AVAILABLE EXIT LEFT', 'NEXT AVAILABLE LEFT', 'NEXT LEFT')) { ast.exit = { kind: 'next', dir: 'L' }; continue; }
     if (p.accept('NEXT EXIT RIGHT', 'NEXT AVAILABLE EXIT RIGHT', 'NEXT AVAILABLE RIGHT', 'NEXT RIGHT')) { ast.exit = { kind: 'next', dir: 'R' }; continue; }
-    if (p.accept('WIND')) { p.number(); p.accept('DEGREES'); p.number(); p.accept('KNOTS'); continue; }
+    if (windTail(p)) { ast.wind = true; continue; }
     if (p.accept('TRAFFIC', 'FOLLOWING')) { ast.trafficInfo = restText(p); continue; }
     if (p.accept('CAUTION WAKE TURBULENCE')) { restTextUntilVerb(p); continue; }
     break;
@@ -1544,10 +1595,20 @@ function parseText(text: string, ctx: ParseCtx): ParseResult {
     const self = (ctx.aircraft ?? []).find(x => x.callsign.toUpperCase() === cs) ?? null;
     const pp = new Parser(tokens, ctx, self); pp.i = p.i; pp.source = text;
     if (pp.eof) pp.fail('unknown_verb', 'Instruction required', ['<verb>']);
+    // the unit's own name read out after the callsign ("Kennedy Tower", "John F. Kennedy Intl Approach"): up to 6 words ending
+    // in a position word, the first of which starts no instruction
+    if (!VERB_STARTERS.has(pp.peek())) {
+      for (let k = 1; k <= 6 && pp.i + k < tokens.length; k++) {
+        const w = tokens[pp.i + k - 1].text;
+        if (VERB_STARTERS.has(w) && k > 1 || /\d/.test(w)) break;           // a name has no instruction words or numbers in it
+        if (POSITION_WORDS[tokens[pp.i + k].text] && tokens[pp.i + k].text !== 'RADAR') { pp.i += k + 1; break; }
+      }
+    }
     // 3. parts
     const parts: Part[] = [];
     while (!pp.eof) {
       pp.skip(',', 'THEN', 'AND');
+      if ((pp.peek() === 'ALTIMETER' || pp.peek() === 'QNH') && /^\d{3,4}$/.test(pp.peek(1))) { pp.next(); pp.next(); continue; }   // altimeter read out with a clearance
       if (pp.eof) break;
       const { part, pending } = parsePart(pp, cs!, self);
       // trailing condition at the end of the line ("turn right heading 090 when passing 4000"); before a further part it binds forward
@@ -1573,6 +1634,10 @@ function parseText(text: string, ctx: ParseCtx): ParseResult {
       if (parts.length > 8) pp.fail('too_many_parts', 'Too many parts', []);
     }
     if (!parts.length) pp.fail('unknown_verb', 'Instruction required', ['<verb>']);
+    // ICAO order "wind 240 degrees 8 knots, runway 27R, cleared for takeoff": the wind belongs to the clearance
+    const clr = parts.find(x => x.kind === 'takeoff' || x.kind === 'clearedLand') as { wind: boolean } | undefined;
+    const wi = parts.findIndex(x => x.kind === 'windCheck');
+    if (clr && wi >= 0) { clr.wind = true; parts.splice(wi, 1); }
     const folded = fold(parts, pp);
     if (folded.length > 4) pp.fail('too_many_parts', 'Max 1 base + 3 parts per transmission', [], tokens.length);
     const inc = incompatibleParts(folded);
