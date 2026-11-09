@@ -1,0 +1,1 @@
+{"engine": "hima", "clipdir": "ml/stt/bench2/clips_in", "threads": 3, "hotwords": false, "lam": null, "load_s": 8.8, "rss_after_load_mb": 1086, "peak_rss_mb": 1316, "clips": 160, "elapsed_s": 171}

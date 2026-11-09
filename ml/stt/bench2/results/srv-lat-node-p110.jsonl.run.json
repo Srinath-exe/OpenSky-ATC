@@ -1,0 +1,1 @@
+{"engine":"sherpa-onnx-node","model":"sherpa-onnx-nemo-parakeet_tdt_transducer_110m-en-36000-int8","threads":3,"loadMs":1283,"clips":40,"rssMb":424,"elapsedS":15}

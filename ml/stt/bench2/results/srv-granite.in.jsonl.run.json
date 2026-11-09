@@ -1,0 +1,1 @@
+{"engine": "granite", "clipdir": "ml/stt/bench2/clips_in", "threads": 3, "hotwords": false, "lam": null, "load_s": 4.8, "rss_after_load_mb": 3080, "peak_rss_mb": 4554, "clips": 160, "elapsed_s": 155}

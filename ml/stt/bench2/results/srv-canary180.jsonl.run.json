@@ -1,0 +1,1 @@
+{"engine": "canary-onnxasr", "clipdir": "ml/stt/bench2/clips", "threads": 3, "hotwords": false, "lam": null, "load_s": 3.8, "rss_after_load_mb": 391, "peak_rss_mb": 783, "clips": 320, "elapsed_s": 706}

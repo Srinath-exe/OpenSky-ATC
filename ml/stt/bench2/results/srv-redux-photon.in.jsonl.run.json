@@ -1,0 +1,1 @@
+{"engine": "redux-photon", "clipdir": "ml/stt/bench2/clips_in", "threads": 3, "hotwords": false, "lam": null, "load_s": 8.7, "rss_after_load_mb": 1331, "peak_rss_mb": 1331, "clips": 160, "elapsed_s": 130}

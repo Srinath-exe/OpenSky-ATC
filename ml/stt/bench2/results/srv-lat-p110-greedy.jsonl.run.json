@@ -1,0 +1,1 @@
+{"engine": "sherpa-sherpa-onnx-nemo-parakeet_tdt_transducer_110m-en-36000-int8", "clipdir": "ml/stt/bench2/clips", "threads": 3, "hotwords": false, "lam": null, "load_s": 1.8, "rss_after_load_mb": 290, "peak_rss_mb": 405, "clips": 40, "elapsed_s": 9}

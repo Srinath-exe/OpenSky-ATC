@@ -1,0 +1,1 @@
+{"engine": "sherpa-sherpa-onnx-nemo-parakeet-tdt-0.6b-redux-int8:beam", "clipdir": "ml/stt/bench2/clips_in", "threads": 3, "hotwords": true, "lam": null, "load_s": 10.9, "rss_after_load_mb": 971, "peak_rss_mb": 1206, "clips": 160, "elapsed_s": 717}

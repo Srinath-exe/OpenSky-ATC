@@ -1,0 +1,1 @@
+{"engine": "sherpa-sherpa-onnx-nemo-parakeet-tdt-0.6b-ultra-int8", "clipdir": "ml/stt/bench2/clips", "threads": 3, "hotwords": false, "lam": null, "load_s": 3.1, "rss_after_load_mb": 968, "peak_rss_mb": 1170, "clips": 40, "elapsed_s": 26}

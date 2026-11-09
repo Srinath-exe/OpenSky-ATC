@@ -1,0 +1,1 @@
+{"engine": "phonon", "clipdir": "ml/stt/bench2/clips", "threads": 3, "hotwords": true, "lam": null, "load_s": 2.2, "rss_after_load_mb": 893, "peak_rss_mb": 935, "clips": 320, "elapsed_s": 164}

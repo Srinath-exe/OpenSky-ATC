@@ -1,0 +1,2467 @@
+{
+ "how": {
+  "us": "ml/stt/bench2/clips, even ids (--every 2): 80 situations x clean/laptop/radio/late = 320 clips, Kokoro US/UK voices",
+  "in": "ml/stt/bench2/clips_in, even ids: 80 situations x clean/laptop = 160 clips, Kokoro Hindi voices reading English (proxy)",
+  "chain": "nbest+S1: the game chain (repair + n-best + S1 2m-grpo-v1 behind the rules); exact = final command parses to the gold AST; sent_wrong = sent without a check and wrong; callsign = right aircraft",
+  "latency": "ms per transmission, one at a time, 3 threads, on this 8-core VPS shared with the browser-model agent (load average 10-27); ms = the biased decode alone, ms_2best = biased + unbiased decodes (what an n-best of 2 costs)"
+ },
+ "engines": {
+  "nemo-asr06": {
+   "info": {
+    "model": "nvidia/nemotron-3.5-asr-streaming-0.6b (another agent, L4 GPU; transcripts reused)",
+    "download_mb": 475,
+    "licence": "OpenMDW-1.1",
+    "commercial": "yes",
+    "biasing": "not tried",
+    "node": "sherpa-onnx-node (streaming int8 build, 475 MB; not run here)"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.716,
+    "sent_wrong": 0.031,
+    "callsign": 0.8,
+    "wer": 0.2,
+    "exact_rules_S1_raw": 0.647,
+    "ms_p50": 23,
+    "ms_p95": 53,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.8,
+      "sent_wrong": 0.025,
+      "callsign": 0.9,
+      "wer": 0.106
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.787,
+      "sent_wrong": 0.037,
+      "callsign": 0.875,
+      "wer": 0.149
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.625,
+      "sent_wrong": 0.037,
+      "callsign": 0.713,
+      "wer": 0.285
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.65,
+      "sent_wrong": 0.025,
+      "callsign": 0.713,
+      "wer": 0.259
+     }
+    }
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.644,
+    "sent_wrong": 0.037,
+    "callsign": 0.775,
+    "wer": 0.245,
+    "exact_rules_S1_raw": 0.594,
+    "ms_p50": 24,
+    "ms_p95": 65,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.675,
+      "sent_wrong": 0.05,
+      "callsign": 0.787,
+      "wer": 0.229
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.613,
+      "sent_wrong": 0.025,
+      "callsign": 0.762,
+      "wer": 0.262
+     }
+    }
+   }
+  },
+  "nemo-salm-context": {
+   "info": {
+    "model": "NVIDIA Nemotron 3.5 Transcribe 30B-A4B with callsign context (another agent, L4 GPU)",
+    "download_mb": null,
+    "licence": "see the model card",
+    "commercial": "-",
+    "biasing": "context prompt",
+    "node": "no (GPU service)"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.834,
+    "sent_wrong": 0.028,
+    "callsign": 0.884,
+    "wer": 0.088,
+    "exact_rules_S1_raw": 0.834,
+    "ms_p50": 297,
+    "ms_p95": 502,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.863,
+      "sent_wrong": 0.037,
+      "callsign": 0.925,
+      "wer": 0.065
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.85,
+      "sent_wrong": 0.025,
+      "callsign": 0.912,
+      "wer": 0.062
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.85,
+      "sent_wrong": 0.013,
+      "callsign": 0.887,
+      "wer": 0.08
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.775,
+      "sent_wrong": 0.037,
+      "callsign": 0.813,
+      "wer": 0.144
+     }
+    }
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.869,
+    "sent_wrong": 0.025,
+    "callsign": 0.906,
+    "wer": 0.083,
+    "exact_rules_S1_raw": 0.869,
+    "ms_p50": 350,
+    "ms_p95": 543,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.875,
+      "sent_wrong": 0.025,
+      "callsign": 0.925,
+      "wer": 0.079
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.863,
+      "sent_wrong": 0.025,
+      "callsign": 0.887,
+      "wer": 0.088
+     }
+    }
+   }
+  },
+  "srv-canary180": {
+   "info": {
+    "model": "nvidia/canary-180m-flash, istupakov int8 ONNX",
+    "runtime": "onnx-asr 0.12 (onnxruntime 1.31)",
+    "download_mb": 204,
+    "licence": "weights CC-BY-4.0; onnx-asr MIT",
+    "commercial": "yes (attribution)",
+    "biasing": "none exposed (AED decoder: the prompt is task tokens only; a custom decode loop could add token boosts)",
+    "node": "sherpa-onnx-node (from_nemo_canary build) or onnxruntime-node + own decode loop; no hotwords"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.519,
+    "sent_wrong": 0.034,
+    "callsign": 0.591,
+    "wer": 0.943,
+    "exact_rules_S1_raw": 0.481,
+    "ms_p50": 633,
+    "ms_p95": 2894,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.55,
+      "sent_wrong": 0.05,
+      "callsign": 0.637,
+      "wer": 0.794
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.625,
+      "sent_wrong": 0.063,
+      "callsign": 0.75,
+      "wer": 1.252
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.738,
+      "sent_wrong": 0.013,
+      "callsign": 0.813,
+      "wer": 0.27
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.163,
+      "sent_wrong": 0.013,
+      "callsign": 0.163,
+      "wer": 1.457
+     }
+    },
+    "peak_rss_mb": 783,
+    "load_s": 3.8
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.444,
+    "sent_wrong": 0.044,
+    "callsign": 0.506,
+    "wer": 0.85,
+    "exact_rules_S1_raw": 0.419,
+    "ms_p50": 525,
+    "ms_p95": 2544,
+    "audio_s_mean": 5.66,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.287,
+      "sent_wrong": 0.025,
+      "callsign": 0.325,
+      "wer": 1.331
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.6,
+      "sent_wrong": 0.063,
+      "callsign": 0.688,
+      "wer": 0.37
+     }
+    },
+    "peak_rss_mb": 783,
+    "load_s": 1.6
+   }
+  },
+  "srv-casc-granite": {
+   "info": {},
+   "us": {
+    "n": 320,
+    "exact": 0.8,
+    "sent_wrong": 0.081,
+    "callsign": 0.884,
+    "wer": 0.239,
+    "exact_rules_S1_raw": 0.688,
+    "ms_p50": 880,
+    "ms_p95": 2531,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.85,
+      "sent_wrong": 0.087,
+      "callsign": 0.925,
+      "wer": 0.2
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.825,
+      "sent_wrong": 0.087,
+      "callsign": 0.925,
+      "wer": 0.2
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.762,
+      "sent_wrong": 0.1,
+      "callsign": 0.863,
+      "wer": 0.252
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.762,
+      "sent_wrong": 0.05,
+      "callsign": 0.825,
+      "wer": 0.306
+     }
+    }
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.844,
+    "sent_wrong": 0.05,
+    "callsign": 0.9,
+    "wer": 0.25,
+    "exact_rules_S1_raw": 0.719,
+    "ms_p50": 808,
+    "ms_p95": 1456,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.863,
+      "sent_wrong": 0.037,
+      "callsign": 0.9,
+      "wer": 0.239
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.825,
+      "sent_wrong": 0.063,
+      "callsign": 0.9,
+      "wer": 0.26
+     }
+    }
+   }
+  },
+  "srv-casc-p110-sherpa": {
+   "info": {
+    "model": "srv-p110-sherpa first (2-best), Whisper base.en (2-best + prompt) only when its guesses are not understood",
+    "note": "cascade built from the two result files (same rule as the scorer's a>b)"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.784,
+    "sent_wrong": 0.078,
+    "callsign": 0.878,
+    "wer": 0.354,
+    "exact_rules_S1_raw": 0.631,
+    "ms_p50": 989,
+    "ms_p95": 1954,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.838,
+      "sent_wrong": 0.087,
+      "callsign": 0.925,
+      "wer": 0.285
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.838,
+      "sent_wrong": 0.087,
+      "callsign": 0.925,
+      "wer": 0.295
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.75,
+      "sent_wrong": 0.075,
+      "callsign": 0.863,
+      "wer": 0.491
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.713,
+      "sent_wrong": 0.063,
+      "callsign": 0.8,
+      "wer": 0.344
+     }
+    }
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.794,
+    "sent_wrong": 0.081,
+    "callsign": 0.887,
+    "wer": 0.338,
+    "exact_rules_S1_raw": 0.606,
+    "ms_p50": 1417,
+    "ms_p95": 2785,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.838,
+      "sent_wrong": 0.063,
+      "callsign": 0.912,
+      "wer": 0.301
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.75,
+      "sent_wrong": 0.1,
+      "callsign": 0.863,
+      "wer": 0.375
+     }
+    }
+   }
+  },
+  "srv-casc-phonon": {
+   "info": {},
+   "us": {
+    "n": 320,
+    "exact": 0.762,
+    "sent_wrong": 0.087,
+    "callsign": 0.881,
+    "wer": 0.268,
+    "exact_rules_S1_raw": 0.656,
+    "ms_p50": 421,
+    "ms_p95": 948,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.075,
+      "callsign": 0.912,
+      "wer": 0.223
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.087,
+      "callsign": 0.925,
+      "wer": 0.239
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.738,
+      "sent_wrong": 0.1,
+      "callsign": 0.887,
+      "wer": 0.306
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.688,
+      "sent_wrong": 0.087,
+      "callsign": 0.8,
+      "wer": 0.303
+     }
+    }
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.831,
+    "sent_wrong": 0.056,
+    "callsign": 0.894,
+    "wer": 0.282,
+    "exact_rules_S1_raw": 0.7,
+    "ms_p50": 542,
+    "ms_p95": 1346,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.85,
+      "sent_wrong": 0.05,
+      "callsign": 0.9,
+      "wer": 0.265
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.063,
+      "callsign": 0.887,
+      "wer": 0.3
+     }
+    }
+   }
+  },
+  "srv-casc-redux-sherpa": {
+   "info": {
+    "model": "srv-redux-sherpa first (2-best), Whisper base.en (2-best + prompt) only when its guesses are not understood",
+    "note": "cascade built from the two result files (same rule as the scorer's a>b)"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.772,
+    "sent_wrong": 0.1,
+    "callsign": 0.891,
+    "wer": 0.282,
+    "exact_rules_S1_raw": 0.65,
+    "ms_p50": 3235,
+    "ms_p95": 7218,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.825,
+      "sent_wrong": 0.087,
+      "callsign": 0.912,
+      "wer": 0.196
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.113,
+      "callsign": 0.925,
+      "wer": 0.239
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.7,
+      "sent_wrong": 0.1,
+      "callsign": 0.887,
+      "wer": 0.352
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.75,
+      "sent_wrong": 0.1,
+      "callsign": 0.838,
+      "wer": 0.342
+     }
+    }
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.825,
+    "sent_wrong": 0.075,
+    "callsign": 0.912,
+    "wer": 0.289,
+    "exact_rules_S1_raw": 0.669,
+    "ms_p50": 4126,
+    "ms_p95": 8078,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.863,
+      "sent_wrong": 0.05,
+      "callsign": 0.925,
+      "wer": 0.244
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.787,
+      "sent_wrong": 0.1,
+      "callsign": 0.9,
+      "wer": 0.334
+     }
+    }
+   }
+  },
+  "srv-casc-ultra-sherpa": {
+   "info": {
+    "model": "srv-ultra-sherpa first (2-best), Whisper base.en (2-best + prompt) only when its guesses are not understood",
+    "note": "cascade built from the two result files (same rule as the scorer's a>b)"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.781,
+    "sent_wrong": 0.075,
+    "callsign": 0.884,
+    "wer": 0.236,
+    "exact_rules_S1_raw": 0.7,
+    "ms_p50": 2510,
+    "ms_p95": 5395,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.825,
+      "sent_wrong": 0.075,
+      "callsign": 0.9,
+      "wer": 0.167
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.825,
+      "sent_wrong": 0.075,
+      "callsign": 0.925,
+      "wer": 0.211
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.738,
+      "sent_wrong": 0.075,
+      "callsign": 0.887,
+      "wer": 0.264
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.738,
+      "sent_wrong": 0.075,
+      "callsign": 0.825,
+      "wer": 0.304
+     }
+    }
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.856,
+    "sent_wrong": 0.037,
+    "callsign": 0.894,
+    "wer": 0.275,
+    "exact_rules_S1_raw": 0.706,
+    "ms_p50": 2285,
+    "ms_p95": 5436,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.863,
+      "sent_wrong": 0.037,
+      "callsign": 0.9,
+      "wer": 0.232
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.85,
+      "sent_wrong": 0.037,
+      "callsign": 0.887,
+      "wer": 0.318
+     }
+    }
+   }
+  },
+  "srv-casc1-phonon": {
+   "info": {},
+   "us": {
+    "n": 320,
+    "exact": 0.762,
+    "sent_wrong": 0.087,
+    "callsign": 0.881,
+    "wer": 0.268,
+    "exact_rules_S1_raw": 0.656,
+    "ms_p50": 203,
+    "ms_p95": 442,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.075,
+      "callsign": 0.912,
+      "wer": 0.223
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.087,
+      "callsign": 0.925,
+      "wer": 0.239
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.738,
+      "sent_wrong": 0.1,
+      "callsign": 0.887,
+      "wer": 0.306
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.688,
+      "sent_wrong": 0.087,
+      "callsign": 0.8,
+      "wer": 0.303
+     }
+    }
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.831,
+    "sent_wrong": 0.056,
+    "callsign": 0.894,
+    "wer": 0.282,
+    "exact_rules_S1_raw": 0.7,
+    "ms_p50": 268,
+    "ms_p95": 629,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.85,
+      "sent_wrong": 0.05,
+      "callsign": 0.9,
+      "wer": 0.265
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.063,
+      "callsign": 0.887,
+      "wer": 0.3
+     }
+    }
+   }
+  },
+  "srv-casc1-ultra-sherpa": {
+   "info": {},
+   "us": {
+    "n": 320,
+    "exact": 0.781,
+    "sent_wrong": 0.075,
+    "callsign": 0.884,
+    "wer": 0.236,
+    "exact_rules_S1_raw": 0.7,
+    "ms_p50": 1264,
+    "ms_p95": 2664,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.838,
+      "sent_wrong": 0.063,
+      "callsign": 0.9,
+      "wer": 0.167
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.825,
+      "sent_wrong": 0.075,
+      "callsign": 0.925,
+      "wer": 0.211
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.738,
+      "sent_wrong": 0.075,
+      "callsign": 0.887,
+      "wer": 0.264
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.725,
+      "sent_wrong": 0.087,
+      "callsign": 0.825,
+      "wer": 0.304
+     }
+    }
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.856,
+    "sent_wrong": 0.037,
+    "callsign": 0.894,
+    "wer": 0.275,
+    "exact_rules_S1_raw": 0.706,
+    "ms_p50": 1106,
+    "ms_p95": 2746,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.863,
+      "sent_wrong": 0.037,
+      "callsign": 0.9,
+      "wer": 0.232
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.85,
+      "sent_wrong": 0.037,
+      "callsign": 0.887,
+      "wer": 0.318
+     }
+    }
+   }
+  },
+  "srv-granite": {
+   "info": {
+    "model": "ibm-granite/granite-speech-5.0-470m-turboctc (multilingual release)",
+    "runtime": "transformers 5.22 + torch 2.15 CPU, fp32",
+    "download_mb": 903,
+    "licence": "Apache-2.0",
+    "commercial": "yes",
+    "biasing": "none built in; CTC logits allow hotword-boosted prefix beam search (not tried)",
+    "node": "onnxruntime-node with a community ONNX export + own log-mel/delta front end + CTC greedy (not tried)"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.738,
+    "sent_wrong": 0.066,
+    "callsign": 0.813,
+    "wer": 0.239,
+    "exact_rules_S1_raw": 0.688,
+    "ms_p50": 880,
+    "ms_p95": 2531,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.075,
+      "callsign": 0.887,
+      "wer": 0.2
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.8,
+      "sent_wrong": 0.075,
+      "callsign": 0.875,
+      "wer": 0.2
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.688,
+      "sent_wrong": 0.075,
+      "callsign": 0.787,
+      "wer": 0.252
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.65,
+      "sent_wrong": 0.037,
+      "callsign": 0.7,
+      "wer": 0.306
+     }
+    },
+    "peak_rss_mb": 5829,
+    "load_s": 9.2
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.787,
+    "sent_wrong": 0.031,
+    "callsign": 0.825,
+    "wer": 0.25,
+    "exact_rules_S1_raw": 0.719,
+    "ms_p50": 808,
+    "ms_p95": 1456,
+    "audio_s_mean": 5.66,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.825,
+      "sent_wrong": 0.025,
+      "callsign": 0.863,
+      "wer": 0.239
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.75,
+      "sent_wrong": 0.037,
+      "callsign": 0.787,
+      "wer": 0.26
+     }
+    },
+    "peak_rss_mb": 4554,
+    "load_s": 4.8
+   }
+  },
+  "srv-granite>srv-tjs-whisper-base.en": {
+   "info": {},
+   "us": {
+    "n": 320,
+    "exact": 0.8,
+    "sent_wrong": 0.081,
+    "callsign": 0.884,
+    "wer": 0.239,
+    "exact_rules_S1_raw": 0.688
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.844,
+    "sent_wrong": 0.05,
+    "callsign": 0.9,
+    "wer": 0.25,
+    "exact_rules_S1_raw": 0.719
+   }
+  },
+  "srv-hima": {
+   "info": {
+    "model": "Prahaladha/hima-asr-ONNX int8 (Qwen3-ASR-1.7B-initialised encoder + Gemma-3-270M writer, 11 Indian languages + English)",
+    "runtime": "hima_onnx.py (onnxruntime, numpy, tokenizers)",
+    "download_mb": 600,
+    "licence": "Apache-2.0 + Gemma Terms of Use (writer from Gemma 3 270M)",
+    "commercial": "yes, under the Gemma terms and prohibited-use policy",
+    "biasing": "none documented (LLM writer; a text prefix is untested and not what it was trained on)",
+    "node": "onnxruntime-node possible (2 ONNX graphs + numpy log-mel + tokenizer): a port of ~200 lines"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.669,
+    "sent_wrong": 0.056,
+    "callsign": 0.781,
+    "wer": 0.36,
+    "exact_rules_S1_raw": 0.588,
+    "ms_p50": 694,
+    "ms_p95": 1463,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.7,
+      "sent_wrong": 0.05,
+      "callsign": 0.8,
+      "wer": 0.383
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.775,
+      "sent_wrong": 0.037,
+      "callsign": 0.875,
+      "wer": 0.311
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.575,
+      "sent_wrong": 0.075,
+      "callsign": 0.725,
+      "wer": 0.403
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.625,
+      "sent_wrong": 0.063,
+      "callsign": 0.725,
+      "wer": 0.345
+     }
+    },
+    "peak_rss_mb": 1306,
+    "load_s": 4.2
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.594,
+    "sent_wrong": 0.063,
+    "callsign": 0.781,
+    "wer": 0.39,
+    "exact_rules_S1_raw": 0.519,
+    "ms_p50": 905,
+    "ms_p95": 1691,
+    "audio_s_mean": 5.66,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.6,
+      "sent_wrong": 0.075,
+      "callsign": 0.825,
+      "wer": 0.381
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.588,
+      "sent_wrong": 0.05,
+      "callsign": 0.738,
+      "wer": 0.398
+     }
+    },
+    "peak_rss_mb": 1316,
+    "load_s": 8.8
+   }
+  },
+  "srv-p110-sherpa": {
+   "info": {
+    "model": "nvidia/parakeet-tdt_ctc-110m (TDT head), sherpa-onnx int8 build",
+    "runtime": "sherpa-onnx 2.0.1 (onnxruntime)",
+    "download_mb": 108,
+    "licence": "weights CC-BY-4.0; sherpa-onnx Apache-2.0",
+    "commercial": "yes (attribution)",
+    "biasing": "hotwords: per-stream list, modified beam search (4 paths) with a context graph, score 1.5/token",
+    "node": "sherpa-onnx-node (prebuilt addon, createStream(hotwords))"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.694,
+    "sent_wrong": 0.053,
+    "callsign": 0.781,
+    "wer": 0.354,
+    "exact_rules_S1_raw": 0.631,
+    "prompt": {
+     "exact": 0.691,
+     "sent_wrong": 0.05,
+     "callsign": 0.775,
+     "wer": 0.354
+    },
+    "plain": {
+     "exact": 0.656,
+     "sent_wrong": 0.059,
+     "callsign": 0.756,
+     "wer": 0.392
+    },
+    "ms_p50": 509,
+    "ms_p95": 1002,
+    "ms_2best_p50": 989,
+    "ms_2best_p95": 1954,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.063,
+      "callsign": 0.887,
+      "wer": 0.285
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.775,
+      "sent_wrong": 0.063,
+      "callsign": 0.838,
+      "wer": 0.295
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.6,
+      "sent_wrong": 0.05,
+      "callsign": 0.713,
+      "wer": 0.491
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.588,
+      "sent_wrong": 0.037,
+      "callsign": 0.688,
+      "wer": 0.344
+     }
+    },
+    "peak_rss_mb": 359,
+    "load_s": 1.7
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.688,
+    "sent_wrong": 0.056,
+    "callsign": 0.794,
+    "wer": 0.338,
+    "exact_rules_S1_raw": 0.606,
+    "prompt": {
+     "exact": 0.662,
+     "sent_wrong": 0.056,
+     "callsign": 0.775,
+     "wer": 0.338
+    },
+    "plain": {
+     "exact": 0.656,
+     "sent_wrong": 0.056,
+     "callsign": 0.744,
+     "wer": 0.364
+    },
+    "ms_p50": 725,
+    "ms_p95": 1281,
+    "ms_2best_p50": 1417,
+    "ms_2best_p95": 2785,
+    "audio_s_mean": 5.66,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.75,
+      "sent_wrong": 0.037,
+      "callsign": 0.8,
+      "wer": 0.301
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.625,
+      "sent_wrong": 0.075,
+      "callsign": 0.787,
+      "wer": 0.375
+     }
+    },
+    "peak_rss_mb": 429,
+    "load_s": 4.0
+   }
+  },
+  "srv-phonon": {
+   "info": {
+    "model": "FermionResearch/Phonon-2.5-English (5-value Parakeet TDT 0.6B v3)",
+    "runtime": "fermion-research 0.2.15 CPU engine (C, avx512-vnni)",
+    "download_mb": 158,
+    "licence": "weights CC-BY-4.0; fermion-research (CLI + native CPU engine) Apache-2.0",
+    "commercial": "yes (attribution)",
+    "biasing": "hotwords: up to 25 words, +lambda per matching word piece in the greedy TDT decoder (used: callsign telephony words, lambda 2)",
+    "node": "neither: Python package + native .so; run as a sidecar (`fermion serve` gives an OpenAI-style /v1/audio/transcriptions) behind OPENATC_STT_URL"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.728,
+    "sent_wrong": 0.075,
+    "callsign": 0.856,
+    "wer": 0.268,
+    "exact_rules_S1_raw": 0.656,
+    "prompt": {
+     "exact": 0.716,
+     "sent_wrong": 0.075,
+     "callsign": 0.847,
+     "wer": 0.268
+    },
+    "plain": {
+     "exact": 0.706,
+     "sent_wrong": 0.069,
+     "callsign": 0.828,
+     "wer": 0.248
+    },
+    "ms_p50": 203,
+    "ms_p95": 442,
+    "ms_2best_p50": 421,
+    "ms_2best_p95": 948,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.787,
+      "sent_wrong": 0.063,
+      "callsign": 0.912,
+      "wer": 0.223
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.787,
+      "sent_wrong": 0.075,
+      "callsign": 0.912,
+      "wer": 0.239
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.713,
+      "sent_wrong": 0.1,
+      "callsign": 0.85,
+      "wer": 0.306
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.625,
+      "sent_wrong": 0.063,
+      "callsign": 0.75,
+      "wer": 0.303
+     }
+    },
+    "peak_rss_mb": 935,
+    "load_s": 2.2
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.769,
+    "sent_wrong": 0.025,
+    "callsign": 0.831,
+    "wer": 0.282,
+    "exact_rules_S1_raw": 0.7,
+    "prompt": {
+     "exact": 0.769,
+     "sent_wrong": 0.025,
+     "callsign": 0.831,
+     "wer": 0.282
+    },
+    "plain": {
+     "exact": 0.769,
+     "sent_wrong": 0.013,
+     "callsign": 0.831,
+     "wer": 0.25
+    },
+    "ms_p50": 268,
+    "ms_p95": 629,
+    "ms_2best_p50": 542,
+    "ms_2best_p95": 1346,
+    "audio_s_mean": 5.66,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.787,
+      "sent_wrong": 0.025,
+      "callsign": 0.838,
+      "wer": 0.265
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.75,
+      "sent_wrong": 0.025,
+      "callsign": 0.825,
+      "wer": 0.3
+     }
+    },
+    "peak_rss_mb": 940,
+    "load_s": 1.7
+   }
+  },
+  "srv-phonon-lam4": {
+   "info": {
+    "model": "FermionResearch/Phonon-2.5-English (5-value Parakeet TDT 0.6B v3)",
+    "runtime": "fermion-research 0.2.15 CPU engine (C, avx512-vnni)",
+    "download_mb": 158,
+    "licence": "weights CC-BY-4.0; fermion-research (CLI + native CPU engine) Apache-2.0",
+    "commercial": "yes (attribution)",
+    "biasing": "hotwords: up to 25 words, +lambda per matching word piece in the greedy TDT decoder (used: callsign telephony words, lambda 2)",
+    "node": "neither: Python package + native .so; run as a sidecar (`fermion serve` gives an OpenAI-style /v1/audio/transcriptions) behind OPENATC_STT_URL",
+    "note": "hotword lambda 4 (US set only)"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.734,
+    "sent_wrong": 0.075,
+    "callsign": 0.859,
+    "wer": 0.392,
+    "exact_rules_S1_raw": 0.637,
+    "prompt": {
+     "exact": 0.709,
+     "sent_wrong": 0.059,
+     "callsign": 0.834,
+     "wer": 0.392
+    },
+    "plain": {
+     "exact": 0.706,
+     "sent_wrong": 0.069,
+     "callsign": 0.828,
+     "wer": 0.248
+    },
+    "ms_p50": 625,
+    "ms_p95": 1165,
+    "ms_2best_p50": 1228,
+    "ms_2best_p95": 2325,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.775,
+      "sent_wrong": 0.075,
+      "callsign": 0.912,
+      "wer": 0.355
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.787,
+      "sent_wrong": 0.075,
+      "callsign": 0.912,
+      "wer": 0.357
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.738,
+      "sent_wrong": 0.1,
+      "callsign": 0.887,
+      "wer": 0.409
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.637,
+      "sent_wrong": 0.05,
+      "callsign": 0.725,
+      "wer": 0.447
+     }
+    },
+    "peak_rss_mb": 934,
+    "load_s": 7.3
+   }
+  },
+  "srv-phonon-lam8": {
+   "info": {
+    "model": "FermionResearch/Phonon-2.5-English (5-value Parakeet TDT 0.6B v3)",
+    "runtime": "fermion-research 0.2.15 CPU engine (C, avx512-vnni)",
+    "download_mb": 158,
+    "licence": "weights CC-BY-4.0; fermion-research (CLI + native CPU engine) Apache-2.0",
+    "commercial": "yes (attribution)",
+    "biasing": "hotwords: up to 25 words, +lambda per matching word piece in the greedy TDT decoder (used: callsign telephony words, lambda 2)",
+    "node": "neither: Python package + native .so; run as a sidecar (`fermion serve` gives an OpenAI-style /v1/audio/transcriptions) behind OPENATC_STT_URL",
+    "note": "hotword lambda 8: the biased decode degenerates (US set only)"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.744,
+    "sent_wrong": 0.072,
+    "callsign": 0.872,
+    "wer": 0.939,
+    "exact_rules_S1_raw": 0.434,
+    "prompt": {
+     "exact": 0.475,
+     "sent_wrong": 0.034,
+     "callsign": 0.694,
+     "wer": 0.939
+    },
+    "plain": {
+     "exact": 0.706,
+     "sent_wrong": 0.069,
+     "callsign": 0.828,
+     "wer": 0.248
+    },
+    "ms_p50": 778,
+    "ms_p95": 1424,
+    "ms_2best_p50": 1565,
+    "ms_2best_p95": 2905,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.8,
+      "sent_wrong": 0.075,
+      "callsign": 0.912,
+      "wer": 0.83
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.787,
+      "sent_wrong": 0.075,
+      "callsign": 0.925,
+      "wer": 0.881
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.75,
+      "sent_wrong": 0.075,
+      "callsign": 0.912,
+      "wer": 1.023
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.637,
+      "sent_wrong": 0.063,
+      "callsign": 0.738,
+      "wer": 1.023
+     }
+    },
+    "peak_rss_mb": 935,
+    "load_s": 4.1
+   }
+  },
+  "srv-phonon2": {
+   "info": {
+    "model": "FermionResearch/Phonon-2 (25 languages, 5-value Parakeet TDT 0.6B v3)",
+    "runtime": "fermion-research 0.2.15 CPU engine (C, avx512-vnni)",
+    "download_mb": 158,
+    "licence": "weights CC-BY-4.0; fermion-research (CLI + native CPU engine) Apache-2.0",
+    "commercial": "yes (attribution)",
+    "biasing": "hotwords: up to 25 words, +lambda per matching word piece in the greedy TDT decoder (used: callsign telephony words, lambda 2)",
+    "node": "neither: Python package + native .so; run as a sidecar (`fermion serve` gives an OpenAI-style /v1/audio/transcriptions) behind OPENATC_STT_URL",
+    "note": "CPU engine output joins digits to words (\"United69 Descent to6000 .\"); srv-phonon2fix re-spaces it"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.672,
+    "sent_wrong": 0.028,
+    "callsign": 0.756,
+    "wer": 0.439,
+    "exact_rules_S1_raw": 0.553,
+    "prompt": {
+     "exact": 0.634,
+     "sent_wrong": 0.025,
+     "callsign": 0.734,
+     "wer": 0.439
+    },
+    "plain": {
+     "exact": 0.65,
+     "sent_wrong": 0.022,
+     "callsign": 0.731,
+     "wer": 0.427
+    },
+    "ms_p50": 582,
+    "ms_p95": 1246,
+    "ms_2best_p50": 1152,
+    "ms_2best_p95": 2438,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.787,
+      "sent_wrong": 0.037,
+      "callsign": 0.85,
+      "wer": 0.319
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.762,
+      "sent_wrong": 0.037,
+      "callsign": 0.85,
+      "wer": 0.462
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.675,
+      "sent_wrong": 0.037,
+      "callsign": 0.825,
+      "wer": 0.493
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.463,
+      "sent_wrong": 0,
+      "callsign": 0.5,
+      "wer": 0.481
+     }
+    },
+    "peak_rss_mb": 1094,
+    "load_s": 13.9
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.713,
+    "sent_wrong": 0.019,
+    "callsign": 0.769,
+    "wer": 0.457,
+    "exact_rules_S1_raw": 0.556,
+    "prompt": {
+     "exact": 0.65,
+     "sent_wrong": 0.019,
+     "callsign": 0.738,
+     "wer": 0.457
+    },
+    "plain": {
+     "exact": 0.694,
+     "sent_wrong": 0.019,
+     "callsign": 0.75,
+     "wer": 0.458
+    },
+    "ms_p50": 264,
+    "ms_p95": 616,
+    "ms_2best_p50": 523,
+    "ms_2best_p95": 1068,
+    "audio_s_mean": 5.66,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.713,
+      "sent_wrong": 0,
+      "callsign": 0.787,
+      "wer": 0.504
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.713,
+      "sent_wrong": 0.037,
+      "callsign": 0.75,
+      "wer": 0.409
+     }
+    },
+    "peak_rss_mb": 940,
+    "load_s": 2.6
+   }
+  },
+  "srv-phonon2fix": {
+   "info": {
+    "model": "FermionResearch/Phonon-2 (25 languages, 5-value Parakeet TDT 0.6B v3)",
+    "runtime": "fermion-research 0.2.15 CPU engine (C, avx512-vnni)",
+    "download_mb": 158,
+    "licence": "weights CC-BY-4.0; fermion-research (CLI + native CPU engine) Apache-2.0",
+    "commercial": "yes (attribution)",
+    "biasing": "hotwords: up to 25 words, +lambda per matching word piece in the greedy TDT decoder (used: callsign telephony words, lambda 2)",
+    "node": "neither: Python package + native .so; run as a sidecar (`fermion serve` gives an OpenAI-style /v1/audio/transcriptions) behind OPENATC_STT_URL",
+    "note": "srv-phonon2 with letters/digits re-spaced after the fact (not the engine output)"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.706,
+    "sent_wrong": 0.047,
+    "callsign": 0.787,
+    "wer": 0.268,
+    "exact_rules_S1_raw": 0.613,
+    "prompt": {
+     "exact": 0.675,
+     "sent_wrong": 0.037,
+     "callsign": 0.769,
+     "wer": 0.268
+    },
+    "plain": {
+     "exact": 0.691,
+     "sent_wrong": 0.041,
+     "callsign": 0.766,
+     "wer": 0.236
+    },
+    "ms_p50": 582,
+    "ms_p95": 1246,
+    "ms_2best_p50": 1152,
+    "ms_2best_p95": 2438,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.825,
+      "sent_wrong": 0.05,
+      "callsign": 0.9,
+      "wer": 0.172
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.8,
+      "sent_wrong": 0.063,
+      "callsign": 0.875,
+      "wer": 0.25
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.738,
+      "sent_wrong": 0.063,
+      "callsign": 0.875,
+      "wer": 0.277
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.463,
+      "sent_wrong": 0.013,
+      "callsign": 0.5,
+      "wer": 0.372
+     }
+    }
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.756,
+    "sent_wrong": 0.025,
+    "callsign": 0.819,
+    "wer": 0.236,
+    "exact_rules_S1_raw": 0.662,
+    "prompt": {
+     "exact": 0.744,
+     "sent_wrong": 0.025,
+     "callsign": 0.813,
+     "wer": 0.236
+    },
+    "plain": {
+     "exact": 0.75,
+     "sent_wrong": 0.025,
+     "callsign": 0.806,
+     "wer": 0.213
+    },
+    "ms_p50": 264,
+    "ms_p95": 616,
+    "ms_2best_p50": 523,
+    "ms_2best_p95": 1068,
+    "audio_s_mean": 5.66,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.762,
+      "sent_wrong": 0.013,
+      "callsign": 0.838,
+      "wer": 0.232
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.75,
+      "sent_wrong": 0.037,
+      "callsign": 0.8,
+      "wer": 0.241
+     }
+    }
+   }
+  },
+  "srv-phonon>srv-tjs-whisper-base.en": {
+   "info": {},
+   "us": {
+    "n": 320,
+    "exact": 0.762,
+    "sent_wrong": 0.087,
+    "callsign": 0.881,
+    "wer": 0.268,
+    "exact_rules_S1_raw": 0.656
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.831,
+    "sent_wrong": 0.056,
+    "callsign": 0.894,
+    "wer": 0.282,
+    "exact_rules_S1_raw": 0.7
+   }
+  },
+  "srv-redux-photon": {
+   "info": {
+    "model": "moondream/parakeet-redux, ternary weights",
+    "runtime": "moondream 2.6.1 / Photon (kestrel 0.9.1, kestrel-kernels 0.7.4)",
+    "download_mb": 178,
+    "licence": "weights CC-BY-4.0; Photon kernels PROPRIETARY (Kestrel Kernels licence: use needs a separate agreement with M87 Labs); sends usage telemetry to api.moondream.ai",
+    "commercial": "no, not without an agreement with M87 Labs (the open weights run under sherpa-onnx instead: srv-redux-sherpa)",
+    "biasing": "none exposed",
+    "node": "neither (Python + proprietary native kernels)"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.706,
+    "sent_wrong": 0.072,
+    "callsign": 0.822,
+    "wer": 0.293,
+    "exact_rules_S1_raw": 0.622,
+    "ms_p50": 563,
+    "ms_p95": 1126,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.75,
+      "sent_wrong": 0.075,
+      "callsign": 0.85,
+      "wer": 0.255
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.775,
+      "sent_wrong": 0.063,
+      "callsign": 0.875,
+      "wer": 0.232
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.662,
+      "sent_wrong": 0.075,
+      "callsign": 0.8,
+      "wer": 0.322
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.637,
+      "sent_wrong": 0.075,
+      "callsign": 0.762,
+      "wer": 0.36
+     }
+    },
+    "peak_rss_mb": 1344,
+    "load_s": 19.0
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.725,
+    "sent_wrong": 0.044,
+    "callsign": 0.8,
+    "wer": 0.298,
+    "exact_rules_S1_raw": 0.644,
+    "ms_p50": 667,
+    "ms_p95": 1553,
+    "audio_s_mean": 5.66,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.762,
+      "sent_wrong": 0.037,
+      "callsign": 0.838,
+      "wer": 0.285
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.688,
+      "sent_wrong": 0.05,
+      "callsign": 0.762,
+      "wer": 0.311
+     }
+    },
+    "peak_rss_mb": 1331,
+    "load_s": 8.7
+   }
+  },
+  "srv-redux-sherpa": {
+   "info": {
+    "model": "moondream/parakeet-redux (ternary Parakeet TDT 0.6B v3), sherpa-onnx int8 build",
+    "runtime": "sherpa-onnx 2.0.1",
+    "download_mb": 327,
+    "licence": "weights CC-BY-4.0; sherpa-onnx Apache-2.0",
+    "commercial": "yes (attribution)",
+    "biasing": "hotwords (as p110-sherpa)",
+    "node": "sherpa-onnx-node"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.734,
+    "sent_wrong": 0.069,
+    "callsign": 0.853,
+    "wer": 0.282,
+    "exact_rules_S1_raw": 0.65,
+    "prompt": {
+     "exact": 0.734,
+     "sent_wrong": 0.063,
+     "callsign": 0.85,
+     "wer": 0.282
+    },
+    "plain": {
+     "exact": 0.722,
+     "sent_wrong": 0.072,
+     "callsign": 0.841,
+     "wer": 0.286
+    },
+    "ms_p50": 1678,
+    "ms_p95": 3465,
+    "ms_2best_p50": 3235,
+    "ms_2best_p95": 7218,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.8,
+      "sent_wrong": 0.063,
+      "callsign": 0.887,
+      "wer": 0.196
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.762,
+      "sent_wrong": 0.075,
+      "callsign": 0.875,
+      "wer": 0.239
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.65,
+      "sent_wrong": 0.087,
+      "callsign": 0.85,
+      "wer": 0.352
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.725,
+      "sent_wrong": 0.05,
+      "callsign": 0.8,
+      "wer": 0.342
+     }
+    },
+    "peak_rss_mb": 1056,
+    "load_s": 4.3
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.756,
+    "sent_wrong": 0.05,
+    "callsign": 0.85,
+    "wer": 0.289,
+    "exact_rules_S1_raw": 0.669,
+    "prompt": {
+     "exact": 0.744,
+     "sent_wrong": 0.05,
+     "callsign": 0.838,
+     "wer": 0.289
+    },
+    "plain": {
+     "exact": 0.744,
+     "sent_wrong": 0.044,
+     "callsign": 0.844,
+     "wer": 0.285
+    },
+    "ms_p50": 2099,
+    "ms_p95": 4248,
+    "ms_2best_p50": 4126,
+    "ms_2best_p95": 8078,
+    "audio_s_mean": 5.66,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.787,
+      "sent_wrong": 0.037,
+      "callsign": 0.85,
+      "wer": 0.244
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.725,
+      "sent_wrong": 0.063,
+      "callsign": 0.85,
+      "wer": 0.334
+     }
+    },
+    "peak_rss_mb": 1206,
+    "load_s": 10.9
+   }
+  },
+  "srv-tjs-whisper-base.en": {
+   "info": {
+    "model": "Whisper base.en (onnx-community), fp32 encoder + q8 decoder",
+    "runtime": "transformers.js on onnxruntime-node (shipped)",
+    "download_mb": 136,
+    "licence": "MIT",
+    "commercial": "yes",
+    "biasing": "prompt (callsigns on frequency), 2-best with and without",
+    "node": "in-process today (src/app/api/voice/stt/engine.ts)"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.769,
+    "sent_wrong": 0.063,
+    "callsign": 0.863,
+    "wer": 0.263,
+    "exact_rules_S1_raw": 0.697,
+    "prompt": {
+     "exact": 0.731,
+     "sent_wrong": 0.059,
+     "callsign": 0.822,
+     "wer": 0.263
+    },
+    "plain": {
+     "exact": 0.703,
+     "sent_wrong": 0.041,
+     "callsign": 0.797,
+     "wer": 0.376
+    },
+    "ms_p50": 1225,
+    "ms_p95": 2052,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.063,
+      "callsign": 0.912,
+      "wer": 0.162
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.838,
+      "sent_wrong": 0.063,
+      "callsign": 0.912,
+      "wer": 0.169
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.75,
+      "sent_wrong": 0.05,
+      "callsign": 0.863,
+      "wer": 0.252
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.675,
+      "sent_wrong": 0.075,
+      "callsign": 0.762,
+      "wer": 0.47
+     }
+    }
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.787,
+    "sent_wrong": 0.075,
+    "callsign": 0.9,
+    "wer": 0.209,
+    "exact_rules_S1_raw": 0.706,
+    "prompt": {
+     "exact": 0.762,
+     "sent_wrong": 0.081,
+     "callsign": 0.869,
+     "wer": 0.209
+    },
+    "plain": {
+     "exact": 0.769,
+     "sent_wrong": 0.056,
+     "callsign": 0.875,
+     "wer": 0.365
+    },
+    "ms_p50": 1250,
+    "ms_p95": 2240,
+    "audio_s_mean": 5.66,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.825,
+      "sent_wrong": 0.063,
+      "callsign": 0.912,
+      "wer": 0.198
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.75,
+      "sent_wrong": 0.087,
+      "callsign": 0.887,
+      "wer": 0.219
+     }
+    }
+   }
+  },
+  "srv-tjs-whisper-base.en+srv-granite": {
+   "info": {},
+   "us": {
+    "n": 320,
+    "exact": 0.803,
+    "sent_wrong": 0.078,
+    "callsign": 0.887,
+    "wer": 0.263,
+    "exact_rules_S1_raw": 0.697
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.831,
+    "sent_wrong": 0.069,
+    "callsign": 0.906,
+    "wer": 0.209,
+    "exact_rules_S1_raw": 0.706
+   }
+  },
+  "srv-tjs-whisper-base.en+srv-phonon": {
+   "info": {},
+   "us": {
+    "n": 320,
+    "exact": 0.769,
+    "sent_wrong": 0.081,
+    "callsign": 0.881,
+    "wer": 0.263,
+    "exact_rules_S1_raw": 0.697
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.831,
+    "sent_wrong": 0.056,
+    "callsign": 0.894,
+    "wer": 0.209,
+    "exact_rules_S1_raw": 0.706
+   }
+  },
+  "srv-tjs-whisper-base.en+srv-ultra-sherpa": {
+   "info": {},
+   "us": {
+    "n": 320,
+    "exact": 0.791,
+    "sent_wrong": 0.069,
+    "callsign": 0.887,
+    "wer": 0.263,
+    "exact_rules_S1_raw": 0.697
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.838,
+    "sent_wrong": 0.056,
+    "callsign": 0.894,
+    "wer": 0.209,
+    "exact_rules_S1_raw": 0.706
+   }
+  },
+  "srv-ultra-onnxasr": {
+   "info": {
+    "model": "ijar/parakeet-ultra-onnx-latin-int8",
+    "runtime": "onnx-asr 0.12 (onnxruntime 1.31)",
+    "download_mb": 728,
+    "licence": "CC-BY-4.0; onnx-asr MIT",
+    "commercial": "yes (attribution)",
+    "biasing": "none in onnx-asr (greedy TDT); the same weights under sherpa-onnx take hotwords",
+    "node": "onnxruntime-node + own mel + TDT loop, or the sherpa-onnx build"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.713,
+    "sent_wrong": 0.05,
+    "callsign": 0.794,
+    "wer": 0.261,
+    "exact_rules_S1_raw": 0.675,
+    "ms_p50": 443,
+    "ms_p95": 844,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.787,
+      "sent_wrong": 0.063,
+      "callsign": 0.875,
+      "wer": 0.188
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.05,
+      "callsign": 0.875,
+      "wer": 0.241
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.675,
+      "sent_wrong": 0.05,
+      "callsign": 0.8,
+      "wer": 0.311
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.575,
+      "sent_wrong": 0.037,
+      "callsign": 0.625,
+      "wer": 0.306
+     }
+    },
+    "peak_rss_mb": 1528,
+    "load_s": 3.0
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.781,
+    "sent_wrong": 0.013,
+    "callsign": 0.838,
+    "wer": 0.307,
+    "exact_rules_S1_raw": 0.713,
+    "ms_p50": 448,
+    "ms_p95": 842,
+    "audio_s_mean": 5.66,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.013,
+      "callsign": 0.863,
+      "wer": 0.268
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.75,
+      "sent_wrong": 0.013,
+      "callsign": 0.813,
+      "wer": 0.345
+     }
+    },
+    "peak_rss_mb": 1648,
+    "load_s": 2.8
+   }
+  },
+  "srv-ultra-sherpa": {
+   "info": {
+    "model": "moondream/parakeet-ultra (post-trained Parakeet TDT 0.6B v3), sherpa-onnx int8 build",
+    "runtime": "sherpa-onnx 2.0.1",
+    "download_mb": 487,
+    "licence": "weights CC-BY-4.0; sherpa-onnx Apache-2.0",
+    "commercial": "yes (attribution)",
+    "biasing": "hotwords (as p110-sherpa)",
+    "node": "sherpa-onnx-node"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.722,
+    "sent_wrong": 0.063,
+    "callsign": 0.828,
+    "wer": 0.236,
+    "exact_rules_S1_raw": 0.7,
+    "prompt": {
+     "exact": 0.722,
+     "sent_wrong": 0.059,
+     "callsign": 0.825,
+     "wer": 0.236
+    },
+    "plain": {
+     "exact": 0.709,
+     "sent_wrong": 0.059,
+     "callsign": 0.809,
+     "wer": 0.23
+    },
+    "ms_p50": 1264,
+    "ms_p95": 2664,
+    "ms_2best_p50": 2510,
+    "ms_2best_p95": 5395,
+    "audio_s_mean": 4.88,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.8,
+      "sent_wrong": 0.063,
+      "callsign": 0.9,
+      "wer": 0.167
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.787,
+      "sent_wrong": 0.05,
+      "callsign": 0.875,
+      "wer": 0.211
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.675,
+      "sent_wrong": 0.075,
+      "callsign": 0.813,
+      "wer": 0.264
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.625,
+      "sent_wrong": 0.063,
+      "callsign": 0.725,
+      "wer": 0.304
+     }
+    },
+    "peak_rss_mb": 1216,
+    "load_s": 5.0
+   },
+   "in": {
+    "n": 160,
+    "exact": 0.781,
+    "sent_wrong": 0.013,
+    "callsign": 0.831,
+    "wer": 0.275,
+    "exact_rules_S1_raw": 0.706,
+    "prompt": {
+     "exact": 0.756,
+     "sent_wrong": 0.013,
+     "callsign": 0.813,
+     "wer": 0.275
+    },
+    "plain": {
+     "exact": 0.756,
+     "sent_wrong": 0.013,
+     "callsign": 0.806,
+     "wer": 0.259
+    },
+    "ms_p50": 1106,
+    "ms_p95": 2746,
+    "ms_2best_p50": 2285,
+    "ms_2best_p95": 5436,
+    "audio_s_mean": 5.66,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.825,
+      "sent_wrong": 0.013,
+      "callsign": 0.85,
+      "wer": 0.232
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.738,
+      "sent_wrong": 0.013,
+      "callsign": 0.813,
+      "wer": 0.318
+     }
+    },
+    "peak_rss_mb": 1442,
+    "load_s": 4.7
+   }
+  },
+  "tjs-whisper-base.en": {
+   "info": {
+    "model": "Whisper base.en (onnx-community), fp32 encoder + q8 decoder",
+    "runtime": "transformers.js on onnxruntime-node (shipped)",
+    "download_mb": 136,
+    "licence": "MIT",
+    "commercial": "yes",
+    "biasing": "prompt (callsigns on frequency), 2-best with and without",
+    "node": "in-process today (src/app/api/voice/stt/engine.ts)",
+    "note": "round-2 run (2 threads, heavy load); srv-tjs-whisper-base.en is the 3-thread re-run"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.769,
+    "sent_wrong": 0.063,
+    "callsign": 0.863,
+    "wer": 0.263,
+    "exact_rules_S1_raw": 0.697,
+    "prompt": {
+     "exact": 0.731,
+     "sent_wrong": 0.059,
+     "callsign": 0.822,
+     "wer": 0.263
+    },
+    "plain": {
+     "exact": 0.703,
+     "sent_wrong": 0.041,
+     "callsign": 0.797,
+     "wer": 0.376
+    },
+    "ms_p50": 3355,
+    "ms_p95": 6903,
+    "audio_s_mean": 4.87,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.063,
+      "callsign": 0.912,
+      "wer": 0.162
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.838,
+      "sent_wrong": 0.063,
+      "callsign": 0.912,
+      "wer": 0.169
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.75,
+      "sent_wrong": 0.05,
+      "callsign": 0.863,
+      "wer": 0.252
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.675,
+      "sent_wrong": 0.075,
+      "callsign": 0.762,
+      "wer": 0.47
+     }
+    }
+   }
+  },
+  "webspeech-google": {
+   "info": {
+    "model": "Google Web Speech in Chrome (round 2)",
+    "download_mb": 0,
+    "licence": "Google service",
+    "commercial": "-",
+    "biasing": "none (phrases rejected)",
+    "node": "browser only"
+   },
+   "us": {
+    "n": 320,
+    "exact": 0.725,
+    "sent_wrong": 0.034,
+    "callsign": 0.794,
+    "wer": 0.303,
+    "exact_rules_S1_raw": 0.578,
+    "ms_p50": 78,
+    "ms_p95": 97,
+    "audio_s_mean": 0.0,
+    "by_cond": {
+     "clean": {
+      "n": 80,
+      "exact": 0.838,
+      "sent_wrong": 0.037,
+      "callsign": 0.9,
+      "wer": 0.213
+     },
+     "laptop": {
+      "n": 80,
+      "exact": 0.813,
+      "sent_wrong": 0.037,
+      "callsign": 0.875,
+      "wer": 0.247
+     },
+     "radio": {
+      "n": 80,
+      "exact": 0.575,
+      "sent_wrong": 0.05,
+      "callsign": 0.675,
+      "wer": 0.408
+     },
+     "late": {
+      "n": 80,
+      "exact": 0.675,
+      "sent_wrong": 0.013,
+      "callsign": 0.725,
+      "wer": 0.344
+     }
+    }
+   }
+  }
+ },
+ "latency_quiet": {
+  "canary180": {
+   "n": 40,
+   "p50": 296,
+   "p95": 46019,
+   "mean_audio_s": 4.98,
+   "peak_rss_mb": 749,
+   "load_s": 1.3
+  },
+  "granite": {
+   "n": 40,
+   "p50": 682,
+   "p95": 1183,
+   "mean_audio_s": 4.98,
+   "peak_rss_mb": 3374,
+   "load_s": 8.3
+  },
+  "hima": {
+   "n": 40,
+   "p50": 420,
+   "p95": 962,
+   "mean_audio_s": 4.98,
+   "peak_rss_mb": 1140,
+   "load_s": 3.6
+  },
+  "node-p110": {
+   "n": 40,
+   "p50": 151,
+   "p95": 295,
+   "mean_audio_s": 4.98,
+   "plain_p50": 148,
+   "plain_p95": 289,
+   "2best_p50": 301,
+   "2best_p95": 578,
+   "peak_rss_mb": 424,
+   "load_s": 1283
+  },
+  "node-ultra": {
+   "n": 40,
+   "p50": 429,
+   "p95": 937,
+   "mean_audio_s": 4.98,
+   "plain_p50": 442,
+   "plain_p95": 1166,
+   "2best_p50": 877,
+   "2best_p95": 2103,
+   "peak_rss_mb": 1050,
+   "load_s": 3049
+  },
+  "p110-greedy": {
+   "n": 40,
+   "p50": 154,
+   "p95": 287,
+   "mean_audio_s": 4.98,
+   "peak_rss_mb": 405,
+   "load_s": 1.8
+  },
+  "p110-sherpa": {
+   "n": 40,
+   "p50": 174,
+   "p95": 1215,
+   "mean_audio_s": 4.98,
+   "plain_p50": 163,
+   "plain_p95": 647,
+   "2best_p50": 319,
+   "2best_p95": 2096,
+   "peak_rss_mb": 342,
+   "load_s": 1.2
+  },
+  "phonon": {
+   "n": 40,
+   "p50": 149,
+   "p95": 273,
+   "mean_audio_s": 4.98,
+   "plain_p50": 157,
+   "plain_p95": 300,
+   "2best_p50": 304,
+   "2best_p95": 529,
+   "peak_rss_mb": 926,
+   "load_s": 2.2
+  },
+  "phonon2": {
+   "n": 40,
+   "p50": 165,
+   "p95": 318,
+   "mean_audio_s": 4.98,
+   "plain_p50": 164,
+   "plain_p95": 290,
+   "2best_p50": 307,
+   "2best_p95": 614,
+   "peak_rss_mb": 927,
+   "load_s": 1.7
+  },
+  "redux-sherpa": {
+   "n": 40,
+   "p50": 424,
+   "p95": 768,
+   "mean_audio_s": 4.98,
+   "plain_p50": 430,
+   "plain_p95": 836,
+   "2best_p50": 870,
+   "2best_p95": 1588,
+   "peak_rss_mb": 1042,
+   "load_s": 3.7
+  },
+  "tjs-whisper-base.en-alts": {
+   "n": 40,
+   "p50": 1268,
+   "p95": 2582,
+   "mean_audio_s": 4.98
+  },
+  "tjs-whisper-base.en-single": {
+   "n": 40,
+   "p50": 1008,
+   "p95": 1918,
+   "mean_audio_s": 4.98
+  },
+  "ultra-greedy": {
+   "n": 40,
+   "p50": 521,
+   "p95": 1069,
+   "mean_audio_s": 4.98,
+   "peak_rss_mb": 1170,
+   "load_s": 3.1
+  },
+  "ultra-sherpa": {
+   "n": 40,
+   "p50": 419,
+   "p95": 800,
+   "mean_audio_s": 4.98,
+   "plain_p50": 428,
+   "plain_p95": 761,
+   "2best_p50": 855,
+   "2best_p95": 1561,
+   "peak_rss_mb": 1412,
+   "load_s": 6.4
+  }
+ },
+ "latency_cascade_est": {
+  "phonon": {
+   "asks_whisper": 0.256,
+   "p50": 328,
+   "p95": 2099
+  },
+  "ultra-sherpa": {
+   "asks_whisper": 0.24,
+   "p50": 942,
+   "p95": 3018
+  },
+  "p110-sherpa": {
+   "asks_whisper": 0.313,
+   "p50": 484,
+   "p95": 2660
+  },
+  "granite": {
+   "asks_whisper": 0.246,
+   "p50": 870,
+   "p95": 2571
+  },
+  "node-ultra": {
+   "asks_whisper": 0.24,
+   "p50": 953,
+   "p95": 3332
+  },
+  "node-p110": {
+   "asks_whisper": 0.313,
+   "p50": 456,
+   "p95": 2178
+  }
+ },
+ "paired_vs_whisper": {
+  "us:srv-casc-phonon": {
+   "n": 320,
+   "diff_pts": -0.6,
+   "only_cand_right": 4,
+   "only_whisper_right": 6,
+   "mcnemar_exact_p": 0.7539
+  },
+  "us:srv-casc-granite": {
+   "n": 320,
+   "diff_pts": 3.1,
+   "only_cand_right": 16,
+   "only_whisper_right": 6,
+   "mcnemar_exact_p": 0.0525
+  },
+  "us:srv-casc-ultra-sherpa": {
+   "n": 320,
+   "diff_pts": 1.2,
+   "only_cand_right": 9,
+   "only_whisper_right": 5,
+   "mcnemar_exact_p": 0.424
+  },
+  "us:srv-casc-p110-sherpa": {
+   "n": 320,
+   "diff_pts": 1.6,
+   "only_cand_right": 18,
+   "only_whisper_right": 13,
+   "mcnemar_exact_p": 0.4731
+  },
+  "us:srv-phonon": {
+   "n": 320,
+   "diff_pts": -4.1,
+   "only_cand_right": 5,
+   "only_whisper_right": 18,
+   "mcnemar_exact_p": 0.0106
+  },
+  "us:srv-granite": {
+   "n": 320,
+   "diff_pts": -3.1,
+   "only_cand_right": 18,
+   "only_whisper_right": 28,
+   "mcnemar_exact_p": 0.1839
+  },
+  "in:srv-casc-phonon": {
+   "n": 160,
+   "diff_pts": 4.4,
+   "only_cand_right": 9,
+   "only_whisper_right": 2,
+   "mcnemar_exact_p": 0.0654
+  },
+  "in:srv-casc-granite": {
+   "n": 160,
+   "diff_pts": 5.6,
+   "only_cand_right": 12,
+   "only_whisper_right": 3,
+   "mcnemar_exact_p": 0.0352
+  },
+  "in:srv-casc-ultra-sherpa": {
+   "n": 160,
+   "diff_pts": 6.9,
+   "only_cand_right": 11,
+   "only_whisper_right": 0,
+   "mcnemar_exact_p": 0.001
+  },
+  "in:srv-casc-p110-sherpa": {
+   "n": 160,
+   "diff_pts": 0.6,
+   "only_cand_right": 4,
+   "only_whisper_right": 3,
+   "mcnemar_exact_p": 1.0
+  },
+  "in:srv-phonon": {
+   "n": 160,
+   "diff_pts": -1.9,
+   "only_cand_right": 9,
+   "only_whisper_right": 12,
+   "mcnemar_exact_p": 0.6636
+  },
+  "in:srv-granite": {
+   "n": 160,
+   "diff_pts": 0.0,
+   "only_cand_right": 13,
+   "only_whisper_right": 13,
+   "mcnemar_exact_p": 1.0
+  }
+ },
+ "owner_recordings": "none: ml/data/gold/live/ was empty at 07:50",
+ "recommendation": {
+  "keep": "Whisper base.en + callsign prompt (2-best) as the second stage; no single small CPU model beats it on its own",
+  "add_node": "Parakeet Ultra int8 via sherpa-onnx-node, callsign hotwords, first pass; Whisper only when not understood: 78.1% US/UK (76.9 today), 85.6% Indian proxy (78.8 today, McNemar p=0.001); ~0.42 s first pass (biased decode only), +1.2 GB RSS, +487 MB",
+  "add_node_small": "Parakeet TDT-CTC 110M int8 via sherpa-onnx-node: 78.4 / 79.4, p50 ~0.46 s, +0.4 GB RSS, +108 MB",
+  "add_sidecar_fastest": "Phonon-2.5-English via `fermion serve` (Python sidecar, needs a service): 76.2 / 83.1, p50 ~0.33 s, +0.93 GB RSS",
+  "validate": "on the owner's own recordings before shipping (none existed)"
+ }
+}
