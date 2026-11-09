@@ -115,7 +115,15 @@ const WORD_FIX: Record<string, string> = {
   heating: 'heading', hitting: 'heading', headed: 'heading', lineup: 'line up', holdshort: 'hold short',
   hole: 'hold', whole: 'hold', holed: 'hold', rodger: 'roger', standbye: 'standby', squak: 'squawk', localiser: 'localizer', 'stand-by': 'standby', niner: 'nine',
   write: 'right', rite: 'right', runaway: 'runway', 'run-way': 'runway', nots: 'knots', knot: 'knots', fl: 'flight level',
+  // the browser's recogniser (Chrome, Indian English) on real controller speech
+  wireless: 'ils', iris: 'ils', ranveer: 'runway', lakh: 'left', project: 'roger', approve: 'approved', decimals: 'decimal', notes: 'knots',
 };
+/** Multi-word mishearings and synonyms, on the normalised text: "hand off to tower" = contact tower. */
+const PHRASE_FIX: [RegExp, string][] = [
+  [/\b(?:hand ?offs?|hand of|hand over|handover)(?: to)?\b/g, 'contact'],
+  [/\bshut up\b/g, 'start up'],
+];
+const FACILITY = ['tower', 'ground', 'approach', 'departure', 'center', 'control', 'director', 'radar'];
 
 // ---------- the pass ----------
 const HALLUCINATION = /^(thank you\.?|thanks for watching!?|you|bye\.?|\.+)$/i;
@@ -149,7 +157,8 @@ export function normaliseTokens(raw: string): string[] {
 }
 
 const NUM_CONTEXT = new Set(['heading', 'runway', 'level', 'speed', 'squawk', 'altitude', 'frequency', 'decimal']);
-const DIGITS_FOR: Record<string, number> = { heading: 3, level: 3, speed: 3, squawk: 4 };
+// not speed: "reduce speed to 90" is the usual phrasing, a missing digit must not become 290
+const DIGITS_FOR: Record<string, number> = { heading: 3, level: 3, squawk: 4, runway: 2 };
 
 function fixNumbers(w: string[], notes: string[]): string[] {
   w = w.map((x, i) => {
@@ -186,6 +195,11 @@ function fixWords(w: string[], from: number, protect: Set<string>, notes: string
     const f = WORD_FIX[x];
     if (f && f !== x) { notes.push(`${x}->${f}`); return f.split(' '); }
     if (x.length < 3 || VOCAB_SET.has(x)) return [x];
+    // "contact cover" = contact tower: the one facility within two letters
+    if (w[i - 1] === 'contact' && x.length >= 4) {
+      const near = FACILITY.filter((f) => levenshtein(x, f) <= 2);
+      if (near.length === 1) { notes.push(`${x}->${near[0]}`); return [near[0]]; }
+    }
     // inflections of a command word: "holds" -> hold, "increased" -> increase, "climbed" -> climb
     for (const stem of [x.replace(/s$/, ''), x.replace(/d$/, ''), x.replace(/ed$/, ''), x.replace(/ing$/, '')]) {
       if (stem !== x && stem.length >= 3 && VOCAB_SET.has(stem)) { notes.push(`${x}->${stem}`); return [stem]; }
@@ -202,7 +216,11 @@ interface Cand { a: AsrAircraft; tel: string; telKey: string; digits: string }
 /** Repair a transcript against the aircraft on frequency. */
 export function repairTranscript(raw: string, aircraft: AsrAircraft[]): Repair {
   const notes: string[] = [];
-  let w = fixNumbers(normaliseTokens(raw), notes);
+  let toks = normaliseTokens(raw);
+  let joined = toks.join(' ');
+  for (const [re, to] of PHRASE_FIX) joined = joined.replace(re, (m) => { notes.push(`${m}->${to}`); return to; });
+  if (joined !== toks.join(' ')) toks = joined.split(' ').filter(Boolean);
+  let w = fixNumbers(toks, notes);
   const cands: Cand[] = aircraft.map((a) => {
     const parts = a.name.toLowerCase().split(/\s+/);
     const last = parts[parts.length - 1] ?? '';
@@ -254,7 +272,10 @@ export function repairTranscript(raw: string, aircraft: AsrAircraft[]): Repair {
     callsign = best.c.a.callsign;
     // a remnant before an exact, unique flight number ("Bieber 50", "number nine six") is as good as the number alone
     fuzzy = best.num < 0.9 || (best.L > 0 && best.name < 0.6) || (best.L === 0 && k > 0 && heardDigits.length < 2);
-    const from = best.L === 0 ? 0 : k - best.L, to = heardDigits ? e : k;
+    let from = best.L === 0 ? 0 : k - best.L;
+    const to = heardDigits ? e : k;
+    // words left before the matched part of the name are the rest of the misheard name ("jack blue" -> "jetblue")
+    if (best.L > 0 && from > 0 && from <= 2 && w.slice(0, from).every((x) => !VOCAB_SET.has(x) && !PHONETIC.has(x) && !isNumWord(x))) from = 0;
     // a number run longer than the flight number keeps its tail ("six two three one two left" -> name + "one two left")
     const rest = heardDigits && heardDigits.length > best.c.digits.length && heardDigits.startsWith(best.c.digits) ? spellDigits(heardDigits.slice(best.c.digits.length)).split(' ') : [];
     // the spoken name when the parser knows the airline's telephony, else the callsign itself ("hong kong express" -> HKE528)

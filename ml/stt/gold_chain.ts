@@ -1,8 +1,8 @@
 // Node side of ml/stt/score_gold.py, compiled to .tmp/gold by it (tsc, CommonJS).
 //
 //   chain <rows.json> <modelDir>   rows [{key, heard, ctx, line}] -> stdout [{key, l0, chain, model}]
-//     Runs the game's own code on every transcript: understand() = rules alone (L0), understandVoice() = the shipped
-//     chain (rules, else the int8 S1 model in the hand-written TS engine, callsign fusion, confidence gate), and the
+//     Runs the game's own code on every transcript: understand() = rules alone (L0), understandHeard() = the shipped
+//     chain (asr-repair cleanup, rules, else the int8 S1 model in the hand-written TS engine, callsign fusion, confidence gate), and the
 //     model alone. "same" compares the parsed AST with the gold line's AST (one ParseCtx for both, with the airport's
 //     runways / taxiways / fixes / stands when `icao` is given).
 //   rules <rows.json>              rules alone -> [{key, gold_ok, ok, same}] (prompt builder: drop ambiguous phrases)
@@ -10,9 +10,10 @@
 //     GOLD_KEY), then GETs the list: the dry run stores clips exactly the way the recording page does.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { understand, understandVoice } from '../../src/lib/voice/understand';
+import { understand } from '../../src/lib/voice/understand';
 import type { L1Like } from '../../src/lib/voice/understand';
 import { S1Model } from '../../src/lib/voice/s1';
+import { understandHeard } from '../../src/lib/voice/asr-nbest';
 import { parseCommand, tokenize, resolveCallsign } from '../../src/lib/sim/commands';
 import type { ParseCtx } from '../../src/lib/sim/commands';
 import * as route from '../../src/app/api/voice/gold/route';
@@ -67,13 +68,13 @@ async function chain(rowsFile: string, modelDir: string) {
     const rulesCs = u.transcript ? resolveCallsign(tokenize(u.transcript), 0, pctx).callsign : null;
     const l0Cs = u.ok ? csOf(u.line) : rulesCs;
     const l0 = { ok: u.ok, line: u.line, same: neg ? !u.ok && !rulesCs : u.ok && sameAst(u.line), cs: l0Cs, cs_ok: !!goldCs && l0Cs === goldCs };
-    // the shipped chain
-    const v = await understandVoice(heard, pctx, 0, l1, { text: r.ctx, callsigns });
+    // the shipped chain, as the game runs it: the recogniser's text cleaned up (asr-repair), rules, then the model
+    const v = await understandHeard([heard], pctx, 0, l1, { text: r.ctx, callsigns });
     const decision = v.ok ? 'sent' : v.sayAgain ? 'sayagain' : v.source === 'L1' ? 'check' : 'fail';
     const vCs = v.source === 'none' ? rulesCs : csOf(v.line);
     const same = neg ? !v.ok && (v.sayAgain || !vCs) : decision !== 'sayagain' && decision !== 'fail' && sameAst(v.line);
     const ch = { ok: v.ok, line: decision === 'sayagain' ? 'SAY AGAIN' : v.ok || v.source === 'L1' ? v.line : '', source: v.source, decision, confidence: v.confidence == null ? null : Math.round(v.confidence * 1000) / 1000,
-      same, cs: vCs, cs_ok: !!goldCs && vCs === goldCs, error: v.error, verify: (v as { verify?: { p: number; gate: string } }).verify ?? null };
+      same, cs: vCs, cs_ok: !!goldCs && vCs === goldCs, error: v.error, heard: v.heard, notes: v.notes, verify: (v as { verify?: { p: number; gate: string } }).verify ?? null };
     // the model alone, on every transcript (also where the rules succeed)
     const mo = u.transcript ? await l1.complete(u.transcript, callsigns, r.ctx) : { line: '', confidence: 0, ms: 0, sayAgain: true };
     const model = { line: mo.line, same: neg ? mo.sayAgain : !mo.sayAgain && sameAst(mo.line), confidence: Math.round(mo.confidence * 1000) / 1000, ms: Math.round(mo.ms) };

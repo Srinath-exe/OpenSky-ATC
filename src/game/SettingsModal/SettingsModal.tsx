@@ -21,8 +21,8 @@ import type { VoiceEngine } from '@/lib/voice/recognizer'
 /** Speech-to-text engines; ml/stt/RESULTS2.md has the measurements behind the default. */
 const voiceEngineOptions = (): MenuOption<VoiceEngine>[] => [
   ...(nativeSpeechAvailable() ? [{ value: 'native' as const, label: 'Phone', description: 'Phone: the OpenATC app transcribes on this phone, audio never leaves it' }] : []),
-  { value: 'browser', label: 'Browser (Google)', description: 'Browser: the built-in recogniser (Chrome sends audio to Google). When it is not understood, this game\'s server listens again (audio not stored)' },
-  { value: 'server', label: 'Server (Parakeet + Whisper, tuned for ATC)', description: 'Server: your transmission goes to this game\'s server (not to Google), is transcribed with the callsigns on frequency, and is not stored. Slower: 0.5-3 s' },
+  { value: 'server', label: 'Server (Parakeet + Whisper, tuned for ATC)', description: 'Server: your transmission goes to this game\'s server (not to Google) while you talk, is transcribed with the callsigns on frequency, and is not stored. The most accurate; text ready ~0.3 s after you let go' },
+  { value: 'browser', label: 'Browser (Google)', description: 'Browser: the built-in recogniser (Chrome sends audio to Google). Often mishears aviation words; when it is not understood, this game\'s server listens again (audio not stored)' },
   { value: 'local', label: 'On-device (Moonshine)', description: 'On-device: a 63 MB model downloads once, audio never leaves this device' },
 ]
 /** Pilot voices (sound.ts pilotVoicePref); ml/tts/RESULTS.md has the measurements. */

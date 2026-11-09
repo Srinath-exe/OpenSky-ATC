@@ -58,10 +58,11 @@ export function localSpeechAvailable(): boolean {
 /** 'native': the OpenATC phone app's on-device recogniser over the JS bridge (only offered inside the app). */
 export type VoiceEngine = 'browser' | 'local' | 'server' | 'native';
 
-/** Chosen by measurement (ml/stt/RESULTS2.md): Web Speech with the server engine as a second opinion was the most
- *  accurate (78 % exact vs 72 % for the server alone, 53 % before) and the fastest (median 0.1 s after speech).
- *  Browsers without Web Speech (Firefox) fall back to the server engine. */
-export const DEFAULT_VOICE_ENGINE: VoiceEngine = 'browser';
+/** Chosen on the owner's real recordings (ml/data/gold, 2026-11-09): through the game's cleanup and rules, Parakeet on
+ *  the server read 15 of 15 commands right (14 by the rules alone), the browser's recogniser (Google) 9 of 15. On
+ *  synthetic speech Web Speech + server had led (ml/stt/RESULTS2.md), real voices reversed it. The server streams while
+ *  the controller talks, so the text is ready ~0.2-0.4 s after release. */
+export const DEFAULT_VOICE_ENGINE: VoiceEngine = 'server';
 
 /** Status of the on-device model for the UI: download progress, then ready (with the backend it runs on). */
 export interface LocalStatus { state: 'idle' | 'loading' | 'ready' | 'error'; progress: number; device: string; lastMs: number | null; message: string }

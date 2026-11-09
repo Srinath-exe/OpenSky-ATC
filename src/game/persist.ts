@@ -12,7 +12,7 @@ export const LS = {
   cmdHistory: 'skycontrol_cmd_history',
   /** Speech recognition engine for push-to-talk: a VoiceEngine (src/lib/voice/recognizer.ts), e.g. 'browser' (Web Speech
    *  API), 'local' (in-browser model), 'native' (the phone app's on-device recogniser, only inside the app). */
-  voiceEngine: 'skycontrol_voice_engine',
+  voiceEngine: 'skycontrol_voice_engine2',   // 2: the default became 'server' (2026-11-09)
   voiceAccent: 'skycontrol_voice_accent',
   /** Pilot voices: 'neural' (Paradee-8M on this device, src/components/atc/pilotVoice.ts; the default) or 'browser' (speechSynthesis). */
   pilotVoice: 'skycontrol_pilot_voice',

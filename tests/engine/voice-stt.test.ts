@@ -295,3 +295,20 @@ test('stt cascade: the later reading wins only when understood or more confident
   assert.equal(better(a, b), a); assert.equal(better(b, a), a); assert.equal(better(a, c), c);
   assert.equal(better(null, b), b); assert.equal(better(a, null), a); assert.equal(better(null, null), null);
 });
+
+// the owner's real recordings (ml/data/gold, 2026-11-09): what Parakeet and Google wrote, read by the rules after cleanup
+test('real-voice slips: runway to five, a clipped name, hand off to, speed to', () => {
+  const ctx = (lines: string[]) => { const ac = aircraftFromContext(lines.join('\n')); return { ac, pctx: { aircraft: ac.map((a) => ({ callsign: a.callsign })), runways: ['25L', '25R', '07L', '07R'] } }; };
+  const hk = ctx(['@GND 25L', 'HKE528 hong kong express 528 DEP GND stand h070 25L', 'CPA222 cathay 222 DEP GND stand h070 25L']);
+  const r1 = repairTranscript('Hong Kong Express five to eight, pushback approved, expect runway to five left.', hk.ac);
+  assert.match(r1.text, /528 pushback approved expect runway two five left$/);
+  assert.equal(understand(r1.text, hk.pctx).line, 'HKE528 Pushback approved, expect 25L');
+  const jb = ctx(['@APP 22L', 'JBU422 jetblue 422 ARR APP approach 5000ft h040 22L', 'VIR48 virgin 48 ARR APP approach 7000ft h040 22L']);
+  assert.equal(repairTranscript('Jack Blue, four twenty-two, Roger.', jb.ac).text, 'jetblue 422 roger');
+  const ez = ctx(['@APP 27L', 'EZY532 easy 532 ARR APP approach 5000ft h270 27L', 'BAW327 speedbird 327 ARR APP approach 8000ft h270 27L']);
+  assert.match(repairTranscript('Easy five three two hand off to cover.', ez.ac).text, /contact tower$/);
+  assert.match(repairTranscript('easy 532 Handoffs to Tower.', ez.ac).text, /contact tower$/);
+  assert.match(repairTranscript('Air India 504 cleared wireless approach Ranveer 29 lakh', ez.ac).text, /cleared ils approach runway two nine left$/);
+  // "speed to 90" is a missing digit, never 290
+  assert.match(repairTranscript('easy 532 increase speed to 90 knots', ez.ac).text, /speed to nine zero knots$/);
+});
