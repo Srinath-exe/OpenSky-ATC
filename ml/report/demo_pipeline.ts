@@ -36,3 +36,26 @@ export { telephony } from '../../src/lib/sim/phraseology';
 export { postStt } from '../../src/lib/voice/asr-server';
 export { wav16 } from '../../src/lib/voice/asr-diag';
 export { isSilent } from '../../src/lib/voice/asr-capture';
+
+// the voice round trip page (/reports/voice-roundtrip.html): streaming speech-to-text, the cascade's whole-recording
+// path, and the pilot's readback exactly as the game words it (phraseology.ts readback(), the sim's own call)
+export { openSttStream } from '../../src/lib/voice/asr-stream';
+export { firstPass } from '../../src/lib/voice/asr-server';
+import { parseCommand } from '../../src/lib/sim/commands';
+import { readback, AIRLINE_TELEPHONY } from '../../src/lib/sim/phraseology';
+import type { PhraseVariant } from '../../src/lib/sim/phraseology';
+
+/** The pilot's readback for a command line in the page's game state ('' when the command has none, e.g. "roger").
+ *  Without the live engine the aircraft's state is unknown, so state-dependent words fall back to the neutral form. */
+export function pilotReadback(line: string, stateText: string, icao = ''): { text: string; callsign: string | null } {
+  const { parse } = contextFromText(stateText);
+  const p = parseCommand(line, parse);
+  if (!p.ok || !p.ast) return { text: '', callsign: p.callsign };
+  const variant: PhraseVariant = /^[KP]/.test(icao) ? 'FAA' : 'ICAO';
+  const tel = (cs: string) => { const m = cs.match(/^([A-Z]{3})(\d+[A-Z]{0,2})$/); const t = m && AIRLINE_TELEPHONY[m[1]]; return t ? `${t} ${m![2]}` : cs; };
+  const ctx = { variant, telephony: tel, unit: () => '', freq: () => '', wind: null, qnh: null, atisLetter: null, magVar: 0,
+    transitionAltFt: variant === 'FAA' ? 18000 : /^Y/.test(icao) ? 10000 : 6000, time: 0, aircraft: null, spokenType: (x: string) => x };
+  try { return { text: readback(p.ast, ctx, variant), callsign: p.callsign }; } catch { return { text: '', callsign: p.callsign }; }
+}
+export { NeuralPilotVoice } from '../../src/components/atc/pilotVoice';
+export { S1_MODEL_URL } from '../../src/lib/voice/l1';

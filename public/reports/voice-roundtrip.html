@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Voice Round Trip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #0e0f11; --surface: #141416; --raise: #1c1c1e; --line: rgba(255,255,255,.09); --line-strong: rgba(255,255,255,.16);
+  --ink-1: #f4f4f5; --ink-2: #c4c5c8; --ink-3: #a0a1a6; --ink-4: #7f8086;
+  --accent: #f5933f; --accent-tint: rgba(245,147,63,.14); --s-before: #5b8fd6;
+  --good: #57cd50; --good-tint: rgba(87,205,80,.13); --neutral-tint: rgba(255,255,255,.07); --bar: #5f6168;
+  --font: "DM Sans", "Helvetica Neue", Arial, sans-serif; --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12); --s-before: #3f78c2;
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --neutral-tint: rgba(20,20,24,.06); --bar: #9a9ba1;
+  color-scheme: light;
+} }
+:root[data-theme="light"] {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12); --s-before: #3f78c2;
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --neutral-tint: rgba(20,20,24,.06); --bar: #9a9ba1;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+/* step colours: the dataviz reference categorical slots 1-5, in order (validated on both surfaces) */
+:root { --st-tail: #3987e5; --st-stt: #d95926; --st-und: #199e70; --st-wh: #c98500; --st-tts: #d55181; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --st-tail: #2a78d6; --st-stt: #eb6834; --st-und: #1baf7a; --st-wh: #eda100; --st-tts: #e87ba4; } }
+:root[data-theme="light"] { --st-tail: #2a78d6; --st-stt: #eb6834; --st-und: #1baf7a; --st-wh: #eda100; --st-tts: #e87ba4; }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink-2); font-family: var(--font); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 72px; }
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2 { color: var(--ink-1); margin: 0; font-weight: 600; letter-spacing: -.01em; text-wrap: balance; }
+h1 { font-size: clamp(26px, 4vw, 34px); }
+h2 { font-size: 18px; }
+p { margin: 0; }
+.lede { color: var(--ink-3); max-width: 72ch; }
+.crumb a { color: var(--ink-4); text-decoration: none; font-size: 13px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
+.readlbl { font-size: 13px; color: var(--ink-4); }
+.read { font-size: clamp(20px, 3.2vw, 26px); color: var(--ink-1); font-weight: 500; line-height: 1.35; }
+.read.free { color: var(--ink-3); font-style: italic; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; color: var(--ink-3); background: var(--raise); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; color: var(--ink-3); font-size: 14px; }
+.opts label { display: inline-flex; gap: 6px; align-items: center; }
+button { font: inherit; font-weight: 600; border-radius: 8px; padding: 9px 16px; border: 1px solid var(--line-strong); background: var(--raise); color: var(--ink-1); cursor: pointer; }
+.talk { width: 100%; padding: 22px 16px; font-size: 18px; border-radius: 12px; background: var(--accent); border-color: var(--accent); color: #141416; touch-action: none; user-select: none; -webkit-user-select: none; }
+.talk.on { background: #e5534b; border-color: #e5534b; color: #fff; }
+#live { font-size: 15px; color: var(--ink-2); min-height: 1.5em; }
+#status { font-size: 13px; color: var(--ink-4); min-height: 1.4em; font-variant-numeric: tabular-nums; }
+#status.err { color: #e5534b; }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.tile h3 { margin: 0; font-size: 13px; font-weight: 500; color: var(--ink-3); display: flex; gap: 7px; align-items: center; }
+.sw { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.big { font-size: 24px; font-weight: 600; color: var(--ink-1); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.sub { font-size: 13px; color: var(--ink-4); font-variant-numeric: tabular-nums; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-3); }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.results { display: grid; gap: 14px; }
+.rt { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 12px; }
+.rt .top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; align-items: baseline; }
+.rt .total { font-size: 22px; font-weight: 600; color: var(--ink-1); font-variant-numeric: tabular-nums; }
+.rt .verdict { font-size: 14px; font-weight: 600; }
+.verdict.sent { color: var(--good); } .verdict.check { color: var(--accent); } .verdict.no { color: #e5534b; }
+.bar { display: flex; height: 14px; border-radius: 4px; overflow: hidden; gap: 2px; background: transparent; }
+.bar > i { display: block; height: 100%; min-width: 2px; }
+.bar > i:first-child { border-radius: 4px 0 0 4px; } .bar > i:last-child { border-radius: 0 4px 4px 0; }
+.lines { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 14px; }
+.lines dt { color: var(--ink-4); }
+.lines dd { margin: 0; color: var(--ink-1); overflow-wrap: anywhere; }
+table.steps { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+table.steps td { padding: 5px 6px; border-top: 1px solid var(--line); vertical-align: top; }
+table.steps td.ms { text-align: right; font-family: var(--mono); font-size: 12.5px; color: var(--ink-1); white-space: nowrap; }
+table.steps td.what { color: var(--ink-3); }
+table.steps tr.sum td { color: var(--ink-1); font-weight: 600; }
+table.steps tr.hidden td { color: var(--ink-4); }
+.note { font-size: 13px; color: var(--ink-4); max-width: 78ch; }
+audio { width: 100%; max-width: 380px; height: 32px; }
+@media (max-width: 720px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .tiles { grid-template-columns: 1fr; } .lines { grid-template-columns: 1fr; } .lines dt { margin-top: 4px; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header style="display:grid;gap:10px">
+    <p class="crumb"><a href="/reports/">← Reports</a></p>
+    <h1>Voice round trip</h1>
+    <p class="lede">Hold the button, give the command, let go. Everything after that is automatic, as in the game: our speech-to-text writes
+      down what you said while you are still talking, the game reads it as a command (its rules, then the small command model in this
+      browser), the aircraft's pilot reads it back, and you hear the pilot's voice. Every step is timed, and every round trip is saved so
+      we can see where the time goes.</p>
+  </header>
+
+  <section class="card" aria-label="Talk">
+    <p class="readlbl" id="readlbl">Say this (you are the controller):</p>
+    <p class="read" id="read">Loading…</p>
+    <div class="chips" id="traffic" aria-label="Traffic on frequency"></div>
+    <div class="opts">
+      <button id="next" type="button">Another command</button>
+      <label><input id="free" type="checkbox"> Give my own command to this traffic</label>
+    </div>
+    <button id="talk" class="talk" type="button">Hold to talk</button>
+    <p id="live" aria-live="polite"></p>
+    <p id="status">Getting ready…</p>
+  </section>
+
+  <section style="display:grid;gap:12px" aria-label="Summary">
+    <h2 id="sumh">Your round trips</h2>
+    <div class="tiles">
+      <div class="tile"><h3>Let go → pilot speaks</h3><div class="big" id="t-total">–</div><div class="sub" id="t-total-s">median</div></div>
+      <div class="tile"><h3><i class="sw" style="background:var(--st-stt)"></i>Speech-to-text</h3><div class="big" id="t-stt">–</div><div class="sub" id="t-stt-s">after you let go, median</div></div>
+      <div class="tile"><h3><i class="sw" style="background:var(--st-und)"></i>Reading the command</h3><div class="big" id="t-und">–</div><div class="sub" id="t-und-s">rules + command model, median</div></div>
+      <div class="tile"><h3><i class="sw" style="background:var(--st-tts)"></i>Pilot voice</h3><div class="big" id="t-tts">–</div><div class="sub" id="t-tts-s">to the first sound, median</div></div>
+    </div>
+    <div class="legend" aria-label="Legend">
+      <span><i class="sw" style="background:var(--st-tail)"></i>Release tail</span>
+      <span><i class="sw" style="background:var(--st-stt)"></i>Speech-to-text (Parakeet)</span>
+      <span><i class="sw" style="background:var(--st-wh)"></i>Second opinion (Whisper)</span>
+      <span><i class="sw" style="background:var(--st-und)"></i>Reading the command</span>
+      <span><i class="sw" style="background:var(--st-tts)"></i>Pilot voice</span>
+    </div>
+    <p class="note" id="simnote">Times run from the moment you let go of the button to the moment the pilot's voice starts. In the game
+      the pilot also waits before answering, as real pilots do (2 to 4 s in the air, 4 to 8 s on the ground; Settings, "Pilot response
+      delay"), and the voice is prepared during that wait, so there it adds about 0.1 s instead of the pilot voice time shown here. That
+      wait is left out here so the machine's own time is visible.</p>
+  </section>
+
+  <section class="results" id="results" aria-label="Round trips"></section>
+</main>
+
+<script type="module">
+import { createMicCapture, openSttStream, firstPass, postStt, biasNames, isSilent, wav16, decide, pilotReadback, saveAttempt, diagKey,
+  NeuralPilotVoice, S1_MODEL_URL } from '/voice/gen/demo-pipeline.js';
+
+const $ = (id) => document.getElementById(id);
+const now = () => performance.now();
+function setStatus(m, err = false) { $('status').textContent = m; $('status').classList.toggle('err', err); }
+
+// ── the command model (the game's worker and model) ──
+const s1 = new Worker('/voice/s1-worker.js', { type: 'module' });
+let s1seq = 0;
+const s1call = (m, timeout = 60000) => new Promise((resolve, reject) => {
+  const id = ++s1seq, t = setTimeout(() => reject(new Error('model timed out')), timeout);
+  const h = (e) => { if (e.data.id !== id) return; s1.removeEventListener('message', h); clearTimeout(t); e.data.type === 'error' ? reject(new Error(e.data.message)) : resolve(e.data); };
+  s1.addEventListener('message', h); s1.postMessage({ ...m, id });
+});
+const s1ready = s1call({ type: 'load', url: S1_MODEL_URL }).then(() => true, (e) => { setStatus(`Command model: ${e.message}`, true); return false; });
+
+// ── pilot voice: the game's own player (Paradee-8M, radio effect), on this page's audio context ──
+let actx = null;
+const voice = new NeuralPilotVoice(() => (actx ? { ctx: actx, out: actx.destination } : null));
+const voiceReady = voice.load();
+function unlockAudio() { if (!actx) actx = new AudioContext(); if (actx.state !== 'running') void actx.resume(); }
+
+// the server's recognisers load before the first transmission
+void fetch('/api/voice/stt?warm=1', { cache: 'no-store' }).catch(() => undefined);
+
+// ── commands to give: the gold set's controller lines, with their traffic ──
+let prompts = [], cur = null, prefillMs = null;
+fetch('/voice/gold-prompts.json', { cache: 'no-cache' }).then((r) => r.json()).then((d) => {
+  prompts = (Array.isArray(d) ? d : d.prompts).filter((p) => p.show === 'read' && p.said && p.ctx);
+  pick();
+}).catch(() => setStatus('Could not load the commands.', true));
+async function pick() {
+  if (!prompts.length) return;
+  const keepTraffic = $('free').checked && cur;
+  if (!keepTraffic) cur = prompts[Math.floor(Math.random() * prompts.length)];
+  $('readlbl').textContent = $('free').checked ? 'Give any command to this traffic:' : 'Say this (you are the controller):';
+  $('read').textContent = $('free').checked ? 'Your own words.' : cur.said;
+  $('read').classList.toggle('free', $('free').checked);
+  $('traffic').textContent = '';
+  for (const l of cur.ctx.split('\n').slice(1)) { const m = l.match(/^(\S+) (.+?) (ARR|DEP) /); if (m) $('traffic').append(Object.assign(document.createElement('span'), { className: 'chip', textContent: `${m[1]} · ${m[2]}` })); }
+  prefillLatest();
+}
+// as in the game, the traffic is read into the command model ahead of time (not part of the round trip). One at a time
+// and only the latest: the worker answers in order, so a pile of stale prefills would delay the next command.
+let prefilling = false, prefilled = null;
+async function prefillLatest() {
+  if (prefilling || !(await s1ready)) return;
+  prefilling = true;
+  while (cur && prefilled !== cur.ctx) {
+    const ctx = cur.ctx, t = now();
+    await s1call({ type: 'prefill', ctx }).catch(() => null);
+    prefillMs = now() - t; prefilled = ctx;
+  }
+  prefilling = false;
+  readyStatus();
+}
+$('next').addEventListener('click', () => { $('free').checked = false; pick(); });
+$('free').addEventListener('change', () => pick());
+async function readyStatus() {
+  const parts = [];
+  parts.push((await Promise.race([s1ready, Promise.resolve(null)])) ? 'command model ready' : 'command model loading');
+  parts.push(voice.state === 'ready' ? 'pilot voice ready' : voice.state === 'failed' ? `pilot voice failed (${voice.error})` : 'pilot voice loading');
+  setStatus(`${parts.join(' · ')}${prefillMs != null ? ` · traffic read into the model in ${Math.round(prefillMs)} ms` : ''}. Hold the button (or Space) to talk.`);
+}
+voiceReady.then(readyStatus);
+
+// ── one round trip ──
+const mic = createMicCapture();
+let state = 'idle', stream = null, pressT = 0, ticker = null;
+function down() {
+  if (state !== 'idle' || !cur) return;
+  unlockAudio();
+  state = 'rec'; pressT = now();
+  $('talk').classList.add('on'); $('talk').textContent = 'Listening… let go when done'; $('live').textContent = '';
+  const s = stream = openSttStream(biasNames({ text: cur.ctx }), (t) => { $('live').textContent = `Heard so far: ${t}…`; });
+  mic.start((pcm) => s.push(pcm)).catch((e) => { state = 'idle'; reset(); setStatus(/denied|not ?allowed|permission/i.test(String(e)) ? 'Microphone access was blocked: allow it for this site.' : `Microphone: ${e.message || e}`, true); });
+  ticker = setInterval(() => setStatus(`Recording ${((now() - pressT) / 1000).toFixed(1)} s`), 100);
+}
+function reset() { clearInterval(ticker); $('talk').classList.remove('on'); $('talk').textContent = 'Hold to talk'; }
+async function up() {
+  if (state !== 'rec') return;
+  state = 'busy'; reset();
+  const T = { released: now() };
+  const s = stream; stream = null;
+  const audio = await mic.stop();
+  T.audio = now();
+  const tailMs = mic.lastTailMs;
+  if (audio.length < 16000 * 0.4) { s?.abort(); state = 'idle'; setStatus('Too short: hold the button while you speak.', true); return; }
+  if (isSilent(audio)) { s?.abort(); state = 'idle'; setStatus('The microphone sent silence: please try again.', true); return; }
+  setStatus('Working…');
+  const names = biasNames({ text: cur.ctx });
+  const rt = { said: $('free').checked ? null : cur.said, prompt: cur, audio, sec: audio.length / 16000, steps: [], at: new Date() };
+  try {
+    // 1. speech-to-text: Parakeet, streamed (only the last phrase is left at release); whole recording if streaming failed
+    const p = await firstPass(audio, s, names);
+    T.stt = now();
+    const streamed = p.segments != null;
+    // 2. reading the command: the game's code (repair, rules, then the S1 model with the verifier gate)
+    let modelMs = 0, modelCalls = 0;
+    const l1 = { complete: async (said, cs, ctx) => { const t = now(); const r = await s1call({ type: 'complete', said, callsigns: cs, ctx }); modelMs += now() - t; modelCalls++; return { ...r, model: S1_MODEL_URL }; } };
+    const understand = (alts) => decide(alts, cur.ctx, l1);
+    let u = p.alternatives.length ? await understand(p.alternatives) : null;
+    T.und1 = now();
+    // 3. not understood: Whisper on the same recording, both lists read together (the game's cascade)
+    let w = null, und2 = 0;
+    if (!u?.ok) {
+      try { w = await postStt(audio, names, 'whisper'); } catch (e) { w = { text: '', alternatives: [], ms: null, error: e.message }; }
+      T.whisper = now();
+      if (w.alternatives.length) {
+        const mix = Array.from({ length: Math.max(p.alternatives.length, w.alternatives.length) }, (_, i) => [p.alternatives[i], w.alternatives[i]]).flat().filter(Boolean);
+        const u2 = await understand(mix); und2 = now() - T.whisper;
+        if (!u || u2.ok || (u2.confidence ?? 0) > (u.confidence ?? 0)) u = u2;
+      }
+    }
+    T.und = now();
+    // 4. the game: the command is sent, the pilot's readback is worded
+    let rb = { text: '', callsign: null };
+    if (u?.ok) rb = pilotReadback(u.line, cur.ctx, cur.icao);
+    T.readback = now();
+    // 5. the pilot's voice: to the first sound
+    let tts = null;
+    if (rb.text) tts = await speak(rb.text, rb.callsign);
+    T.voice = now();
+    Object.assign(rt, { p, w, u, rb, tts, streamed, modelMs, modelCalls, tailMs, und2,
+      ms: {
+        tail: T.audio - T.released, stt: T.stt - T.audio, und: (T.und1 - T.stt) + und2, whisper: w ? (T.whisper - T.und1) : 0,
+        readback: T.readback - T.und, voice: tts?.firstSoundMs ?? null,
+        total: tts?.startedAt != null ? tts.startedAt - T.released : null, toDecision: T.und - T.released,
+      } });
+  } catch (e) { rt.error = e.message || String(e); }
+  rounds.unshift(rt); draw(); state = 'idle';
+  setStatus(rt.error ? `Something failed: ${rt.error}` : 'Done. Hold the button again, or pick another command.', !!rt.error);
+  if (diagKey() && !rt.error) {
+    const t = rt.ms;
+    saveAttempt(audio, { page: 'demo', engine: 'roundtrip', ctx: cur.ctx, expected: rt.said ?? undefined,
+      transcripts: { server: [...(rt.p?.alternatives ?? []), ...(rt.w?.alternatives ?? [])].slice(0, 8) },
+      heard: rt.u?.heard, line: rt.u?.line, ok: rt.u?.ok, source: rt.u?.source, sayAgain: rt.u?.sayAgain, error: rt.u?.error ?? null, confidence: rt.u?.confidence ?? null,
+      readback: rt.rb?.text, timings: { tailMs: t.tail, sttMs: t.stt, undMs: t.und, whisperMs: t.whisper, readbackMs: t.readback, voiceMs: t.voice ?? -1, totalMs: t.total ?? -1,
+        toDecisionMs: t.toDecision, s1Ms: rt.modelMs, s1Calls: rt.modelCalls, segments: rt.p?.segments ?? -1, drainMs: rt.p?.drainMs ?? -1, finalRttMs: rt.p?.finalRttMs ?? -1,
+        serverMs: rt.p?.serverMs ?? -1, tailModelMs: rt.p?.tailModelMs ?? -1, sttModelMs: rt.p?.ms ?? -1, whisperModelMs: rt.w?.ms ?? -1, ttsFirstSynthMs: rt.tts?.firstSynthMs ?? -1,
+        ttsSynthMs: rt.tts?.synthMs ?? -1, audioS: rt.sec, streamed: rt.streamed ? 1 : 0 } });
+  }
+}
+
+/** Speak the readback with the game's player; resolves at the first sound (or failure). */
+function speak(text, callsign) {
+  return new Promise((resolve) => {
+    const t0 = now();
+    let done = false;
+    const finish = (r) => { if (!done) { done = true; resolve(r); } };
+    setTimeout(() => finish({ firstSoundMs: null, error: 'pilot voice timed out' }), 15000);
+    const go = () => {
+      const ok = voice.say(text, callsign, undefined, {
+        onStart: (t) => finish({ startedAt: t.startedAt, firstSoundMs: t.startedAt - t0, firstSynthMs: t.firstSynthMs, firstChunkMs: t.firstChunkMs, waitedForModel: t0Load }),
+      });
+      if (!ok) finish({ firstSoundMs: null, error: `pilot voice not available (${voice.state})` });
+    };
+    const t0Load = voice.state === 'ready' ? 0 : null;
+    if (voice.state === 'ready') go(); else voiceReady.then((ok) => (ok ? go() : finish({ firstSoundMs: null, error: voice.error || 'pilot voice failed' })));
+  });
+}
+
+// ── input ──
+const talk = $('talk');
+talk.addEventListener('pointerdown', (e) => { if (e.button !== 0) return; e.preventDefault(); talk.setPointerCapture?.(e.pointerId); down(); });
+talk.addEventListener('pointerup', up); talk.addEventListener('pointercancel', up);
+talk.addEventListener('contextmenu', (e) => e.preventDefault());
+addEventListener('keydown', (e) => { if (e.code === 'Space' && !e.repeat && !/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement?.tagName || '')) { e.preventDefault(); down(); } });
+addEventListener('keyup', (e) => { if (e.code === 'Space') { e.preventDefault(); up(); } });
+
+// ── drawing ──
+const rounds = [];
+const urls = new WeakMap();
+const fmt = (ms) => (ms == null ? '–' : ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(2)} s`);
+const median = (a) => { const s = a.filter((x) => x != null && Number.isFinite(x)).sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : null; };
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function row(tbody, color, name, what, ms, cls = '') {
+  const tr = el('tr', cls); const a = el('td'); a.style.whiteSpace = 'nowrap';
+  if (color) { const i = el('i', 'sw'); i.style.background = `var(${color})`; i.style.display = 'inline-block'; i.style.marginRight = '7px'; a.append(i); }
+  a.append(name); tr.append(a, el('td', 'what', what), el('td', 'ms', ms)); tbody.append(tr);
+}
+function draw() {
+  const box = $('results'); box.textContent = '';
+  for (const r of rounds.slice(0, 40)) {
+    const c = el('article', 'rt');
+    if (r.error) { c.append(el('p', 'verdict no', `Failed: ${r.error}`)); box.append(c); continue; }
+    const m = r.ms, u = r.u;
+    const top = el('div', 'top');
+    top.append(el('span', 'total', m.total != null ? `${fmt(m.total)} from letting go to the pilot's voice` : `${fmt(m.toDecision)} from letting go to the decision`));
+    top.append(el('span', `verdict ${u?.ok ? 'sent' : u?.sayAgain || !u?.line ? 'no' : 'check'}`, u?.ok ? 'Sent' : u?.sayAgain || !u?.line ? 'Not understood: the game asks you to say again' : 'The game would ask you to check it first'));
+    c.append(top);
+    // the bar: each step's share of the round trip
+    const parts = [['--st-tail', m.tail], ['--st-stt', m.stt], ['--st-und', (m.und - (r.und2 || 0))], ['--st-wh', m.whisper], ['--st-und', r.und2 || 0], ['--st-tts', (m.readback || 0) + (m.voice || 0)]].filter(([, v]) => v > 0.5);
+    const bar = el('div', 'bar'); bar.setAttribute('role', 'img'); bar.setAttribute('aria-label', 'Time per step, see the table');
+    for (const [col, v] of parts) { const i = el('i'); i.style.background = `var(${col})`; i.style.flex = `${v} 0 0`; i.title = fmt(v); bar.append(i); }
+    c.append(bar);
+    const dl = el('dl', 'lines');
+    const add = (k, v) => { dl.append(el('dt', '', k), el('dd', '', v)); };
+    add('You said', r.said ?? '(your own words)');
+    add('Parakeet heard', r.p?.text || '(nothing)');
+    if (r.w) add('Whisper heard', r.w.text || r.w.error || '(nothing)');
+    add('Command', u?.line ? `${u.line}${u.source ? ` (${u.source === 'L1' ? 'command model' : 'rules'})` : ''}` : (u?.error || '–'));
+    if (r.rb?.text) add('Pilot', r.rb.text);
+    c.append(dl);
+    const tb = el('tbody');
+    row(tb, '--st-tail', 'Release tail', r.tailMs > 0 ? 'you were still talking at release, so the end is kept recording' : 'you had finished, nothing to wait for', fmt(m.tail));
+    if (r.streamed) {
+      row(tb, '--st-stt', 'Speech-to-text', `Parakeet, streamed: ${r.p.segments} phrase${r.p.segments === 1 ? '' : 's'}, ${r.p.segments > 1 ? `${r.p.segments - 1} done while you talked; ` : ''}last phrase ${fmt(r.p.tailModelMs)} on the server, request ${fmt(r.p.finalRttMs)}${r.p.drainMs > 5 ? `, waited ${fmt(r.p.drainMs)} for a chunk in flight` : ''}`, fmt(m.stt));
+    } else row(tb, '--st-stt', 'Speech-to-text', `Parakeet, whole recording (streaming failed or not available): model ${fmt(r.p?.ms)}, rest is upload and queue`, fmt(m.stt));
+    row(tb, '--st-und', 'Reading the command', `${u?.source === 'L1' ? `rules could not, command model ${fmt(r.modelMs)} (${r.modelCalls} call${r.modelCalls === 1 ? '' : 's'})` : r.modelCalls ? `rules, checked against the command model (${fmt(r.modelMs)})` : 'the game\'s rules'}${r.und2 ? '; first reading' : ''}`, fmt(m.und - (r.und2 || 0)));
+    if (r.w) { row(tb, '--st-wh', 'Second opinion', `Parakeet's text not understood: Whisper on the whole recording (model ${fmt(r.w.ms)})`, fmt(m.whisper)); if (r.und2) row(tb, '--st-und', 'Reading again', 'both recognisers\' guesses together', fmt(r.und2)); }
+    if (u?.ok) {
+      row(tb, '--st-tts', 'Pilot readback', 'the game words the pilot\'s reply', fmt(m.readback));
+      row(tb, '--st-tts', 'Pilot voice', r.tts?.error ? r.tts.error : `first clause synthesised in ${fmt(r.tts?.firstSynthMs)}, then playing`, fmt(m.voice));
+      row(tb, null, 'Total', 'let go → pilot\'s voice starts', fmt(m.total), 'sum');
+    } else row(tb, null, 'Total', 'let go → decision (nothing is sent)', fmt(m.toDecision), 'sum');
+    if (r.streamed && r.p.segments > 1) row(tb, null, 'Hidden while you talked', `${r.p.segments - 1} phrase${r.p.segments > 2 ? 's' : ''} transcribed before you let go`, '', 'hidden');
+    const t = el('table', 'steps'); t.append(tb); c.append(t);
+    if (!urls.has(r)) urls.set(r, URL.createObjectURL(wav16(r.audio)));
+    const au = el('audio'); au.controls = true; au.preload = 'none'; au.src = urls.get(r); c.append(au);
+    box.append(c);
+  }
+  const ok = rounds.filter((r) => !r.error);
+  $('sumh').textContent = ok.length ? `Your round trips (${ok.length})` : 'Your round trips';
+  if (!ok.length) return;
+  const sent = ok.filter((r) => r.u?.ok);
+  $('t-total').textContent = fmt(median(sent.map((r) => r.ms.total)));
+  $('t-total-s').textContent = `median of ${sent.length} sent · ${ok.length - sent.length} not sent`;
+  $('t-stt').textContent = fmt(median(ok.map((r) => r.ms.stt + r.ms.tail)));
+  $('t-stt-s').textContent = `after you let go (tail included), median · Whisper needed ${ok.filter((r) => r.w).length} of ${ok.length}`;
+  $('t-und').textContent = fmt(median(ok.map((r) => r.ms.und)));
+  $('t-und-s').textContent = `median · command model used ${ok.filter((r) => r.modelCalls).length} of ${ok.length}`;
+  $('t-tts').textContent = fmt(median(sent.map((r) => r.ms.voice)));
+  $('t-tts-s').textContent = 'readback to first sound, median';
+}
+</script>
+</body>
+</html>

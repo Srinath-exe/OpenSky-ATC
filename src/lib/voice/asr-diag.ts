@@ -28,6 +28,8 @@ export interface AttemptMeta {
   transcripts: { browser?: string[]; server?: string[]; local?: string[]; native?: string[] };
   heard?: string; line?: string; ok?: boolean; source?: string; sayAgain?: boolean; error?: string | null; confidence?: number | null;
   expected?: string; example?: number;
+  /** The round trip page: the pilot's readback and every step's time (ms). */
+  readback?: string; timings?: Record<string, number>;
 }
 
 export function saveAttempt(audio: Float32Array | null, meta: AttemptMeta): void {

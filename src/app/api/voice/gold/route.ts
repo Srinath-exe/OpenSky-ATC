@@ -146,7 +146,18 @@ function cleanLive(raw: unknown): Record<string, unknown> {
     transcripts, heard: str(m.heard, 500), line: str(m.line, 300), ok: typeof m.ok === 'boolean' ? m.ok : null, source: str(m.source, 8),
     sayAgain: typeof m.sayAgain === 'boolean' ? m.sayAgain : null, error: str(m.error, 300), confidence: num(m.confidence),
     expected: str(m.expected, 300), example: num(m.example), clientTs: str(m.clientTs, 40), mic: cleanMic(m.mic),
+    readback: str(m.readback, 400), timings: cleanTimings(m.timings),
   };
+}
+
+/** The round trip's step times (ms): a flat object of numbers, short camelCase keys only. */
+function cleanTimings(raw: unknown): Record<string, number> | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const out: Record<string, number> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>).slice(0, 40)) {
+    if (/^[A-Za-z][A-Za-z0-9]{0,31}$/.test(k) && typeof v === 'number' && Number.isFinite(v) && Math.abs(v) < 1e7) out[k] = Math.round(v * 10) / 10;
+  }
+  return Object.keys(out).length ? out : null;
 }
 
 /** asr-capture's MicInfo (or the recorder's equivalent): numbers, booleans and short words only. */
