@@ -13,6 +13,7 @@ export const LS = {
   /** Speech recognition engine for push-to-talk: a VoiceEngine (src/lib/voice/recognizer.ts), e.g. 'browser' (Web Speech
    *  API), 'local' (in-browser model), 'native' (the phone app's on-device recogniser, only inside the app). */
   voiceEngine: 'skycontrol_voice_engine',
+  voiceAccent: 'skycontrol_voice_accent',
 } as const
 
 /** Fired on window when the voice engine setting changes (same-tab listeners; `storage` only fires in other tabs). */

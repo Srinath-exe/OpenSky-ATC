@@ -25,6 +25,8 @@ export interface Recognizer {
   /** More guesses for the last utterance from another engine, asked only when the first guesses were not understood
    *  (asr-server.ts withServerSecondOpinion). */
   secondOpinion?(): Promise<string[]>;
+  /** The last transmission's audio (16 kHz mono) when this recogniser records it itself, for the owner's live-attempt log. */
+  lastAudio?(): Promise<Float32Array | null>;
 }
 
 type SR = {
@@ -117,6 +119,20 @@ const ATC_PHRASES = ['flight level', 'heading', 'descend and maintain', 'climb a
 let phrasesSupported: boolean | null = null;   // null = not tried; false after 'phrases-not-supported'
 
 const PREROLL_S = 0.3;
+
+/** English accents the browser recogniser has its own models for (Google: en-IN, en-GB, ...). The accent matters more
+ *  than anything else for Web Speech on a non-US voice, so it is a setting (Settings -> Voice accent). */
+export const VOICE_ACCENTS: { value: string; label: string }[] = [
+  { value: 'en-US', label: 'US English' }, { value: 'en-GB', label: 'UK English' }, { value: 'en-IN', label: 'Indian English' },
+  { value: 'en-AU', label: 'Australian English' }, { value: 'en-CA', label: 'Canadian English' }, { value: 'en-IE', label: 'Irish English' },
+  { value: 'en-NZ', label: 'New Zealand English' }, { value: 'en-ZA', label: 'South African English' }, { value: 'en-SG', label: 'Singapore English' },
+];
+/** The browser's first English locale we have a model for, else US English. */
+export function defaultAccent(): string {
+  const langs = typeof navigator !== 'undefined' ? [...(navigator.languages ?? []), navigator.language].filter(Boolean) : [];
+  for (const l of langs) { const hit = VOICE_ACCENTS.find((a) => a.value.toLowerCase() === String(l).toLowerCase()); if (hit) return hit.value; }
+  return 'en-US';
+}
 
 /** Web Speech API recogniser. One utterance per start()/stop(). Keeps up to 5 alternatives (n-best) and, where the
  *  browser supports it (Chrome 14x+ `SpeechRecognition.phrases`, on-device recognition only), biases towards the

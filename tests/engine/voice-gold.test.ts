@@ -143,6 +143,20 @@ test('save, list, serve, overwrite', async () => {
   assert.equal(fs.readdirSync(dir).filter(f => f.endsWith('.tmp')).length, 0, 'atomic writes leave no temp files');
 });
 
+test('live attempts: saved apart from the prompt set, metadata cleaned, key required', async () => {
+  const id = 'live-1794197968224-ab12';
+  const meta = JSON.stringify({ page: 'demo', engine: 'browser+server', accent: 'en-IN', transcripts: { browser: ['speedbird 273 climb'], server: ['Speedbird 273, climb'], evil: ['x'] }, line: 'BAW273 Climb 13000', ok: true, extra: 'dropped' });
+  assert.equal((await post(id, wav(), meta, null)).status, 401, 'no key');
+  assert.equal((await post('live-123-ab12', wav(), meta)).status, 400, 'malformed live id');
+  const r = await post(id, wav(), meta);
+  assert.equal(r.status, 200);
+  const j = JSON.parse(fs.readFileSync(path.join(dir, 'live', `${id}.json`), 'utf8'));
+  assert.equal(j.accent, 'en-IN'); assert.deepEqual(j.transcripts, { browser: ['speedbird 273 climb'], server: ['Speedbird 273, climb'] });
+  assert.equal(j.extra, undefined); assert.ok(fs.existsSync(path.join(dir, 'live', `${id}.wav`)));
+  const list = await (await get()).json() as { ids: string[] };
+  assert.ok(!list.ids.includes(id), 'not counted as a prompt');
+});
+
 test('cap: at most 3000 clips; overwriting still works when full', async () => {
   for (let i = 0; i < 3000; i++) fs.writeFileSync(path.join(dir, `x${i}.wav`), '');
   try {

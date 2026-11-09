@@ -8,6 +8,13 @@ import { understandHeard } from '../../src/lib/voice/asr-nbest';
 import type { HeardResult } from '../../src/lib/voice/asr-nbest';
 import type { L1Like } from '../../src/lib/voice/understand';
 import type { ParseCtx } from '../../src/lib/sim/commands';
+// the game's speech pieces, for the demo's microphone: capture with pre-roll, our server's Whisper, the callsign hints,
+// the accent list, and the owner's live-attempt log
+export { createMicCapture } from '../../src/lib/voice/asr-capture';
+export { postStt } from '../../src/lib/voice/asr-server';
+export { biasNames } from '../../src/lib/voice/asr-nbest';
+export { saveAttempt, diagKey } from '../../src/lib/voice/asr-diag';
+export { VOICE_ACCENTS, defaultAccent } from '../../src/lib/voice/recognizer';
 
 export function contextFromText(text: string): { parse: ParseCtx; state: { text: string; callsigns: string[] } } {
   const lines = text.split('\n');

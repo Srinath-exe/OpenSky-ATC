@@ -51,6 +51,7 @@ export function withServerSecondOpinion(rec: Recognizer): Recognizer {
     rec.onPartial?.('Checking with the server…');
     try { return (await postStt(a, names)).alternatives; } catch { return []; }
   };
+  rec.lastAudio = async () => (audio ? await audio : null);
   return rec;
 }
 
@@ -59,6 +60,7 @@ export function createServerRecognizer(onStatus?: (s: ServerStatus) => void): Re
   const mic = createMicCapture();
   let names: string[] = [];
   const status: ServerStatus = { lastMs: null, model: null, error: null };
+  let last: Float32Array | null = null;
   // load the model on the server now, not at the first transmission
   void fetch(`${STT_URL}?warm=1`, { cache: 'no-store' }).then((r) => r.json()).then((j) => { status.model = j.model ?? null; onStatus?.({ ...status }); }).catch(() => undefined);
 
@@ -74,8 +76,9 @@ export function createServerRecognizer(onStatus?: (s: ServerStatus) => void): Re
       mic.start().then(() => self.onPartial?.('Listening…'))
         .catch((err) => self.onError?.(/denied|not ?allowed/i.test(String(err)) ? 'Microphone access was blocked. Allow it in the browser to talk.' : `Microphone: ${String(err)}`));
     },
+    lastAudio: async () => last,
     async stop() {
-      const audio = await mic.stop();
+      const audio = await mic.stop(); last = audio;
       if (audio.length < 16000 * 0.25) return '';
       self.onPartial?.('Transcribing…');
       try {

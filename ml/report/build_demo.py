@@ -30,7 +30,7 @@ page = r"""<!doctype html>
 .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px 18px; display:grid; gap:12px; min-width:0; }
 .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 select, input[type=text] { font:inherit; color:var(--ink-1); background:var(--raise); border:1px solid var(--line-strong); border-radius:10px; padding:10px 12px; min-width:0; }
-select { width:100%; } input[type=text] { flex:1 1 320px; font-family:var(--mono); font-size:14px; }
+select { width:100%; } .saved { color:var(--good); } .opts { display:grid; grid-template-columns:auto 1fr; gap:8px 10px; align-items:center; } .opts select { width:auto; max-width:100%; } input[type=text] { flex:1 1 320px; font-family:var(--mono); font-size:14px; }
 button { font:inherit; font-weight:600; border-radius:10px; padding:10px 16px; border:1px solid var(--line-strong); background:var(--raise); color:var(--ink-1); cursor:pointer; }
 button.primary { background:var(--accent); border-color:var(--accent); color:#16100a; } button:disabled { opacity:.5; cursor:default; }
 button.mic[data-on="1"] { background:var(--no-tint); border-color:var(--no); }
@@ -55,6 +55,9 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline:2px so
 <div class="card">
   <label class="k" for="said">What was heard</label>
   <div class="row"><input type="text" id="said" autocomplete="off" spellcheck="false"><button class="mic" id="mic" title="Hold to talk">🎙 Hold to talk</button><button class="primary" id="go">Understand</button></div>
+  <div class="row opts"><label class="k" for="eng">Recogniser</label><select id="eng"><option value="browser+server">Browser, then our server if not understood (the game's default)</option><option value="browser">Browser only (Google)</option><option value="server">Our server only (Whisper, told the callsigns)</option></select>
+    <label class="k" for="acc">Your accent</label><select id="acc"></select></div>
+  <div class="cap" id="heardby"></div>
   <div class="status" id="status">Loading the model (2 MB)…</div>
 </div>
 <div class="card" id="result" hidden>
@@ -70,7 +73,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline:2px so
 <p class="cap">How it works: when you pick a situation, the model reads the game state into its KV cache (in the game this happens while you are still talking). Pressing Understand runs the same code as push-to-talk in the game: the transcript is repaired (ATC words, callsign matched by sound to the aircraft on frequency), the rules try it first, and only when they cannot parse it does the model write the command (first tokens restricted to callsigns that exist). A verifier then says the command back in words and compares it with what was heard: sure → sent; doubtful → left in the command bar to check; no matching aircraft → “say again”. Speaking uses the browser’s recogniser with its 5 best guesses. <a href="/reports/ai-paths.html" style="color:var(--accent)">How we built it</a></p>
 </div>
 <script type="module">
-import { decide } from '/voice/gen/demo-pipeline.js';
+import { decide, createMicCapture, postStt, biasNames, saveAttempt, diagKey, VOICE_ACCENTS, defaultAccent } from '/voice/gen/demo-pipeline.js';
 const MODEL = '__MODEL__';
 const EX = __EXAMPLES__;
 const $ = (id) => document.getElementById(id);
@@ -93,12 +96,18 @@ async function understand(alts) {
   const guesses = alts && alts.length ? alts : [typed];
   $('go').disabled = true;
   // the worker is the in-browser model (L1); everything else is the game's own code (demo-pipeline.js)
-  let modelMs = null, conf = null;
+  let modelMs = null;
   const l1 = { complete: async (said, cs, ctx) => { const r = await call({ type: 'complete', said, callsigns: cs, ctx }); modelMs = r.ms; return { ...r, model: MODEL }; } };
   const t0 = performance.now();
   const v = await decide(guesses, cur.ctx, l1);
   const totalMs = performance.now() - t0;
   $('go').disabled = false;
+  v.__meta = { typed, guesses, totalMs, modelMs };
+  show(v);
+  return v;
+}
+function show(v) {
+  const { typed, guesses, totalMs, modelMs } = v.__meta; let conf = null;
   const norm = (s) => (s || '').toUpperCase().replace(/,/g, ' ').split(/\s+/).filter(Boolean).join(' ');
   $('result').hidden = false; $('line').textContent = v.line || '(nothing)';
   const same = norm(v.line) === norm(cur.gold);
@@ -115,17 +124,58 @@ async function understand(alts) {
 $('ex').addEventListener('change', (e) => select(+e.target.value));
 $('go').addEventListener('click', () => understand());
 $('said').addEventListener('keydown', (e) => { if (e.key === 'Enter') understand(); });
-// microphone: the browser's own recogniser (Chrome / Edge), hold to talk
+// microphone: the same engines as the game (browser recogniser in your accent, our server's Whisper as a second opinion)
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch { /* private */ } } };
+VOICE_ACCENTS.forEach((a) => { const o = document.createElement('option'); o.value = a.value; o.textContent = a.label; $('acc').appendChild(o); });
+$('acc').value = store.get('skycontrol_voice_accent')?.replace(/"/g, '') || defaultAccent();
+$('eng').value = store.get('atc-demo-engine') || 'browser+server';
+$('acc').addEventListener('change', () => store.set('skycontrol_voice_accent', JSON.stringify($('acc').value)));
+$('eng').addEventListener('change', () => store.set('atc-demo-engine', $('eng').value));
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (!SR) { $('mic').disabled = true; $('mic').title = 'Speech recognition is not available in this browser: type instead'; }
-let rec = null;
-const startMic = () => { if (!SR || rec) return; rec = new SR(); rec.lang = 'en-US'; rec.interimResults = true; rec.continuous = true; rec.maxAlternatives = 5; let txt = '', alts = [];
-  rec.onresult = (e) => { const res = Array.from(e.results); txt = res.map((r) => r[0].transcript).join(' '); $('said').value = txt;
-    const n = Math.max(...res.map((r) => r.length)); alts = Array.from({ length: n }, (_, k) => res.map((r) => (r[k] || r[0]).transcript).join(' ')); };
-  rec.onend = () => { rec = null; $('mic').dataset.on = '0'; if (txt) understand(alts); }; rec.start(); $('mic').dataset.on = '1'; };
-const stopMic = () => { if (rec) rec.stop(); };
+let mic = null; try { mic = createMicCapture(); } catch { mic = null; }
+let rec = null, txt = '', alts = [], recording = false, audioP = null;
+const names = () => (cur ? biasNames({ text: cur.ctx }) : []);
+const startMic = () => {
+  if (recording) return; recording = true; $('mic').dataset.on = '1'; txt = ''; alts = []; $('heardby').textContent = 'Listening…';
+  const eng = $('eng').value;
+  if (mic && eng !== 'browser') mic.start().catch((e) => { $('heardby').textContent = 'Microphone: ' + e; });
+  if (eng !== 'server' && SR) {
+    rec = new SR(); rec.lang = $('acc').value; rec.interimResults = true; rec.continuous = true; rec.maxAlternatives = 5;
+    rec.onresult = (e) => { const res = Array.from(e.results); txt = res.map((r) => r[0].transcript).join(' '); $('said').value = txt;
+      const n = Math.max(...res.map((r) => r.length)); alts = Array.from({ length: n }, (_, k) => res.map((r) => (r[k] || r[0]).transcript).join(' ')); };
+    rec.onerror = (e) => { if (e.error !== 'no-speech' && e.error !== 'aborted') $('heardby').textContent = 'Browser recogniser: ' + e.error; };
+    try { rec.start(); } catch { /* already running */ }
+  }
+};
+const stopMic = async () => {
+  if (!recording) return; recording = false; $('mic').dataset.on = '0';
+  const eng = $('eng').value;
+  audioP = mic && eng !== 'browser' ? mic.stop() : Promise.resolve(null);
+  if (rec) { const r = rec; rec = null; await new Promise((ok) => { const t = setTimeout(ok, 2000); r.onend = () => { clearTimeout(t); ok(); }; try { r.stop(); } catch { ok(); } }); }
+  const browserAlts = eng === 'server' ? [] : [...new Set(alts.filter(Boolean))];
+  let serverAlts = [];
+  const askServer = async () => {
+    const a = await audioP; if (!a || a.length < 16000 * 0.25) return [];
+    $('heardby').textContent = 'Asking our server…';
+    try { return (await postStt(a, names())).alternatives; } catch (e) { $('heardby').textContent = 'Server: ' + e.message; return []; }
+  };
+  if (eng === 'server') { serverAlts = await askServer(); $('said').value = serverAlts[0] || ''; }
+  let v = browserAlts.length || serverAlts.length ? await understand(eng === 'server' ? serverAlts : browserAlts) : null;
+  if (eng === 'browser+server' && (!v || !v.ok)) {
+    serverAlts = await askServer();
+    if (serverAlts.length) { if (!$('said').value.trim()) $('said').value = serverAlts[0]; const v2 = await understand(serverAlts); if (v2 && (!v || v2.ok || (v2.confidence ?? 0) > (v.confidence ?? 0))) v = v2; else if (v) show(v); }
+  }
+  $('heardby').innerHTML = (browserAlts.length ? `Browser heard: “${esc(browserAlts[0])}”${browserAlts.length > 1 ? ` (+${browserAlts.length - 1} other guesses)` : ''}` : (eng === 'server' ? '' : 'Browser heard nothing')) +
+    (serverAlts.length ? `<br>Server heard: “${esc(serverAlts[0])}”` : '') + (diagKey() ? '<br><span class="saved">Saved for tuning (your key is in this browser)</span>' : '');
+  if (diagKey()) audioP.then((a) => saveAttempt(a, { page: 'demo', engine: eng, accent: $('acc').value, ctx: cur && cur.ctx,
+    transcripts: { ...(browserAlts.length ? { browser: browserAlts } : {}), ...(serverAlts.length ? { server: serverAlts } : {}) },
+    heard: v && v.heard, line: v && v.line, ok: v && v.ok, source: v && v.source, sayAgain: v && v.sayAgain, error: v && v.error, confidence: v && v.confidence,
+    expected: cur && cur.gold, example: +$('ex').value })).catch(() => undefined);
+};
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+if (!SR && !mic) { $('mic').disabled = true; $('mic').title = 'No microphone access in this browser: type instead'; }
 $('mic').addEventListener('pointerdown', (e) => { e.preventDefault(); startMic(); });
-['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => $('mic').addEventListener(t, stopMic));
+['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => $('mic').addEventListener(t, () => { void stopMic(); }));
 (async () => {
   const t0 = performance.now(); const r = await call({ type: 'load', url: MODEL });
   if (r.type === 'error') { $('status').textContent = 'Could not load the model: ' + r.message; return; }

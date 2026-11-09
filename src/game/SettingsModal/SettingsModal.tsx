@@ -15,7 +15,7 @@ import type { Settings } from '@/components/atc/simStore'
 import { useShell } from '../shellContext'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { LS, EV_VOICE_ENGINE } from '../persist'
-import { nativeSpeechAvailable, DEFAULT_VOICE_ENGINE } from '@/lib/voice/recognizer'
+import { nativeSpeechAvailable, DEFAULT_VOICE_ENGINE, VOICE_ACCENTS, defaultAccent } from '@/lib/voice/recognizer'
 import type { VoiceEngine } from '@/lib/voice/recognizer'
 
 /** Speech-to-text engines; ml/stt/RESULTS2.md has the measurements behind the default. */
@@ -59,6 +59,8 @@ export function SettingsModal() {
   const [hotkeyBadges, setHotkeyBadges] = usePersistedState<boolean>(LS.hotkeyBadges, true)
   const [voiceEngine, setVoiceEngineState] = usePersistedState<VoiceEngine>(LS.voiceEngine, nativeSpeechAvailable() ? 'native' : DEFAULT_VOICE_ENGINE)
   const setVoiceEngine = (v: VoiceEngine) => { setVoiceEngineState(v); window.setTimeout(() => window.dispatchEvent(new Event(EV_VOICE_ENGINE)), 0) }
+  const [voiceAccent, setVoiceAccentState] = usePersistedState<string>(LS.voiceAccent, defaultAccent())
+  const setVoiceAccent = (v: string) => { setVoiceAccentState(v); window.setTimeout(() => window.dispatchEvent(new Event(EV_VOICE_ENGINE)), 0) }
   const set = (patch: Partial<Settings>) => updateSettings(patch)
   const close = React.useCallback(() => shell.hide('settings'), [shell])
   React.useEffect(() => { document.documentElement.setAttribute('data-hotkey-badges', hotkeyBadges ? 'on' : 'off') }, [hotkeyBadges])
@@ -123,6 +125,7 @@ export function SettingsModal() {
             <ListRow flush title="Instant vectors" subtitle="Drag-to-heading transmits without a confirm step" trailing={<Mirror state={settings.instantVectors ? 'on' : 'off'}><Toggle checked={settings.instantVectors} onChange={(v) => set({ instantVectors: v })} testId="set-instant-vectors" /></Mirror>} />
             <ListRow flush title="Typed commands transmit on Enter" subtitle="Off shows the parsed command for review first" trailing={<Mirror state={settings.typedInstant ? 'on' : 'off'}><Toggle checked={settings.typedInstant} onChange={(v) => set({ typedInstant: v })} testId="set-typed-instant" /></Mirror>} />
             <ListRow flush title="Voice recognition" subtitle={voiceEngineOptions().find((o) => o.value === voiceEngine)?.description ?? ''} trailing={<Select size="m" ariaLabel="Voice recognition" options={voiceEngineOptions()} value={voiceEngine} onChange={(v) => setVoiceEngine(v)} className={styles.select} testId="set-voice-engine" />} />
+            {(voiceEngine === 'browser') && <ListRow flush title="Voice accent" subtitle="The browser recogniser has a model per accent: pick yours (it matters more than anything else)" trailing={<Select size="m" ariaLabel="Voice accent" options={VOICE_ACCENTS} value={voiceAccent} onChange={(v) => setVoiceAccent(v)} className={styles.select} testId="set-voice-accent" />} />}
             <ListRow flush title="Hotkey badges" subtitle="Show the key letter on every action button" trailing={<Mirror state={hotkeyBadges ? 'on' : 'off'}><Toggle checked={hotkeyBadges} onChange={setHotkeyBadges} testId="set-hotkey-badges" /></Mirror>} />
           </div>
         </div>

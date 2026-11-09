@@ -25,6 +25,10 @@ const MAX_BODY = MAX_WAV + MAX_META + 16_384; // + multipart framing
 const MAX_CLIPS = 3000;
 const MIN_SEC = 0.2;
 const ID_RE = /^[a-z][a-z0-9-]{0,31}$/;
+// live attempts (push-to-talk in the game or the demo, saved when the owner's key is in the browser): free speech with
+// what every recogniser heard and what the game decided, kept apart from the prompt set in <GOLD_DIR>/live/
+const LIVE_RE = /^live-\d{13}-[a-z0-9]{4}$/;
+const MAX_LIVE = 2000;
 
 interface PromptInfo { group: string; kind: string; icao: string; line: string }
 
@@ -131,6 +135,20 @@ function cleanMeta(raw: unknown): Record<string, unknown> {
   };
 }
 
+function cleanLive(raw: unknown): Record<string, unknown> {
+  const m = (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}) as Record<string, unknown>;
+  const list = (v: unknown) => (Array.isArray(v) ? v.slice(0, 8).map((x) => str(x, 500)).filter((x): x is string => !!x) : []);
+  const tr = (m.transcripts && typeof m.transcripts === 'object' && !Array.isArray(m.transcripts) ? m.transcripts : {}) as Record<string, unknown>;
+  const transcripts: Record<string, string[]> = {};
+  for (const k of ['browser', 'server', 'local', 'native']) { const l = list(tr[k]); if (l.length) transcripts[k] = l; }
+  return {
+    page: m.page === 'game' || m.page === 'demo' ? m.page : null, engine: str(m.engine, 20), accent: str(m.accent, 12), ctx: str(m.ctx, 8000),
+    transcripts, heard: str(m.heard, 500), line: str(m.line, 300), ok: typeof m.ok === 'boolean' ? m.ok : null, source: str(m.source, 8),
+    sayAgain: typeof m.sayAgain === 'boolean' ? m.sayAgain : null, error: str(m.error, 300), confidence: num(m.confidence),
+    expected: str(m.expected, 300), example: num(m.example), clientTs: str(m.clientTs, 40),
+  };
+}
+
 async function writeAtomic(file: string, data: Buffer | string): Promise<void> {
   const tmp = path.join(path.dirname(file), `.${path.basename(file)}.${randomBytes(6).toString('hex')}.tmp`);
   await fs.writeFile(tmp, data, { mode: 0o600 });
@@ -155,7 +173,8 @@ export async function POST(req: Request): Promise<Response> {
   catch { return json({ error: 'malformed multipart body' }, 400); }
   const id = form.get('id');
   const prompts = await promptSet();
-  if (typeof id !== 'string' || !ID_RE.test(id) || !prompts.has(id)) return json({ error: 'unknown prompt id' }, 400);
+  const live = typeof id === 'string' && LIVE_RE.test(id);
+  if (typeof id !== 'string' || (!live && (!ID_RE.test(id) || !prompts.has(id)))) return json({ error: 'unknown prompt id' }, 400);
   const file = form.get('wav');
   if (!file || typeof file === 'string') return json({ error: 'wav file required' }, 400);
   if (file.size > MAX_WAV) return json({ error: `clip larger than ${MAX_WAV} bytes` }, 413);
@@ -167,6 +186,16 @@ export async function POST(req: Request): Promise<Response> {
   const w = checkWav(Buffer.from(await file.arrayBuffer()));
   if (!w.ok) return json({ error: w.error }, 400);
 
+  if (live) {
+    const ldir = path.join(dir, 'live');
+    await fs.mkdir(ldir, { recursive: true });
+    if ((await fs.readdir(ldir)).filter((n) => n.endsWith('.wav')).length >= MAX_LIVE) return json({ error: `live attempts are full (${MAX_LIVE})` }, 507);
+    const rec = { id, savedAt: new Date().toISOString(), userAgent: (req.headers.get('user-agent') ?? '').slice(0, 400), bytes: w.wav.length,
+      sec: Math.round(w.sec * 1000) / 1000, sha256: createHash('sha256').update(w.wav).digest('hex'), ...cleanLive(meta) };
+    await writeAtomic(path.join(ldir, `${id}.json`), JSON.stringify(rec, null, 1));
+    await writeAtomic(path.join(ldir, `${id}.wav`), w.wav);
+    return json({ ok: true, id, sec: rec.sec, live: true });
+  }
   await fs.mkdir(dir, { recursive: true });
   const before = await savedIds(dir, prompts);
   const overwritten = before.includes(id);

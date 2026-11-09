@@ -16,9 +16,10 @@ import { LS, readJson, writeJson, EV_VOICE_ENGINE } from '../persist'
 import { isSilent, fromEngine } from '@/lib/sim/dispatch'
 import { parseCommand } from '@/lib/sim/commands'
 import { describe } from '@/lib/sim/commandAst'
-import { createBrowserRecognizer, createLocalRecognizer, browserSpeechAvailable, localSpeechAvailable, DEFAULT_VOICE_ENGINE, createNativeRecognizer, nativeSpeechAvailable } from '@/lib/voice/recognizer'
+import { createBrowserRecognizer, createLocalRecognizer, browserSpeechAvailable, localSpeechAvailable, DEFAULT_VOICE_ENGINE, createNativeRecognizer, nativeSpeechAvailable, defaultAccent } from '@/lib/voice/recognizer'
 import type { Recognizer, VoiceEngine } from '@/lib/voice/recognizer'
 import { createServerRecognizer, serverSpeechAvailable, withServerSecondOpinion } from '@/lib/voice/asr-server'
+import { diagKey, saveAttempt } from '@/lib/voice/asr-diag'
 import { understandHeard, biasNames } from '@/lib/voice/asr-nbest'
 import { L1Client } from '@/lib/voice/l1'
 import { voiceContext, positionOf } from '@/lib/voice/context'
@@ -319,13 +320,16 @@ export function CommLog() {
   const engineRef = React.useRef<VoiceEngine>('browser')
   const recognizerFor = React.useCallback((engine: VoiceEngine): Recognizer | null => {
     const have = recs.current[engine]; if (have) return have
-    const browser = () => { const b = createBrowserRecognizer(); return b ? withServerSecondOpinion(b) : null }   // Web Speech, the server when it is not understood
+    const browser = () => { const b = createBrowserRecognizer(readJson<string>(LS.voiceAccent, defaultAccent())); return b ? withServerSecondOpinion(b) : null }   // Web Speech in the player's accent, the server when it is not understood
     const r = engine === 'native' ? createNativeRecognizer() : engine === 'server' ? createServerRecognizer() : engine === 'local' ? createLocalRecognizer() : browser()
     if (r) recs.current[engine] = r
     return r
   }, [])
   React.useEffect(() => {
+    let accent = readJson<string>(LS.voiceAccent, defaultAccent())
     const sync = () => {
+      // a new accent: the browser recogniser is made again with it on the next push-to-talk
+      const a = readJson<string>(LS.voiceAccent, defaultAccent()); if (a !== accent) { accent = a; delete recs.current.browser }
       // inside the phone app (mobile/) the app's own on-device recogniser is the default
       const want = readJson<VoiceEngine>(LS.voiceEngine, nativeSpeechAvailable() ? 'native' : DEFAULT_VOICE_ENGINE)
       const avail: Partial<Record<VoiceEngine, boolean>> = { native: nativeSpeechAvailable(), server: serverSpeechAvailable(), browser: browserSpeechAvailable(), local: localSpeechAvailable() }
@@ -372,10 +376,12 @@ export function CommLog() {
         if (!alts.length && !rec.secondOpinion) return
         const pctx = fromEngine(e, { lastCallsign: sim.lastCallsign, position: sim.position })
         const firstP = alts.length ? understandHeard(alts, pctx, e.magVar ?? 0, l1Ref.current, stateRef.current) : Promise.resolve(null)
+        let serverAlts: string[] = []
         void firstP
           .then(async (first) => {
             if (first?.ok || !rec.secondOpinion) return first
             const more = await rec.secondOpinion()
+            serverAlts = more
             setHeard('')
             if (!more.length) return first
             const second = await understandHeard(more, pctx, e.magVar ?? 0, l1Ref.current, stateRef.current)
@@ -383,6 +389,15 @@ export function CommLog() {
             return second.ok || (second.confidence ?? 0) > (first.confidence ?? 0) ? second : first
           })
           .then((u) => {
+            // the owner's live-attempt log (asr-diag.ts): only with the gold-set key in this browser
+            if (diagKey()) {
+              const kind = rec.kind === 'local' ? 'local' : rec.kind === 'native' ? 'native' : rec.kind === 'server' ? 'server' : 'browser'
+              void rec.lastAudio?.().then((a) => saveAttempt(a, {
+                page: 'game', engine: engineRef.current, accent: readJson<string>(LS.voiceAccent, defaultAccent()), ctx: stateRef.current?.text,
+                transcripts: { [kind]: alts, ...(serverAlts.length ? { server: serverAlts } : {}) },
+                heard: u?.heard, line: u?.line, ok: u?.ok, source: u?.source, sayAgain: u?.sayAgain, error: u?.error ?? null, confidence: u?.confidence ?? null,
+              })).catch(() => undefined)
+            }
             if (!u) return
             if (u.ok) { sendRef.current(u.line); return }
             focus(u.line)
