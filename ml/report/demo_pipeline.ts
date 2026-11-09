@@ -35,3 +35,4 @@ export { speakableAtc, speechChunks, voiceFor, PILOT_VOICES } from '../../src/li
 export { telephony } from '../../src/lib/sim/phraseology';
 export { postStt } from '../../src/lib/voice/asr-server';
 export { wav16 } from '../../src/lib/voice/asr-diag';
+export { isSilent } from '../../src/lib/voice/asr-capture';
