@@ -1,0 +1,480 @@
+{
+ "lines": [
+  {
+   "id": 1,
+   "text": "Cleared for takeoff runway two seven left, Singapore niner eight tree.",
+   "icao": "EGLL",
+   "note": "ICAO digits: niner, tree; runway",
+   "clips": [
+    {
+     "model": "paradee",
+     "voice": "af_heart",
+     "dry": "l1_paradee-af_heart_dry.wav",
+     "radio": "l1_paradee-af_heart_radio.wav",
+     "dur_s": 4.62,
+     "synth_s": 0.997,
+     "phonemes": "klˈɪɹd fɔɹ tˈAkˌɔf ɹˈʌnwˌA tˈu sˈɛvən lˈɛft, sˈɪŋəpˌɔɹ nˈInəɹ ˈAt tɹˈi."
+    },
+    {
+     "model": "paradee",
+     "voice": "bf_isabella",
+     "dry": "l1_paradee-bf_isabella_dry.wav",
+     "radio": "l1_paradee-bf_isabella_radio.wav",
+     "dur_s": 4.88,
+     "synth_s": 0.924,
+     "phonemes": "klˈɪəd fɔː tˈAkɒf ɹˈʌnwA tˈuː sˈɛvᵊn lˈɛft, sɪŋəpˈɔː nˈInə ˈAt tɹˈiː."
+    },
+    {
+     "model": "paradee",
+     "voice": "am_puck",
+     "dry": "l1_paradee-am_puck_dry.wav",
+     "radio": "l1_paradee-am_puck_radio.wav",
+     "dur_s": 4.72,
+     "synth_s": 0.151,
+     "phonemes": "klˈɪɹd fɔɹ tˈAkˌɔf ɹˈʌnwˌA tˈu sˈɛvən lˈɛft, sˈɪŋəpˌɔɹ nˈInəɹ ˈAt tɹˈi."
+    },
+    {
+     "model": "paradee",
+     "voice": "bm_fable",
+     "dry": "l1_paradee-bm_fable_dry.wav",
+     "radio": "l1_paradee-bm_fable_radio.wav",
+     "dur_s": 5.0,
+     "synth_s": 0.168,
+     "phonemes": "klˈɪəd fɔː tˈAkɒf ɹˈʌnwA tˈuː sˈɛvᵊn lˈɛft, sɪŋəpˈɔː nˈInə ˈAt tɹˈiː."
+    },
+    {
+     "model": "kokoro",
+     "voice": "af_heart",
+     "dry": "l1_kokoro-af_heart_dry.wav",
+     "radio": "l1_kokoro-af_heart_radio.wav",
+     "dur_s": 4.72,
+     "synth_s": 6.738,
+     "phonemes": null
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "text": "Climb flight level tree fife zero, Emirates seven six one.",
+   "icao": "EGLL",
+   "note": "flight level, tree fife",
+   "clips": [
+    {
+     "model": "paradee",
+     "voice": "af_heart",
+     "dry": "l2_paradee-af_heart_dry.wav",
+     "radio": "l2_paradee-af_heart_radio.wav",
+     "dur_s": 4.25,
+     "synth_s": 0.171,
+     "phonemes": "klˈIm flˈIt lˈɛvᵊl tɹˈi fˈIf zˈɪɹO, ˈɛməɹəts sˈɛvən sˈɪks wˈʌn."
+    },
+    {
+     "model": "paradee",
+     "voice": "bf_isabella",
+     "dry": "l2_paradee-bf_isabella_dry.wav",
+     "radio": "l2_paradee-bf_isabella_radio.wav",
+     "dur_s": 4.6,
+     "synth_s": 0.262,
+     "phonemes": "klˈIm flˈIt lˈɛvᵊl tɹˈiː fˈIf zˈɪəɹQ, ˈɛmɪɹəts sˈɛvᵊn sˈɪks wˈʌn."
+    },
+    {
+     "model": "paradee",
+     "voice": "am_puck",
+     "dry": "l2_paradee-am_puck_dry.wav",
+     "radio": "l2_paradee-am_puck_radio.wav",
+     "dur_s": 4.2,
+     "synth_s": 0.145,
+     "phonemes": "klˈIm flˈIt lˈɛvᵊl tɹˈi fˈIf zˈɪɹO, ˈɛməɹəts sˈɛvən sˈɪks wˈʌn."
+    },
+    {
+     "model": "paradee",
+     "voice": "bm_fable",
+     "dry": "l2_paradee-bm_fable_dry.wav",
+     "radio": "l2_paradee-bm_fable_radio.wav",
+     "dur_s": 4.72,
+     "synth_s": 0.395,
+     "phonemes": "klˈIm flˈIt lˈɛvᵊl tɹˈiː fˈIf zˈɪəɹQ, ˈɛmɪɹəts sˈɛvᵊn sˈɪks wˈʌn."
+    },
+    {
+     "model": "kokoro",
+     "voice": "af_heart",
+     "dry": "l2_kokoro-af_heart_dry.wav",
+     "radio": "l2_kokoro-af_heart_radio.wav",
+     "dur_s": 4.17,
+     "synth_s": 3.838,
+     "phonemes": null
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "text": "Cleared ILS runway three one right, will report established, Air France eight eighty.",
+   "icao": "KJFK",
+   "note": "FAA grouped callsign, ILS",
+   "clips": [
+    {
+     "model": "paradee",
+     "voice": "af_heart",
+     "dry": "l3_paradee-af_heart_dry.wav",
+     "radio": "l3_paradee-af_heart_radio.wav",
+     "dur_s": 5.53,
+     "synth_s": 0.285,
+     "phonemes": "klˈɪɹd ˌIˌɛlˈɛs ɹˈʌnwˌA θɹˈi wˈʌn ɹˈIt, wɪl ɹəpˈɔɹt əstˈæblɪʃt, ˈɛɹ fɹˈæns ˈAt ˈATi."
+    },
+    {
+     "model": "paradee",
+     "voice": "bf_isabella",
+     "dry": "l3_paradee-bf_isabella_dry.wav",
+     "radio": "l3_paradee-bf_isabella_radio.wav",
+     "dur_s": 5.97,
+     "synth_s": 0.223,
+     "phonemes": "klˈɪəd ˌIˌɛlˈɛs ɹˈʌnwA θɹˈiː wˈʌn ɹˈIt, wɪl ɹɪpˈɔːt ɪstˈablɪʃt, ˈɛː fɹˈɑːns ˈAt ˈAti."
+    },
+    {
+     "model": "paradee",
+     "voice": "am_puck",
+     "dry": "l3_paradee-am_puck_dry.wav",
+     "radio": "l3_paradee-am_puck_radio.wav",
+     "dur_s": 5.4,
+     "synth_s": 0.189,
+     "phonemes": "klˈɪɹd ˌIˌɛlˈɛs ɹˈʌnwˌA θɹˈi wˈʌn ɹˈIt, wɪl ɹəpˈɔɹt əstˈæblɪʃt, ˈɛɹ fɹˈæns ˈAt ˈATi."
+    },
+    {
+     "model": "paradee",
+     "voice": "bm_fable",
+     "dry": "l3_paradee-bm_fable_dry.wav",
+     "radio": "l3_paradee-bm_fable_radio.wav",
+     "dur_s": 5.75,
+     "synth_s": 0.249,
+     "phonemes": "klˈɪəd ˌIˌɛlˈɛs ɹˈʌnwA θɹˈiː wˈʌn ɹˈIt, wɪl ɹɪpˈɔːt ɪstˈablɪʃt, ˈɛː fɹˈɑːns ˈAt ˈAti."
+    },
+    {
+     "model": "kokoro",
+     "voice": "af_heart",
+     "dry": "l3_kokoro-af_heart_dry.wav",
+     "radio": "l3_kokoro-af_heart_radio.wav",
+     "dur_s": 5.7,
+     "synth_s": 3.91,
+     "phonemes": null
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "text": "Departure one two fife decimal two zero zero, good day, Speedbird two four eight.",
+   "icao": "EGLL",
+   "note": "frequency, Speedbird",
+   "clips": [
+    {
+     "model": "paradee",
+     "voice": "af_heart",
+     "dry": "l4_paradee-af_heart_dry.wav",
+     "radio": "l4_paradee-af_heart_radio.wav",
+     "dur_s": 5.8,
+     "synth_s": 0.189,
+     "phonemes": "dəpˈɑɹʧəɹ wˈʌn tˈu fˈIf dˈɛsəməl tˈu zˈɪɹO zˈɪɹO, ɡˈʊd dˈA, spˈidbɜɹd tˈu fˈɔɹ ˈAt."
+    },
+    {
+     "model": "paradee",
+     "voice": "bf_isabella",
+     "dry": "l4_paradee-bf_isabella_dry.wav",
+     "radio": "l4_paradee-bf_isabella_radio.wav",
+     "dur_s": 5.9,
+     "synth_s": 0.211,
+     "phonemes": "dɪpˈɑːʧə wˈʌn tˈuː fˈIf dˈɛsɪmᵊl tˈuː zˈɪəɹQ zˈɪəɹQ, ɡˈʊd dˈA, spˈiːdbɜːd tˈuː fˈɔː ˈAt."
+    },
+    {
+     "model": "paradee",
+     "voice": "am_puck",
+     "dry": "l4_paradee-am_puck_dry.wav",
+     "radio": "l4_paradee-am_puck_radio.wav",
+     "dur_s": 5.78,
+     "synth_s": 0.172,
+     "phonemes": "dəpˈɑɹʧəɹ wˈʌn tˈu fˈIf dˈɛsəməl tˈu zˈɪɹO zˈɪɹO, ɡˈʊd dˈA, spˈidbɜɹd tˈu fˈɔɹ ˈAt."
+    },
+    {
+     "model": "paradee",
+     "voice": "bm_fable",
+     "dry": "l4_paradee-bm_fable_dry.wav",
+     "radio": "l4_paradee-bm_fable_radio.wav",
+     "dur_s": 5.8,
+     "synth_s": 0.172,
+     "phonemes": "dɪpˈɑːʧə wˈʌn tˈuː fˈIf dˈɛsɪmᵊl tˈuː zˈɪəɹQ zˈɪəɹQ, ɡˈʊd dˈA, spˈiːdbɜːd tˈuː fˈɔː ˈAt."
+    },
+    {
+     "model": "kokoro",
+     "voice": "af_heart",
+     "dry": "l4_kokoro-af_heart_dry.wav",
+     "radio": "l4_kokoro-af_heart_radio.wav",
+     "dur_s": 5.75,
+     "synth_s": 3.255,
+     "phonemes": null
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "text": "Cleared to land runway three one left, Lufthansa eight twenty.",
+   "icao": "KJFK",
+   "note": "landing clearance",
+   "clips": [
+    {
+     "model": "paradee",
+     "voice": "af_heart",
+     "dry": "l5_paradee-af_heart_dry.wav",
+     "radio": "l5_paradee-af_heart_radio.wav",
+     "dur_s": 4.17,
+     "synth_s": 0.15,
+     "phonemes": "klˈɪɹd tə lˈænd ɹˈʌnwˌA θɹˈi wˈʌn lˈɛft, lʌfθˈænsə ˈAt twˈɛnti."
+    },
+    {
+     "model": "paradee",
+     "voice": "bf_isabella",
+     "dry": "l5_paradee-bf_isabella_dry.wav",
+     "radio": "l5_paradee-bf_isabella_radio.wav",
+     "dur_s": 4.47,
+     "synth_s": 0.166,
+     "phonemes": "klˈɪəd tə lˈand ɹˈʌnwA θɹˈiː wˈʌn lˈɛft, lʌfθˈansə ˈAt twˈɛnti."
+    },
+    {
+     "model": "paradee",
+     "voice": "am_puck",
+     "dry": "l5_paradee-am_puck_dry.wav",
+     "radio": "l5_paradee-am_puck_radio.wav",
+     "dur_s": 4.1,
+     "synth_s": 0.138,
+     "phonemes": "klˈɪɹd tə lˈænd ɹˈʌnwˌA θɹˈi wˈʌn lˈɛft, lʌfθˈænsə ˈAt twˈɛnti."
+    },
+    {
+     "model": "paradee",
+     "voice": "bm_fable",
+     "dry": "l5_paradee-bm_fable_dry.wav",
+     "radio": "l5_paradee-bm_fable_radio.wav",
+     "dur_s": 4.7,
+     "synth_s": 0.15,
+     "phonemes": "klˈɪəd tə lˈand ɹˈʌnwA θɹˈiː wˈʌn lˈɛft, lʌfθˈansə ˈAt twˈɛnti."
+    },
+    {
+     "model": "kokoro",
+     "voice": "af_heart",
+     "dry": "l5_kokoro-af_heart_dry.wav",
+     "radio": "l5_kokoro-af_heart_radio.wav",
+     "dur_s": 4.25,
+     "synth_s": 2.503,
+     "phonemes": null
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "text": "Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha.",
+   "icao": "EGLL",
+   "note": "pilot request, stand, information",
+   "clips": [
+    {
+     "model": "paradee",
+     "voice": "af_heart",
+     "dry": "l6_paradee-af_heart_dry.wav",
+     "radio": "l6_paradee-af_heart_radio.wav",
+     "dur_s": 7.83,
+     "synth_s": 0.335,
+     "phonemes": "hˈiθɹO ɡɹˈWnd, skˈI dubˈI tˈu nˈInəɹ fˈIf, stˈænd fˈIf fˈɔɹ fˈIf lˈimə, ɹəkwˈɛst pˈʊʃbˌæk, ˌɪnfəɹmˈAʃən ˈælfə."
+    },
+    {
+     "model": "paradee",
+     "voice": "bf_isabella",
+     "dry": "l6_paradee-bf_isabella_dry.wav",
+     "radio": "l6_paradee-bf_isabella_radio.wav",
+     "dur_s": 7.55,
+     "synth_s": 0.252,
+     "phonemes": "hˌiːθɹˈQ ɡɹˈWnd, skˈI djuːbˈI tˈuː nˈInə fˈIf, stˈand fˈIf fˈɔː fˈIf lˈiːmə, ɹɪkwˈɛst pˈʊʃbak, ˌɪnfəmˈAʃᵊn ˈalfə."
+    },
+    {
+     "model": "paradee",
+     "voice": "am_puck",
+     "dry": "l6_paradee-am_puck_dry.wav",
+     "radio": "l6_paradee-am_puck_radio.wav",
+     "dur_s": 7.42,
+     "synth_s": 0.246,
+     "phonemes": "hˈiθɹO ɡɹˈWnd, skˈI dubˈI tˈu nˈInəɹ fˈIf, stˈænd fˈIf fˈɔɹ fˈIf lˈimə, ɹəkwˈɛst pˈʊʃbˌæk, ˌɪnfəɹmˈAʃən ˈælfə."
+    },
+    {
+     "model": "paradee",
+     "voice": "bm_fable",
+     "dry": "l6_paradee-bm_fable_dry.wav",
+     "radio": "l6_paradee-bm_fable_radio.wav",
+     "dur_s": 7.47,
+     "synth_s": 0.258,
+     "phonemes": "hˌiːθɹˈQ ɡɹˈWnd, skˈI djuːbˈI tˈuː nˈInə fˈIf, stˈand fˈIf fˈɔː fˈIf lˈiːmə, ɹɪkwˈɛst pˈʊʃbak, ˌɪnfəmˈAʃᵊn ˈalfə."
+    },
+    {
+     "model": "kokoro",
+     "voice": "af_heart",
+     "dry": "l6_kokoro-af_heart_dry.wav",
+     "radio": "l6_kokoro-af_heart_radio.wav",
+     "dur_s": 7.5,
+     "synth_s": 4.094,
+     "phonemes": null
+    }
+   ]
+  },
+  {
+   "id": 7,
+   "text": "Squawk two tree six fife, Shamrock seven two.",
+   "icao": "EGLL",
+   "note": "squawk, Shamrock",
+   "clips": [
+    {
+     "model": "paradee",
+     "voice": "af_heart",
+     "dry": "l7_paradee-af_heart_dry.wav",
+     "radio": "l7_paradee-af_heart_radio.wav",
+     "dur_s": 3.52,
+     "synth_s": 0.11,
+     "phonemes": "skwˈɔk tˈu tɹˈi sˈɪks fˈIf, ʃˈæmɹˌɑk sˈɛvən tˈu."
+    },
+    {
+     "model": "paradee",
+     "voice": "bf_isabella",
+     "dry": "l7_paradee-bf_isabella_dry.wav",
+     "radio": "l7_paradee-bf_isabella_radio.wav",
+     "dur_s": 3.75,
+     "synth_s": 0.172,
+     "phonemes": "skwˈɔːk tˈuː tɹˈiː sˈɪks fˈIf, ʃˈamɹɒk sˈɛvᵊn tˈuː."
+    },
+    {
+     "model": "paradee",
+     "voice": "am_puck",
+     "dry": "l7_paradee-am_puck_dry.wav",
+     "radio": "l7_paradee-am_puck_radio.wav",
+     "dur_s": 3.27,
+     "synth_s": 0.14,
+     "phonemes": "skwˈɔk tˈu tɹˈi sˈɪks fˈIf, ʃˈæmɹˌɑk sˈɛvən tˈu."
+    },
+    {
+     "model": "paradee",
+     "voice": "bm_fable",
+     "dry": "l7_paradee-bm_fable_dry.wav",
+     "radio": "l7_paradee-bm_fable_radio.wav",
+     "dur_s": 3.77,
+     "synth_s": 0.155,
+     "phonemes": "skwˈɔːk tˈuː tɹˈiː sˈɪks fˈIf, ʃˈamɹɒk sˈɛvᵊn tˈuː."
+    },
+    {
+     "model": "kokoro",
+     "voice": "af_heart",
+     "dry": "l7_kokoro-af_heart_dry.wav",
+     "radio": "l7_kokoro-af_heart_radio.wav",
+     "dur_s": 3.4,
+     "synth_s": 1.851,
+     "phonemes": null
+    }
+   ]
+  },
+  {
+   "id": 8,
+   "text": "Runway three one right, line up and wait, JetBlue two forty-eight.",
+   "icao": "KJFK",
+   "note": "line up and wait",
+   "clips": [
+    {
+     "model": "paradee",
+     "voice": "af_heart",
+     "dry": "l8_paradee-af_heart_dry.wav",
+     "radio": "l8_paradee-af_heart_radio.wav",
+     "dur_s": 4.45,
+     "synth_s": 0.162,
+     "phonemes": "ɹˈʌnwˌA θɹˈi wˈʌn ɹˈIt, lˈIn ˌʌp ænd wˈAt, ʤˈɛtblˌu tˈu fˈɔɹTiˌAt."
+    },
+    {
+     "model": "paradee",
+     "voice": "bf_isabella",
+     "dry": "l8_paradee-bf_isabella_dry.wav",
+     "radio": "l8_paradee-bf_isabella_radio.wav",
+     "dur_s": 4.55,
+     "synth_s": 0.15,
+     "phonemes": "ɹˈʌnwA θɹˈiː wˈʌn ɹˈIt, lˈIn ˌʌp and wˈAt, ʤˌɛtblˈuː tˈuː fˈɔːtiˌAt."
+    },
+    {
+     "model": "paradee",
+     "voice": "am_puck",
+     "dry": "l8_paradee-am_puck_dry.wav",
+     "radio": "l8_paradee-am_puck_radio.wav",
+     "dur_s": 4.22,
+     "synth_s": 0.149,
+     "phonemes": "ɹˈʌnwˌA θɹˈi wˈʌn ɹˈIt, lˈIn ˌʌp ænd wˈAt, ʤˈɛtblˌu tˈu fˈɔɹTiˌAt."
+    },
+    {
+     "model": "paradee",
+     "voice": "bm_fable",
+     "dry": "l8_paradee-bm_fable_dry.wav",
+     "radio": "l8_paradee-bm_fable_radio.wav",
+     "dur_s": 4.7,
+     "synth_s": 0.16,
+     "phonemes": "ɹˈʌnwA θɹˈiː wˈʌn ɹˈIt, lˈIn ˌʌp and wˈAt, ʤˌɛtblˈuː tˈuː fˈɔːtiˌAt."
+    },
+    {
+     "model": "kokoro",
+     "voice": "af_heart",
+     "dry": "l8_kokoro-af_heart_dry.wav",
+     "radio": "l8_kokoro-af_heart_radio.wav",
+     "dur_s": 4.3,
+     "synth_s": 2.461,
+     "phonemes": null
+    }
+   ]
+  }
+ ],
+ "sr": 24000,
+ "extra": [
+  {
+   "model": "Audio8-TTS-Realistic-Air",
+   "voice": "default voice, no reference",
+   "kind": "Dry",
+   "file": "audio8_00_dry.wav",
+   "text": "Holding point runway two seven left, Sky Dubai two niner fife.",
+   "note": "141 s on 3 CPU threads for 5.5 s of speech"
+  },
+  {
+   "model": "Audio8-TTS-Realistic-Air",
+   "voice": "default voice, no reference",
+   "kind": "Radio",
+   "file": "audio8_00_radio.wav",
+   "text": "Holding point runway two seven left, Sky Dubai two niner fife.",
+   "note": ""
+  },
+  {
+   "model": "Audio8-TTS-Realistic-Air",
+   "voice": "default voice, no reference",
+   "kind": "Dry",
+   "file": "audio8_06_dry.wav",
+   "text": "Departure one two fife decimal two zero zero, good day, Speedbird two four eight.",
+   "note": "372 s on 3 CPU threads for 5.9 s of speech"
+  },
+  {
+   "model": "Audio8-TTS-Realistic-Air",
+   "voice": "default voice, no reference",
+   "kind": "Radio",
+   "file": "audio8_06_radio.wav",
+   "text": "Departure one two fife decimal two zero zero, good day, Speedbird two four eight.",
+   "note": ""
+  },
+  {
+   "model": "Audio8-TTS-Realistic-Air",
+   "voice": "default voice, no reference",
+   "kind": "Dry",
+   "file": "audio8_18_dry.wav",
+   "text": "Descend flight level seven zero, Speedbird four zero.",
+   "note": "432 s on 3 CPU threads for 4.6 s of speech"
+  },
+  {
+   "model": "Audio8-TTS-Realistic-Air",
+   "voice": "default voice, no reference",
+   "kind": "Radio",
+   "file": "audio8_18_radio.wav",
+   "text": "Descend flight level seven zero, Speedbird four zero.",
+   "note": ""
+  }
+ ],
+ "extra_note": "Audio8-TTS-Realistic-Air (Edge0, Apache-2.0) is a 0.6B-parameter DualAR model with a 44.1 kHz codec, 2.5 GB of weights. It is far too big for the browser; it is here as a sense of what a large model sounds like, and as a possible offline generator of training audio."
+}

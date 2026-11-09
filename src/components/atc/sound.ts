@@ -4,8 +4,10 @@
 //  No assets: every cue is synthesised on demand (sine / triangle / square
 //  oscillators through a master gain, a short filtered-noise burst for the
 //  squelch click). Everything is gated by `enabled` (settings.sound); TTS is
-//  gated separately by `tts` (settings.tts) and speaks pilot lines through
-//  speechSynthesis. SSR-safe: nothing touches the DOM until a cue plays in a
+//  gated separately by `tts` (settings.tts). Pilot lines are spoken by the
+//  neural voice (pilotVoice.ts: Paradee-8M in a worker, radio effect, one voice
+//  per callsign) when the "Pilot voices" setting is Neural (the default) and it
+//  loads, else by speechSynthesis. SSR-safe: nothing touches the DOM until a cue plays in a
 //  browser. The AudioContext is created lazily and resumed on the first user
 //  gesture (autoplay policy) - `unlock()` is also wired to pointerdown/keydown.
 //
@@ -16,6 +18,14 @@
 //  undo rewind, score up / down, pause / resume.
 // ============================================================
 import type { AlertSeverity } from '../../lib/sim/types';
+import type { PhraseVariant } from '../../lib/sim/phraseology';
+import { NeuralPilotVoice } from './pilotVoice';
+import type { NeuralLineStat, NeuralState } from './pilotVoice';
+import { LS, readJson } from '../../game/persist';
+
+/** "Pilot voices" setting (SettingsModal, LS.pilotVoice): the neural model on this device, or the browser's voice. */
+export type PilotVoicePref = 'neural' | 'browser';
+export function pilotVoicePref(): PilotVoicePref { return readJson<PilotVoicePref>(LS.pilotVoice, 'neural') === 'browser' ? 'browser' : 'neural'; }
 
 export type SoundCue =
   | 'transmit' | 'readback' | 'request' | 'handoff' | 'resolve' | 'error' | 'undo'
@@ -43,6 +53,10 @@ class SoundEngine {
   private unlocked = false;
   private listenersInstalled = false;
   private speechQueued = 0;
+  /** Neural pilot voices: created lazily, the worker and model load on the first pilot line. */
+  private neural = new NeuralPilotVoice(() => { const ctx = this.context(); return ctx && this.master ? { ctx, out: this.master } : null; });
+  /** Lines that arrived while the neural voice loads and there is no browser voice (the phone app's WebView). */
+  private neuralPending: { text: string; callsign?: string; variant?: PhraseVariant; at: number }[] = [];
   /** Real-time throttle so identical cues do not stack (ms per cue). */
   private lastPlayed = new Map<SoundCue, number>();
 
@@ -114,17 +128,48 @@ class SoundEngine {
   }
 
   // ── TTS ────────────────────────────────────────────────────────────────────
-  /** Speak a pilot line (only when both `enabled` and `tts`). */
-  speak(text: string, opts: { who?: 'PILOT' | 'ATC' | 'SYS' | 'AI'; force?: boolean } = {}): void {
+  /** Speak a pilot line (only when both `enabled` and `tts`): the neural voice when chosen and loaded, else the browser's.
+   *  `callsign` picks the neural voice (the same aircraft always sounds the same); `variant` is ICAO or FAA wording. */
+  speak(text: string, opts: { who?: 'PILOT' | 'ATC' | 'SYS' | 'AI'; force?: boolean; callsign?: string; variant?: PhraseVariant } = {}): void {
     if (!opts.force && (!this.enabled || !this.tts)) return;
-    if (typeof window === 'undefined' || !('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') return;
+    if (typeof window === 'undefined') return;
+    if (opts.who !== 'ATC' && pilotVoicePref() === 'neural' && this.neural.state !== 'failed') {
+      const ctx = this.context();
+      if (ctx && ctx.state !== 'running') this.unlock();
+      if (this.neural.state === 'idle') {
+        void this.neural.load().then((ok) => {
+          const fresh = this.neuralPending.splice(0).filter((p) => performance.now() - p.at < 8000);
+          for (const p of fresh) ok ? this.neural.say(p.text, p.callsign, p.variant) : this.speakBrowser(p.text, 'PILOT');
+        });
+      }
+      if (this.neural.say(text, opts.callsign, opts.variant)) return;
+      if (this.neural.state === 'loading' && !this.browserVoice()) {   // no browser voice to bridge the download: wait
+        this.neuralPending.push({ text, callsign: opts.callsign, variant: opts.variant, at: performance.now() });
+        if (this.neuralPending.length > 2) this.neuralPending.shift();
+        return;
+      }
+    }
+    this.speakBrowser(text, opts.who);
+  }
+
+  /** The neural voice's state ('idle' until the first pilot line) and its last line timings (tests, diagnostics). */
+  get neuralState(): NeuralState { return this.neural.state; }
+  neuralStats(): NeuralLineStat[] { return this.neural.stats.slice(); }
+
+  private browserVoice(): boolean {
+    return typeof window !== 'undefined' && 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined' && !!window.speechSynthesis;
+  }
+
+  /** speechSynthesis: one robotic voice, cancelled when more than four lines stack. */
+  private speakBrowser(text: string, who?: 'PILOT' | 'ATC' | 'SYS' | 'AI'): void {
+    if (!this.browserVoice()) return;
     const synth = window.speechSynthesis; if (!synth) return;
     const clean = text.replace(/\b[A-Z]{4,}\b/g, w => w.toLowerCase()).replace(/\s+/g, ' ').trim();
     if (!clean) return;
     try {
       if (this.speechQueued > 4) { synth.cancel(); this.speechQueued = 0; }
       const u = new SpeechSynthesisUtterance(clean);
-      const pilot = opts.who !== 'ATC';
+      const pilot = who !== 'ATC';
       u.rate = pilot ? 1.08 : 1.0;
       u.pitch = pilot ? 0.9 : 1.05;
       u.volume = Math.max(0, Math.min(1, this.volume));
@@ -138,6 +183,8 @@ class SoundEngine {
   stopSpeech(): void {
     try { if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel(); } catch { /* ignore */ }
     this.speechQueued = 0;
+    this.neural.stop();
+    this.neuralPending = [];
   }
 
   // ── internals ──────────────────────────────────────────────────────────────

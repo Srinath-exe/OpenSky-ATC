@@ -673,7 +673,7 @@ class SimStore implements TestApiHost {
         return;                                                        // UI reads these from state
       case 'request': {
         if (d?.type === 'request') {
-          if (d.change === 'raised' || d.change === 'recalled') { this.pushLine({ who: 'PILOT', at: ev.at, text: ev.message, callsign: ev.callsign, position: ev.position }); sound.play('request'); this.speak(ev.message, 'PILOT'); }
+          if (d.change === 'raised' || d.change === 'recalled') { this.pushLine({ who: 'PILOT', at: ev.at, text: ev.message, callsign: ev.callsign, position: ev.position }); sound.play('request'); this.speak(ev.message, 'PILOT', ev.callsign); }
           return;
         }
         break;
@@ -682,7 +682,7 @@ class SimStore implements TestApiHost {
         this.pushLine({ who: 'PILOT', at: ev.at, text: ev.message, callsign: ev.callsign, position: ev.position, status: d?.type === 'readback' ? readbackStatus(d.status) : undefined });
         this.closeUndo(ev.callsign, d?.type === 'readback' ? d.status : 'ok');
         if (d?.type === 'readback' && (d.status === 'unable' || d.status === 'mismatch')) sound.play('error'); else sound.play('readback');
-        this.speak(ev.message, 'PILOT');
+        this.speak(ev.message, 'PILOT', ev.callsign);
         return;
       }
       case 'transmission': {
@@ -745,7 +745,7 @@ class SimStore implements TestApiHost {
             this.pushToast({ kind: 'success', text: `Emergency resolved · ${ev.callsign}`, duration: 4000, callsigns: [ev.callsign] });
             sound.play('resolve');
           }
-          if (line === 'PILOT') this.speak(ev.message, 'PILOT');
+          if (line === 'PILOT') this.speak(ev.message, 'PILOT', ev.callsign);
           return;
         }
         break;
@@ -768,7 +768,7 @@ class SimStore implements TestApiHost {
     }
     // generic routing by who
     this.pushLine({ who, at: ev.at, text: ev.message, callsign: ev.callsign !== 'SYSTEM' ? ev.callsign : undefined, position: ev.position });
-    if (who === 'PILOT') this.speak(ev.message, 'PILOT');
+    if (who === 'PILOT') this.speak(ev.message, 'PILOT', ev.callsign);
   }
 
   private upsertAlertToast(al: Alert, change: 'raised' | 'updated'): void {
@@ -784,8 +784,8 @@ class SimStore implements TestApiHost {
     this.pushToast({ kind, severity: al.severity, text: al.title, detail: al.detail, duration, alertId: al.id, callsigns: [...al.subjects] });
   }
 
-  private speak(text: string, who: 'PILOT' | 'ATC'): void {
-    if (this.settings.tts && this.settings.sound && !this.testMode) sound.speak(text, { who });
+  private speak(text: string, who: 'PILOT' | 'ATC', callsign?: string): void {
+    if (this.settings.tts && this.settings.sound && !this.testMode) sound.speak(text, { who, callsign, variant: this.engine?.settings.region });
   }
 
   /** Readback for `callsign` arrived: the UNDO ring of its latest open ATC line closes (06 §4). */

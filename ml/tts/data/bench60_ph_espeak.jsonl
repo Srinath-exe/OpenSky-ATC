@@ -1,0 +1,240 @@
+{"bench_id":0,"voice":"af_heart","phonemes":"hˈOldɪŋ pˈYnt ɹˈʌnwA tˈu sˈɛvən lˈɛft, skˈI dˈubI tˈu nˈInəɹ fˈIf."}
+{"bench_id":0,"voice":"am_puck","phonemes":"hˈOldɪŋ pˈYnt ɹˈʌnwA tˈu sˈɛvən lˈɛft, skˈI dˈubI tˈu nˈInəɹ fˈIf."}
+{"bench_id":0,"voice":"bf_isabella","phonemes":"hˈQldɪŋ pˈYnt ɹˈʌnwA tˈuː sˈɛvən lˈɛft, skˈI djˈuːbI tˈuː nˈInə fˈIf."}
+{"bench_id":0,"voice":"bm_fable","phonemes":"hˈQldɪŋ pˈYnt ɹˈʌnwA tˈuː sˈɛvən lˈɛft, skˈI djˈuːbI tˈuː nˈInə fˈIf."}
+{"bench_id":1,"voice":"af_heart","phonemes":"klˈɪɹd ˌIˌɛlˈɛs ɹˈʌnwA θɹˈi wˈʌn ɹˈIt, wɪl ɹᵻpˈɔɹt ɪstˈæblɪʃt, ˈɛɹ fɹˈæns ˈAt ˈATi."}
+{"bench_id":1,"voice":"am_puck","phonemes":"klˈɪɹd ˌIˌɛlˈɛs ɹˈʌnwA θɹˈi wˈʌn ɹˈIt, wɪl ɹᵻpˈɔɹt ɪstˈæblɪʃt, ˈɛɹ fɹˈæns ˈAt ˈATi."}
+{"bench_id":1,"voice":"bf_isabella","phonemes":"klˈɪəd ˌIˌɛlˈɛs ɹˈʌnwA θɹˈiː wˈɒn ɹˈIt, wɪl ɹɪpˈɔːt ɪstˈablɪʃt, ˈɛː fɹˈans ˈAt ˈAti."}
+{"bench_id":1,"voice":"bm_fable","phonemes":"klˈɪəd ˌIˌɛlˈɛs ɹˈʌnwA θɹˈiː wˈɒn ɹˈIt, wɪl ɹɪpˈɔːt ɪstˈablɪʃt, ˈɛː fɹˈans ˈAt ˈAti."}
+{"bench_id":2,"voice":"af_heart","phonemes":"ɹˈAdɑɹ kˈɑntækt, ˈæltɪmˌiTəɹ θɹˈi zˈiəɹO tˈu wˌʌn, ˌIˌɛlˈɛs zˈiəɹO sˈɪks lˈɛft, kˈæntəz ˈAt ˈATi."}
+{"bench_id":2,"voice":"am_puck","phonemes":"ɹˈAdɑɹ kˈɑntækt, ˈæltɪmˌiTəɹ θɹˈi zˈiəɹO tˈu wˌʌn, ˌIˌɛlˈɛs zˈiəɹO sˈɪks lˈɛft, kˈæntəz ˈAt ˈATi."}
+{"bench_id":2,"voice":"bf_isabella","phonemes":"ɹˈAdɑː kˈɒntakt, ˈaltɪmˌiːtə θɹˈiː zˈɪəɹQ tˈuː wˌɒn, ˌIˌɛlˈɛs zˈɪəɹQ sˈɪks lˈɛft, kˈantəz ˈAt ˈAti."}
+{"bench_id":2,"voice":"bm_fable","phonemes":"ɹˈAdɑː kˈɒntakt, ˈaltɪmˌiːtə θɹˈiː zˈɪəɹQ tˈuː wˌɒn, ˌIˌɛlˈɛs zˈɪəɹQ sˈɪks lˈɛft, kˈantəz ˈAt ˈAti."}
+{"bench_id":3,"voice":"af_heart","phonemes":"ɹˈAdɑɹ kˈɑntækt, kjˌuˌɛnˈAʧ wˈʌn zˈiəɹO tˈu sˈɛvən, ˌIˌɛlˈɛs tˈu sˈɪks ɹˈIt, dˈɛltə ˈAt ˈAt zˈiəɹO."}
+{"bench_id":3,"voice":"am_puck","phonemes":"ɹˈAdɑɹ kˈɑntækt, kjˌuˌɛnˈAʧ wˈʌn zˈiəɹO tˈu sˈɛvən, ˌIˌɛlˈɛs tˈu sˈɪks ɹˈIt, dˈɛltə ˈAt ˈAt zˈiəɹO."}
+{"bench_id":3,"voice":"bf_isabella","phonemes":"ɹˈAdɑː kˈɒntakt, kjˌuːˌɛnˈAʧ wˈɒn zˈɪəɹQ tˈuː sˈɛvən, ˌIˌɛlˈɛs tˈuː sˈɪks ɹˈIt, dˈɛltəɹ ˈAt ˈAt zˈɪəɹQ."}
+{"bench_id":3,"voice":"bm_fable","phonemes":"ɹˈAdɑː kˈɒntakt, kjˌuːˌɛnˈAʧ wˈɒn zˈɪəɹQ tˈuː sˈɛvən, ˌIˌɛlˈɛs tˈuː sˈɪks ɹˈIt, dˈɛltəɹ ˈAt ˈAt zˈɪəɹQ."}
+{"bench_id":4,"voice":"af_heart","phonemes":"stˈɑɹtˌʌp əpɹˈuvd, ɹˈʌnwA tɹˈi zˈiəɹO lˈɛft, kjˌuˌɛnˈAʧ wˈʌn zˈiəɹO wˈʌn sˈɛvən, əmˈɛɹɪkən sˈɛvən nˈInəɹ fˈɔɹ."}
+{"bench_id":4,"voice":"am_puck","phonemes":"stˈɑɹtˌʌp əpɹˈuvd, ɹˈʌnwA tɹˈi zˈiəɹO lˈɛft, kjˌuˌɛnˈAʧ wˈʌn zˈiəɹO wˈʌn sˈɛvən, əmˈɛɹɪkən sˈɛvən nˈInəɹ fˈɔɹ."}
+{"bench_id":4,"voice":"bf_isabella","phonemes":"stˈɑːtˌʌp əpɹˈuːvd, ɹˈʌnwA tɹˈiː zˈɪəɹQ lˈɛft, kjˌuːˌɛnˈAʧ wˈɒn zˈɪəɹQ wˈɒn sˈɛvən, əmˈɛɹɪkən sˈɛvən nˈInə fˈɔː."}
+{"bench_id":4,"voice":"bm_fable","phonemes":"stˈɑːtˌʌp əpɹˈuːvd, ɹˈʌnwA tɹˈiː zˈɪəɹQ lˈɛft, kjˌuːˌɛnˈAʧ wˈɒn zˈɪəɹQ wˈɒn sˈɛvən, əmˈɛɹɪkən sˈɛvən nˈInə fˈɔː."}
+{"bench_id":5,"voice":"af_heart","phonemes":"ɛkspˈɛkt ˌIˌɛlˈɛs zˈiəɹO sˈɛvən, ˌɪnfəɹmˈAʃən ˈælfə, skˈuTəɹ fˈɔɹ nˈInəɹ sˈɪks."}
+{"bench_id":5,"voice":"am_puck","phonemes":"ɛkspˈɛkt ˌIˌɛlˈɛs zˈiəɹO sˈɛvən, ˌɪnfəɹmˈAʃən ˈælfə, skˈuTəɹ fˈɔɹ nˈInəɹ sˈɪks."}
+{"bench_id":5,"voice":"bf_isabella","phonemes":"ɛkspˈɛkt ˌIˌɛlˈɛs zˈɪəɹQ sˈɛvən, ˌɪnfəmˈAʃən ˈalfə, skˈuːtə fˈɔː nˈInə sˈɪks."}
+{"bench_id":5,"voice":"bm_fable","phonemes":"ɛkspˈɛkt ˌIˌɛlˈɛs zˈɪəɹQ sˈɛvən, ˌɪnfəmˈAʃən ˈalfə, skˈuːtə fˈɔː nˈInə sˈɪks."}
+{"bench_id":6,"voice":"af_heart","phonemes":"dᵻpˈɑɹʧəɹ wˈʌn tˈu fˈIf dˈɛsɪmᵊl tˈu zˈiəɹO zˈiəɹO, ɡˈʊd dˈA, spˈidbɜɹd tˈu fˈɔɹ ˈAt."}
+{"bench_id":6,"voice":"am_puck","phonemes":"dᵻpˈɑɹʧəɹ wˈʌn tˈu fˈIf dˈɛsɪmᵊl tˈu zˈiəɹO zˈiəɹO, ɡˈʊd dˈA, spˈidbɜɹd tˈu fˈɔɹ ˈAt."}
+{"bench_id":6,"voice":"bf_isabella","phonemes":"dɪpˈɑːʧə wˈɒn tˈuː fˈIf dˈɛsɪmᵊl tˈuː zˈɪəɹQ zˈɪəɹQ, ɡˈʊd dˈA, spˈiːdbɜːd tˈuː fˈɔːɹ ˈAt."}
+{"bench_id":6,"voice":"bm_fable","phonemes":"dɪpˈɑːʧə wˈɒn tˈuː fˈIf dˈɛsɪmᵊl tˈuː zˈɪəɹQ zˈɪəɹQ, ɡˈʊd dˈA, spˈiːdbɜːd tˈuː fˈɔːɹ ˈAt."}
+{"bench_id":7,"voice":"af_heart","phonemes":"hˈɛdɪŋ wˈʌn fˈIv tˈu, ˈɛɹ fɹˈæns ˈAt sˈɪkstifˈIv."}
+{"bench_id":7,"voice":"am_puck","phonemes":"hˈɛdɪŋ wˈʌn fˈIv tˈu, ˈɛɹ fɹˈæns ˈAt sˈɪkstifˈIv."}
+{"bench_id":7,"voice":"bf_isabella","phonemes":"hˈɛdɪŋ wˈɒn fˈIv tˈuː, ˈɛː fɹˈans ˈAt sˈɪkstifˈIv."}
+{"bench_id":7,"voice":"bm_fable","phonemes":"hˈɛdɪŋ wˈɒn fˈIv tˈuː, ˈɛː fɹˈans ˈAt sˈɪkstifˈIv."}
+{"bench_id":8,"voice":"af_heart","phonemes":"ɹˈʌnwA tˈu fˈIv lˈɛft, sWθwˈɛst fˈIv twˈɛntisˈɛvən."}
+{"bench_id":8,"voice":"am_puck","phonemes":"ɹˈʌnwA tˈu fˈIv lˈɛft, sWθwˈɛst fˈIv twˈɛntisˈɛvən."}
+{"bench_id":8,"voice":"bf_isabella","phonemes":"ɹˈʌnwA tˈuː fˈIv lˈɛft, sWθwˈɛst fˈIv twˈɛntisˈɛvən."}
+{"bench_id":8,"voice":"bm_fable","phonemes":"ɹˈʌnwA tˈuː fˈIv lˈɛft, sWθwˈɛst fˈIv twˈɛntisˈɛvən."}
+{"bench_id":9,"voice":"af_heart","phonemes":"hˈOldɪŋ pəzˈɪʃən, əmˈɛɹɪkən sˈɛvən nˈInəɹ fˈɔɹ."}
+{"bench_id":9,"voice":"am_puck","phonemes":"hˈOldɪŋ pəzˈɪʃən, əmˈɛɹɪkən sˈɛvən nˈInəɹ fˈɔɹ."}
+{"bench_id":9,"voice":"bf_isabella","phonemes":"hˈQldɪŋ pəzˈɪʃən, əmˈɛɹɪkən sˈɛvən nˈInə fˈɔː."}
+{"bench_id":9,"voice":"bm_fable","phonemes":"hˈQldɪŋ pəzˈɪʃən, əmˈɛɹɪkən sˈɛvən nˈInə fˈɔː."}
+{"bench_id":10,"voice":"af_heart","phonemes":"ɹˈɑʤəɹ, stˈændɪŋ bˈI, vˈɜɹʤɪn fˈIf wˌʌn."}
+{"bench_id":10,"voice":"am_puck","phonemes":"ɹˈɑʤəɹ, stˈændɪŋ bˈI, vˈɜɹʤɪn fˈIf wˌʌn."}
+{"bench_id":10,"voice":"bf_isabella","phonemes":"ɹˈɒʤə, stˈandɪŋ bˈI, vˈɜːʤɪn fˈIf wˌɒn."}
+{"bench_id":10,"voice":"bm_fable","phonemes":"ɹˈɒʤə, stˈandɪŋ bˈI, vˈɜːʤɪn fˈIf wˌɒn."}
+{"bench_id":11,"voice":"af_heart","phonemes":"stˈɑɹtˌʌp əpɹˈuvd, ɹˈʌnwA zˈiəɹO sˈɛvən, kjˌuˌɛnˈAʧ wˈʌn zˈiəɹO tˈu fˈɔɹ, vəlˈɑsᵻTi fˈIf fˈɔɹ tˈu."}
+{"bench_id":11,"voice":"am_puck","phonemes":"stˈɑɹtˌʌp əpɹˈuvd, ɹˈʌnwA zˈiəɹO sˈɛvən, kjˌuˌɛnˈAʧ wˈʌn zˈiəɹO tˈu fˈɔɹ, vəlˈɑsᵻTi fˈIf fˈɔɹ tˈu."}
+{"bench_id":11,"voice":"bf_isabella","phonemes":"stˈɑːtˌʌp əpɹˈuːvd, ɹˈʌnwA zˈɪəɹQ sˈɛvən, kjˌuːˌɛnˈAʧ wˈɒn zˈɪəɹQ tˈuː fˈɔː, vəlˈɒsɪti fˈIf fˈɔː tˈuː."}
+{"bench_id":11,"voice":"bm_fable","phonemes":"stˈɑːtˌʌp əpɹˈuːvd, ɹˈʌnwA zˈɪəɹQ sˈɛvən, kjˌuːˌɛnˈAʧ wˈɒn zˈɪəɹQ tˈuː fˈɔː, vəlˈɒsɪti fˈIf fˈɔː tˈuː."}
+{"bench_id":12,"voice":"af_heart","phonemes":"ɹˈIt hˈɛdɪŋ wˈʌn nˈInəɹ zˈiəɹO, spˈidbɜɹd tˈu fˈɔɹ ˈAt."}
+{"bench_id":12,"voice":"am_puck","phonemes":"ɹˈIt hˈɛdɪŋ wˈʌn nˈInəɹ zˈiəɹO, spˈidbɜɹd tˈu fˈɔɹ ˈAt."}
+{"bench_id":12,"voice":"bf_isabella","phonemes":"ɹˈIt hˈɛdɪŋ wˈɒn nˈInə zˈɪəɹQ, spˈiːdbɜːd tˈuː fˈɔːɹ ˈAt."}
+{"bench_id":12,"voice":"bm_fable","phonemes":"ɹˈIt hˈɛdɪŋ wˈɒn nˈInə zˈɪəɹQ, spˈiːdbɜːd tˈuː fˈɔːɹ ˈAt."}
+{"bench_id":13,"voice":"af_heart","phonemes":"ɹˈʌnwA θɹˈi wˈʌn lˈɛft, lˈIn ˌʌp ænd wˈAt, dˈɛltə sˈɛvəntisˈɪks."}
+{"bench_id":13,"voice":"am_puck","phonemes":"ɹˈʌnwA θɹˈi wˈʌn lˈɛft, lˈIn ˌʌp ænd wˈAt, dˈɛltə sˈɛvəntisˈɪks."}
+{"bench_id":13,"voice":"bf_isabella","phonemes":"ɹˈʌnwA θɹˈiː wˈɒn lˈɛft, lˈIn ˌʌp and wˈAt, dˈɛltə sˈɛvəntisˈɪks."}
+{"bench_id":13,"voice":"bm_fable","phonemes":"ɹˈʌnwA θɹˈiː wˈɒn lˈɛft, lˈIn ˌʌp and wˈAt, dˈɛltə sˈɛvəntisˈɪks."}
+{"bench_id":14,"voice":"af_heart","phonemes":"stˈɑɹtˌʌp əpɹˈuvd, ɹˈʌnwA zˈiəɹO sˈɪks ɹˈIt, ˈæltɪmˌiTəɹ θɹˈi zˈiəɹO tˈu wˌʌn, sWθwˈɛst fˈIv twˈɛntisˈɛvən."}
+{"bench_id":14,"voice":"am_puck","phonemes":"stˈɑɹtˌʌp əpɹˈuvd, ɹˈʌnwA zˈiəɹO sˈɪks ɹˈIt, ˈæltɪmˌiTəɹ θɹˈi zˈiəɹO tˈu wˌʌn, sWθwˈɛst fˈIv twˈɛntisˈɛvən."}
+{"bench_id":14,"voice":"bf_isabella","phonemes":"stˈɑːtˌʌp əpɹˈuːvd, ɹˈʌnwA zˈɪəɹQ sˈɪks ɹˈIt, ˈaltɪmˌiːtə θɹˈiː zˈɪəɹQ tˈuː wˌɒn, sWθwˈɛst fˈIv twˈɛntisˈɛvən."}
+{"bench_id":14,"voice":"bm_fable","phonemes":"stˈɑːtˌʌp əpɹˈuːvd, ɹˈʌnwA zˈɪəɹQ sˈɪks ɹˈIt, ˈaltɪmˌiːtə θɹˈiː zˈɪəɹQ tˈuː wˌɒn, sWθwˈɛst fˈIv twˈɛntisˈɛvən."}
+{"bench_id":15,"voice":"af_heart","phonemes":"hˈOld æt sˌidˌiʤˈiˌɛndˈʌbəljˌu, æz pˈʌblɪʃt, ɹˈIt tˈɜɹnz, wˈʌn mˈɪnɪt lˈɛɡz, dˈɛltə ˈAt sˈɪks fˈIf."}
+{"bench_id":15,"voice":"am_puck","phonemes":"hˈOld æt sˌidˌiʤˈiˌɛndˈʌbəljˌu, æz pˈʌblɪʃt, ɹˈIt tˈɜɹnz, wˈʌn mˈɪnɪt lˈɛɡz, dˈɛltə ˈAt sˈɪks fˈIf."}
+{"bench_id":15,"voice":"bf_isabella","phonemes":"hˈQld at sˌiːdˌiːʤˈiːˌɛndˈʌbəljˌuː, az pˈʌblɪʃt, ɹˈIt tˈɜːnz, wˈɒn mˈɪnɪt lˈɛɡz, dˈɛltəɹ ˈAt sˈɪks fˈIf."}
+{"bench_id":15,"voice":"bm_fable","phonemes":"hˈQld at sˌiːdˌiːʤˈiːˌɛndˈʌbəljˌuː, az pˈʌblɪʃt, ɹˈIt tˈɜːnz, wˈɒn mˈɪnɪt lˈɛɡz, dˈɛltəɹ ˈAt sˈɪks fˈIf."}
+{"bench_id":16,"voice":"af_heart","phonemes":"hˈOldɪŋ pˈYnt ɹˈʌnwA tɹˈi zˈiəɹO lˈɛft vˈIə ʤˌulɪˈɛt, ʤˌulɪˈɛt wˌʌn, ʤˌulɪˈɛt tˈu, ˈɛmᵻɹˌAts tˈu fˈɔɹ ˈAt."}
+{"bench_id":16,"voice":"am_puck","phonemes":"hˈOldɪŋ pˈYnt ɹˈʌnwA tɹˈi zˈiəɹO lˈɛft vˈIə ʤˌulɪˈɛt, ʤˌulɪˈɛt wˌʌn, ʤˌulɪˈɛt tˈu, ˈɛmᵻɹˌAts tˈu fˈɔɹ ˈAt."}
+{"bench_id":16,"voice":"bf_isabella","phonemes":"hˈQldɪŋ pˈYnt ɹˈʌnwA tɹˈiː zˈɪəɹQ lˈɛft vˈIə ʤˌuːlɪˈɛt, ʤˌuːlɪˈɛt wˌɒn, ʤˌuːlɪˈɛt tˈuː, ˈɛmɪɹˌAts tˈuː fˈɔːɹ ˈAt."}
+{"bench_id":16,"voice":"bm_fable","phonemes":"hˈQldɪŋ pˈYnt ɹˈʌnwA tɹˈiː zˈɪəɹQ lˈɛft vˈIə ʤˌuːlɪˈɛt, ʤˌuːlɪˈɛt wˌɒn, ʤˌuːlɪˈɛt tˈuː, ˈɛmɪɹˌAts tˈuː fˈɔːɹ ˈAt."}
+{"bench_id":17,"voice":"af_heart","phonemes":"spˈid wˈʌn sˈɪks zˈiəɹO nˈɑts, kˈæntəz sˈɛvən sˈɪks."}
+{"bench_id":17,"voice":"am_puck","phonemes":"spˈid wˈʌn sˈɪks zˈiəɹO nˈɑts, kˈæntəz sˈɛvən sˈɪks."}
+{"bench_id":17,"voice":"bf_isabella","phonemes":"spˈiːd wˈɒn sˈɪks zˈɪəɹQ nˈɒts, kˈantəz sˈɛvən sˈɪks."}
+{"bench_id":17,"voice":"bm_fable","phonemes":"spˈiːd wˈɒn sˈɪks zˈɪəɹQ nˈɒts, kˈantəz sˈɛvən sˈɪks."}
+{"bench_id":18,"voice":"af_heart","phonemes":"dᵻsˈɛnd flˈIt lˈɛvᵊl sˈɛvən zˈiəɹO, spˈidbɜɹd fˈɔɹ zˈiəɹO."}
+{"bench_id":18,"voice":"am_puck","phonemes":"dᵻsˈɛnd flˈIt lˈɛvᵊl sˈɛvən zˈiəɹO, spˈidbɜɹd fˈɔɹ zˈiəɹO."}
+{"bench_id":18,"voice":"bf_isabella","phonemes":"dɪsˈɛnd flˈIt lˈɛvᵊl sˈɛvən zˈɪəɹQ, spˈiːdbɜːd fˈɔː zˈɪəɹQ."}
+{"bench_id":18,"voice":"bm_fable","phonemes":"dɪsˈɛnd flˈIt lˈɛvᵊl sˈɛvən zˈɪəɹQ, spˈiːdbɜːd fˈɔː zˈɪəɹQ."}
+{"bench_id":19,"voice":"af_heart","phonemes":"klˈɪɹd tə lˈænd ɹˈʌnwA θɹˈi wˈʌn ɹˈIt, dˈɛltə sˈɛvəntisˈɪks."}
+{"bench_id":19,"voice":"am_puck","phonemes":"klˈɪɹd tə lˈænd ɹˈʌnwA θɹˈi wˈʌn ɹˈIt, dˈɛltə sˈɛvəntisˈɪks."}
+{"bench_id":19,"voice":"bf_isabella","phonemes":"klˈɪəd tə lˈand ɹˈʌnwA θɹˈiː wˈɒn ɹˈIt, dˈɛltə sˈɛvəntisˈɪks."}
+{"bench_id":19,"voice":"bm_fable","phonemes":"klˈɪəd tə lˈand ɹˈʌnwA θɹˈiː wˈɒn ɹˈIt, dˈɛltə sˈɛvəntisˈɪks."}
+{"bench_id":20,"voice":"af_heart","phonemes":"pˈʊʃbæk əpɹˈuvd, fˈAsɪŋ sˈWθ, ɛkspˈɛkt ɹˈʌnwA tˈu fˈIv lˈɛft, ˈɔl nˈɪpən sˈɪks ˈAtin."}
+{"bench_id":20,"voice":"am_puck","phonemes":"pˈʊʃbæk əpɹˈuvd, fˈAsɪŋ sˈWθ, ɛkspˈɛkt ɹˈʌnwA tˈu fˈIv lˈɛft, ˈɔl nˈɪpən sˈɪks ˈAtin."}
+{"bench_id":20,"voice":"bf_isabella","phonemes":"pˈʊʃbak əpɹˈuːvd, fˈAsɪŋ sˈWθ, ɛkspˈɛkt ɹˈʌnwA tˈuː fˈIv lˈɛft, ˈɔːl nˈɪpən sˈɪks ˈAtiːn."}
+{"bench_id":20,"voice":"bm_fable","phonemes":"pˈʊʃbak əpɹˈuːvd, fˈAsɪŋ sˈWθ, ɛkspˈɛkt ɹˈʌnwA tˈuː fˈIv lˈɛft, ˈɔːl nˈɪpən sˈɪks ˈAtiːn."}
+{"bench_id":21,"voice":"af_heart","phonemes":"ɹˈʌnwA tˈu sˈɪks ɹˈIt, lˈIn ˌʌp ænd wˈAt, jˌupˌiˈɛs nˈInəɹ sˈɛvən sˈɪks."}
+{"bench_id":21,"voice":"am_puck","phonemes":"ɹˈʌnwA tˈu sˈɪks ɹˈIt, lˈIn ˌʌp ænd wˈAt, jˌupˌiˈɛs nˈInəɹ sˈɛvən sˈɪks."}
+{"bench_id":21,"voice":"bf_isabella","phonemes":"ɹˈʌnwA tˈuː sˈɪks ɹˈIt, lˈIn ˌʌp and wˈAt, jˌuːpˌiːˈɛs nˈInə sˈɛvən sˈɪks."}
+{"bench_id":21,"voice":"bm_fable","phonemes":"ɹˈʌnwA tˈuː sˈɪks ɹˈIt, lˈIn ˌʌp and wˈAt, jˌuːpˌiːˈɛs nˈInə sˈɛvən sˈɪks."}
+{"bench_id":22,"voice":"af_heart","phonemes":"hˈOldɪŋ pˈYnt ɹˈʌnwA tɹˈi zˈiəɹO ɹˈIt, hˈOld ʃˈɔɹt wˈʌn tˈu ɹˈIt, skˈI dˈubI tˈu nˈInəɹ fˈIf."}
+{"bench_id":22,"voice":"am_puck","phonemes":"hˈOldɪŋ pˈYnt ɹˈʌnwA tɹˈi zˈiəɹO ɹˈIt, hˈOld ʃˈɔɹt wˈʌn tˈu ɹˈIt, skˈI dˈubI tˈu nˈInəɹ fˈIf."}
+{"bench_id":22,"voice":"bf_isabella","phonemes":"hˈQldɪŋ pˈYnt ɹˈʌnwA tɹˈiː zˈɪəɹQ ɹˈIt, hˈQld ʃˈɔːt wˈɒn tˈuː ɹˈIt, skˈI djˈuːbI tˈuː nˈInə fˈIf."}
+{"bench_id":22,"voice":"bm_fable","phonemes":"hˈQldɪŋ pˈYnt ɹˈʌnwA tɹˈiː zˈɪəɹQ ɹˈIt, hˈQld ʃˈɔːt wˈɒn tˈuː ɹˈIt, skˈI djˈuːbI tˈuː nˈInə fˈIf."}
+{"bench_id":23,"voice":"af_heart","phonemes":"kɹˈɔs ɹˈʌnwA wˈʌn sˈɪks ɹˈIt, wˈɪlkO, kˈæntəz tˈu fˈɔɹ ˈAt."}
+{"bench_id":23,"voice":"am_puck","phonemes":"kɹˈɔs ɹˈʌnwA wˈʌn sˈɪks ɹˈIt, wˈɪlkO, kˈæntəz tˈu fˈɔɹ ˈAt."}
+{"bench_id":23,"voice":"bf_isabella","phonemes":"kɹˈɒs ɹˈʌnwA wˈɒn sˈɪks ɹˈIt, wˈɪlkQ, kˈantəz tˈuː fˈɔːɹ ˈAt."}
+{"bench_id":23,"voice":"bm_fable","phonemes":"kɹˈɒs ɹˈʌnwA wˈɒn sˈɪks ɹˈIt, wˈɪlkQ, kˈantəz tˈuː fˈɔːɹ ˈAt."}
+{"bench_id":24,"voice":"af_heart","phonemes":"pˈʊʃbæk əpɹˈuvd, fˈAsɪŋ ˈist, ɛkspˈɛkt ɹˈʌnwA tˈu sˈɛvən ɹˈIt, kætˈɑɹɹi nˈInəɹ tɹˈi sˈɛvən."}
+{"bench_id":24,"voice":"am_puck","phonemes":"pˈʊʃbæk əpɹˈuvd, fˈAsɪŋ ˈist, ɛkspˈɛkt ɹˈʌnwA tˈu sˈɛvən ɹˈIt, kætˈɑɹɹi nˈInəɹ tɹˈi sˈɛvən."}
+{"bench_id":24,"voice":"bf_isabella","phonemes":"pˈʊʃbak əpɹˈuːvd, fˈAsɪŋ ˈiːst, ɛkspˈɛkt ɹˈʌnwA tˈuː sˈɛvən ɹˈIt, katˈɑːɹi nˈInə tɹˈiː sˈɛvən."}
+{"bench_id":24,"voice":"bm_fable","phonemes":"pˈʊʃbak əpɹˈuːvd, fˈAsɪŋ ˈiːst, ɛkspˈɛkt ɹˈʌnwA tˈuː sˈɛvən ɹˈIt, katˈɑːɹi nˈInə tɹˈiː sˈɛvən."}
+{"bench_id":25,"voice":"af_heart","phonemes":"klˈɪɹd tə lˈænd ɹˈʌnwA θɹˈi wˈʌn lˈɛft, lʌfθˈænsə ˈAt twˈɛnti."}
+{"bench_id":25,"voice":"am_puck","phonemes":"klˈɪɹd tə lˈænd ɹˈʌnwA θɹˈi wˈʌn lˈɛft, lʌfθˈænsə ˈAt twˈɛnti."}
+{"bench_id":25,"voice":"bf_isabella","phonemes":"klˈɪəd tə lˈand ɹˈʌnwA θɹˈiː wˈɒn lˈɛft, lʌfθˈansəɹ ˈAt twˈɛnti."}
+{"bench_id":25,"voice":"bm_fable","phonemes":"klˈɪəd tə lˈand ɹˈʌnwA θɹˈiː wˈɒn lˈɛft, lʌfθˈansəɹ ˈAt twˈɛnti."}
+{"bench_id":26,"voice":"af_heart","phonemes":"ɹˈʌnwA tˈu fˈIv lˈɛft, hˈOld ʃˈɔɹt tˈu fˈIv ɹˈIt, dˈɛltə tˈu fˈɔɹTiˈAt."}
+{"bench_id":26,"voice":"am_puck","phonemes":"ɹˈʌnwA tˈu fˈIv lˈɛft, hˈOld ʃˈɔɹt tˈu fˈIv ɹˈIt, dˈɛltə tˈu fˈɔɹTiˈAt."}
+{"bench_id":26,"voice":"bf_isabella","phonemes":"ɹˈʌnwA tˈuː fˈIv lˈɛft, hˈQld ʃˈɔːt tˈuː fˈIv ɹˈIt, dˈɛltə tˈuː fˈɔːtiˈAt."}
+{"bench_id":26,"voice":"bm_fable","phonemes":"ɹˈʌnwA tˈuː fˈIv lˈɛft, hˈQld ʃˈɔːt tˈuː fˈIv ɹˈIt, dˈɛltə tˈuː fˈɔːtiˈAt."}
+{"bench_id":27,"voice":"af_heart","phonemes":"tˈWəɹ wˈʌn wˈʌn ˈAt dˈɛsɪmᵊl fˈIf zˈiəɹO zˈiəɹO, lʌfθˈænsə wˈʌn fˈIf tɹˈi."}
+{"bench_id":27,"voice":"am_puck","phonemes":"tˈWəɹ wˈʌn wˈʌn ˈAt dˈɛsɪmᵊl fˈIf zˈiəɹO zˈiəɹO, lʌfθˈænsə wˈʌn fˈIf tɹˈi."}
+{"bench_id":27,"voice":"bf_isabella","phonemes":"tˈWə wˈɒn wˈɒn ˈAt dˈɛsɪmᵊl fˈIf zˈɪəɹQ zˈɪəɹQ, lʌfθˈansə wˈɒn fˈIf tɹˈiː."}
+{"bench_id":27,"voice":"bm_fable","phonemes":"tˈWə wˈɒn wˈɒn ˈAt dˈɛsɪmᵊl fˈIf zˈɪəɹQ zˈɪəɹQ, lʌfθˈansə wˈɒn fˈIf tɹˈiː."}
+{"bench_id":28,"voice":"af_heart","phonemes":"ɛkspˈɛkt ˌIˌɛlˈɛs tɹˈi zˈiəɹO ɹˈIt, ˌɪnfəɹmˈAʃən ˈælfə, ˈɛmᵻɹˌAts sˈɛvən sˈɪks."}
+{"bench_id":28,"voice":"am_puck","phonemes":"ɛkspˈɛkt ˌIˌɛlˈɛs tɹˈi zˈiəɹO ɹˈIt, ˌɪnfəɹmˈAʃən ˈælfə, ˈɛmᵻɹˌAts sˈɛvən sˈɪks."}
+{"bench_id":28,"voice":"bf_isabella","phonemes":"ɛkspˈɛkt ˌIˌɛlˈɛs tɹˈiː zˈɪəɹQ ɹˈIt, ˌɪnfəmˈAʃən ˈalfə, ˈɛmɪɹˌAts sˈɛvən sˈɪks."}
+{"bench_id":28,"voice":"bm_fable","phonemes":"ɛkspˈɛkt ˌIˌɛlˈɛs tɹˈiː zˈɪəɹQ ɹˈIt, ˌɪnfəmˈAʃən ˈalfə, ˈɛmɪɹˌAts sˈɛvən sˈɪks."}
+{"bench_id":29,"voice":"af_heart","phonemes":"klˈɪɹd tə lˈænd ɹˈʌnwA zˈiəɹO sˈɛvən, ˈɛmᵻɹˌAts ˈAt ˈAt zˈiəɹO."}
+{"bench_id":29,"voice":"am_puck","phonemes":"klˈɪɹd tə lˈænd ɹˈʌnwA zˈiəɹO sˈɛvən, ˈɛmᵻɹˌAts ˈAt ˈAt zˈiəɹO."}
+{"bench_id":29,"voice":"bf_isabella","phonemes":"klˈɪəd tə lˈand ɹˈʌnwA zˈɪəɹQ sˈɛvən, ˈɛmɪɹˌAts ˈAt ˈAt zˈɪəɹQ."}
+{"bench_id":29,"voice":"bm_fable","phonemes":"klˈɪəd tə lˈand ɹˈʌnwA zˈɪəɹQ sˈɛvən, ˈɛmɪɹˌAts ˈAt ˈAt zˈɪəɹQ."}
+{"bench_id":30,"voice":"af_heart","phonemes":"hˈOldɪŋ pˈYnt ɹˈʌnwA tˈu sˈɛvən ɹˈIt vˈIəɹ ˈælfə wˌʌn, ˈælfə tˈu, ˈælfə θɹˈi, spˈidbɜɹd tˈu sˈɪks fˈIf."}
+{"bench_id":30,"voice":"am_puck","phonemes":"hˈOldɪŋ pˈYnt ɹˈʌnwA tˈu sˈɛvən ɹˈIt vˈIəɹ ˈælfə wˌʌn, ˈælfə tˈu, ˈælfə θɹˈi, spˈidbɜɹd tˈu sˈɪks fˈIf."}
+{"bench_id":30,"voice":"bf_isabella","phonemes":"hˈQldɪŋ pˈYnt ɹˈʌnwA tˈuː sˈɛvən ɹˈIt vˈIəɹ ˈalfə wˌɒn, ˈalfə tˈuː, ˈalfə θɹˈiː, spˈiːdbɜːd tˈuː sˈɪks fˈIf."}
+{"bench_id":30,"voice":"bm_fable","phonemes":"hˈQldɪŋ pˈYnt ɹˈʌnwA tˈuː sˈɛvən ɹˈIt vˈIəɹ ˈalfə wˌɒn, ˈalfə tˈuː, ˈalfə θɹˈiː, spˈiːdbɜːd tˈuː sˈɪks fˈIf."}
+{"bench_id":31,"voice":"af_heart","phonemes":"tˈWəɹ wˈʌn wˈʌn ˈAt pˈYnt fˈIv, skˈI dˈubI tˈu nˈIntifˈIv."}
+{"bench_id":31,"voice":"am_puck","phonemes":"tˈWəɹ wˈʌn wˈʌn ˈAt pˈYnt fˈIv, skˈI dˈubI tˈu nˈIntifˈIv."}
+{"bench_id":31,"voice":"bf_isabella","phonemes":"tˈWə wˈɒn wˈɒn ˈAt pˈYnt fˈIv, skˈI djˈuːbI tˈuː nˈIntifˈIv."}
+{"bench_id":31,"voice":"bm_fable","phonemes":"tˈWə wˈɒn wˈɒn ˈAt pˈYnt fˈIv, skˈI djˈuːbI tˈuː nˈIntifˈIv."}
+{"bench_id":32,"voice":"af_heart","phonemes":"hˈiθɹO ɡɹˈWnd, ʃˈæmɹɑk sˈɛvən tˈu, ɹˈɛdi tə tˈæksi, ˌɪnfəɹmˈAʃən ˈælfə."}
+{"bench_id":32,"voice":"am_puck","phonemes":"hˈiθɹO ɡɹˈWnd, ʃˈæmɹɑk sˈɛvən tˈu, ɹˈɛdi tə tˈæksi, ˌɪnfəɹmˈAʃən ˈælfə."}
+{"bench_id":32,"voice":"bf_isabella","phonemes":"hˈiːθɹQ ɡɹˈWnd, ʃˈamɹɒk sˈɛvən tˈuː, ɹˈɛdi tə tˈaksi, ˌɪnfəmˈAʃən ˈalfə."}
+{"bench_id":32,"voice":"bm_fable","phonemes":"hˈiːθɹQ ɡɹˈWnd, ʃˈamɹɒk sˈɛvən tˈuː, ɹˈɛdi tə tˈaksi, ˌɪnfəmˈAʃən ˈalfə."}
+{"bench_id":33,"voice":"af_heart","phonemes":"ˈɛɹ fɹˈæns ˈAt ˈATi, ɹᵻkwˈɛst dᵻɹˈɛkt ʤˌAˌɛfkˈAˌɛsˈi."}
+{"bench_id":33,"voice":"am_puck","phonemes":"ˈɛɹ fɹˈæns ˈAt ˈATi, ɹᵻkwˈɛst dᵻɹˈɛkt ʤˌAˌɛfkˈAˌɛsˈi."}
+{"bench_id":33,"voice":"bf_isabella","phonemes":"ˈɛː fɹˈans ˈAt ˈAti, ɹɪkwˈɛst dIɹˈɛkt ʤˌAˌɛfkˈAˌɛsˈiː."}
+{"bench_id":33,"voice":"bm_fable","phonemes":"ˈɛː fɹˈans ˈAt ˈAti, ɹɪkwˈɛst dIɹˈɛkt ʤˌAˌɛfkˈAˌɛsˈiː."}
+{"bench_id":34,"voice":"af_heart","phonemes":"lˌɑs ˈænʤəlɪs ˌɪntəɹnˈæʃənᵊl ɡɹˈWnd, sWθwˈɛst fˈIv twˈɛntisˈɛvən, stˈænd ɹˈOmɪˌO fˈɔɹ θɹˈi, ɹᵻkwˈɛst stˈɑɹtˈʌp, ˌɪnfəɹmˈAʃən ˈælfə."}
+{"bench_id":34,"voice":"am_puck","phonemes":"lˌɑs ˈænʤəlɪs ˌɪntəɹnˈæʃənᵊl ɡɹˈWnd, sWθwˈɛst fˈIv twˈɛntisˈɛvən, stˈænd ɹˈOmɪˌO fˈɔɹ θɹˈi, ɹᵻkwˈɛst stˈɑɹtˈʌp, ˌɪnfəɹmˈAʃən ˈælfə."}
+{"bench_id":34,"voice":"bf_isabella","phonemes":"lˌɒs ˈanʤəlˌiːs ˌɪntənˈaʃənᵊl ɡɹˈWnd, sWθwˈɛst fˈIv twˈɛntisˈɛvən, stˈand ɹˈQmɪˌQ fˈɔː θɹˈiː, ɹɪkwˈɛst stˈɑːtˈʌp, ˌɪnfəmˈAʃən ˈalfə."}
+{"bench_id":34,"voice":"bm_fable","phonemes":"lˌɒs ˈanʤəlˌiːs ˌɪntənˈaʃənᵊl ɡɹˈWnd, sWθwˈɛst fˈIv twˈɛntisˈɛvən, stˈand ɹˈQmɪˌQ fˈɔː θɹˈiː, ɹɪkwˈɛst stˈɑːtˈʌp, ˌɪnfəmˈAʃən ˈalfə."}
+{"bench_id":35,"voice":"af_heart","phonemes":"pˈæɹɪs ʧˈɑɹlz də ɡˈɔl əpɹˈOʧ, ˈɛɹ fɹˈæns tɹˈi fˈIf fˈɔɹ, ˌIˌɛlˈɛs ɹˈʌnwA tˈu sˈɪks lˈɛft."}
+{"bench_id":35,"voice":"am_puck","phonemes":"pˈæɹɪs ʧˈɑɹlz də ɡˈɔl əpɹˈOʧ, ˈɛɹ fɹˈæns tɹˈi fˈIf fˈɔɹ, ˌIˌɛlˈɛs ɹˈʌnwA tˈu sˈɪks lˈɛft."}
+{"bench_id":35,"voice":"bf_isabella","phonemes":"pˈaɹɪs ʧˈɑːlz də ɡˈɔːl əpɹˈQʧ, ˈɛː fɹˈans tɹˈiː fˈIf fˈɔː, ˌIˌɛlˈɛs ɹˈʌnwA tˈuː sˈɪks lˈɛft."}
+{"bench_id":35,"voice":"bm_fable","phonemes":"pˈaɹɪs ʧˈɑːlz də ɡˈɔːl əpɹˈQʧ, ˈɛː fɹˈans tɹˈiː fˈIf fˈɔː, ˌIˌɛlˈɛs ɹˈʌnwA tˈuː sˈɪks lˈɛft."}
+{"bench_id":36,"voice":"af_heart","phonemes":"dˈubI ˌɪntəɹnˈæʃənᵊl əpɹˈOʧ, I flˈI ˈAt ˈAt zˈiəɹO, ˌIˌɛlˈɛs ɹˈʌnwA tɹˈi zˈiəɹO ɹˈIt."}
+{"bench_id":36,"voice":"am_puck","phonemes":"dˈubI ˌɪntəɹnˈæʃənᵊl əpɹˈOʧ, I flˈI ˈAt ˈAt zˈiəɹO, ˌIˌɛlˈɛs ɹˈʌnwA tɹˈi zˈiəɹO ɹˈIt."}
+{"bench_id":36,"voice":"bf_isabella","phonemes":"djˈuːbI ˌɪntənˈaʃənᵊl əpɹˈQʧ, I flˈI ˈAt ˈAt zˈɪəɹQ, ˌIˌɛlˈɛs ɹˈʌnwA tɹˈiː zˈɪəɹQ ɹˈIt."}
+{"bench_id":36,"voice":"bm_fable","phonemes":"djˈuːbI ˌɪntənˈaʃənᵊl əpɹˈQʧ, I flˈI ˈAt ˈAt zˈɪəɹQ, ˌIˌɛlˈɛs ɹˈʌnwA tɹˈiː zˈɪəɹQ ɹˈIt."}
+{"bench_id":37,"voice":"af_heart","phonemes":"sˈɪdni kˈɪŋzfəɹd smˈɪθ əpɹˈOʧ, ˈɛmᵻɹˌAts ˈAt ˈAt zˈiəɹO, ˌIˌɛlˈɛs ɹˈʌnwA zˈiəɹO sˈɛvən."}
+{"bench_id":37,"voice":"am_puck","phonemes":"sˈɪdni kˈɪŋzfəɹd smˈɪθ əpɹˈOʧ, ˈɛmᵻɹˌAts ˈAt ˈAt zˈiəɹO, ˌIˌɛlˈɛs ɹˈʌnwA zˈiəɹO sˈɛvən."}
+{"bench_id":37,"voice":"bf_isabella","phonemes":"sˈɪdni kˈɪŋzfəd smˈɪθ əpɹˈQʧ, ˈɛmɪɹˌAts ˈAt ˈAt zˈɪəɹQ, ˌIˌɛlˈɛs ɹˈʌnwA zˈɪəɹQ sˈɛvən."}
+{"bench_id":37,"voice":"bm_fable","phonemes":"sˈɪdni kˈɪŋzfəd smˈɪθ əpɹˈQʧ, ˈɛmɪɹˌAts ˈAt ˈAt zˈɪəɹQ, ˌIˌɛlˈɛs ɹˈʌnwA zˈɪəɹQ sˈɛvən."}
+{"bench_id":38,"voice":"af_heart","phonemes":"hˈiθɹO tˈWəɹ, lʌfθˈænsə wˈʌn fˈIf tɹˈi, hˈOldɪŋ pˈYnt ɹˈʌnwA tˈu sˈɛvən ɹˈIt, ɹˈɛdi fɔɹ dᵻpˈɑɹʧəɹ."}
+{"bench_id":38,"voice":"am_puck","phonemes":"hˈiθɹO tˈWəɹ, lʌfθˈænsə wˈʌn fˈIf tɹˈi, hˈOldɪŋ pˈYnt ɹˈʌnwA tˈu sˈɛvən ɹˈIt, ɹˈɛdi fɔɹ dᵻpˈɑɹʧəɹ."}
+{"bench_id":38,"voice":"bf_isabella","phonemes":"hˈiːθɹQ tˈWə, lʌfθˈansə wˈɒn fˈIf tɹˈiː, hˈQldɪŋ pˈYnt ɹˈʌnwA tˈuː sˈɛvən ɹˈIt, ɹˈɛdi fɔː dɪpˈɑːʧə."}
+{"bench_id":38,"voice":"bm_fable","phonemes":"hˈiːθɹQ tˈWə, lʌfθˈansə wˈɒn fˈIf tɹˈiː, hˈQldɪŋ pˈYnt ɹˈʌnwA tˈuː sˈɛvən ɹˈIt, ɹˈɛdi fɔː dɪpˈɑːʧə."}
+{"bench_id":39,"voice":"af_heart","phonemes":"ˈɛɹ fɹˈæns ˈAt ˈATi, ɹᵻkwˈɛst dᵻsˈɛnt tə fˈɔɹ θˈWzənd."}
+{"bench_id":39,"voice":"am_puck","phonemes":"ˈɛɹ fɹˈæns ˈAt ˈATi, ɹᵻkwˈɛst dᵻsˈɛnt tə fˈɔɹ θˈWzənd."}
+{"bench_id":39,"voice":"bf_isabella","phonemes":"ˈɛː fɹˈans ˈAt ˈAti, ɹɪkwˈɛst dɪsˈɛnt tə fˈɔː θˈWzənd."}
+{"bench_id":39,"voice":"bm_fable","phonemes":"ˈɛː fɹˈans ˈAt ˈAti, ɹɪkwˈɛst dɪsˈɛnt tə fˈɔː θˈWzənd."}
+{"bench_id":40,"voice":"af_heart","phonemes":"lˌɑs ˈænʤəlɪs ˌɪntəɹnˈæʃənᵊl ɡɹˈWnd, kˈæntəz ˈAt sˈɛvənti, stˈænd sˈɪks nˈIn ˈælfə, ɹᵻkwˈɛst pˈʊʃbæk, ˌɪnfəɹmˈAʃən bɹˈɑvO."}
+{"bench_id":40,"voice":"am_puck","phonemes":"lˌɑs ˈænʤəlɪs ˌɪntəɹnˈæʃənᵊl ɡɹˈWnd, kˈæntəz ˈAt sˈɛvənti, stˈænd sˈɪks nˈIn ˈælfə, ɹᵻkwˈɛst pˈʊʃbæk, ˌɪnfəɹmˈAʃən bɹˈɑvO."}
+{"bench_id":40,"voice":"bf_isabella","phonemes":"lˌɒs ˈanʤəlˌiːs ˌɪntənˈaʃənᵊl ɡɹˈWnd, kˈantəz ˈAt sˈɛvənti, stˈand sˈɪks nˈIn ˈalfə, ɹɪkwˈɛst pˈʊʃbak, ˌɪnfəmˈAʃən bɹˈɑːvQ."}
+{"bench_id":40,"voice":"bm_fable","phonemes":"lˌɒs ˈanʤəlˌiːs ˌɪntənˈaʃənᵊl ɡɹˈWnd, kˈantəz ˈAt sˈɛvənti, stˈand sˈɪks nˈIn ˈalfə, ɹɪkwˈɛst pˈʊʃbak, ˌɪnfəmˈAʃən bɹˈɑːvQ."}
+{"bench_id":41,"voice":"af_heart","phonemes":"pˈæɹɪs ʧˈɑɹlz də ɡˈɔl ɡɹˈWnd, ˈɛɹ fɹˈæns tˈu fˈɔɹ ˈAt, stˈænd ˈɪndiə tɹˈi fˈɔɹ tˈu, ɹᵻkwˈɛst stˈɑɹtˈʌp, ˌɪnfəɹmˈAʃən ˈælfə."}
+{"bench_id":41,"voice":"am_puck","phonemes":"pˈæɹɪs ʧˈɑɹlz də ɡˈɔl ɡɹˈWnd, ˈɛɹ fɹˈæns tˈu fˈɔɹ ˈAt, stˈænd ˈɪndiə tɹˈi fˈɔɹ tˈu, ɹᵻkwˈɛst stˈɑɹtˈʌp, ˌɪnfəɹmˈAʃən ˈælfə."}
+{"bench_id":41,"voice":"bf_isabella","phonemes":"pˈaɹɪs ʧˈɑːlz də ɡˈɔːl ɡɹˈWnd, ˈɛː fɹˈans tˈuː fˈɔːɹ ˈAt, stˈand ˈɪndɪə tɹˈiː fˈɔː tˈuː, ɹɪkwˈɛst stˈɑːtˈʌp, ˌɪnfəmˈAʃən ˈalfə."}
+{"bench_id":41,"voice":"bm_fable","phonemes":"pˈaɹɪs ʧˈɑːlz də ɡˈɔːl ɡɹˈWnd, ˈɛː fɹˈans tˈuː fˈɔːɹ ˈAt, stˈand ˈɪndɪə tɹˈiː fˈɔː tˈuː, ɹɪkwˈɛst stˈɑːtˈʌp, ˌɪnfəmˈAʃən ˈalfə."}
+{"bench_id":42,"voice":"af_heart","phonemes":"skˈI dˈubI tˈu nˈInəɹ fˈIf, hˈOldɪŋ ʃˈɔɹt ɹˈʌnwA wˈʌn tˈu ɹˈIt, ɹᵻkwˈɛst kɹˈɔs."}
+{"bench_id":42,"voice":"am_puck","phonemes":"skˈI dˈubI tˈu nˈInəɹ fˈIf, hˈOldɪŋ ʃˈɔɹt ɹˈʌnwA wˈʌn tˈu ɹˈIt, ɹᵻkwˈɛst kɹˈɔs."}
+{"bench_id":42,"voice":"bf_isabella","phonemes":"skˈI djˈuːbI tˈuː nˈInə fˈIf, hˈQldɪŋ ʃˈɔːt ɹˈʌnwA wˈɒn tˈuː ɹˈIt, ɹɪkwˈɛst kɹˈɒs."}
+{"bench_id":42,"voice":"bm_fable","phonemes":"skˈI djˈuːbI tˈuː nˈInə fˈIf, hˈQldɪŋ ʃˈɔːt ɹˈʌnwA wˈɒn tˈuː ɹˈIt, ɹɪkwˈɛst kɹˈɒs."}
+{"bench_id":43,"voice":"af_heart","phonemes":"sˈɪdni kˈɪŋzfəɹd smˈɪθ dᵻpˈɑɹʧəɹ, lʌfθˈænsə wˈʌn fˈIf tɹˈi, pˈæsɪŋ wˈʌn θˈWzənd nˈInəɹ hˈʌndɹɪd klˈImɪŋ wˈʌn tɹˈi θˈWzənd."}
+{"bench_id":43,"voice":"am_puck","phonemes":"sˈɪdni kˈɪŋzfəɹd smˈɪθ dᵻpˈɑɹʧəɹ, lʌfθˈænsə wˈʌn fˈIf tɹˈi, pˈæsɪŋ wˈʌn θˈWzənd nˈInəɹ hˈʌndɹɪd klˈImɪŋ wˈʌn tɹˈi θˈWzənd."}
+{"bench_id":43,"voice":"bf_isabella","phonemes":"sˈɪdni kˈɪŋzfəd smˈɪθ dɪpˈɑːʧə, lʌfθˈansə wˈɒn fˈIf tɹˈiː, pˈasɪŋ wˈɒn θˈWzənd nˈInə hˈʌndɹɪd klˈImɪŋ wˈɒn tɹˈiː θˈWzənd."}
+{"bench_id":43,"voice":"bm_fable","phonemes":"sˈɪdni kˈɪŋzfəd smˈɪθ dɪpˈɑːʧə, lʌfθˈansə wˈɒn fˈIf tɹˈiː, pˈasɪŋ wˈɒn θˈWzənd nˈInə hˈʌndɹɪd klˈImɪŋ wˈɒn tɹˈiː θˈWzənd."}
+{"bench_id":44,"voice":"af_heart","phonemes":"hˈiθɹO əpɹˈOʧ, spˈidbɜɹd wˈʌn wˈʌn ˈAt, ˌIˌɛlˈɛs ɹˈʌnwA tˈu sˈɛvən lˈɛft."}
+{"bench_id":44,"voice":"am_puck","phonemes":"hˈiθɹO əpɹˈOʧ, spˈidbɜɹd wˈʌn wˈʌn ˈAt, ˌIˌɛlˈɛs ɹˈʌnwA tˈu sˈɛvən lˈɛft."}
+{"bench_id":44,"voice":"bf_isabella","phonemes":"hˈiːθɹQ əpɹˈQʧ, spˈiːdbɜːd wˈɒn wˈɒn ˈAt, ˌIˌɛlˈɛs ɹˈʌnwA tˈuː sˈɛvən lˈɛft."}
+{"bench_id":44,"voice":"bm_fable","phonemes":"hˈiːθɹQ əpɹˈQʧ, spˈiːdbɜːd wˈɒn wˈɒn ˈAt, ˌIˌɛlˈɛs ɹˈʌnwA tˈuː sˈɛvən lˈɛft."}
+{"bench_id":45,"voice":"af_heart","phonemes":"lʌfθˈænsə ˈAt twˈɛnti, hˈOldɪŋ ʃˈɔɹt ɹˈʌnwA zˈiəɹO fˈɔɹ lˈɛft, ɹᵻkwˈɛst kɹˈɔs."}
+{"bench_id":45,"voice":"am_puck","phonemes":"lʌfθˈænsə ˈAt twˈɛnti, hˈOldɪŋ ʃˈɔɹt ɹˈʌnwA zˈiəɹO fˈɔɹ lˈɛft, ɹᵻkwˈɛst kɹˈɔs."}
+{"bench_id":45,"voice":"bf_isabella","phonemes":"lʌfθˈansəɹ ˈAt twˈɛnti, hˈQldɪŋ ʃˈɔːt ɹˈʌnwA zˈɪəɹQ fˈɔː lˈɛft, ɹɪkwˈɛst kɹˈɒs."}
+{"bench_id":45,"voice":"bm_fable","phonemes":"lʌfθˈansəɹ ˈAt twˈɛnti, hˈQldɪŋ ʃˈɔːt ɹˈʌnwA zˈɪəɹQ fˈɔː lˈɛft, ɹɪkwˈɛst kɹˈɒs."}
+{"bench_id":46,"voice":"af_heart","phonemes":"sWθwˈɛst fˈIv twˈɛntiˈAt, stˈændɪŋ bˈI."}
+{"bench_id":46,"voice":"am_puck","phonemes":"sWθwˈɛst fˈIv twˈɛntiˈAt, stˈændɪŋ bˈI."}
+{"bench_id":46,"voice":"bf_isabella","phonemes":"sWθwˈɛst fˈIv twˈɛntiˈAt, stˈandɪŋ bˈI."}
+{"bench_id":46,"voice":"bm_fable","phonemes":"sWθwˈɛst fˈIv twˈɛntiˈAt, stˈandɪŋ bˈI."}
+{"bench_id":47,"voice":"af_heart","phonemes":"pˈæɹɪs ʧˈɑɹlz də ɡˈɔl ɡɹˈWnd, jˌupˌiˈɛs nˈInəɹ sˈɛvən sˈɪks, ɹˈɛdi tə tˈæksi, ˌɪnfəɹmˈAʃən ˈælfə."}
+{"bench_id":47,"voice":"am_puck","phonemes":"pˈæɹɪs ʧˈɑɹlz də ɡˈɔl ɡɹˈWnd, jˌupˌiˈɛs nˈInəɹ sˈɛvən sˈɪks, ɹˈɛdi tə tˈæksi, ˌɪnfəɹmˈAʃən ˈælfə."}
+{"bench_id":47,"voice":"bf_isabella","phonemes":"pˈaɹɪs ʧˈɑːlz də ɡˈɔːl ɡɹˈWnd, jˌuːpˌiːˈɛs nˈInə sˈɛvən sˈɪks, ɹˈɛdi tə tˈaksi, ˌɪnfəmˈAʃən ˈalfə."}
+{"bench_id":47,"voice":"bm_fable","phonemes":"pˈaɹɪs ʧˈɑːlz də ɡˈɔːl ɡɹˈWnd, jˌuːpˌiːˈɛs nˈInə sˈɛvən sˈɪks, ɹˈɛdi tə tˈaksi, ˌɪnfəmˈAʃən ˈalfə."}
+{"bench_id":48,"voice":"af_heart","phonemes":"lʌfθˈænsə wˈʌn fˈIf tɹˈi ɹˈʌnwA zˈiəɹO nˈInəɹ ɹˈIt vˈAkATᵻd."}
+{"bench_id":48,"voice":"am_puck","phonemes":"lʌfθˈænsə wˈʌn fˈIf tɹˈi ɹˈʌnwA zˈiəɹO nˈInəɹ ɹˈIt vˈAkATᵻd."}
+{"bench_id":48,"voice":"bf_isabella","phonemes":"lʌfθˈansə wˈɒn fˈIf tɹˈiː ɹˈʌnwA zˈɪəɹQ nˈInə ɹˈIt vAkˈAtɪd."}
+{"bench_id":48,"voice":"bm_fable","phonemes":"lʌfθˈansə wˈɒn fˈIf tɹˈiː ɹˈʌnwA zˈɪəɹQ nˈInə ɹˈIt vAkˈAtɪd."}
+{"bench_id":49,"voice":"af_heart","phonemes":"ʤˈɛt blˈu tˈu fˈɔɹTiˈAt ˈɛɹbɔɹn ɹˈʌnwA θɹˈi wˈʌn lˈɛft."}
+{"bench_id":49,"voice":"am_puck","phonemes":"ʤˈɛt blˈu tˈu fˈɔɹTiˈAt ˈɛɹbɔɹn ɹˈʌnwA θɹˈi wˈʌn lˈɛft."}
+{"bench_id":49,"voice":"bf_isabella","phonemes":"ʤˈɛt blˈuː tˈuː fˈɔːtiˈAt ˈɛːbɔːn ɹˈʌnwA θɹˈiː wˈɒn lˈɛft."}
+{"bench_id":49,"voice":"bm_fable","phonemes":"ʤˈɛt blˈuː tˈuː fˈɔːtiˈAt ˈɛːbɔːn ɹˈʌnwA θɹˈiː wˈɒn lˈɛft."}
+{"bench_id":50,"voice":"af_heart","phonemes":"sWθwˈɛst fˈIv fˈɔɹTitˈu kˈɑntækt lˌɑs ˈænʤəlɪs ˌɪntəɹnˈæʃənᵊl tˈWəɹ wˈʌn wˈʌn ˈAt pˈYnt fˈIv."}
+{"bench_id":50,"voice":"am_puck","phonemes":"sWθwˈɛst fˈIv fˈɔɹTitˈu kˈɑntækt lˌɑs ˈænʤəlɪs ˌɪntəɹnˈæʃənᵊl tˈWəɹ wˈʌn wˈʌn ˈAt pˈYnt fˈIv."}
+{"bench_id":50,"voice":"bf_isabella","phonemes":"sWθwˈɛst fˈIv fˈɔːtitˈuː kˈɒntakt lˌɒs ˈanʤəlˌiːs ˌɪntənˈaʃənᵊl tˈWə wˈɒn wˈɒn ˈAt pˈYnt fˈIv."}
+{"bench_id":50,"voice":"bm_fable","phonemes":"sWθwˈɛst fˈIv fˈɔːtitˈuː kˈɒntakt lˌɒs ˈanʤəlˌiːs ˌɪntənˈaʃənᵊl tˈWə wˈɒn wˈɒn ˈAt pˈYnt fˈIv."}
+{"bench_id":51,"voice":"af_heart","phonemes":"ˈɛɹ fɹˈæns tˈu fˈɔɹ ˈAt stˈɑɹt əbˈɔɹTᵻd, hˈɑt stˈɑɹt, ɹᵻkwˈɛst fˈIv mˈɪnɪts."}
+{"bench_id":51,"voice":"am_puck","phonemes":"ˈɛɹ fɹˈæns tˈu fˈɔɹ ˈAt stˈɑɹt əbˈɔɹTᵻd, hˈɑt stˈɑɹt, ɹᵻkwˈɛst fˈIv mˈɪnɪts."}
+{"bench_id":51,"voice":"bf_isabella","phonemes":"ˈɛː fɹˈans tˈuː fˈɔːɹ ˈAt stˈɑːt əbˈɔːtɪd, hˈɒt stˈɑːt, ɹɪkwˈɛst fˈIv mˈɪnɪts."}
+{"bench_id":51,"voice":"bm_fable","phonemes":"ˈɛː fɹˈans tˈuː fˈɔːɹ ˈAt stˈɑːt əbˈɔːtɪd, hˈɒt stˈɑːt, ɹɪkwˈɛst fˈIv mˈɪnɪts."}
+{"bench_id":52,"voice":"af_heart","phonemes":"skˈI dˈubI fˈIf tˈu sˈɛvən kˈɑntækt dˈubI ˌɪntəɹnˈæʃənᵊl dᵻpˈɑɹʧəɹ wˈʌn tˈu fˈIf dˈɛsɪmᵊl tˈu."}
+{"bench_id":52,"voice":"am_puck","phonemes":"skˈI dˈubI fˈIf tˈu sˈɛvən kˈɑntækt dˈubI ˌɪntəɹnˈæʃənᵊl dᵻpˈɑɹʧəɹ wˈʌn tˈu fˈIf dˈɛsɪmᵊl tˈu."}
+{"bench_id":52,"voice":"bf_isabella","phonemes":"skˈI djˈuːbI fˈIf tˈuː sˈɛvən kˈɒntakt djˈuːbI ˌɪntənˈaʃənᵊl dɪpˈɑːʧə wˈɒn tˈuː fˈIf dˈɛsɪmᵊl tˈuː."}
+{"bench_id":52,"voice":"bm_fable","phonemes":"skˈI djˈuːbI fˈIf tˈuː sˈɛvən kˈɒntakt djˈuːbI ˌɪntənˈaʃənᵊl dɪpˈɑːʧə wˈɒn tˈuː fˈIf dˈɛsɪmᵊl tˈuː."}
+{"bench_id":53,"voice":"af_heart","phonemes":"lʌfθˈænsə wˈʌn fˈIf tɹˈi hˈOldɪŋ ʃˈɔɹt ɹˈʌnwA wˈʌn sˈɪks ɹˈIt."}
+{"bench_id":53,"voice":"am_puck","phonemes":"lʌfθˈænsə wˈʌn fˈIf tɹˈi hˈOldɪŋ ʃˈɔɹt ɹˈʌnwA wˈʌn sˈɪks ɹˈIt."}
+{"bench_id":53,"voice":"bf_isabella","phonemes":"lʌfθˈansə wˈɒn fˈIf tɹˈiː hˈQldɪŋ ʃˈɔːt ɹˈʌnwA wˈɒn sˈɪks ɹˈIt."}
+{"bench_id":53,"voice":"bm_fable","phonemes":"lʌfθˈansə wˈɒn fˈIf tɹˈiː hˈQldɪŋ ʃˈɔːt ɹˈʌnwA wˈɒn sˈɪks ɹˈIt."}
+{"bench_id":54,"voice":"af_heart","phonemes":"vˈɜɹʤɪn fˈIf tˈu sˈɛvən hˈOldɪŋ ʃˈɔɹt ɹˈʌnwA tˈu sˈɛvən lˈɛft."}
+{"bench_id":54,"voice":"am_puck","phonemes":"vˈɜɹʤɪn fˈIf tˈu sˈɛvən hˈOldɪŋ ʃˈɔɹt ɹˈʌnwA tˈu sˈɛvən lˈɛft."}
+{"bench_id":54,"voice":"bf_isabella","phonemes":"vˈɜːʤɪn fˈIf tˈuː sˈɛvən hˈQldɪŋ ʃˈɔːt ɹˈʌnwA tˈuː sˈɛvən lˈɛft."}
+{"bench_id":54,"voice":"bm_fable","phonemes":"vˈɜːʤɪn fˈIf tˈuː sˈɛvən hˈQldɪŋ ʃˈɔːt ɹˈʌnwA tˈuː sˈɛvən lˈɛft."}
+{"bench_id":55,"voice":"af_heart","phonemes":"ʤˈɛt blˈu tˈu fˈɔɹTiˈAt ɹˈOlɪŋ ɹˈʌnwA θɹˈi wˈʌn lˈɛft."}
+{"bench_id":55,"voice":"am_puck","phonemes":"ʤˈɛt blˈu tˈu fˈɔɹTiˈAt ɹˈOlɪŋ ɹˈʌnwA θɹˈi wˈʌn lˈɛft."}
+{"bench_id":55,"voice":"bf_isabella","phonemes":"ʤˈɛt blˈuː tˈuː fˈɔːtiˈAt ɹˈQlɪŋ ɹˈʌnwA θɹˈiː wˈɒn lˈɛft."}
+{"bench_id":55,"voice":"bm_fable","phonemes":"ʤˈɛt blˈuː tˈuː fˈɔːtiˈAt ɹˈQlɪŋ ɹˈʌnwA θɹˈiː wˈɒn lˈɛft."}
+{"bench_id":56,"voice":"af_heart","phonemes":"lʌfθˈænsə wˈʌn fˈɪftiθɹˈi ɹˈʌnwA zˈiəɹO sˈɛvən lˈɛft vˈAkATᵻd."}
+{"bench_id":56,"voice":"am_puck","phonemes":"lʌfθˈænsə wˈʌn fˈɪftiθɹˈi ɹˈʌnwA zˈiəɹO sˈɛvən lˈɛft vˈAkATᵻd."}
+{"bench_id":56,"voice":"bf_isabella","phonemes":"lʌfθˈansə wˈɒn fˈɪftiθɹˈiː ɹˈʌnwA zˈɪəɹQ sˈɛvən lˈɛft vAkˈAtɪd."}
+{"bench_id":56,"voice":"bm_fable","phonemes":"lʌfθˈansə wˈɒn fˈɪftiθɹˈiː ɹˈʌnwA zˈɪəɹQ sˈɛvən lˈɛft vAkˈAtɪd."}
+{"bench_id":57,"voice":"af_heart","phonemes":"dˈɛltə ˈAt sˈɪks fˈIf kˈɑntækt pˈæɹɪs ʧˈɑɹlz də ɡˈɔl tˈWəɹ wˈʌn wˈʌn ˈAt dˈɛsɪmᵊl fˈIf."}
+{"bench_id":57,"voice":"am_puck","phonemes":"dˈɛltə ˈAt sˈɪks fˈIf kˈɑntækt pˈæɹɪs ʧˈɑɹlz də ɡˈɔl tˈWəɹ wˈʌn wˈʌn ˈAt dˈɛsɪmᵊl fˈIf."}
+{"bench_id":57,"voice":"bf_isabella","phonemes":"dˈɛltəɹ ˈAt sˈɪks fˈIf kˈɒntakt pˈaɹɪs ʧˈɑːlz də ɡˈɔːl tˈWə wˈɒn wˈɒn ˈAt dˈɛsɪmᵊl fˈIf."}
+{"bench_id":57,"voice":"bm_fable","phonemes":"dˈɛltəɹ ˈAt sˈɪks fˈIf kˈɒntakt pˈaɹɪs ʧˈɑːlz də ɡˈɔːl tˈWə wˈɒn wˈɒn ˈAt dˈɛsɪmᵊl fˈIf."}
+{"bench_id":58,"voice":"af_heart","phonemes":"skˈI dˈubI fˈIf tˈu sˈɛvən ɹˈOlɪŋ ɹˈʌnwA tɹˈi zˈiəɹO ɹˈIt."}
+{"bench_id":58,"voice":"am_puck","phonemes":"skˈI dˈubI fˈIf tˈu sˈɛvən ɹˈOlɪŋ ɹˈʌnwA tɹˈi zˈiəɹO ɹˈIt."}
+{"bench_id":58,"voice":"bf_isabella","phonemes":"skˈI djˈuːbI fˈIf tˈuː sˈɛvən ɹˈQlɪŋ ɹˈʌnwA tɹˈiː zˈɪəɹQ ɹˈIt."}
+{"bench_id":58,"voice":"bm_fable","phonemes":"skˈI djˈuːbI fˈIf tˈuː sˈɛvən ɹˈQlɪŋ ɹˈʌnwA tɹˈiː zˈɪəɹQ ɹˈIt."}
+{"bench_id":59,"voice":"af_heart","phonemes":"lʌfθˈænsə wˈʌn fˈIf tɹˈi hˈOldɪŋ ʃˈɔɹt ɹˈʌnwA zˈiəɹO sˈɛvən."}
+{"bench_id":59,"voice":"am_puck","phonemes":"lʌfθˈænsə wˈʌn fˈIf tɹˈi hˈOldɪŋ ʃˈɔɹt ɹˈʌnwA zˈiəɹO sˈɛvən."}
+{"bench_id":59,"voice":"bf_isabella","phonemes":"lʌfθˈansə wˈɒn fˈIf tɹˈiː hˈQldɪŋ ʃˈɔːt ɹˈʌnwA zˈɪəɹQ sˈɛvən."}
+{"bench_id":59,"voice":"bm_fable","phonemes":"lʌfθˈansə wˈɒn fˈIf tɹˈiː hˈQldɪŋ ʃˈɔːt ɹˈʌnwA zˈɪəɹQ sˈɛvən."}

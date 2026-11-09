@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Pilot Voice Samples</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Same tokens as voice-ai.html: dark first, like the game. */
+:root {
+  --bg: #0e0f11; --surface: #141416; --raise: #1c1c1e; --line: rgba(255,255,255,.09); --line-strong: rgba(255,255,255,.16);
+  --ink-1: #f4f4f5; --ink-2: #c4c5c8; --ink-3: #a0a1a6; --ink-4: #7f8086;
+  --accent: #f5933f; --accent-tint: rgba(245,147,63,.14); --neutral-tint: rgba(255,255,255,.07);
+  --font: "DM Sans", "Helvetica Neue", Arial, sans-serif; --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12); --neutral-tint: rgba(20,20,24,.06);
+  color-scheme: light;
+} }
+:root[data-theme="light"] {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12); --neutral-tint: rgba(20,20,24,.06);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink-2); font-family: var(--font); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 72px; }
+.wrap { max-width: 960px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2 { color: var(--ink-1); margin: 0; font-weight: 600; letter-spacing: -.01em; text-wrap: balance; }
+h1 { font-size: clamp(28px, 4.4vw, 40px); line-height: 1.12; }
+h2 { font-size: 22px; line-height: 1.25; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+code { font-family: var(--mono); font-size: .9em; }
+.eyebrow { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+header, section { display: grid; gap: 14px; min-width: 0; }
+.lede { font-size: 17px; max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--ink-3); font-size: 13px; }
+.cards { display: grid; gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; display: grid; gap: 12px; min-width: 0; }
+.head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.num { font-family: var(--mono); font-size: 12px; color: var(--ink-4); }
+.icao { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.note { font-size: 12.5px; color: var(--ink-3); }
+.said { color: var(--ink-1); font-size: 16px; line-height: 1.45; overflow-wrap: anywhere; }
+.rows { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.row { display: grid; grid-template-columns: 170px minmax(0, 1fr) minmax(0, 1fr); gap: 6px 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+.row:last-child { border-bottom: 0; }
+.row.kok .who b { color: var(--ink-2); }
+.who { display: grid; gap: 0; font-size: 13px; line-height: 1.35; min-width: 0; }
+.who b { color: var(--ink-1); font-weight: 600; }
+.who span { color: var(--ink-3); font-size: 12px; font-family: var(--mono); }
+.ref { justify-self: start; font-family: var(--font) !important; font-size: 11px !important; font-weight: 600; letter-spacing: .02em; color: var(--accent) !important; background: var(--accent-tint); border-radius: 999px; padding: 0 8px; margin: 2px 0; }
+.pl { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; }
+.pl.wide { grid-column: span 2; }
+.k { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-4); font-weight: 600; }
+audio { width: 100%; min-width: 0; height: 36px; display: block; }
+.x-said { grid-column: 1 / -1; font-size: 13.5px; color: var(--ink-2); }
+.x-said span { color: var(--ink-3); }
+footer { font-size: 13px; color: var(--ink-3); display: grid; gap: 8px; }
+@media (max-width: 720px) {
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .pl.wide { grid-column: auto; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header>
+  <span class="eyebrow">OpenATC · pilot voices</span>
+  <h1>Pilot voices: listen</h1>
+  <p class="lede">Eight readbacks taken from the game's own phraseology, each read by the four voices of Paradee-8M v1.2, the 8.5 MB model that is meant to run in your browser, and by Kokoro-82M, the 82M-parameter model it was distilled from. Each clip comes dry and through the radio effect the game will use.</p>
+  <div class="meta"><span>Paradee int8 ONNX, CPU</span><span>Kokoro-82M, PyTorch CPU</span><span>Radio: 300–3400 Hz band-pass, soft compression, faint hiss, squelch clicks</span></div>
+  <p class="meta">Measurements (speed, word error rate, browser latency) are in the <a href="voice-tts.html">pilot voice report</a>.</p>
+</header>
+<section class="cards" aria-label="Readbacks">
+<article class="card">
+  <div class="head"><span class="num">01</span><span class="icao">EGLL</span><span class="note">ICAO digits: niner, tree; runway</span></div>
+  <p class="said">“Cleared for takeoff runway two seven left, Singapore niner eight tree.”</p>
+  <div class="rows"><div class="row">
+  <div class="who"><b>Paradee-8M</b><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l1_paradee-af_heart_dry.wav" aria-label="Paradee-8M af_heart, dry: Cleared for takeoff runway two seven left, Singapore niner eight tree."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l1_paradee-af_heart_radio.wav" aria-label="Paradee-8M af_heart, radio: Cleared for takeoff runway two seven left, Singapore niner eight tree."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>am_puck · US male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l1_paradee-am_puck_dry.wav" aria-label="Paradee-8M am_puck, dry: Cleared for takeoff runway two seven left, Singapore niner eight tree."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l1_paradee-am_puck_radio.wav" aria-label="Paradee-8M am_puck, radio: Cleared for takeoff runway two seven left, Singapore niner eight tree."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bf_isabella · UK female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l1_paradee-bf_isabella_dry.wav" aria-label="Paradee-8M bf_isabella, dry: Cleared for takeoff runway two seven left, Singapore niner eight tree."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l1_paradee-bf_isabella_radio.wav" aria-label="Paradee-8M bf_isabella, radio: Cleared for takeoff runway two seven left, Singapore niner eight tree."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bm_fable · UK male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l1_paradee-bm_fable_dry.wav" aria-label="Paradee-8M bm_fable, dry: Cleared for takeoff runway two seven left, Singapore niner eight tree."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l1_paradee-bm_fable_radio.wav" aria-label="Paradee-8M bm_fable, radio: Cleared for takeoff runway two seven left, Singapore niner eight tree."></audio></div>
+</div>
+<div class="row kok">
+  <div class="who"><b>Kokoro-82M</b><span class="ref">reference</span><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l1_kokoro-af_heart_dry.wav" aria-label="Kokoro-82M af_heart, dry: Cleared for takeoff runway two seven left, Singapore niner eight tree."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l1_kokoro-af_heart_radio.wav" aria-label="Kokoro-82M af_heart, radio: Cleared for takeoff runway two seven left, Singapore niner eight tree."></audio></div>
+</div></div>
+</article>
+<article class="card">
+  <div class="head"><span class="num">02</span><span class="icao">EGLL</span><span class="note">flight level, tree fife</span></div>
+  <p class="said">“Climb flight level tree fife zero, Emirates seven six one.”</p>
+  <div class="rows"><div class="row">
+  <div class="who"><b>Paradee-8M</b><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l2_paradee-af_heart_dry.wav" aria-label="Paradee-8M af_heart, dry: Climb flight level tree fife zero, Emirates seven six one."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l2_paradee-af_heart_radio.wav" aria-label="Paradee-8M af_heart, radio: Climb flight level tree fife zero, Emirates seven six one."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>am_puck · US male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l2_paradee-am_puck_dry.wav" aria-label="Paradee-8M am_puck, dry: Climb flight level tree fife zero, Emirates seven six one."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l2_paradee-am_puck_radio.wav" aria-label="Paradee-8M am_puck, radio: Climb flight level tree fife zero, Emirates seven six one."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bf_isabella · UK female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l2_paradee-bf_isabella_dry.wav" aria-label="Paradee-8M bf_isabella, dry: Climb flight level tree fife zero, Emirates seven six one."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l2_paradee-bf_isabella_radio.wav" aria-label="Paradee-8M bf_isabella, radio: Climb flight level tree fife zero, Emirates seven six one."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bm_fable · UK male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l2_paradee-bm_fable_dry.wav" aria-label="Paradee-8M bm_fable, dry: Climb flight level tree fife zero, Emirates seven six one."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l2_paradee-bm_fable_radio.wav" aria-label="Paradee-8M bm_fable, radio: Climb flight level tree fife zero, Emirates seven six one."></audio></div>
+</div>
+<div class="row kok">
+  <div class="who"><b>Kokoro-82M</b><span class="ref">reference</span><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l2_kokoro-af_heart_dry.wav" aria-label="Kokoro-82M af_heart, dry: Climb flight level tree fife zero, Emirates seven six one."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l2_kokoro-af_heart_radio.wav" aria-label="Kokoro-82M af_heart, radio: Climb flight level tree fife zero, Emirates seven six one."></audio></div>
+</div></div>
+</article>
+<article class="card">
+  <div class="head"><span class="num">03</span><span class="icao">KJFK</span><span class="note">FAA grouped callsign, ILS</span></div>
+  <p class="said">“Cleared ILS runway three one right, will report established, Air France eight eighty.”</p>
+  <div class="rows"><div class="row">
+  <div class="who"><b>Paradee-8M</b><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l3_paradee-af_heart_dry.wav" aria-label="Paradee-8M af_heart, dry: Cleared ILS runway three one right, will report established, Air France eight eighty."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l3_paradee-af_heart_radio.wav" aria-label="Paradee-8M af_heart, radio: Cleared ILS runway three one right, will report established, Air France eight eighty."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>am_puck · US male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l3_paradee-am_puck_dry.wav" aria-label="Paradee-8M am_puck, dry: Cleared ILS runway three one right, will report established, Air France eight eighty."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l3_paradee-am_puck_radio.wav" aria-label="Paradee-8M am_puck, radio: Cleared ILS runway three one right, will report established, Air France eight eighty."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bf_isabella · UK female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l3_paradee-bf_isabella_dry.wav" aria-label="Paradee-8M bf_isabella, dry: Cleared ILS runway three one right, will report established, Air France eight eighty."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l3_paradee-bf_isabella_radio.wav" aria-label="Paradee-8M bf_isabella, radio: Cleared ILS runway three one right, will report established, Air France eight eighty."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bm_fable · UK male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l3_paradee-bm_fable_dry.wav" aria-label="Paradee-8M bm_fable, dry: Cleared ILS runway three one right, will report established, Air France eight eighty."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l3_paradee-bm_fable_radio.wav" aria-label="Paradee-8M bm_fable, radio: Cleared ILS runway three one right, will report established, Air France eight eighty."></audio></div>
+</div>
+<div class="row kok">
+  <div class="who"><b>Kokoro-82M</b><span class="ref">reference</span><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l3_kokoro-af_heart_dry.wav" aria-label="Kokoro-82M af_heart, dry: Cleared ILS runway three one right, will report established, Air France eight eighty."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l3_kokoro-af_heart_radio.wav" aria-label="Kokoro-82M af_heart, radio: Cleared ILS runway three one right, will report established, Air France eight eighty."></audio></div>
+</div></div>
+</article>
+<article class="card">
+  <div class="head"><span class="num">04</span><span class="icao">EGLL</span><span class="note">frequency, Speedbird</span></div>
+  <p class="said">“Departure one two fife decimal two zero zero, good day, Speedbird two four eight.”</p>
+  <div class="rows"><div class="row">
+  <div class="who"><b>Paradee-8M</b><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l4_paradee-af_heart_dry.wav" aria-label="Paradee-8M af_heart, dry: Departure one two fife decimal two zero zero, good day, Speedbird two four eight."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l4_paradee-af_heart_radio.wav" aria-label="Paradee-8M af_heart, radio: Departure one two fife decimal two zero zero, good day, Speedbird two four eight."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>am_puck · US male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l4_paradee-am_puck_dry.wav" aria-label="Paradee-8M am_puck, dry: Departure one two fife decimal two zero zero, good day, Speedbird two four eight."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l4_paradee-am_puck_radio.wav" aria-label="Paradee-8M am_puck, radio: Departure one two fife decimal two zero zero, good day, Speedbird two four eight."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bf_isabella · UK female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l4_paradee-bf_isabella_dry.wav" aria-label="Paradee-8M bf_isabella, dry: Departure one two fife decimal two zero zero, good day, Speedbird two four eight."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l4_paradee-bf_isabella_radio.wav" aria-label="Paradee-8M bf_isabella, radio: Departure one two fife decimal two zero zero, good day, Speedbird two four eight."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bm_fable · UK male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l4_paradee-bm_fable_dry.wav" aria-label="Paradee-8M bm_fable, dry: Departure one two fife decimal two zero zero, good day, Speedbird two four eight."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l4_paradee-bm_fable_radio.wav" aria-label="Paradee-8M bm_fable, radio: Departure one two fife decimal two zero zero, good day, Speedbird two four eight."></audio></div>
+</div>
+<div class="row kok">
+  <div class="who"><b>Kokoro-82M</b><span class="ref">reference</span><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l4_kokoro-af_heart_dry.wav" aria-label="Kokoro-82M af_heart, dry: Departure one two fife decimal two zero zero, good day, Speedbird two four eight."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l4_kokoro-af_heart_radio.wav" aria-label="Kokoro-82M af_heart, radio: Departure one two fife decimal two zero zero, good day, Speedbird two four eight."></audio></div>
+</div></div>
+</article>
+<article class="card">
+  <div class="head"><span class="num">05</span><span class="icao">KJFK</span><span class="note">landing clearance</span></div>
+  <p class="said">“Cleared to land runway three one left, Lufthansa eight twenty.”</p>
+  <div class="rows"><div class="row">
+  <div class="who"><b>Paradee-8M</b><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l5_paradee-af_heart_dry.wav" aria-label="Paradee-8M af_heart, dry: Cleared to land runway three one left, Lufthansa eight twenty."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l5_paradee-af_heart_radio.wav" aria-label="Paradee-8M af_heart, radio: Cleared to land runway three one left, Lufthansa eight twenty."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>am_puck · US male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l5_paradee-am_puck_dry.wav" aria-label="Paradee-8M am_puck, dry: Cleared to land runway three one left, Lufthansa eight twenty."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l5_paradee-am_puck_radio.wav" aria-label="Paradee-8M am_puck, radio: Cleared to land runway three one left, Lufthansa eight twenty."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bf_isabella · UK female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l5_paradee-bf_isabella_dry.wav" aria-label="Paradee-8M bf_isabella, dry: Cleared to land runway three one left, Lufthansa eight twenty."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l5_paradee-bf_isabella_radio.wav" aria-label="Paradee-8M bf_isabella, radio: Cleared to land runway three one left, Lufthansa eight twenty."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bm_fable · UK male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l5_paradee-bm_fable_dry.wav" aria-label="Paradee-8M bm_fable, dry: Cleared to land runway three one left, Lufthansa eight twenty."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l5_paradee-bm_fable_radio.wav" aria-label="Paradee-8M bm_fable, radio: Cleared to land runway three one left, Lufthansa eight twenty."></audio></div>
+</div>
+<div class="row kok">
+  <div class="who"><b>Kokoro-82M</b><span class="ref">reference</span><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l5_kokoro-af_heart_dry.wav" aria-label="Kokoro-82M af_heart, dry: Cleared to land runway three one left, Lufthansa eight twenty."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l5_kokoro-af_heart_radio.wav" aria-label="Kokoro-82M af_heart, radio: Cleared to land runway three one left, Lufthansa eight twenty."></audio></div>
+</div></div>
+</article>
+<article class="card">
+  <div class="head"><span class="num">06</span><span class="icao">EGLL</span><span class="note">pilot request, stand, information</span></div>
+  <p class="said">“Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha.”</p>
+  <div class="rows"><div class="row">
+  <div class="who"><b>Paradee-8M</b><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l6_paradee-af_heart_dry.wav" aria-label="Paradee-8M af_heart, dry: Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l6_paradee-af_heart_radio.wav" aria-label="Paradee-8M af_heart, radio: Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>am_puck · US male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l6_paradee-am_puck_dry.wav" aria-label="Paradee-8M am_puck, dry: Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l6_paradee-am_puck_radio.wav" aria-label="Paradee-8M am_puck, radio: Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bf_isabella · UK female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l6_paradee-bf_isabella_dry.wav" aria-label="Paradee-8M bf_isabella, dry: Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l6_paradee-bf_isabella_radio.wav" aria-label="Paradee-8M bf_isabella, radio: Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bm_fable · UK male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l6_paradee-bm_fable_dry.wav" aria-label="Paradee-8M bm_fable, dry: Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l6_paradee-bm_fable_radio.wav" aria-label="Paradee-8M bm_fable, radio: Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha."></audio></div>
+</div>
+<div class="row kok">
+  <div class="who"><b>Kokoro-82M</b><span class="ref">reference</span><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l6_kokoro-af_heart_dry.wav" aria-label="Kokoro-82M af_heart, dry: Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l6_kokoro-af_heart_radio.wav" aria-label="Kokoro-82M af_heart, radio: Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha."></audio></div>
+</div></div>
+</article>
+<article class="card">
+  <div class="head"><span class="num">07</span><span class="icao">EGLL</span><span class="note">squawk, Shamrock</span></div>
+  <p class="said">“Squawk two tree six fife, Shamrock seven two.”</p>
+  <div class="rows"><div class="row">
+  <div class="who"><b>Paradee-8M</b><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l7_paradee-af_heart_dry.wav" aria-label="Paradee-8M af_heart, dry: Squawk two tree six fife, Shamrock seven two."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l7_paradee-af_heart_radio.wav" aria-label="Paradee-8M af_heart, radio: Squawk two tree six fife, Shamrock seven two."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>am_puck · US male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l7_paradee-am_puck_dry.wav" aria-label="Paradee-8M am_puck, dry: Squawk two tree six fife, Shamrock seven two."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l7_paradee-am_puck_radio.wav" aria-label="Paradee-8M am_puck, radio: Squawk two tree six fife, Shamrock seven two."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bf_isabella · UK female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l7_paradee-bf_isabella_dry.wav" aria-label="Paradee-8M bf_isabella, dry: Squawk two tree six fife, Shamrock seven two."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l7_paradee-bf_isabella_radio.wav" aria-label="Paradee-8M bf_isabella, radio: Squawk two tree six fife, Shamrock seven two."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bm_fable · UK male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l7_paradee-bm_fable_dry.wav" aria-label="Paradee-8M bm_fable, dry: Squawk two tree six fife, Shamrock seven two."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l7_paradee-bm_fable_radio.wav" aria-label="Paradee-8M bm_fable, radio: Squawk two tree six fife, Shamrock seven two."></audio></div>
+</div>
+<div class="row kok">
+  <div class="who"><b>Kokoro-82M</b><span class="ref">reference</span><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l7_kokoro-af_heart_dry.wav" aria-label="Kokoro-82M af_heart, dry: Squawk two tree six fife, Shamrock seven two."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l7_kokoro-af_heart_radio.wav" aria-label="Kokoro-82M af_heart, radio: Squawk two tree six fife, Shamrock seven two."></audio></div>
+</div></div>
+</article>
+<article class="card">
+  <div class="head"><span class="num">08</span><span class="icao">KJFK</span><span class="note">line up and wait</span></div>
+  <p class="said">“Runway three one right, line up and wait, JetBlue two forty-eight.”</p>
+  <div class="rows"><div class="row">
+  <div class="who"><b>Paradee-8M</b><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l8_paradee-af_heart_dry.wav" aria-label="Paradee-8M af_heart, dry: Runway three one right, line up and wait, JetBlue two forty-eight."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l8_paradee-af_heart_radio.wav" aria-label="Paradee-8M af_heart, radio: Runway three one right, line up and wait, JetBlue two forty-eight."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>am_puck · US male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l8_paradee-am_puck_dry.wav" aria-label="Paradee-8M am_puck, dry: Runway three one right, line up and wait, JetBlue two forty-eight."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l8_paradee-am_puck_radio.wav" aria-label="Paradee-8M am_puck, radio: Runway three one right, line up and wait, JetBlue two forty-eight."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bf_isabella · UK female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l8_paradee-bf_isabella_dry.wav" aria-label="Paradee-8M bf_isabella, dry: Runway three one right, line up and wait, JetBlue two forty-eight."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l8_paradee-bf_isabella_radio.wav" aria-label="Paradee-8M bf_isabella, radio: Runway three one right, line up and wait, JetBlue two forty-eight."></audio></div>
+</div>
+<div class="row">
+  <div class="who"><b>Paradee-8M</b><span>bm_fable · UK male</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l8_paradee-bm_fable_dry.wav" aria-label="Paradee-8M bm_fable, dry: Runway three one right, line up and wait, JetBlue two forty-eight."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l8_paradee-bm_fable_radio.wav" aria-label="Paradee-8M bm_fable, radio: Runway three one right, line up and wait, JetBlue two forty-eight."></audio></div>
+</div>
+<div class="row kok">
+  <div class="who"><b>Kokoro-82M</b><span class="ref">reference</span><span>af_heart · US female</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/l8_kokoro-af_heart_dry.wav" aria-label="Kokoro-82M af_heart, dry: Runway three one right, line up and wait, JetBlue two forty-eight."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/l8_kokoro-af_heart_radio.wav" aria-label="Kokoro-82M af_heart, radio: Runway three one right, line up and wait, JetBlue two forty-eight."></audio></div>
+</div></div>
+</article>
+</section>
+<section>
+  <h2>A big model for comparison</h2>
+  <p>Audio8-TTS-Realistic-Air (Edge0, Apache-2.0) is a 0.6B-parameter DualAR model with a 44.1 kHz codec, 2.5 GB of weights. It is far too big for the browser; it is here as a sense of what a large model sounds like, and as a possible offline generator of training audio.</p>
+  <div class="cards"><article class="card">
+  <div class="head"><span class="num">A1</span><span class="note">141 s on 3 CPU threads for 5.5 s of speech</span></div>
+  <p class="said">“Holding point runway two seven left, Sky Dubai two niner fife.”</p>
+  <div class="rows"><div class="row">
+  <div class="who"><b>Audio8 Realistic Air</b><span>default voice, no reference</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/audio8_00_dry.wav" aria-label="Audio8, dry: Holding point runway two seven left, Sky Dubai two niner fife."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/audio8_00_radio.wav" aria-label="Audio8, radio: Holding point runway two seven left, Sky Dubai two niner fife."></audio></div>
+</div></div>
+</article><article class="card">
+  <div class="head"><span class="num">A2</span><span class="note">372 s on 3 CPU threads for 5.9 s of speech</span></div>
+  <p class="said">“Departure one two fife decimal two zero zero, good day, Speedbird two four eight.”</p>
+  <div class="rows"><div class="row">
+  <div class="who"><b>Audio8 Realistic Air</b><span>default voice, no reference</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/audio8_06_dry.wav" aria-label="Audio8, dry: Departure one two fife decimal two zero zero, good day, Speedbird two four eight."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/audio8_06_radio.wav" aria-label="Audio8, radio: Departure one two fife decimal two zero zero, good day, Speedbird two four eight."></audio></div>
+</div></div>
+</article><article class="card">
+  <div class="head"><span class="num">A3</span><span class="note">432 s on 3 CPU threads for 4.6 s of speech</span></div>
+  <p class="said">“Descend flight level seven zero, Speedbird four zero.”</p>
+  <div class="rows"><div class="row">
+  <div class="who"><b>Audio8 Realistic Air</b><span>default voice, no reference</span></div>
+  <div class="pl"><span class="k">Dry</span><audio controls preload="none" src="audio/tts/audio8_18_dry.wav" aria-label="Audio8, dry: Descend flight level seven zero, Speedbird four zero."></audio></div>
+  <div class="pl"><span class="k">Radio</span><audio controls preload="none" src="audio/tts/audio8_18_radio.wav" aria-label="Audio8, radio: Descend flight level seven zero, Speedbird four zero."></audio></div>
+</div></div>
+</article></div>
+</section>
+<footer>
+  <p>The same callsign always gets the same voice in the game; here every line is read by every voice so you can compare them. Each audio file loads only when you press play.</p>
+  <p>Paradee-8M v1.2 by Sahil Mahendrakar and Kokoro-82M by hexgrad are Apache-2.0. Clips made by <code>ml/tts/samples.py</code>.</p>
+</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,13 @@
+Paradee-8M v1.2
+Copyright 2026 Sahil Mahendrakar. Licensed under the Apache License, Version 2.0 (see LICENSE in this directory).
+
+Source: https://huggingface.co/sahilmahendrakar/Paradee-8M-v1.2 (revision ed2934d4df8a4fd891e29584c5e1104649409765)
+Code:   https://github.com/sahilmahendrakar/paradee
+
+Files here, unmodified from that revision:
+  paradee_int8.onnx   (onnx/paradee_int8.onnx in the source repository)
+  config.json
+  LICENSE
+
+Paradee is distilled from Kokoro-82M (https://huggingface.co/hexgrad/Kokoro-82M, Apache-2.0).
+OpenATC uses it to speak pilot lines in the browser (public/voice/tts-worker.js).

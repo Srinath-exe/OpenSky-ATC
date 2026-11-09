@@ -14,6 +14,8 @@ export const LS = {
    *  API), 'local' (in-browser model), 'native' (the phone app's on-device recogniser, only inside the app). */
   voiceEngine: 'skycontrol_voice_engine',
   voiceAccent: 'skycontrol_voice_accent',
+  /** Pilot voices: 'neural' (Paradee-8M on this device, src/components/atc/pilotVoice.ts; the default) or 'browser' (speechSynthesis). */
+  pilotVoice: 'skycontrol_pilot_voice',
 } as const
 
 /** Fired on window when the voice engine setting changes (same-tab listeners; `storage` only fires in other tabs). */

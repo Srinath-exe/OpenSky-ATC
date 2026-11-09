@@ -25,6 +25,11 @@ const voiceEngineOptions = (): MenuOption<VoiceEngine>[] => [
   { value: 'server', label: 'Server (Whisper, tuned for ATC)', description: 'Server: your transmission goes to this game\'s server (not to Google), is transcribed with the callsigns on frequency, and is not stored. Slower: 1-3 s' },
   { value: 'local', label: 'On-device (Moonshine)', description: 'On-device: a 63 MB model downloads once, audio never leaves this device' },
 ]
+/** Pilot voices (sound.ts pilotVoicePref); ml/tts/RESULTS.md has the measurements. */
+const PILOT_VOICE_OPTIONS: MenuOption<'neural' | 'browser'>[] = [
+  { value: 'neural', label: 'Neural (on this device, ~12 MB)', description: 'Neural: four pilot voices made on this device (Paradee-8M), one per aircraft, over a radio. About 12 MB downloads once, on the first pilot line' },
+  { value: 'browser', label: 'Browser', description: 'Browser: the built-in speech voice (the same for every pilot)' },
+]
 import { EV_REPLAY_TIPS } from '../HelpOverlay/OnboardingTips'
 import { PRESETS, setGraphicsPref, useDetected, useGraphicsPref } from '@/components/atc/WorldMap/quality'
 import type { GraphicsPref } from '@/components/atc/WorldMap/quality'
@@ -61,6 +66,7 @@ export function SettingsModal() {
   const setVoiceEngine = (v: VoiceEngine) => { setVoiceEngineState(v); window.setTimeout(() => window.dispatchEvent(new Event(EV_VOICE_ENGINE)), 0) }
   const [voiceAccent, setVoiceAccentState] = usePersistedState<string>(LS.voiceAccent, defaultAccent())
   const setVoiceAccent = (v: string) => { setVoiceAccentState(v); window.setTimeout(() => window.dispatchEvent(new Event(EV_VOICE_ENGINE)), 0) }
+  const [pilotVoice, setPilotVoice] = usePersistedState<'neural' | 'browser'>(LS.pilotVoice, 'neural')
   const set = (patch: Partial<Settings>) => updateSettings(patch)
   const close = React.useCallback(() => shell.hide('settings'), [shell])
   React.useEffect(() => { document.documentElement.setAttribute('data-hotkey-badges', hotkeyBadges ? 'on' : 'off') }, [hotkeyBadges])
@@ -86,6 +92,7 @@ export function SettingsModal() {
           <div className={styles.rows}>
             <ListRow flush title="Sound" subtitle="Radio clicks, alert chimes, UI cues" trailing={<Mirror state={settings.sound ? 'on' : 'off'}><Toggle checked={settings.sound} onChange={(v) => set({ sound: v })} testId="set-sound" /></Mirror>} />
             <ListRow flush title="Pilot voice" subtitle="Synthesised readbacks and requests" trailing={<Mirror state={settings.tts ? 'on' : 'off'}><Toggle checked={settings.tts} onChange={(v) => set({ tts: v })} testId="set-tts" /></Mirror>} />
+            {settings.tts && <ListRow flush title="Pilot voices" subtitle={PILOT_VOICE_OPTIONS.find((o) => o.value === pilotVoice)?.description ?? ''} trailing={<Select size="m" ariaLabel="Pilot voices" options={PILOT_VOICE_OPTIONS} value={pilotVoice} onChange={(v) => setPilotVoice(v)} className={styles.select} testId="set-pilot-voices" />} />}
             <ListRow
               flush
               title="Volume"

@@ -1,0 +1,438 @@
+{"id":0,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-ai","variant":"ICAO","text":"Descend seven thousand, Emirates eight six fife."}
+{"id":1,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Heading tree zero zero, Emirates eight eight zero."}
+{"id":2,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Speed one six zero knots, Qantas seven six."}
+{"id":3,"icao":"YSSY","seed":1,"cs":"UAE865","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Approach, Emirates eight six fife, ILS runway zero seven."}
+{"id":4,"icao":"YSSY","seed":1,"cs":"UAE880","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Approach, Emirates eight eight zero, ILS runway zero seven."}
+{"id":5,"icao":"YSSY","seed":1,"cs":"QFA76","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Approach, Qantas seven six, ILS runway zero seven."}
+{"id":6,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two four, ILS zero seven, Emirates eight six fife."}
+{"id":7,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two four, ILS zero seven, Qantas seven six."}
+{"id":8,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two four, ILS zero seven, Emirates eight eight zero."}
+{"id":9,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-ai","variant":"ICAO","text":"Heading one fife eight, Emirates eight six fife."}
+{"id":10,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Descend fife thousand, Qantas seven six."}
+{"id":11,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Descend seven thousand, Emirates eight eight zero."}
+{"id":12,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-sample","variant":"ICAO","text":"Direct SSYNW, Emirates eight eight zero."}
+{"id":13,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-sample","variant":"ICAO","text":"Standing by, Velocity fife two seven."}
+{"id":14,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-template","variant":"ICAO","text":"Right heading one niner zero, Emirates eight six fife."}
+{"id":15,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading zero six fife, Qantas seven six."}
+{"id":16,"icao":"YSSY","seed":1,"cs":"DLH153","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Lufthansa one fife tree, stand four tree, request pushback, information Alpha."}
+{"id":17,"icao":"YSSY","seed":1,"cs":"DLH153","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway zero seven, Lufthansa one fife tree."}
+{"id":18,"icao":"YSSY","seed":1,"cs":"FDB295","type":"readback-sample","variant":"ICAO","text":"Pushback approved, facing north, expect runway zero seven, Sky Dubai two niner fife."}
+{"id":19,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-template","variant":"ICAO","text":"Cleared for takeoff runway zero seven, Emirates eight six fife."}
+{"id":20,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-ai","variant":"ICAO","text":"Descend tree thousand, Emirates eight six fife."}
+{"id":21,"icao":"YSSY","seed":1,"cs":"QFA248","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Qantas two four eight, stand fife fife # tree, request pushback, information Alpha."}
+{"id":22,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Velocity fife two seven, stand Romeo one eight, request pushback, information Alpha."}
+{"id":23,"icao":"YSSY","seed":1,"cs":"QFA248","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway zero seven, Qantas two four eight."}
+{"id":24,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-sample","variant":"ICAO","text":"Direct SSYWE, Emirates eight six fife."}
+{"id":25,"icao":"YSSY","seed":1,"cs":"QFA248","type":"readback-sample","variant":"ICAO","text":"Pushback approved, facing south, expect runway zero seven, Qantas two four eight."}
+{"id":26,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-template","variant":"ICAO","text":"Squawk four seven two one, Qantas seven six."}
+{"id":27,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway zero seven, Velocity fife two seven."}
+{"id":28,"icao":"YSSY","seed":1,"cs":"FDB295","type":"readback-sample","variant":"ICAO","text":"Standing by, Sky Dubai two niner fife."}
+{"id":29,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-sample","variant":"ICAO","text":"Stopping, Velocity fife two seven."}
+{"id":30,"icao":"YSSY","seed":1,"cs":"DLH153","type":"readback-template","variant":"ICAO","text":"Climb flight level two tree zero, Lufthansa one fife tree."}
+{"id":31,"icao":"YSSY","seed":1,"cs":"FDB295","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Sky Dubai two niner fife, stand niner zero, request pushback, information Alpha."}
+{"id":32,"icao":"YSSY","seed":1,"cs":"FDB295","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway zero seven, Sky Dubai two niner fife."}
+{"id":33,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-sample","variant":"ICAO","text":"Direct SSYSO, Qantas seven six."}
+{"id":34,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"readback-sample","variant":"ICAO","text":"Start-up approved, runway zero seven, QNH one zero two four, Velocity fife four two."}
+{"id":35,"icao":"YSSY","seed":1,"cs":"FDB295","type":"readback-template","variant":"ICAO","text":"Departure one two fife decimal two zero zero, good day, Sky Dubai two niner fife."}
+{"id":36,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading two one niner, Qantas seven six."}
+{"id":37,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-sample","variant":"ICAO","text":"Expect ILS zero seven, information Alpha, Qantas seven six."}
+{"id":38,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-sample","variant":"ICAO","text":"Cleared ILS runway zero seven, will report established, Emirates eight eight zero."}
+{"id":39,"icao":"YSSY","seed":1,"cs":"DLH153","type":"readback-template","variant":"ICAO","text":"Cleared for takeoff runway zero seven, Lufthansa one fife tree."}
+{"id":40,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Velocity fife four two, stand Foxtrot one tree Bravo, request start-up, information Alpha."}
+{"id":41,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading two tree one, Qantas seven six."}
+{"id":42,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-sample","variant":"ICAO","text":"Left heading two fife fife, Emirates eight eight zero."}
+{"id":43,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-sample","variant":"ICAO","text":"Climb one eight thousand, Emirates eight eight zero."}
+{"id":44,"icao":"YSSY","seed":1,"cs":"DLH153","type":"readback-template","variant":"ICAO","text":"Climb flight level tree fife zero, Lufthansa one fife tree."}
+{"id":45,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Speed one six zero knots, Emirates eight eight zero."}
+{"id":46,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"readback-sample","variant":"ICAO","text":"Standing by, Velocity fife four two."}
+{"id":47,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-sample","variant":"ICAO","text":"Speed one niner zero knots, Qantas seven six."}
+{"id":48,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-template","variant":"ICAO","text":"Cleared for takeoff runway zero seven, Velocity fife two seven."}
+{"id":49,"icao":"YSSY","seed":1,"cs":"DLH153","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Lufthansa one fife tree, ready to taxi, information Alpha."}
+{"id":50,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading two four one, Qantas seven six."}
+{"id":51,"icao":"YSSY","seed":1,"cs":"DLH153","type":"readback-ai","variant":"ICAO","text":"Holding point runway zero seven, hold short one six right, Lufthansa one fife tree."}
+{"id":52,"icao":"YSSY","seed":1,"cs":"UAE880","type":"request","variant":"ICAO","text":"Emirates eight eight zero, request descent to four thousand."}
+{"id":53,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"readback-sample","variant":"ICAO","text":"Give way to the Singapore eight two zero, Velocity fife four two."}
+{"id":54,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"readback-sample","variant":"ICAO","text":"Give way to the Sky Dubai two niner fife, Velocity fife four two."}
+{"id":55,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-template","variant":"ICAO","text":"Right heading tree zero zero, Emirates eight eight zero."}
+{"id":56,"icao":"YSSY","seed":1,"cs":"DLH153","type":"readback-sample","variant":"ICAO","text":"Holding position, Lufthansa one fife tree."}
+{"id":57,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-sample","variant":"ICAO","text":"Climb one eight thousand, Qantas seven six."}
+{"id":58,"icao":"YSSY","seed":1,"cs":"FDB295","type":"readback-template","variant":"ICAO","text":"Climb one fife thousand, Sky Dubai two niner fife."}
+{"id":59,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-ai","variant":"ICAO","text":"Heading one six niner, Emirates eight six fife."}
+{"id":60,"icao":"YSSY","seed":1,"cs":"QFA248","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Qantas two four eight, ready to taxi, information Alpha."}
+{"id":61,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Descend four thousand, Emirates eight eight zero."}
+{"id":62,"icao":"YSSY","seed":1,"cs":"QFA248","type":"readback-ai","variant":"ICAO","text":"Holding point runway zero seven, hold short one six right, Qantas two four eight."}
+{"id":63,"icao":"YSSY","seed":1,"cs":"SIA820","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Singapore eight two zero, stand Foxtrot one fife, request start-up, information Alpha."}
+{"id":64,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-sample","variant":"ICAO","text":"Holding point runway zero seven via Alpha, Alpha one, Velocity fife two seven."}
+{"id":65,"icao":"YSSY","seed":1,"cs":"SIA820","type":"readback-template","variant":"ICAO","text":"Climb niner thousand, Singapore eight two zero."}
+{"id":66,"icao":"YSSY","seed":1,"cs":"SIA820","type":"readback-ai","variant":"ICAO","text":"Start-up approved, runway zero seven, QNH one zero two four, Singapore eight two zero."}
+{"id":67,"icao":"YSSY","seed":1,"cs":"QFA71","type":"readback-ai","variant":"ICAO","text":"Heading two tree one, Qantas seven one."}
+{"id":68,"icao":"YSSY","seed":1,"cs":"QFA71","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Approach, Qantas seven one, ILS runway zero seven."}
+{"id":69,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading two fife one, Qantas seven six."}
+{"id":70,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"readback-sample","variant":"ICAO","text":"Tower one one eight decimal fife zero zero, Velocity fife four two."}
+{"id":71,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-template","variant":"ICAO","text":"Climb flight level two tree zero, Emirates eight eight zero."}
+{"id":72,"icao":"YSSY","seed":1,"cs":"QFA71","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two four, ILS zero seven, Qantas seven one."}
+{"id":73,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Velocity fife two seven, ready to taxi, information Alpha."}
+{"id":74,"icao":"YSSY","seed":1,"cs":"DLH153","type":"reached_hold","variant":"ICAO","text":"DLH153 holding short runway 16R"}
+{"id":75,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading zero tree seven, Qantas seven six."}
+{"id":76,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-ai","variant":"ICAO","text":"Speed one six zero knots, Emirates eight six fife."}
+{"id":77,"icao":"YSSY","seed":1,"cs":"DLH153","type":"request","variant":"ICAO","text":"Lufthansa one fife tree, holding short runway one six right, request cross."}
+{"id":78,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-ai","variant":"ICAO","text":"Holding point runway zero seven, hold short one six right, Velocity fife two seven."}
+{"id":79,"icao":"YSSY","seed":1,"cs":"DLH153","type":"readback-ai","variant":"ICAO","text":"Cross runway one six right, wilco, Lufthansa one fife tree."}
+{"id":80,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-ai","variant":"ICAO","text":"Heading one fife four, Emirates eight six fife."}
+{"id":81,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-sample","variant":"ICAO","text":"Holding point runway zero seven, Velocity fife two seven."}
+{"id":82,"icao":"YSSY","seed":1,"cs":"QFA248","type":"readback-sample","variant":"ICAO","text":"Holding point runway zero seven via Alpha, Alpha one, Qantas two four eight."}
+{"id":83,"icao":"YSSY","seed":1,"cs":"QFA71","type":"readback-template","variant":"ICAO","text":"Cleared for takeoff runway zero seven, Qantas seven one."}
+{"id":84,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading zero four niner, Qantas seven six."}
+{"id":85,"icao":"YSSY","seed":1,"cs":"DLH153","type":"readback-sample","variant":"ICAO","text":"Holding point runway zero seven via Alpha, Lufthansa one fife tree."}
+{"id":86,"icao":"YSSY","seed":1,"cs":"DLH153","type":"runway_vacated","variant":"ICAO","text":"DLH153 runway 16R/34L vacated"}
+{"id":87,"icao":"YSSY","seed":1,"cs":"FDB295","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Sky Dubai two niner fife, ready to taxi, information Alpha."}
+{"id":88,"icao":"YSSY","seed":1,"cs":"FDB295","type":"readback-ai","variant":"ICAO","text":"Holding point runway zero seven, hold short one six right, Sky Dubai two niner fife."}
+{"id":89,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-ai","variant":"ICAO","text":"Heading zero eight eight, Emirates eight six fife."}
+{"id":90,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading zero six one, Qantas seven six."}
+{"id":91,"icao":"YSSY","seed":1,"cs":"FDB295","type":"readback-sample","variant":"ICAO","text":"Holding position, Sky Dubai two niner fife."}
+{"id":92,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-sample","variant":"ICAO","text":"Stand four niner via Alpha, Alpha one, Velocity fife two seven."}
+{"id":93,"icao":"YSSY","seed":1,"cs":"FDB295","type":"readback-template","variant":"ICAO","text":"Climb flight level tree fife zero, Sky Dubai two niner fife."}
+{"id":94,"icao":"YSSY","seed":1,"cs":"QFA248","type":"reached_hold","variant":"ICAO","text":"QFA248 holding short runway 16R"}
+{"id":95,"icao":"YSSY","seed":1,"cs":"QFA248","type":"readback-sample","variant":"ICAO","text":"Holding point runway zero seven via Alpha, Alpha one, Alpha two, Qantas two four eight."}
+{"id":96,"icao":"YSSY","seed":1,"cs":"FDB295","type":"readback-template","variant":"ICAO","text":"Cleared to land runway zero seven, Sky Dubai two niner fife."}
+{"id":97,"icao":"YSSY","seed":1,"cs":"QFA248","type":"request","variant":"ICAO","text":"Qantas two four eight, holding short runway one six right, request cross."}
+{"id":98,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-ai","variant":"ICAO","text":"Cleared ILS runway zero seven, will report established, Emirates eight six fife."}
+{"id":99,"icao":"YSSY","seed":1,"cs":"QFA248","type":"readback-ai","variant":"ICAO","text":"Cross runway one six right, wilco, Qantas two four eight."}
+{"id":100,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Descend four thousand, Qantas seven six."}
+{"id":101,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Velocity fife four two, ready to taxi, information Alpha."}
+{"id":102,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading zero eight eight, Qantas seven six."}
+{"id":103,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"readback-ai","variant":"ICAO","text":"Holding point runway zero seven, hold short one six right, Velocity fife four two."}
+{"id":104,"icao":"YSSY","seed":1,"cs":"JST623","type":"readback-sample","variant":"ICAO","text":"Standing by, Jetstar six two tree."}
+{"id":105,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-template","variant":"ICAO","text":"Climb niner thousand, Emirates eight six fife."}
+{"id":106,"icao":"YSSY","seed":1,"cs":"UAE865","type":"info","variant":"ICAO","text":"UAE865 established localizer 07"}
+{"id":107,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Descend tree thousand, Emirates eight eight zero."}
+{"id":108,"icao":"YSSY","seed":1,"cs":"UAE880","type":"request","variant":"ICAO","text":"Emirates eight eight zero, request direct SSYSW."}
+{"id":109,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Roger, standing by, Emirates eight eight zero."}
+{"id":110,"icao":"YSSY","seed":1,"cs":"QFA248","type":"runway_vacated","variant":"ICAO","text":"QFA248 runway 16R/34L vacated"}
+{"id":111,"icao":"YSSY","seed":1,"cs":"QFA248","type":"readback-sample","variant":"ICAO","text":"Stand fife four # two, Qantas two four eight."}
+{"id":112,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-sample","variant":"ICAO","text":"Tower one one eight decimal fife zero zero, Emirates eight six fife."}
+{"id":113,"icao":"YSSY","seed":1,"cs":"FDB295","type":"readback-template","variant":"ICAO","text":"Climb flight level two niner zero, Sky Dubai two niner fife."}
+{"id":114,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Speed one niner zero knots, Emirates eight eight zero."}
+{"id":115,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Heading two eight tree, Emirates eight eight zero."}
+{"id":116,"icao":"YSSY","seed":1,"cs":"QFA248","type":"readback-sample","variant":"ICAO","text":"Hold short zero seven, Qantas two four eight."}
+{"id":117,"icao":"YSSY","seed":1,"cs":"SIA820","type":"readback-template","variant":"ICAO","text":"Departure one two fife decimal two zero zero, good day, Singapore eight two zero."}
+{"id":118,"icao":"YSSY","seed":1,"cs":"UAE865","type":"handoff","variant":"ICAO","text":"UAE865 contact Sydney Kingsford Smith Tower 118.500"}
+{"id":119,"icao":"YSSY","seed":1,"cs":"UAE865","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Tower, Emirates eight six fife, ILS runway zero seven."}
+{"id":120,"icao":"YSSY","seed":1,"cs":"JST623","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Jetstar six two tree, stand one zero # two, request pushback, information Alpha."}
+{"id":121,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Heading two seven zero, Emirates eight eight zero."}
+{"id":122,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Heading two fife niner, Emirates eight eight zero."}
+{"id":123,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-sample","variant":"ICAO","text":"Ground one two one decimal niner zero zero, Emirates eight six fife."}
+{"id":124,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-sample","variant":"ICAO","text":"Stand tree four # two via Alpha, Alpha one, Alpha two, Velocity fife two seven."}
+{"id":125,"icao":"YSSY","seed":1,"cs":"DLH153","type":"readback-template","variant":"ICAO","text":"Departure one two fife decimal two zero zero, good day, Lufthansa one fife tree."}
+{"id":126,"icao":"YSSY","seed":1,"cs":"DLH153","type":"reached_hold","variant":"ICAO","text":"DLH153 holding short runway 07"}
+{"id":127,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Heading two four eight, Emirates eight eight zero."}
+{"id":128,"icao":"YSSY","seed":1,"cs":"DLH153","type":"handoff","variant":"ICAO","text":"DLH153 contact Sydney Kingsford Smith Tower 118.500"}
+{"id":129,"icao":"YSSY","seed":1,"cs":"QFA71","type":"request","variant":"ICAO","text":"Qantas seven one, request descent to four thousand."}
+{"id":130,"icao":"YSSY","seed":1,"cs":"JST623","type":"readback-sample","variant":"ICAO","text":"Roger, standing by, Jetstar six two tree."}
+{"id":131,"icao":"YSSY","seed":1,"cs":"QFA248","type":"readback-sample","variant":"ICAO","text":"Stand fife two # two via Alpha, Alpha one, Alpha two, Qantas two four eight."}
+{"id":132,"icao":"YSSY","seed":1,"cs":"QFA248","type":"readback-template","variant":"ICAO","text":"Departure one two fife decimal two zero zero, good day, Qantas two four eight."}
+{"id":133,"icao":"YSSY","seed":1,"cs":"SCO496","type":"readback-ai","variant":"ICAO","text":"Heading two zero seven, Scooter four niner six."}
+{"id":134,"icao":"YSSY","seed":1,"cs":"SCO496","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Approach, Scooter four niner six, ILS runway zero seven."}
+{"id":135,"icao":"YSSY","seed":1,"cs":"DLH153","type":"info","variant":"ICAO","text":"DLH153 rolling runway 07"}
+{"id":136,"icao":"YSSY","seed":1,"cs":"SCO496","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two four, ILS zero seven, Scooter four niner six."}
+{"id":137,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Heading two tree seven, Emirates eight eight zero."}
+{"id":138,"icao":"YSSY","seed":1,"cs":"FDB295","type":"readback-sample","variant":"ICAO","text":"Hold short one six right, Sky Dubai two niner fife."}
+{"id":139,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-template","variant":"ICAO","text":"Speed one eight zero knots, Emirates eight six fife."}
+{"id":140,"icao":"YSSY","seed":1,"cs":"SIA820","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Singapore eight two zero, ready to taxi, information Alpha."}
+{"id":141,"icao":"YSSY","seed":1,"cs":"SIA820","type":"readback-ai","variant":"ICAO","text":"Holding point runway zero seven, hold short one six right, Singapore eight two zero."}
+{"id":142,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-sample","variant":"ICAO","text":"Roger, Emirates eight six fife."}
+{"id":143,"icao":"YSSY","seed":1,"cs":"SCO496","type":"readback-sample","variant":"ICAO","text":"Expediting, Scooter four niner six."}
+{"id":144,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"readback-template","variant":"ICAO","text":"Right heading zero niner zero, Velocity fife four two."}
+{"id":145,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Heading tree tree two, Emirates eight eight zero."}
+{"id":146,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"readback-sample","variant":"ICAO","text":"Holding position, Velocity fife four two."}
+{"id":147,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"readback-template","variant":"ICAO","text":"Speed one eight zero knots, Velocity fife four two."}
+{"id":148,"icao":"YSSY","seed":1,"cs":"DLH153","type":"airborne","variant":"ICAO","text":"DLH153 airborne runway 07"}
+{"id":149,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-ai","variant":"ICAO","text":"Cleared to land runway zero seven, Emirates eight six fife."}
+{"id":150,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Heading tree four seven, Emirates eight eight zero."}
+{"id":151,"icao":"YSSY","seed":1,"cs":"FDB295","type":"reached_hold","variant":"ICAO","text":"FDB295 holding short runway 16R"}
+{"id":152,"icao":"YSSY","seed":1,"cs":"QFA248","type":"reached_hold","variant":"ICAO","text":"QFA248 holding short runway 07"}
+{"id":153,"icao":"YSSY","seed":1,"cs":"FDB295","type":"request","variant":"ICAO","text":"Sky Dubai two niner fife, holding short runway one six right, request cross."}
+{"id":154,"icao":"YSSY","seed":1,"cs":"FDB295","type":"readback-ai","variant":"ICAO","text":"Cross runway one six right, wilco, Sky Dubai two niner fife."}
+{"id":155,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-sample","variant":"ICAO","text":"Speed two tree zero knots, Qantas seven six."}
+{"id":156,"icao":"YSSY","seed":1,"cs":"SIA820","type":"readback-sample","variant":"ICAO","text":"Holding point runway zero seven, Singapore eight two zero."}
+{"id":157,"icao":"YSSY","seed":1,"cs":"SIA820","type":"readback-template","variant":"ICAO","text":"Climb flight level two tree zero, Singapore eight two zero."}
+{"id":158,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Heading tree six zero, Emirates eight eight zero."}
+{"id":159,"icao":"YSSY","seed":1,"cs":"QFA248","type":"handoff","variant":"ICAO","text":"QFA248 contact Sydney Kingsford Smith Tower 118.500"}
+{"id":160,"icao":"YSSY","seed":1,"cs":"QFA248","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Tower, Qantas two four eight, holding point runway zero seven, ready for departure."}
+{"id":161,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Heading zero one fife, Emirates eight eight zero."}
+{"id":162,"icao":"YSSY","seed":1,"cs":"QFA248","type":"readback-ai","variant":"ICAO","text":"Holding position, Qantas two four eight."}
+{"id":163,"icao":"YSSY","seed":1,"cs":"QFA248","type":"readback-sample","variant":"ICAO","text":"Roger, Qantas two four eight."}
+{"id":164,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-template","variant":"ICAO","text":"Cleared to land runway zero seven, Velocity fife two seven."}
+{"id":165,"icao":"YSSY","seed":1,"cs":"DLH153","type":"handoff","variant":"ICAO","text":"DLH153 contact Sydney Kingsford Smith Departure 125.200"}
+{"id":166,"icao":"YSSY","seed":1,"cs":"DLH153","type":"readback-ai","variant":"ICAO","text":"Climb one tree thousand, Lufthansa one fife tree."}
+{"id":167,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"reached_hold","variant":"ICAO","text":"VOZ542 holding short runway 16R"}
+{"id":168,"icao":"YSSY","seed":1,"cs":"DLH153","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Departure, Lufthansa one fife tree, passing one thousand niner hundred climbing one tree thousand."}
+{"id":169,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"request","variant":"ICAO","text":"Velocity fife four two, holding short runway one six right, request cross."}
+{"id":170,"icao":"YSSY","seed":1,"cs":"JST623","type":"request","variant":"ICAO","text":"Jetstar six two tree, standing by."}
+{"id":171,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Heading zero two niner, Emirates eight eight zero."}
+{"id":172,"icao":"YSSY","seed":1,"cs":"FDB295","type":"runway_vacated","variant":"ICAO","text":"FDB295 runway 16R/34L vacated"}
+{"id":173,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"readback-ai","variant":"ICAO","text":"Cross runway one six right, wilco, Velocity fife four two."}
+{"id":174,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-ai","variant":"ICAO","text":"Heading zero tree four, Emirates eight eight zero."}
+{"id":175,"icao":"YSSY","seed":1,"cs":"UAL975","type":"readback-sample","variant":"ICAO","text":"Pushback approved, facing east, expect runway zero seven, United niner seven fife."}
+{"id":176,"icao":"YSSY","seed":1,"cs":"UAE865","type":"readback-template","variant":"ICAO","text":"Departure one two fife decimal two zero zero, good day, Emirates eight six fife."}
+{"id":177,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Descend tree thousand, Qantas seven six."}
+{"id":178,"icao":"YSSY","seed":1,"cs":"QFA71","type":"readback-ai","variant":"ICAO","text":"Descend seven thousand, Qantas seven one."}
+{"id":179,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"reached_hold","variant":"ICAO","text":"VOZ527 holding short runway 16R"}
+{"id":180,"icao":"YSSY","seed":1,"cs":"JST623","type":"readback-template","variant":"ICAO","text":"Right heading two seven zero, Jetstar six two tree."}
+{"id":181,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"runway_vacated","variant":"ICAO","text":"VOZ542 runway 16R/34L vacated"}
+{"id":182,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"request","variant":"ICAO","text":"Velocity fife two seven, holding short runway one six right, request cross."}
+{"id":183,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-ai","variant":"ICAO","text":"Cross runway one six right, wilco, Velocity fife two seven."}
+{"id":184,"icao":"YSSY","seed":1,"cs":"UAL975","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, United niner seven fife, stand fife fife # two, request pushback, information Alpha."}
+{"id":185,"icao":"YSSY","seed":1,"cs":"SCO496","type":"readback-sample","variant":"ICAO","text":"Expect ILS zero seven, information Alpha, Scooter four niner six."}
+{"id":186,"icao":"YSSY","seed":1,"cs":"DLH153","type":"readback-sample","variant":"ICAO","text":"Speed two fife zero knots, Lufthansa one fife tree."}
+{"id":187,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-template","variant":"ICAO","text":"Squawk four seven two one, Velocity fife two seven."}
+{"id":188,"icao":"YSSY","seed":1,"cs":"QFA71","type":"request","variant":"ICAO","text":"Qantas seven one, request direct SSYNO."}
+{"id":189,"icao":"YSSY","seed":1,"cs":"QFA71","type":"readback-ai","variant":"ICAO","text":"Roger, standing by, Qantas seven one."}
+{"id":190,"icao":"YSSY","seed":1,"cs":"UAE880","type":"info","variant":"ICAO","text":"UAE880 established localizer 07"}
+{"id":191,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"runway_vacated","variant":"ICAO","text":"VOZ527 runway 16R/34L vacated"}
+{"id":192,"icao":"YSSY","seed":1,"cs":"SCO496","type":"request","variant":"ICAO","text":"Scooter four niner six, request descent to four thousand."}
+{"id":193,"icao":"YSSY","seed":1,"cs":"QFA71","type":"readback-sample","variant":"ICAO","text":"Expediting, Qantas seven one."}
+{"id":194,"icao":"YSSY","seed":1,"cs":"UAE880","type":"readback-sample","variant":"ICAO","text":"Cleared to land runway zero seven, Emirates eight eight zero."}
+{"id":195,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"readback-template","variant":"ICAO","text":"Climb flight level tree fife zero, Velocity fife four two."}
+{"id":196,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading tree tree one, Qantas seven six."}
+{"id":197,"icao":"YSSY","seed":1,"cs":"CPA952","type":"readback-ai","variant":"ICAO","text":"Speed one six zero knots, Cathay niner fife two."}
+{"id":198,"icao":"YSSY","seed":1,"cs":"CPA952","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Approach, Cathay niner fife two, ILS runway zero seven."}
+{"id":199,"icao":"YSSY","seed":1,"cs":"UAE865","type":"touchdown","variant":"ICAO","text":"UAE865 touchdown runway 07"}
+{"id":200,"icao":"YSSY","seed":1,"cs":"CPA952","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two four, ILS zero seven, Cathay niner fife two."}
+{"id":201,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading tree two one, Qantas seven six."}
+{"id":202,"icao":"YSSY","seed":1,"cs":"DLH153","type":"readback-sample","variant":"ICAO","text":"Hold at SSYNE, as published, right turns, one minute legs, Lufthansa one fife tree."}
+{"id":203,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-template","variant":"ICAO","text":"Climb one fife thousand, Qantas seven six."}
+{"id":204,"icao":"YSSY","seed":1,"cs":"CPA952","type":"readback-ai","variant":"ICAO","text":"Descend seven thousand, Cathay niner fife two."}
+{"id":205,"icao":"YSSY","seed":1,"cs":"SIA820","type":"reached_hold","variant":"ICAO","text":"SIA820 holding short runway 16R"}
+{"id":206,"icao":"YSSY","seed":1,"cs":"CPA952","type":"readback-ai","variant":"ICAO","text":"Heading zero zero two, Cathay niner fife two."}
+{"id":207,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading tree one zero, Qantas seven six."}
+{"id":208,"icao":"YSSY","seed":1,"cs":"SIA820","type":"request","variant":"ICAO","text":"Singapore eight two zero, holding short runway one six right, request cross."}
+{"id":209,"icao":"YSSY","seed":1,"cs":"SIA820","type":"readback-ai","variant":"ICAO","text":"Cross runway one six right, wilco, Singapore eight two zero."}
+{"id":210,"icao":"YSSY","seed":1,"cs":"UAE865","type":"info","variant":"ICAO","text":"UAE865 exiting via D"}
+{"id":211,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-sample","variant":"ICAO","text":"Stand tree fife # four via Alpha, Alpha one, Velocity fife two seven."}
+{"id":212,"icao":"YSSY","seed":1,"cs":"VOZ527","type":"readback-sample","variant":"ICAO","text":"Holding position, Velocity fife two seven."}
+{"id":213,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-template","variant":"ICAO","text":"Speed one eight zero knots, Qantas seven six."}
+{"id":214,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading two niner seven, Qantas seven six."}
+{"id":215,"icao":"YSSY","seed":1,"cs":"DLH153","type":"readback-ai","variant":"ICAO","text":"Control one two seven decimal one zero zero, good day, Lufthansa one fife tree."}
+{"id":216,"icao":"YSSY","seed":1,"cs":"SCO496","type":"readback-ai","variant":"ICAO","text":"Descend eight thousand, Scooter four niner six."}
+{"id":217,"icao":"YSSY","seed":1,"cs":"DLH153","type":"handoff","variant":"ICAO","text":"DLH153 contact Control 127.100"}
+{"id":218,"icao":"YSSY","seed":1,"cs":"DLH153","type":"departed","variant":"ICAO","text":"DLH153 handed off, leaving the TMA"}
+{"id":219,"icao":"YSSY","seed":1,"cs":"UAL975","type":"readback-sample","variant":"ICAO","text":"Roger, standing by, United niner seven fife."}
+{"id":220,"icao":"YSSY","seed":1,"cs":"CPA952","type":"readback-sample","variant":"ICAO","text":"Descend fife thousand, Cathay niner fife two."}
+{"id":221,"icao":"YSSY","seed":1,"cs":"SIA820","type":"readback-template","variant":"ICAO","text":"Speed one eight zero knots, Singapore eight two zero."}
+{"id":222,"icao":"YSSY","seed":1,"cs":"UAE865","type":"runway_vacated","variant":"ICAO","text":"UAE865 runway 07 vacated"}
+{"id":223,"icao":"YSSY","seed":1,"cs":"QFA248","type":"readback-ai","variant":"ICAO","text":"Cleared for takeoff runway zero seven, Qantas two four eight."}
+{"id":224,"icao":"YSSY","seed":1,"cs":"SIA820","type":"runway_vacated","variant":"ICAO","text":"SIA820 runway 16R/34L vacated"}
+{"id":225,"icao":"YSSY","seed":1,"cs":"QFA248","type":"info","variant":"ICAO","text":"QFA248 rolling runway 07"}
+{"id":226,"icao":"YSSY","seed":1,"cs":"UAE865","type":"handoff","variant":"ICAO","text":"UAE865 contact Sydney Kingsford Smith Ground 121.900"}
+{"id":227,"icao":"YSSY","seed":1,"cs":"UAE865","type":"request","variant":"ICAO","text":"Sydney Kingsford Smith Ground, Emirates eight six fife, ILS runway zero seven."}
+{"id":228,"icao":"YSSY","seed":1,"cs":"QFA71","type":"readback-sample","variant":"ICAO","text":"Direct SSYNE, Qantas seven one."}
+{"id":229,"icao":"YSSY","seed":1,"cs":"VOZ542","type":"readback-sample","variant":"ICAO","text":"Continue taxi, Velocity fife four two."}
+{"id":230,"icao":"YSSY","seed":1,"cs":"QFA71","type":"readback-template","variant":"ICAO","text":"Cleared to land runway zero seven, Qantas seven one."}
+{"id":231,"icao":"YSSY","seed":1,"cs":"CPA952","type":"readback-ai","variant":"ICAO","text":"Descend six thousand, Cathay niner fife two."}
+{"id":232,"icao":"YSSY","seed":1,"cs":"QFA76","type":"readback-ai","variant":"ICAO","text":"Heading two four six, Qantas seven six."}
+{"id":233,"icao":"YSSY","seed":1,"cs":"QFA71","type":"readback-ai","variant":"ICAO","text":"Speed one six zero knots, Qantas seven one."}
+{"id":234,"icao":"YSSY","seed":1,"cs":"SCO496","type":"readback-sample","variant":"ICAO","text":"Speed two one zero knots, Scooter four niner six."}
+{"id":235,"icao":"YSSY","seed":1,"cs":"FDB295","type":"readback-sample","variant":"ICAO","text":"Give way to the Velocity fife two seven, Sky Dubai two niner fife."}
+{"id":236,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-ai","variant":"ICAO","text":"Heading one one one, Delta eight six fife."}
+{"id":237,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Heading zero four two, Delta eight eight zero."}
+{"id":238,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-ai","variant":"ICAO","text":"Heading zero eight two, Air France seven six."}
+{"id":239,"icao":"LFPG","seed":1,"cs":"DAL865","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Approach, Delta eight six fife, ILS runway two six left."}
+{"id":240,"icao":"LFPG","seed":1,"cs":"DAL880","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Approach, Delta eight eight zero, ILS runway two six right."}
+{"id":241,"icao":"LFPG","seed":1,"cs":"AFR76","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Approach, Air France seven six, ILS runway two six left."}
+{"id":242,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two seven, ILS two six left, Delta eight six fife."}
+{"id":243,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two seven, ILS two six right, Delta eight eight zero."}
+{"id":244,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two seven, ILS two six left, Air France seven six."}
+{"id":245,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-sample","variant":"ICAO","text":"Expect ILS two six right, information Alpha, Delta eight eight zero."}
+{"id":246,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-sample","variant":"ICAO","text":"Right heading one niner fife, Air France seven six."}
+{"id":247,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-template","variant":"ICAO","text":"Speed one eight zero knots, Easy fife two seven."}
+{"id":248,"icao":"LFPG","seed":1,"cs":"DLH153","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, Lufthansa one fife tree, stand India four Papa, request start-up, information Alpha."}
+{"id":249,"icao":"LFPG","seed":1,"cs":"DLH153","type":"readback-ai","variant":"ICAO","text":"Start-up approved, runway two seven left, QNH one zero two seven, Lufthansa one fife tree."}
+{"id":250,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-sample","variant":"ICAO","text":"Descend four thousand, Air France seven six."}
+{"id":251,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-sample","variant":"ICAO","text":"Expect ILS two six left, information Alpha, Air France seven six."}
+{"id":252,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-template","variant":"ICAO","text":"Speed one eight zero knots, Delta eight eight zero."}
+{"id":253,"icao":"LFPG","seed":1,"cs":"AFR248","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, Air France two four eight, stand India tree four # two, request start-up, information Alpha."}
+{"id":254,"icao":"LFPG","seed":1,"cs":"EZY527","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, Easy fife two seven, stand Yankee zero tree, request pushback, information Alpha."}
+{"id":255,"icao":"LFPG","seed":1,"cs":"AFR248","type":"readback-ai","variant":"ICAO","text":"Start-up approved, runway two seven left, QNH one zero two seven, Air France two four eight."}
+{"id":256,"icao":"LFPG","seed":1,"cs":"FDB295","type":"readback-sample","variant":"ICAO","text":"Pushback approved, facing east, expect runway two seven right, Sky Dubai two niner fife."}
+{"id":257,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-template","variant":"ICAO","text":"Climb flight level one niner zero, Easy fife two seven."}
+{"id":258,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway two seven right, Easy fife two seven."}
+{"id":259,"icao":"LFPG","seed":1,"cs":"AFR248","type":"startup","variant":"ICAO","text":"AFR248 start aborted, hot start, request five minutes"}
+{"id":260,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-ai","variant":"ICAO","text":"Descend seven thousand, Delta eight six fife."}
+{"id":261,"icao":"LFPG","seed":1,"cs":"DLH153","type":"readback-sample","variant":"ICAO","text":"Standing by, Lufthansa one fife tree."}
+{"id":262,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha, Alpha three, Easy fife two seven."}
+{"id":263,"icao":"LFPG","seed":1,"cs":"DLH153","type":"readback-template","variant":"ICAO","text":"Runway two six left, line up and wait, Lufthansa one fife tree."}
+{"id":264,"icao":"LFPG","seed":1,"cs":"FDB295","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, Sky Dubai two niner fife, stand Kilo fife niner, request pushback, information Alpha."}
+{"id":265,"icao":"LFPG","seed":1,"cs":"FDB295","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway two seven right, Sky Dubai two niner fife."}
+{"id":266,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Descend seven thousand, Delta eight eight zero."}
+{"id":267,"icao":"LFPG","seed":1,"cs":"DLH153","type":"readback-sample","variant":"ICAO","text":"Tower one one eight decimal fife zero zero, Lufthansa one fife tree."}
+{"id":268,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-template","variant":"ICAO","text":"Right heading tree zero zero, Delta eight eight zero."}
+{"id":269,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-sample","variant":"ICAO","text":"Heading two six zero, Air France seven six."}
+{"id":270,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-sample","variant":"ICAO","text":"Heading one eight fife, Delta eight eight zero."}
+{"id":271,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-template","variant":"ICAO","text":"Climb one two thousand, Delta eight six fife."}
+{"id":272,"icao":"LFPG","seed":1,"cs":"AAL794","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, American seven niner four, stand Echo November fife tree, request start-up, information Alpha."}
+{"id":273,"icao":"LFPG","seed":1,"cs":"AAL794","type":"readback-ai","variant":"ICAO","text":"Start-up approved, runway two seven left, QNH one zero two seven, American seven niner four."}
+{"id":274,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-sample","variant":"ICAO","text":"Hold at CDGNW, as published, right turns, one minute legs, Delta eight six fife."}
+{"id":275,"icao":"LFPG","seed":1,"cs":"AAL794","type":"readback-sample","variant":"ICAO","text":"Tower one one eight decimal fife zero zero, American seven niner four."}
+{"id":276,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-template","variant":"ICAO","text":"Climb one two thousand, Easy fife two seven."}
+{"id":277,"icao":"LFPG","seed":1,"cs":"AFR248","type":"readback-sample","variant":"ICAO","text":"Standing by, Air France two four eight."}
+{"id":278,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-sample","variant":"ICAO","text":"Speed one seven zero knots, Air France seven six."}
+{"id":279,"icao":"LFPG","seed":1,"cs":"AAL794","type":"readback-template","variant":"ICAO","text":"Cleared to land runway two seven right, American seven niner four."}
+{"id":280,"icao":"LFPG","seed":1,"cs":"DAL865","type":"request","variant":"ICAO","text":"Delta eight six fife, request descent to four thousand."}
+{"id":281,"icao":"LFPG","seed":1,"cs":"DAL880","type":"request","variant":"ICAO","text":"Delta eight eight zero, request descent to four thousand."}
+{"id":282,"icao":"LFPG","seed":1,"cs":"AFR76","type":"request","variant":"ICAO","text":"Air France seven six, request descent to four thousand."}
+{"id":283,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-ai","variant":"ICAO","text":"Heading one tree two, Air France one six zero."}
+{"id":284,"icao":"LFPG","seed":1,"cs":"AFR160","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Approach, Air France one six zero, ILS runway two six left."}
+{"id":285,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-sample","variant":"ICAO","text":"Heading one fife fife, Delta eight eight zero."}
+{"id":286,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-sample","variant":"ICAO","text":"Stopping, Easy fife two seven."}
+{"id":287,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-template","variant":"ICAO","text":"Cleared to land runway two seven left, Delta eight eight zero."}
+{"id":288,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two seven, ILS two six left, Air France one six zero."}
+{"id":289,"icao":"LFPG","seed":1,"cs":"FDB295","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha, Alpha three, Alpha four, Sky Dubai two niner fife."}
+{"id":290,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-sample","variant":"ICAO","text":"Hold at CDGWE, as published, right turns, one minute legs, Air France seven six."}
+{"id":291,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-template","variant":"ICAO","text":"Runway two six right, line up and wait, Air France one six zero."}
+{"id":292,"icao":"LFPG","seed":1,"cs":"DLH153","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, Lufthansa one fife tree, ready to taxi, information Alpha."}
+{"id":293,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-sample","variant":"ICAO","text":"Speed one seven zero knots, Delta eight eight zero."}
+{"id":294,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-sample","variant":"ICAO","text":"Cleared ILS runway two six left, will report established, Air France one six zero."}
+{"id":295,"icao":"LFPG","seed":1,"cs":"DLH153","type":"readback-template","variant":"ICAO","text":"Squawk six zero one tree, Lufthansa one fife tree."}
+{"id":296,"icao":"LFPG","seed":1,"cs":"DLH153","type":"readback-ai","variant":"ICAO","text":"Holding point runway two seven left, Lufthansa one fife tree."}
+{"id":297,"icao":"LFPG","seed":1,"cs":"EZY527","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, Easy fife two seven, ready to taxi, information Alpha."}
+{"id":298,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Speed one six zero knots, Delta eight eight zero."}
+{"id":299,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-ai","variant":"ICAO","text":"Holding point runway two seven right, hold short two seven left, Easy fife two seven."}
+{"id":300,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-sample","variant":"ICAO","text":"Standing by, Easy fife two seven."}
+{"id":301,"icao":"LFPG","seed":1,"cs":"FDB295","type":"readback-sample","variant":"ICAO","text":"Stopping, Sky Dubai two niner fife."}
+{"id":302,"icao":"LFPG","seed":1,"cs":"FDB295","type":"readback-template","variant":"ICAO","text":"Cleared to land runway two six right, Sky Dubai two niner fife."}
+{"id":303,"icao":"LFPG","seed":1,"cs":"AFR354","type":"readback-ai","variant":"ICAO","text":"Heading one zero six, Air France tree fife four."}
+{"id":304,"icao":"LFPG","seed":1,"cs":"AFR354","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Approach, Air France tree fife four, ILS runway two six left."}
+{"id":305,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-sample","variant":"ICAO","text":"Cleared ILS runway two six left, will report established, Air France seven six."}
+{"id":306,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-template","variant":"ICAO","text":"Speed one eight zero knots, Air France seven six."}
+{"id":307,"icao":"LFPG","seed":1,"cs":"AFR354","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two seven, ILS two six left, Air France tree fife four."}
+{"id":308,"icao":"LFPG","seed":1,"cs":"FDB295","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, Sky Dubai two niner fife, ready to taxi, information Alpha."}
+{"id":309,"icao":"LFPG","seed":1,"cs":"FDB295","type":"readback-ai","variant":"ICAO","text":"Holding point runway two seven right, hold short two seven left, Sky Dubai two niner fife."}
+{"id":310,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-sample","variant":"ICAO","text":"Hold short two seven left, Easy fife two seven."}
+{"id":311,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-template","variant":"ICAO","text":"Squawk six zero one tree, Easy fife two seven."}
+{"id":312,"icao":"LFPG","seed":1,"cs":"AAL794","type":"readback-sample","variant":"ICAO","text":"Standing by, American seven niner four."}
+{"id":313,"icao":"LFPG","seed":1,"cs":"DLH153","type":"readback-sample","variant":"ICAO","text":"Give way to the Air France two four eight, Lufthansa one fife tree."}
+{"id":314,"icao":"LFPG","seed":1,"cs":"AFR248","type":"readback-template","variant":"ICAO","text":"Speed one eight zero knots, Air France two four eight."}
+{"id":315,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-ai","variant":"ICAO","text":"Descend tree thousand, Delta eight six fife."}
+{"id":316,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-ai","variant":"ICAO","text":"Descend seven thousand, Air France one six zero."}
+{"id":317,"icao":"LFPG","seed":1,"cs":"AAL794","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, American seven niner four, ready to taxi, information Alpha."}
+{"id":318,"icao":"LFPG","seed":1,"cs":"AAL794","type":"readback-ai","variant":"ICAO","text":"Holding point runway two seven left, American seven niner four."}
+{"id":319,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-sample","variant":"ICAO","text":"Cleared ILS runway two six right, will report established, Delta eight eight zero."}
+{"id":320,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-sample","variant":"ICAO","text":"Direct CDGNW, Delta eight six fife."}
+{"id":321,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-template","variant":"ICAO","text":"Right heading tree zero zero, Air France one six zero."}
+{"id":322,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Descend four thousand, Delta eight eight zero."}
+{"id":323,"icao":"LFPG","seed":1,"cs":"AFR248","type":"readback-sample","variant":"ICAO","text":"Tower one one eight decimal fife zero zero, Air France two four eight."}
+{"id":324,"icao":"LFPG","seed":1,"cs":"AFR160","type":"request","variant":"ICAO","text":"Air France one six zero, request descent to four thousand."}
+{"id":325,"icao":"LFPG","seed":1,"cs":"DAL865","type":"request","variant":"ICAO","text":"Delta eight six fife, request direct CDGNE."}
+{"id":326,"icao":"LFPG","seed":1,"cs":"DAL880","type":"request","variant":"ICAO","text":"Delta eight eight zero, request direct CDGSE."}
+{"id":327,"icao":"LFPG","seed":1,"cs":"AFR76","type":"request","variant":"ICAO","text":"Air France seven six, request direct CDGNW."}
+{"id":328,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-ai","variant":"ICAO","text":"Roger, standing by, Delta eight six fife."}
+{"id":329,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-ai","variant":"ICAO","text":"Roger, standing by, Air France seven six."}
+{"id":330,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Roger, standing by, Delta eight eight zero."}
+{"id":331,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-sample","variant":"ICAO","text":"Tower one one eight decimal fife zero zero, Delta eight six fife."}
+{"id":332,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-sample","variant":"ICAO","text":"Cleared ILS runway two six left, will report established, Delta eight six fife."}
+{"id":333,"icao":"LFPG","seed":1,"cs":"DLH153","type":"readback-template","variant":"ICAO","text":"Cleared to land runway two six right, Lufthansa one fife tree."}
+{"id":334,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-ai","variant":"ICAO","text":"Descend seven thousand, Air France seven six."}
+{"id":335,"icao":"LFPG","seed":1,"cs":"UPS976","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, UPS niner seven six, stand Romeo one two, request start-up, information Alpha."}
+{"id":336,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-sample","variant":"ICAO","text":"Expect ILS two six left, information Alpha, Delta eight six fife."}
+{"id":337,"icao":"LFPG","seed":1,"cs":"UPS976","type":"readback-template","variant":"ICAO","text":"Runway two six right, line up and wait, UPS niner seven six."}
+{"id":338,"icao":"LFPG","seed":1,"cs":"UPS976","type":"readback-ai","variant":"ICAO","text":"Start-up approved, runway two seven left, QNH one zero two seven, UPS niner seven six."}
+{"id":339,"icao":"LFPG","seed":1,"cs":"AAL794","type":"readback-sample","variant":"ICAO","text":"Holding position, American seven niner four."}
+{"id":340,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-sample","variant":"ICAO","text":"Expediting, Delta eight eight zero."}
+{"id":341,"icao":"LFPG","seed":1,"cs":"FDB295","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha, Sky Dubai two niner fife."}
+{"id":342,"icao":"LFPG","seed":1,"cs":"AFR20","type":"readback-sample","variant":"ICAO","text":"Standing by, Air France two zero."}
+{"id":343,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-template","variant":"ICAO","text":"Speed one eight zero knots, Air France one six zero."}
+{"id":344,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-ai","variant":"ICAO","text":"Speed one six zero knots, Air France one six zero."}
+{"id":345,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Heading zero tree two, Delta eight eight zero."}
+{"id":346,"icao":"LFPG","seed":1,"cs":"AFR354","type":"request","variant":"ICAO","text":"Air France tree fife four, request descent to four thousand."}
+{"id":347,"icao":"LFPG","seed":1,"cs":"AFR354","type":"readback-sample","variant":"ICAO","text":"Tower one one eight decimal fife zero zero, Air France tree fife four."}
+{"id":348,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-sample","variant":"ICAO","text":"Descend two thousand, Delta eight six fife."}
+{"id":349,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Heading zero four tree, Delta eight eight zero."}
+{"id":350,"icao":"LFPG","seed":1,"cs":"FDB295","type":"readback-sample","variant":"ICAO","text":"Hold short two seven left, Sky Dubai two niner fife."}
+{"id":351,"icao":"LFPG","seed":1,"cs":"DLH153","type":"readback-sample","variant":"ICAO","text":"Give way to the American seven niner four, Lufthansa one fife tree."}
+{"id":352,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-template","variant":"ICAO","text":"Climb one one thousand, Delta eight six fife."}
+{"id":353,"icao":"LFPG","seed":1,"cs":"EZY564","type":"readback-ai","variant":"ICAO","text":"Heading one tree two, Easy fife six four."}
+{"id":354,"icao":"LFPG","seed":1,"cs":"EZY564","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Approach, Easy fife six four, ILS runway two six left."}
+{"id":355,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Heading zero fife six, Delta eight eight zero."}
+{"id":356,"icao":"LFPG","seed":1,"cs":"EZY564","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two seven, ILS two six left, Easy fife six four."}
+{"id":357,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-template","variant":"ICAO","text":"Departure one two fife decimal two zero zero, good day, Air France one six zero."}
+{"id":358,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Heading zero six eight, Delta eight eight zero."}
+{"id":359,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Heading zero seven niner, Delta eight eight zero."}
+{"id":360,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-sample","variant":"ICAO","text":"Climb one zero thousand, Air France one six zero."}
+{"id":361,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-sample","variant":"ICAO","text":"Heading one fife zero, Delta eight six fife."}
+{"id":362,"icao":"LFPG","seed":1,"cs":"AFR354","type":"readback-template","variant":"ICAO","text":"Departure one two fife decimal two zero zero, good day, Air France tree fife four."}
+{"id":363,"icao":"LFPG","seed":1,"cs":"AFR20","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, Air France two zero, stand Alpha tree four, request pushback, information Alpha."}
+{"id":364,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-ai","variant":"ICAO","text":"Heading one two two, Delta eight six fife."}
+{"id":365,"icao":"LFPG","seed":1,"cs":"AFR20","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway two seven right, Air France two zero."}
+{"id":366,"icao":"LFPG","seed":1,"cs":"AFR248","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, Air France two four eight, ready to taxi, information Alpha."}
+{"id":367,"icao":"LFPG","seed":1,"cs":"AFR248","type":"readback-ai","variant":"ICAO","text":"Holding point runway two seven left, Air France two four eight."}
+{"id":368,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Speed one niner zero knots, Delta eight eight zero."}
+{"id":369,"icao":"LFPG","seed":1,"cs":"UPS976","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven left, UPS niner seven six."}
+{"id":370,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-template","variant":"ICAO","text":"Cleared for takeoff runway two six left, Delta eight eight zero."}
+{"id":371,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-ai","variant":"ICAO","text":"Speed one six zero knots, Air France seven six."}
+{"id":372,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-ai","variant":"ICAO","text":"Heading one tree four, Delta eight six fife."}
+{"id":373,"icao":"LFPG","seed":1,"cs":"AFR354","type":"readback-ai","variant":"ICAO","text":"Descend seven thousand, Air France tree fife four."}
+{"id":374,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-ai","variant":"ICAO","text":"Speed one six zero knots, Delta eight six fife."}
+{"id":375,"icao":"LFPG","seed":1,"cs":"AFR160","type":"request","variant":"ICAO","text":"Air France one six zero, request direct CDGNE."}
+{"id":376,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Heading tree fife one, Delta eight eight zero."}
+{"id":377,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-ai","variant":"ICAO","text":"Roger, standing by, Air France one six zero."}
+{"id":378,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-ai","variant":"ICAO","text":"Heading one eight four, Delta eight six fife."}
+{"id":379,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right, Easy fife two seven."}
+{"id":380,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-template","variant":"ICAO","text":"Climb flight level two niner zero, Air France seven six."}
+{"id":381,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Heading tree four zero, Delta eight eight zero."}
+{"id":382,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-ai","variant":"ICAO","text":"Heading one niner six, Delta eight six fife."}
+{"id":383,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Heading tree two niner, Delta eight eight zero."}
+{"id":384,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-ai","variant":"ICAO","text":"Heading two zero eight, Delta eight six fife."}
+{"id":385,"icao":"LFPG","seed":1,"cs":"EZY527","type":"reached_hold","variant":"ICAO","text":"EZY527 holding short runway 27L"}
+{"id":386,"icao":"LFPG","seed":1,"cs":"UPS976","type":"readback-sample","variant":"ICAO","text":"Standing by, UPS niner seven six."}
+{"id":387,"icao":"LFPG","seed":1,"cs":"AFR248","type":"readback-template","variant":"ICAO","text":"Climb flight level tree fife zero, Air France two four eight."}
+{"id":388,"icao":"LFPG","seed":1,"cs":"EZY527","type":"request","variant":"ICAO","text":"Easy fife two seven, holding short runway two seven left, request cross."}
+{"id":389,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-ai","variant":"ICAO","text":"Heading two one niner, Delta eight six fife."}
+{"id":390,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Heading tree one fife, Delta eight eight zero."}
+{"id":391,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-ai","variant":"ICAO","text":"Cross runway two seven left, wilco, Easy fife two seven."}
+{"id":392,"icao":"LFPG","seed":1,"cs":"EZY564","type":"readback-ai","variant":"ICAO","text":"Descend eight thousand, Easy fife six four."}
+{"id":393,"icao":"LFPG","seed":1,"cs":"DAL865","type":"readback-ai","variant":"ICAO","text":"Heading two tree six, Delta eight six fife."}
+{"id":394,"icao":"LFPG","seed":1,"cs":"JAL645","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, Japan Air six four fife, stand Juliett tree zero, request pushback, information Alpha."}
+{"id":395,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-ai","variant":"ICAO","text":"Descend six thousand, Air France one six zero."}
+{"id":396,"icao":"LFPG","seed":1,"cs":"AFR354","type":"readback-sample","variant":"ICAO","text":"Cleared ILS runway two six left, will report established, Air France tree fife four."}
+{"id":397,"icao":"LFPG","seed":1,"cs":"AAL794","type":"readback-sample","variant":"ICAO","text":"Stand Echo November niner niner, American seven niner four."}
+{"id":398,"icao":"LFPG","seed":1,"cs":"UPS976","type":"readback-template","variant":"ICAO","text":"Runway two seven left, line up and wait, UPS niner seven six."}
+{"id":399,"icao":"LFPG","seed":1,"cs":"JAL645","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway two seven left, Japan Air six four fife."}
+{"id":400,"icao":"LFPG","seed":1,"cs":"DAL880","type":"readback-ai","variant":"ICAO","text":"Heading two niner zero, Delta eight eight zero."}
+{"id":401,"icao":"LFPG","seed":1,"cs":"UPS976","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, UPS niner seven six, ready to taxi, information Alpha."}
+{"id":402,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-ai","variant":"ICAO","text":"Descend fife thousand, Air France seven six."}
+{"id":403,"icao":"LFPG","seed":1,"cs":"EZY527","type":"runway_vacated","variant":"ICAO","text":"EZY527 runway 09R/27L vacated"}
+{"id":404,"icao":"LFPG","seed":1,"cs":"UPS976","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven left via Alpha, UPS niner seven six."}
+{"id":405,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha, Easy fife two seven."}
+{"id":406,"icao":"LFPG","seed":1,"cs":"UPS976","type":"readback-template","variant":"ICAO","text":"Squawk four seven two one, UPS niner seven six."}
+{"id":407,"icao":"LFPG","seed":1,"cs":"AFR354","type":"request","variant":"ICAO","text":"Air France tree fife four, request direct CDGNE."}
+{"id":408,"icao":"LFPG","seed":1,"cs":"AFR354","type":"readback-ai","variant":"ICAO","text":"Roger, standing by, Air France tree fife four."}
+{"id":409,"icao":"LFPG","seed":1,"cs":"DLH153","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven left via Alpha, Alpha three, Alpha four, Lufthansa one fife tree."}
+{"id":410,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-ai","variant":"ICAO","text":"Heading zero niner two, Air France seven six."}
+{"id":411,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-ai","variant":"ICAO","text":"Heading one one seven, Air France one six zero."}
+{"id":412,"icao":"LFPG","seed":1,"cs":"FDB295","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right, Sky Dubai two niner fife."}
+{"id":413,"icao":"LFPG","seed":1,"cs":"AFR248","type":"readback-template","variant":"ICAO","text":"Climb one one thousand, Air France two four eight."}
+{"id":414,"icao":"LFPG","seed":1,"cs":"EZY564","type":"request","variant":"ICAO","text":"Easy fife six four, request descent to four thousand."}
+{"id":415,"icao":"LFPG","seed":1,"cs":"DAL865","type":"info","variant":"ICAO","text":"DAL865 established localizer 26L"}
+{"id":416,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-ai","variant":"ICAO","text":"Heading two seven seven, Air France one six zero."}
+{"id":417,"icao":"LFPG","seed":1,"cs":"DAL880","type":"info","variant":"ICAO","text":"DAL880 established localizer 26R"}
+{"id":418,"icao":"LFPG","seed":1,"cs":"EZY527","type":"reached_hold","variant":"ICAO","text":"EZY527 holding short runway 27R"}
+{"id":419,"icao":"LFPG","seed":1,"cs":"AFR76","type":"readback-ai","variant":"ICAO","text":"Descend tree thousand, Air France seven six."}
+{"id":420,"icao":"LFPG","seed":1,"cs":"EZY527","type":"handoff","variant":"ICAO","text":"EZY527 contact Paris Charles de Gaulle Tower 118.500"}
+{"id":421,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-ai","variant":"ICAO","text":"Cleared for takeoff runway two seven right, Easy fife two seven."}
+{"id":422,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-sample","variant":"ICAO","text":"Hold at CDGNO, as published, right turns, one minute legs, Air France one six zero."}
+{"id":423,"icao":"LFPG","seed":1,"cs":"AFR20","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha, Alpha three, Alpha four, Air France two zero."}
+{"id":424,"icao":"LFPG","seed":1,"cs":"AFR20","type":"readback-template","variant":"ICAO","text":"Runway two six right, line up and wait, Air France two zero."}
+{"id":425,"icao":"LFPG","seed":1,"cs":"EZY527","type":"info","variant":"ICAO","text":"EZY527 rolling runway 27R"}
+{"id":426,"icao":"LFPG","seed":1,"cs":"DAL865","type":"handoff","variant":"ICAO","text":"DAL865 contact Paris Charles de Gaulle Tower 118.500"}
+{"id":427,"icao":"LFPG","seed":1,"cs":"DAL865","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Tower, Delta eight six fife, ILS runway two six left."}
+{"id":428,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-ai","variant":"ICAO","text":"Heading two eight eight, Air France one six zero."}
+{"id":429,"icao":"LFPG","seed":1,"cs":"AFR248","type":"readback-sample","variant":"ICAO","text":"Holding position, Air France two four eight."}
+{"id":430,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-sample","variant":"ICAO","text":"Climb one four thousand, Air France one six zero."}
+{"id":431,"icao":"LFPG","seed":1,"cs":"EZY527","type":"readback-template","variant":"ICAO","text":"Departure one two fife decimal two zero zero, good day, Easy fife two seven."}
+{"id":432,"icao":"LFPG","seed":1,"cs":"AFR160","type":"readback-ai","variant":"ICAO","text":"Descend fife thousand, Air France one six zero."}
+{"id":433,"icao":"LFPG","seed":1,"cs":"AFR20","type":"request","variant":"ICAO","text":"Paris Charles de Gaulle Ground, Air France two zero, ready to taxi, information Alpha."}
+{"id":434,"icao":"LFPG","seed":1,"cs":"AFR354","type":"readback-ai","variant":"ICAO","text":"Speed one six zero knots, Air France tree fife four."}
+{"id":435,"icao":"LFPG","seed":1,"cs":"AFR20","type":"readback-ai","variant":"ICAO","text":"Holding point runway two seven right, hold short two seven left, Air France two zero."}
+{"id":436,"icao":"LFPG","seed":1,"cs":"AFR354","type":"readback-sample","variant":"ICAO","text":"Hold at CDGNW, as published, right turns, one minute legs, Air France tree fife four."}
+{"id":437,"icao":"LFPG","seed":1,"cs":"FDB295","type":"readback-template","variant":"ICAO","text":"Cleared for takeoff runway two seven right, Sky Dubai two niner fife."}

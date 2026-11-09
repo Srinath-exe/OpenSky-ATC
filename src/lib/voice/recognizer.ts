@@ -65,12 +65,17 @@ export interface LocalStatus { state: 'idle' | 'loading' | 'ready' | 'error'; pr
 
 /** On-device recogniser: mic -> AudioWorklet (16 kHz, 0.3 s pre-roll; asr-capture.ts) -> Moonshine in a Web Worker.
  *  Not streaming: the utterance is transcribed when push-to-talk is released. `?model=base` on the worker selects
- *  Moonshine base (the default since ml/stt/RESULTS2.md: tiny missed too many callsigns). */
-export function createLocalRecognizer(onStatus?: (s: LocalStatus) => void, model: 'tiny' | 'base' = 'base'): Recognizer | null {
+ *  Moonshine base (the default since ml/stt/RESULTS2.md: tiny missed too many callsigns). The page URL can pick another
+ *  on-device model to try: `?stt-model=whistle` (Cactus Whistle, 18 MB, keyword-biased with the airline names and ATC
+ *  words; a quarter of the download, but 3-8 points less accurate than Moonshine base, ml/stt/models/EDGE.md), `tiny`,
+ *  `whisper-tiny.en`. */
+export function createLocalRecognizer(onStatus?: (s: LocalStatus) => void, model: 'base' | 'tiny' | 'whistle' = 'base'): Recognizer | null {
   if (!localSpeechAvailable()) return null;
   const status: LocalStatus = { state: 'idle', progress: 0, device: '', lastMs: null, message: '' };
   const emit = (p: Partial<LocalStatus>) => { Object.assign(status, p); onStatus?.({ ...status }); };
-  const worker = new Worker(`/voice/stt-worker.js?model=${model}`, { type: 'module' });
+  const asked = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('stt-model') : null;
+  const pick = asked && ['base', 'tiny', 'whistle', 'whisper-tiny.en', 'whisper-base.en'].includes(asked) ? asked : model;
+  const worker = new Worker(`/voice/stt-worker.js?model=${pick}`, { type: 'module' });
   const files = new Map<string, { loaded: number; total: number }>();
   const pending = new Map<number, (text: string) => void>();
   let nextId = 1;

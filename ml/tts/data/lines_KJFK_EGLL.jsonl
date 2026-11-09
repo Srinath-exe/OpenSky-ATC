@@ -1,0 +1,431 @@
+{"id":0,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Heading one three eight, Air France eight sixty-five."}
+{"id":1,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Descend seven thousand, Air France eight eighty."}
+{"id":2,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-ai","variant":"FAA","text":"Heading one two one, Delta seventy-six."}
+{"id":3,"icao":"KJFK","seed":1,"cs":"AFR865","type":"request","variant":"FAA","text":"John F. Kennedy Intl Approach, Air France eight sixty-five, ILS runway three one left."}
+{"id":4,"icao":"KJFK","seed":1,"cs":"AFR880","type":"request","variant":"FAA","text":"John F. Kennedy Intl Approach, Air France eight eighty, ILS runway three one right."}
+{"id":5,"icao":"KJFK","seed":1,"cs":"DAL76","type":"request","variant":"FAA","text":"John F. Kennedy Intl Approach, Delta seventy-six, ILS runway three one right."}
+{"id":6,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Radar contact, altimeter three zero three three, ILS three one right, Air France eight eighty."}
+{"id":7,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Radar contact, altimeter three zero three three, ILS three one left, Air France eight sixty-five."}
+{"id":8,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-ai","variant":"FAA","text":"Radar contact, altimeter three zero three three, ILS three one right, Delta seventy-six."}
+{"id":9,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Heading zero six six, Air France eight eighty."}
+{"id":10,"icao":"KJFK","seed":1,"cs":"AAL527","type":"readback-sample","variant":"FAA","text":"Pushback approved, facing east, expect runway three one right, American five twenty-seven."}
+{"id":11,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-sample","variant":"FAA","text":"Standing by, Lufthansa one fifty-three."}
+{"id":12,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-template","variant":"FAA","text":"Cleared for takeoff runway three one right, Delta seventy-six."}
+{"id":13,"icao":"KJFK","seed":1,"cs":"DLH153","type":"request","variant":"FAA","text":"John F. Kennedy Intl Ground, Lufthansa one fifty-three, stand four six Alpha, request pushback, information Alpha."}
+{"id":14,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-ai","variant":"FAA","text":"Start-up and pushback approved, expect runway three one left, Lufthansa one fifty-three."}
+{"id":15,"icao":"KJFK","seed":1,"cs":"DLH153","type":"startup","variant":"FAA","text":"DLH153 start aborted, hot start, request five minutes"}
+{"id":16,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-sample","variant":"FAA","text":"Runway three one left via Alpha, Alpha one, Alpha four, Lufthansa one fifty-three."}
+{"id":17,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-sample","variant":"FAA","text":"Pushback approved, expect runway three one right, Sky Dubai two ninety-five."}
+{"id":18,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-template","variant":"FAA","text":"Cleared for takeoff runway three one left, Air France eight sixty-five."}
+{"id":19,"icao":"KJFK","seed":1,"cs":"JBU248","type":"request","variant":"FAA","text":"John F. Kennedy Intl Ground, JetBlue two forty-eight, stand seven nine, request pushback, information Alpha."}
+{"id":20,"icao":"KJFK","seed":1,"cs":"AAL527","type":"request","variant":"FAA","text":"John F. Kennedy Intl Ground, American five twenty-seven, stand Romeo one two, request pushback, information Alpha."}
+{"id":21,"icao":"KJFK","seed":1,"cs":"JBU248","type":"readback-ai","variant":"FAA","text":"Start-up and pushback approved, expect runway three one left, JetBlue two forty-eight."}
+{"id":22,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-sample","variant":"FAA","text":"Climb one eight thousand, Delta seventy-six."}
+{"id":23,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-sample","variant":"FAA","text":"Standing by, Sky Dubai two ninety-five."}
+{"id":24,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-template","variant":"FAA","text":"Runway three one right, line up and wait, Lufthansa one fifty-three."}
+{"id":25,"icao":"KJFK","seed":1,"cs":"AAL527","type":"readback-ai","variant":"FAA","text":"Start-up and pushback approved, expect runway three one right, American five twenty-seven."}
+{"id":26,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-sample","variant":"FAA","text":"Expediting, Air France eight eighty."}
+{"id":27,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-sample","variant":"FAA","text":"Tower one one eight point five, Air France eight eighty."}
+{"id":28,"icao":"KJFK","seed":1,"cs":"AAL527","type":"readback-template","variant":"FAA","text":"Runway three one right, line up and wait, American five twenty-seven."}
+{"id":29,"icao":"KJFK","seed":1,"cs":"AAL791","type":"readback-ai","variant":"FAA","text":"Heading one six one, American seven ninety-one."}
+{"id":30,"icao":"KJFK","seed":1,"cs":"AAL791","type":"request","variant":"FAA","text":"John F. Kennedy Intl Approach, American seven ninety-one, ILS runway three one left."}
+{"id":31,"icao":"KJFK","seed":1,"cs":"FDB295","type":"request","variant":"FAA","text":"John F. Kennedy Intl Ground, Sky Dubai two ninety-five, stand Alpha two, request pushback, information Alpha."}
+{"id":32,"icao":"KJFK","seed":1,"cs":"AAL791","type":"readback-ai","variant":"FAA","text":"Radar contact, altimeter three zero three three, ILS three one left, American seven ninety-one."}
+{"id":33,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Speed one six zero knots, Air France eight eighty."}
+{"id":34,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-ai","variant":"FAA","text":"Start-up and pushback approved, expect runway three one right, Sky Dubai two ninety-five."}
+{"id":35,"icao":"KJFK","seed":1,"cs":"FDB295","type":"startup","variant":"FAA","text":"FDB295 start aborted, hot start, request five minutes"}
+{"id":36,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-sample","variant":"FAA","text":"Hold at JFKWE, as published, right turns, one minute legs, Delta seventy-six."}
+{"id":37,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-template","variant":"FAA","text":"Climb one one thousand, Sky Dubai two ninety-five."}
+{"id":38,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-sample","variant":"FAA","text":"Speed one eight zero knots, Air France eight eighty."}
+{"id":39,"icao":"KJFK","seed":1,"cs":"AAL527","type":"readback-sample","variant":"FAA","text":"Stopping, American five twenty-seven."}
+{"id":40,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-template","variant":"FAA","text":"Climb flight level one nine zero, Sky Dubai two ninety-five."}
+{"id":41,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Descend seven thousand, Air France eight sixty-five."}
+{"id":42,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-sample","variant":"FAA","text":"Direct JFKNE, Air France eight eighty."}
+{"id":43,"icao":"KJFK","seed":1,"cs":"DLH820","type":"readback-sample","variant":"FAA","text":"Standing by, Lufthansa eight twenty."}
+{"id":44,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-template","variant":"FAA","text":"Squawk four seven two one, Lufthansa one fifty-three."}
+{"id":45,"icao":"KJFK","seed":1,"cs":"AFR865","type":"request","variant":"FAA","text":"Air France eight sixty-five, request descent to four thousand."}
+{"id":46,"icao":"KJFK","seed":1,"cs":"AFR880","type":"request","variant":"FAA","text":"Air France eight eighty, request descent to four thousand."}
+{"id":47,"icao":"KJFK","seed":1,"cs":"DAL76","type":"request","variant":"FAA","text":"Delta seventy-six, request descent to four thousand."}
+{"id":48,"icao":"KJFK","seed":1,"cs":"AAL527","type":"readback-sample","variant":"FAA","text":"Runway three one right via Alpha, American five twenty-seven."}
+{"id":49,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-sample","variant":"FAA","text":"Expect ILS three one left, information Alpha, Air France eight sixty-five."}
+{"id":50,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-template","variant":"FAA","text":"Right heading one nine zero, Lufthansa one fifty-three."}
+{"id":51,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Descend four thousand, Air France eight eighty."}
+{"id":52,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-sample","variant":"FAA","text":"Speed two five zero knots, Delta seventy-six."}
+{"id":53,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-sample","variant":"FAA","text":"Speed two four zero knots, Air France eight sixty-five."}
+{"id":54,"icao":"KJFK","seed":1,"cs":"AAL527","type":"readback-template","variant":"FAA","text":"Right heading two seven zero, American five twenty-seven."}
+{"id":55,"icao":"KJFK","seed":1,"cs":"DLH820","type":"request","variant":"FAA","text":"John F. Kennedy Intl Ground, Lufthansa eight twenty, stand Hotel Sierra two Bravo, request pushback, information Alpha."}
+{"id":56,"icao":"KJFK","seed":1,"cs":"DLH820","type":"readback-ai","variant":"FAA","text":"Start-up and pushback approved, expect runway three one left, Lufthansa eight twenty."}
+{"id":57,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-sample","variant":"FAA","text":"Runway three one left via Alpha, Lufthansa one fifty-three."}
+{"id":58,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-sample","variant":"FAA","text":"Expect ILS three one right, information Alpha, Delta seventy-six."}
+{"id":59,"icao":"KJFK","seed":1,"cs":"JBU248","type":"readback-template","variant":"FAA","text":"Squawk six zero one three, JetBlue two forty-eight."}
+{"id":60,"icao":"KJFK","seed":1,"cs":"JBU354","type":"readback-ai","variant":"FAA","text":"Heading one six zero, JetBlue three fifty-four."}
+{"id":61,"icao":"KJFK","seed":1,"cs":"JBU354","type":"request","variant":"FAA","text":"John F. Kennedy Intl Approach, JetBlue three fifty-four, ILS runway three one right."}
+{"id":62,"icao":"KJFK","seed":1,"cs":"JBU354","type":"readback-ai","variant":"FAA","text":"Radar contact, altimeter three zero three three, ILS three one right, JetBlue three fifty-four."}
+{"id":63,"icao":"KJFK","seed":1,"cs":"AAL791","type":"readback-sample","variant":"FAA","text":"Right heading zero nine five, American seven ninety-one."}
+{"id":64,"icao":"KJFK","seed":1,"cs":"AAL527","type":"readback-template","variant":"FAA","text":"Squawk six zero one three, American five twenty-seven."}
+{"id":65,"icao":"KJFK","seed":1,"cs":"JBU248","type":"request","variant":"FAA","text":"John F. Kennedy Intl Ground, JetBlue two forty-eight, ready to taxi, information Alpha."}
+{"id":66,"icao":"KJFK","seed":1,"cs":"JBU248","type":"readback-ai","variant":"FAA","text":"Runway three one left, hold short zero four left, JetBlue two forty-eight."}
+{"id":67,"icao":"KJFK","seed":1,"cs":"AAL527","type":"request","variant":"FAA","text":"John F. Kennedy Intl Ground, American five twenty-seven, ready to taxi, information Alpha."}
+{"id":68,"icao":"KJFK","seed":1,"cs":"AAL791","type":"request","variant":"FAA","text":"American seven ninety-one, request descent to four thousand."}
+{"id":69,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-sample","variant":"FAA","text":"Runway three one left, Lufthansa one fifty-three."}
+{"id":70,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-sample","variant":"FAA","text":"Climb seven thousand, Air France eight eighty."}
+{"id":71,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-template","variant":"FAA","text":"Right heading one nine zero, Air France eight sixty-five."}
+{"id":72,"icao":"KJFK","seed":1,"cs":"AAL527","type":"readback-ai","variant":"FAA","text":"Runway three one right, hold short two two right, American five twenty-seven."}
+{"id":73,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Heading zero seven six, Air France eight eighty."}
+{"id":74,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-sample","variant":"FAA","text":"Runway three one right, Sky Dubai two ninety-five."}
+{"id":75,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-sample","variant":"FAA","text":"Heading two one zero, Delta seventy-six."}
+{"id":76,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-template","variant":"FAA","text":"Runway three one left, line up and wait, Delta seventy-six."}
+{"id":77,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-sample","variant":"FAA","text":"Tower one one eight point five, Delta seventy-six."}
+{"id":78,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-sample","variant":"FAA","text":"Runway three one right via Alpha, Alpha one, Alpha four, Sky Dubai two ninety-five."}
+{"id":79,"icao":"KJFK","seed":1,"cs":"JBU248","type":"readback-template","variant":"FAA","text":"Runway three one right, line up and wait, JetBlue two forty-eight."}
+{"id":80,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-sample","variant":"FAA","text":"Direct JFKSW, Air France eight sixty-five."}
+{"id":81,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-sample","variant":"FAA","text":"Climb flight level one nine zero, Delta seventy-six."}
+{"id":82,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Heading zero eight eight, Air France eight eighty."}
+{"id":83,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Speed one six zero knots, Speedbird fifteen."}
+{"id":84,"icao":"KJFK","seed":1,"cs":"BAW15","type":"request","variant":"FAA","text":"John F. Kennedy Intl Approach, Speedbird fifteen, ILS runway three one right."}
+{"id":85,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Radar contact, altimeter three zero three three, ILS three one right, Speedbird fifteen."}
+{"id":86,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Heading one zero zero, Air France eight eighty."}
+{"id":87,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Descend five thousand, Speedbird fifteen."}
+{"id":88,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-sample","variant":"FAA","text":"Speed one four zero knots, Air France eight sixty-five."}
+{"id":89,"icao":"KJFK","seed":1,"cs":"JBU248","type":"readback-sample","variant":"FAA","text":"Runway three one left, JetBlue two forty-eight."}
+{"id":90,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-template","variant":"FAA","text":"Departure one two five point two, good day, Delta seventy-six."}
+{"id":91,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-ai","variant":"FAA","text":"Descend seven thousand, Delta seventy-six."}
+{"id":92,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Descend eight thousand, Speedbird fifteen."}
+{"id":93,"icao":"KJFK","seed":1,"cs":"JBU248","type":"reached_hold","variant":"FAA","text":"JBU248 holding short runway 04L"}
+{"id":94,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Heading one one three, Air France eight eighty."}
+{"id":95,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Heading three two one, Speedbird fifteen."}
+{"id":96,"icao":"KJFK","seed":1,"cs":"JBU248","type":"request","variant":"FAA","text":"JetBlue two forty-eight, holding short runway zero four left, request cross."}
+{"id":97,"icao":"KJFK","seed":1,"cs":"AFR865","type":"request","variant":"FAA","text":"Air France eight sixty-five, request direct JFKNE."}
+{"id":98,"icao":"KJFK","seed":1,"cs":"AFR880","type":"request","variant":"FAA","text":"Air France eight eighty, request direct JFKSE."}
+{"id":99,"icao":"KJFK","seed":1,"cs":"DAL76","type":"request","variant":"FAA","text":"Delta seventy-six, request direct JFKSO."}
+{"id":100,"icao":"KJFK","seed":1,"cs":"JBU248","type":"readback-ai","variant":"FAA","text":"Cross runway zero four left, wilco, JetBlue two forty-eight."}
+{"id":101,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Roger, standing by, Air France eight sixty-five."}
+{"id":102,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Roger, standing by, Air France eight eighty."}
+{"id":103,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-ai","variant":"FAA","text":"Roger, standing by, Delta seventy-six."}
+{"id":104,"icao":"KJFK","seed":1,"cs":"DLH820","type":"readback-sample","variant":"FAA","text":"Runway three one left via Alpha, Alpha one, Lufthansa eight twenty."}
+{"id":105,"icao":"KJFK","seed":1,"cs":"AAL791","type":"readback-template","variant":"FAA","text":"Cleared for takeoff runway three one right, American seven ninety-one."}
+{"id":106,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Descend three thousand, Air France eight sixty-five."}
+{"id":107,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Heading one two five, Air France eight eighty."}
+{"id":108,"icao":"KJFK","seed":1,"cs":"AAL791","type":"readback-ai","variant":"FAA","text":"Descend seven thousand, American seven ninety-one."}
+{"id":109,"icao":"KJFK","seed":1,"cs":"DLH820","type":"request","variant":"FAA","text":"John F. Kennedy Intl Ground, Lufthansa eight twenty, ready to taxi, information Alpha."}
+{"id":110,"icao":"KJFK","seed":1,"cs":"JBU248","type":"readback-sample","variant":"FAA","text":"Hold short three one left, JetBlue two forty-eight."}
+{"id":111,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-sample","variant":"FAA","text":"Heading zero five zero, Air France eight sixty-five."}
+{"id":112,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-template","variant":"FAA","text":"Speed one eight zero knots, Sky Dubai two ninety-five."}
+{"id":113,"icao":"KJFK","seed":1,"cs":"DLH820","type":"readback-ai","variant":"FAA","text":"Runway three one left, hold short zero four left, Lufthansa eight twenty."}
+{"id":114,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Heading one three eight, Air France eight eighty."}
+{"id":115,"icao":"KJFK","seed":1,"cs":"DAL108","type":"readback-ai","variant":"FAA","text":"Heading zero nine seven, Delta one zero eight."}
+{"id":116,"icao":"KJFK","seed":1,"cs":"DAL108","type":"request","variant":"FAA","text":"John F. Kennedy Intl Approach, Delta one zero eight, ILS runway three one right."}
+{"id":117,"icao":"KJFK","seed":1,"cs":"JBU248","type":"runway_vacated","variant":"FAA","text":"JBU248 runway 04L/22R vacated"}
+{"id":118,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Heading zero four nine, Air France eight eighty."}
+{"id":119,"icao":"KJFK","seed":1,"cs":"DAL108","type":"readback-ai","variant":"FAA","text":"Radar contact, altimeter three zero three three, ILS three one right, Delta one zero eight."}
+{"id":120,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-sample","variant":"FAA","text":"Tower one one eight point five, Sky Dubai two ninety-five."}
+{"id":121,"icao":"KJFK","seed":1,"cs":"AAL527","type":"readback-sample","variant":"FAA","text":"Holding position, American five twenty-seven."}
+{"id":122,"icao":"KJFK","seed":1,"cs":"JBU354","type":"readback-template","variant":"FAA","text":"Climb one five thousand, JetBlue three fifty-four."}
+{"id":123,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Heading zero three five, Air France eight eighty."}
+{"id":124,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Heading zero three nine, Speedbird fifteen."}
+{"id":125,"icao":"KJFK","seed":1,"cs":"JBU354","type":"request","variant":"FAA","text":"JetBlue three fifty-four, request descent to four thousand."}
+{"id":126,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Heading zero two two, Air France eight eighty."}
+{"id":127,"icao":"KJFK","seed":1,"cs":"DLH820","type":"readback-sample","variant":"FAA","text":"Stand Romeo one two, Lufthansa eight twenty."}
+{"id":128,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-template","variant":"FAA","text":"Climb nine thousand, Lufthansa one fifty-three."}
+{"id":129,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Heading zero three zero, Air France eight eighty."}
+{"id":130,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Heading one zero nine, Speedbird fifteen."}
+{"id":131,"icao":"KJFK","seed":1,"cs":"AAL791","type":"request","variant":"FAA","text":"American seven ninety-one, request direct JFKEA."}
+{"id":132,"icao":"KJFK","seed":1,"cs":"AAL527","type":"readback-sample","variant":"FAA","text":"Give way to the Sky Dubai two ninety-five, American five twenty-seven."}
+{"id":133,"icao":"KJFK","seed":1,"cs":"JBU354","type":"readback-sample","variant":"FAA","text":"Expect ILS three one right, information Alpha, JetBlue three fifty-four."}
+{"id":134,"icao":"KJFK","seed":1,"cs":"AAL527","type":"readback-template","variant":"FAA","text":"Climb one two thousand, American five twenty-seven."}
+{"id":135,"icao":"KJFK","seed":1,"cs":"AAL791","type":"readback-ai","variant":"FAA","text":"Roger, standing by, American seven ninety-one."}
+{"id":136,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Heading one two two, Speedbird fifteen."}
+{"id":137,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Speed one nine zero knots, Air France eight eighty."}
+{"id":138,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Heading two three seven, Air France eight eighty."}
+{"id":139,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-sample","variant":"FAA","text":"Speed one seven zero knots, Speedbird fifteen."}
+{"id":140,"icao":"KJFK","seed":1,"cs":"DLH820","type":"readback-template","variant":"FAA","text":"Cleared to land runway three one left, Lufthansa eight twenty."}
+{"id":141,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Heading one three four, Speedbird fifteen."}
+{"id":142,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Heading three three three, Air France eight eighty."}
+{"id":143,"icao":"KJFK","seed":1,"cs":"DAL47","type":"readback-ai","variant":"FAA","text":"Heading zero six nine, Delta forty-seven."}
+{"id":144,"icao":"KJFK","seed":1,"cs":"DAL47","type":"readback-sample","variant":"FAA","text":"Hold at JFKSO, as published, right turns, one minute legs, Delta forty-seven."}
+{"id":145,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-sample","variant":"FAA","text":"Hold at JFKSE, as published, right turns, one minute legs, Speedbird fifteen."}
+{"id":146,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-template","variant":"FAA","text":"Climb one one thousand, Delta seventy-six."}
+{"id":147,"icao":"KJFK","seed":1,"cs":"DAL47","type":"request","variant":"FAA","text":"John F. Kennedy Intl Approach, Delta forty-seven, ILS runway three one right."}
+{"id":148,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-ai","variant":"FAA","text":"Cleared ILS runway three one right, will report established, Air France eight eighty."}
+{"id":149,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Heading one four five, Speedbird fifteen."}
+{"id":150,"icao":"KJFK","seed":1,"cs":"AFR880","type":"info","variant":"FAA","text":"AFR880 established localizer 31R"}
+{"id":151,"icao":"KJFK","seed":1,"cs":"DAL47","type":"readback-ai","variant":"FAA","text":"Radar contact, altimeter three zero three three, ILS three one right, Delta forty-seven."}
+{"id":152,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-ai","variant":"FAA","text":"Speed one six zero knots, Delta seventy-six."}
+{"id":153,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Speed one six zero knots, Air France eight sixty-five."}
+{"id":154,"icao":"KJFK","seed":1,"cs":"DAL47","type":"readback-ai","variant":"FAA","text":"Descend nine thousand, Delta forty-seven."}
+{"id":155,"icao":"KJFK","seed":1,"cs":"JBU248","type":"reached_hold","variant":"FAA","text":"JBU248 holding short runway 31L"}
+{"id":156,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-sample","variant":"FAA","text":"Descend one thousand, Speedbird fifteen."}
+{"id":157,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-sample","variant":"FAA","text":"Expect ILS three one right, information Alpha, Speedbird fifteen."}
+{"id":158,"icao":"KJFK","seed":1,"cs":"DLH820","type":"readback-template","variant":"FAA","text":"Speed one eight zero knots, Lufthansa eight twenty."}
+{"id":159,"icao":"KJFK","seed":1,"cs":"AAL791","type":"readback-ai","variant":"FAA","text":"Speed one six zero knots, American seven ninety-one."}
+{"id":160,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Heading zero four eight, Air France eight sixty-five."}
+{"id":161,"icao":"KJFK","seed":1,"cs":"BAW15","type":"request","variant":"FAA","text":"Speedbird fifteen, request descent to four thousand."}
+{"id":162,"icao":"KJFK","seed":1,"cs":"JBU248","type":"readback-ai","variant":"FAA","text":"Cleared for takeoff runway three one left, JetBlue two forty-eight."}
+{"id":163,"icao":"KJFK","seed":1,"cs":"JBU248","type":"handoff","variant":"FAA","text":"JBU248 contact John F. Kennedy Intl Tower 118.500"}
+{"id":164,"icao":"KJFK","seed":1,"cs":"JBU248","type":"info","variant":"FAA","text":"JBU248 rolling runway 31L"}
+{"id":165,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Heading two nine two, Speedbird fifteen."}
+{"id":166,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-ai","variant":"FAA","text":"Descend four thousand, Delta seventy-six."}
+{"id":167,"icao":"KJFK","seed":1,"cs":"DAL47","type":"readback-sample","variant":"FAA","text":"Expediting, Delta forty-seven."}
+{"id":168,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-sample","variant":"FAA","text":"Tower one one eight point five, Air France eight sixty-five."}
+{"id":169,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-template","variant":"FAA","text":"Climb one two thousand, Sky Dubai two ninety-five."}
+{"id":170,"icao":"KJFK","seed":1,"cs":"DLH153","type":"request","variant":"FAA","text":"John F. Kennedy Intl Ground, Lufthansa one fifty-three, ready to taxi, information Alpha."}
+{"id":171,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Heading one four two, Air France eight sixty-five."}
+{"id":172,"icao":"KJFK","seed":1,"cs":"FDB295","type":"request","variant":"FAA","text":"John F. Kennedy Intl Ground, Sky Dubai two ninety-five, ready to taxi, information Alpha."}
+{"id":173,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-ai","variant":"FAA","text":"Runway three one left, hold short zero four left, Lufthansa one fifty-three."}
+{"id":174,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-ai","variant":"FAA","text":"Runway three one right, hold short two two right, Sky Dubai two ninety-five."}
+{"id":175,"icao":"KJFK","seed":1,"cs":"DAL108","type":"readback-sample","variant":"FAA","text":"Left heading zero nine five, Delta one zero eight."}
+{"id":176,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Heading three zero three, Speedbird fifteen."}
+{"id":177,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Descend seven thousand, Speedbird fifteen."}
+{"id":178,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-sample","variant":"FAA","text":"Holding position, Lufthansa one fifty-three."}
+{"id":179,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-sample","variant":"FAA","text":"Runway three one right via Alpha, Sky Dubai two ninety-five."}
+{"id":180,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-template","variant":"FAA","text":"Right heading three zero zero, Air France eight eighty."}
+{"id":181,"icao":"KJFK","seed":1,"cs":"DAL112","type":"readback-ai","variant":"FAA","text":"Heading zero nine seven, Delta one twelve."}
+{"id":182,"icao":"KJFK","seed":1,"cs":"DAL108","type":"request","variant":"FAA","text":"Delta one zero eight, request descent to four thousand."}
+{"id":183,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Heading three one five, Speedbird fifteen."}
+{"id":184,"icao":"KJFK","seed":1,"cs":"DAL112","type":"request","variant":"FAA","text":"John F. Kennedy Intl Approach, Delta one twelve, ILS runway three one right."}
+{"id":185,"icao":"KJFK","seed":1,"cs":"JBU248","type":"airborne","variant":"FAA","text":"JBU248 airborne runway 31L"}
+{"id":186,"icao":"KJFK","seed":1,"cs":"DAL112","type":"readback-ai","variant":"FAA","text":"Radar contact, altimeter three zero three three, ILS three one right, Delta one twelve."}
+{"id":187,"icao":"KJFK","seed":1,"cs":"DAL108","type":"readback-ai","variant":"FAA","text":"Descend eight thousand, Delta one zero eight."}
+{"id":188,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-sample","variant":"FAA","text":"Hold at JFKNW, as published, right turns, one minute legs, Air France eight sixty-five."}
+{"id":189,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-template","variant":"FAA","text":"Speed one eight zero knots, Delta seventy-six."}
+{"id":190,"icao":"KJFK","seed":1,"cs":"JBU354","type":"request","variant":"FAA","text":"JetBlue three fifty-four, request direct JFKEA."}
+{"id":191,"icao":"KJFK","seed":1,"cs":"JBU354","type":"readback-ai","variant":"FAA","text":"Roger, standing by, JetBlue three fifty-four."}
+{"id":192,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Heading one five two, Air France eight sixty-five."}
+{"id":193,"icao":"KJFK","seed":1,"cs":"DAL108","type":"readback-sample","variant":"FAA","text":"Hold at JFKSW, as published, right turns, one minute legs, Delta one zero eight."}
+{"id":194,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-template","variant":"FAA","text":"Departure one two five point two, good day, Speedbird fifteen."}
+{"id":195,"icao":"KJFK","seed":1,"cs":"AAL791","type":"readback-ai","variant":"FAA","text":"Descend five thousand, American seven ninety-one."}
+{"id":196,"icao":"KJFK","seed":1,"cs":"JBU354","type":"readback-ai","variant":"FAA","text":"Descend seven thousand, JetBlue three fifty-four."}
+{"id":197,"icao":"KJFK","seed":1,"cs":"JBU248","type":"handoff","variant":"FAA","text":"JBU248 contact John F. Kennedy Intl Departure 125.200"}
+{"id":198,"icao":"KJFK","seed":1,"cs":"JBU248","type":"readback-ai","variant":"FAA","text":"Climb one three thousand, JetBlue two forty-eight."}
+{"id":199,"icao":"KJFK","seed":1,"cs":"DLH153","type":"reached_hold","variant":"FAA","text":"DLH153 holding short runway 04L"}
+{"id":200,"icao":"KJFK","seed":1,"cs":"JBU248","type":"request","variant":"FAA","text":"John F. Kennedy Intl Departure, JetBlue two forty-eight, passing one thousand eight hundred climbing one three thousand."}
+{"id":201,"icao":"KJFK","seed":1,"cs":"DAL47","type":"readback-ai","variant":"FAA","text":"Speed one six zero knots, Delta forty-seven."}
+{"id":202,"icao":"KJFK","seed":1,"cs":"DLH153","type":"request","variant":"FAA","text":"Lufthansa one fifty-three, holding short runway zero four left, request cross."}
+{"id":203,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-ai","variant":"FAA","text":"Cross runway zero four left, wilco, Lufthansa one fifty-three."}
+{"id":204,"icao":"KJFK","seed":1,"cs":"JBU354","type":"readback-sample","variant":"FAA","text":"Heading zero two zero, JetBlue three fifty-four."}
+{"id":205,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-template","variant":"FAA","text":"Right heading three zero zero, Sky Dubai two ninety-five."}
+{"id":206,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Heading one six seven, Air France eight sixty-five."}
+{"id":207,"icao":"KJFK","seed":1,"cs":"JBU354","type":"readback-ai","variant":"FAA","text":"Speed one six zero knots, JetBlue three fifty-four."}
+{"id":208,"icao":"KJFK","seed":1,"cs":"DLH820","type":"reached_hold","variant":"FAA","text":"DLH820 holding short runway 04L"}
+{"id":209,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-sample","variant":"FAA","text":"Hold short two two right, Sky Dubai two ninety-five."}
+{"id":210,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-sample","variant":"FAA","text":"Hold short three one left, Lufthansa one fifty-three."}
+{"id":211,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-template","variant":"FAA","text":"Cleared to land runway three one right, Delta seventy-six."}
+{"id":212,"icao":"KJFK","seed":1,"cs":"DLH820","type":"request","variant":"FAA","text":"Lufthansa eight twenty, holding short runway zero four left, request cross."}
+{"id":213,"icao":"KJFK","seed":1,"cs":"DAL76","type":"readback-ai","variant":"FAA","text":"Heading one three two, Delta seventy-six."}
+{"id":214,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Heading one five six, Air France eight sixty-five."}
+{"id":215,"icao":"KJFK","seed":1,"cs":"DLH820","type":"readback-ai","variant":"FAA","text":"Cross runway zero four left, wilco, Lufthansa eight twenty."}
+{"id":216,"icao":"KJFK","seed":1,"cs":"DLH153","type":"runway_vacated","variant":"FAA","text":"DLH153 runway 04L/22R vacated"}
+{"id":217,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Heading three two seven, Speedbird fifteen."}
+{"id":218,"icao":"KJFK","seed":1,"cs":"DAL47","type":"request","variant":"FAA","text":"Delta forty-seven, request descent to four thousand."}
+{"id":219,"icao":"KJFK","seed":1,"cs":"AFR880","type":"readback-sample","variant":"FAA","text":"Going around, Air France eight eighty."}
+{"id":220,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Heading one four four, Air France eight sixty-five."}
+{"id":221,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Heading one one two, Speedbird fifteen."}
+{"id":222,"icao":"KJFK","seed":1,"cs":"DLH153","type":"reached_hold","variant":"FAA","text":"DLH153 holding short runway 31L"}
+{"id":223,"icao":"KJFK","seed":1,"cs":"AAL791","type":"readback-ai","variant":"FAA","text":"Heading one seven one, American seven ninety-one."}
+{"id":224,"icao":"KJFK","seed":1,"cs":"DLH820","type":"runway_vacated","variant":"FAA","text":"DLH820 runway 04L/22R vacated"}
+{"id":225,"icao":"KJFK","seed":1,"cs":"FDB295","type":"readback-sample","variant":"FAA","text":"Holding position, Sky Dubai two ninety-five."}
+{"id":226,"icao":"KJFK","seed":1,"cs":"AAL791","type":"readback-sample","variant":"FAA","text":"Direct JFKSE, American seven ninety-one."}
+{"id":227,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-template","variant":"FAA","text":"Climb one two thousand, Lufthansa one fifty-three."}
+{"id":228,"icao":"KJFK","seed":1,"cs":"BAW15","type":"request","variant":"FAA","text":"Speedbird fifteen, request direct JFKSE."}
+{"id":229,"icao":"KJFK","seed":1,"cs":"DAL47","type":"readback-ai","variant":"FAA","text":"Heading zero seven nine, Delta forty-seven."}
+{"id":230,"icao":"KJFK","seed":1,"cs":"DLH153","type":"handoff","variant":"FAA","text":"DLH153 contact John F. Kennedy Intl Tower 118.500"}
+{"id":231,"icao":"KJFK","seed":1,"cs":"DLH153","type":"readback-ai","variant":"FAA","text":"Cleared for takeoff runway three one left, Lufthansa one fifty-three."}
+{"id":232,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Roger, standing by, Speedbird fifteen."}
+{"id":233,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Heading one three three, Air France eight sixty-five."}
+{"id":234,"icao":"KJFK","seed":1,"cs":"DLH153","type":"info","variant":"FAA","text":"DLH153 rolling runway 31L"}
+{"id":235,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-ai","variant":"FAA","text":"Heading one two five, Speedbird fifteen."}
+{"id":236,"icao":"KJFK","seed":1,"cs":"AFR865","type":"readback-ai","variant":"FAA","text":"Speed one nine zero knots, Air France eight sixty-five."}
+{"id":237,"icao":"KJFK","seed":1,"cs":"JBU354","type":"readback-sample","variant":"FAA","text":"Speed one five zero knots, JetBlue three fifty-four."}
+{"id":238,"icao":"KJFK","seed":1,"cs":"BAW15","type":"readback-sample","variant":"FAA","text":"Speed two one zero knots, Speedbird fifteen."}
+{"id":239,"icao":"KJFK","seed":1,"cs":"DAL108","type":"readback-template","variant":"FAA","text":"Squawk two three six five, Delta one zero eight."}
+{"id":240,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Descend flight level seven zero, United eight six fife."}
+{"id":241,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Descend flight level seven zero, Speedbird four zero."}
+{"id":242,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-ai","variant":"ICAO","text":"Heading zero eight one, Speedbird one one eight."}
+{"id":243,"icao":"EGLL","seed":1,"cs":"UAL865","type":"request","variant":"ICAO","text":"Heathrow Approach, United eight six fife, ILS runway two seven left."}
+{"id":244,"icao":"EGLL","seed":1,"cs":"BAW40","type":"request","variant":"ICAO","text":"Heathrow Approach, Speedbird four zero, ILS runway two seven right."}
+{"id":245,"icao":"EGLL","seed":1,"cs":"BAW118","type":"request","variant":"ICAO","text":"Heathrow Approach, Speedbird one one eight, ILS runway two seven left."}
+{"id":246,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two fife, ILS two seven left, United eight six fife."}
+{"id":247,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two fife, ILS two seven right, Speedbird four zero."}
+{"id":248,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two fife, ILS two seven left, Speedbird one one eight."}
+{"id":249,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Heading tree one fife, United eight six fife."}
+{"id":250,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Descend four thousand, Speedbird four zero."}
+{"id":251,"icao":"EGLL","seed":1,"cs":"FDB295","type":"readback-sample","variant":"ICAO","text":"Standing by, Sky Dubai two niner fife."}
+{"id":252,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-sample","variant":"ICAO","text":"Direct MATCH, Speedbird one one eight."}
+{"id":253,"icao":"EGLL","seed":1,"cs":"BAW248","type":"readback-template","variant":"ICAO","text":"Departure one two fife decimal two zero zero, good day, Speedbird two four eight."}
+{"id":254,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Heading two four fife, Speedbird four zero."}
+{"id":255,"icao":"EGLL","seed":1,"cs":"DLH153","type":"request","variant":"ICAO","text":"Heathrow Ground, Lufthansa one fife tree, stand four two zero, request pushback, information Alpha."}
+{"id":256,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Speed one six zero knots, Speedbird four zero."}
+{"id":257,"icao":"EGLL","seed":1,"cs":"DLH153","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway two seven right, Lufthansa one fife tree."}
+{"id":258,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-sample","variant":"ICAO","text":"Climb flight level one six zero, Speedbird one one eight."}
+{"id":259,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-sample","variant":"ICAO","text":"Left heading two eight fife, Speedbird four zero."}
+{"id":260,"icao":"EGLL","seed":1,"cs":"VIR527","type":"readback-template","variant":"ICAO","text":"Climb flight level two tree zero, Virgin fife two seven."}
+{"id":261,"icao":"EGLL","seed":1,"cs":"BAW248","type":"request","variant":"ICAO","text":"Heathrow Ground, Speedbird two four eight, stand four four niner, request pushback, information Alpha."}
+{"id":262,"icao":"EGLL","seed":1,"cs":"VIR527","type":"request","variant":"ICAO","text":"Heathrow Ground, Virgin fife two seven, stand Tango Alpha six, request start-up, information Alpha."}
+{"id":263,"icao":"EGLL","seed":1,"cs":"BAW248","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway two seven right, Speedbird two four eight."}
+{"id":264,"icao":"EGLL","seed":1,"cs":"VIR527","type":"readback-sample","variant":"ICAO","text":"Roger, standing by, Virgin fife two seven."}
+{"id":265,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-sample","variant":"ICAO","text":"Expect ILS two seven right, information Alpha, Speedbird four zero."}
+{"id":266,"icao":"EGLL","seed":1,"cs":"FDB295","type":"readback-template","variant":"ICAO","text":"Speed one eight zero knots, Sky Dubai two niner fife."}
+{"id":267,"icao":"EGLL","seed":1,"cs":"VIR527","type":"readback-ai","variant":"ICAO","text":"Start-up approved, runway two seven left, QNH one zero two fife, Virgin fife two seven."}
+{"id":268,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-sample","variant":"ICAO","text":"Direct BUZAD, Speedbird one one eight."}
+{"id":269,"icao":"EGLL","seed":1,"cs":"FDB295","type":"readback-sample","variant":"ICAO","text":"Pushback approved, facing north, expect runway two seven left, Sky Dubai two niner fife."}
+{"id":270,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-template","variant":"ICAO","text":"Departure one two fife decimal two zero zero, good day, Speedbird four zero."}
+{"id":271,"icao":"EGLL","seed":1,"cs":"FDB295","type":"request","variant":"ICAO","text":"Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha."}
+{"id":272,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Descend tree thousand, United eight six fife."}
+{"id":273,"icao":"EGLL","seed":1,"cs":"FDB295","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway two seven left, Sky Dubai two niner fife."}
+{"id":274,"icao":"EGLL","seed":1,"cs":"SIA983","type":"request","variant":"ICAO","text":"Heathrow Ground, Singapore niner eight tree, stand fife fife seven, request pushback, information Alpha."}
+{"id":275,"icao":"EGLL","seed":1,"cs":"SIA983","type":"readback-sample","variant":"ICAO","text":"Roger, standing by, Singapore niner eight tree."}
+{"id":276,"icao":"EGLL","seed":1,"cs":"VIR527","type":"readback-sample","variant":"ICAO","text":"Standing by, Virgin fife two seven."}
+{"id":277,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-template","variant":"ICAO","text":"Speed one eight zero knots, United eight six fife."}
+{"id":278,"icao":"EGLL","seed":1,"cs":"SIA983","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway two seven right, Singapore niner eight tree."}
+{"id":279,"icao":"EGLL","seed":1,"cs":"BAW265","type":"readback-sample","variant":"ICAO","text":"Start-up approved, runway two seven right, QNH one zero two fife, Speedbird two six fife."}
+{"id":280,"icao":"EGLL","seed":1,"cs":"BAW248","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right, Speedbird two four eight."}
+{"id":281,"icao":"EGLL","seed":1,"cs":"BAW265","type":"readback-template","variant":"ICAO","text":"Runway two seven left, line up and wait, Speedbird two six fife."}
+{"id":282,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-sample","variant":"ICAO","text":"Tower one one eight decimal fife zero zero, United eight six fife."}
+{"id":283,"icao":"EGLL","seed":1,"cs":"BAW265","type":"readback-template","variant":"ICAO","text":"Cleared for takeoff runway two seven right, Speedbird two six fife."}
+{"id":284,"icao":"EGLL","seed":1,"cs":"DLH153","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha one, Alpha two, Lufthansa one fife tree."}
+{"id":285,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-sample","variant":"ICAO","text":"Cleared ILS runway two seven right, will report established, Speedbird four zero."}
+{"id":286,"icao":"EGLL","seed":1,"cs":"SIA983","type":"readback-template","variant":"ICAO","text":"Cleared for takeoff runway two seven left, Singapore niner eight tree."}
+{"id":287,"icao":"EGLL","seed":1,"cs":"BAW118","type":"request","variant":"ICAO","text":"Speedbird one one eight, request descent to four thousand."}
+{"id":288,"icao":"EGLL","seed":1,"cs":"SIA983","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right, Singapore niner eight tree."}
+{"id":289,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-sample","variant":"ICAO","text":"Speed one fife zero knots, Speedbird one one eight."}
+{"id":290,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-template","variant":"ICAO","text":"Climb flight level tree seven zero, Speedbird one one eight."}
+{"id":291,"icao":"EGLL","seed":1,"cs":"DLH153","type":"request","variant":"ICAO","text":"Heathrow Ground, Lufthansa one fife tree, ready to taxi, information Alpha."}
+{"id":292,"icao":"EGLL","seed":1,"cs":"BAW265","type":"request","variant":"ICAO","text":"Heathrow Ground, Speedbird two six fife, stand Tango Alpha fife, request start-up, information Alpha."}
+{"id":293,"icao":"EGLL","seed":1,"cs":"SIA983","type":"readback-sample","variant":"ICAO","text":"Stopping, Singapore niner eight tree."}
+{"id":294,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-sample","variant":"ICAO","text":"Right heading zero niner zero, United eight six fife."}
+{"id":295,"icao":"EGLL","seed":1,"cs":"BAW248","type":"readback-template","variant":"ICAO","text":"Right heading one niner zero, Speedbird two four eight."}
+{"id":296,"icao":"EGLL","seed":1,"cs":"DLH153","type":"readback-ai","variant":"ICAO","text":"Holding point runway two seven right, hold short two seven left, Lufthansa one fife tree."}
+{"id":297,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Descend tree thousand, Speedbird four zero."}
+{"id":298,"icao":"EGLL","seed":1,"cs":"SIA983","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha one, Singapore niner eight tree."}
+{"id":299,"icao":"EGLL","seed":1,"cs":"DLH153","type":"readback-sample","variant":"ICAO","text":"Cross runway two seven left, wilco, Lufthansa one fife tree."}
+{"id":300,"icao":"EGLL","seed":1,"cs":"FDB295","type":"readback-template","variant":"ICAO","text":"Right heading tree zero zero, Sky Dubai two niner fife."}
+{"id":301,"icao":"EGLL","seed":1,"cs":"VIR527","type":"request","variant":"ICAO","text":"Heathrow Ground, Virgin fife two seven, ready to taxi, information Alpha."}
+{"id":302,"icao":"EGLL","seed":1,"cs":"SIA983","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha one, Alpha two, Singapore niner eight tree."}
+{"id":303,"icao":"EGLL","seed":1,"cs":"UAE761","type":"readback-template","variant":"ICAO","text":"Cleared to land runway two seven right, Emirates seven six one."}
+{"id":304,"icao":"EGLL","seed":1,"cs":"VIR527","type":"readback-ai","variant":"ICAO","text":"Holding point runway two seven left, Virgin fife two seven."}
+{"id":305,"icao":"EGLL","seed":1,"cs":"BAW248","type":"request","variant":"ICAO","text":"Heathrow Ground, Speedbird two four eight, ready to taxi, information Alpha."}
+{"id":306,"icao":"EGLL","seed":1,"cs":"BAW248","type":"readback-ai","variant":"ICAO","text":"Holding point runway two seven right, hold short two seven left, Speedbird two four eight."}
+{"id":307,"icao":"EGLL","seed":1,"cs":"FDB295","type":"request","variant":"ICAO","text":"Heathrow Ground, Sky Dubai two niner fife, ready to taxi, information Alpha."}
+{"id":308,"icao":"EGLL","seed":1,"cs":"FDB295","type":"readback-ai","variant":"ICAO","text":"Holding point runway two seven left, Sky Dubai two niner fife."}
+{"id":309,"icao":"EGLL","seed":1,"cs":"UAE761","type":"readback-sample","variant":"ICAO","text":"Standing by, Emirates seven six one."}
+{"id":310,"icao":"EGLL","seed":1,"cs":"DLH153","type":"readback-template","variant":"ICAO","text":"Speed one eight zero knots, Lufthansa one fife tree."}
+{"id":311,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Heading two fife fife, Speedbird four zero."}
+{"id":312,"icao":"EGLL","seed":1,"cs":"UAE761","type":"request","variant":"ICAO","text":"Heathrow Ground, Emirates seven six one, stand two one seven, request pushback, information Alpha."}
+{"id":313,"icao":"EGLL","seed":1,"cs":"UAE761","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway two seven right, Emirates seven six one."}
+{"id":314,"icao":"EGLL","seed":1,"cs":"BAW265","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha one, Speedbird two six fife."}
+{"id":315,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-sample","variant":"ICAO","text":"Left heading zero two fife, Speedbird four zero."}
+{"id":316,"icao":"EGLL","seed":1,"cs":"EIN72","type":"readback-template","variant":"ICAO","text":"Squawk two tree six fife, Shamrock seven two."}
+{"id":317,"icao":"EGLL","seed":1,"cs":"DLH153","type":"reached_hold","variant":"ICAO","text":"DLH153 holding short runway 27L"}
+{"id":318,"icao":"EGLL","seed":1,"cs":"DLH153","type":"request","variant":"ICAO","text":"Lufthansa one fife tree, holding short runway two seven left, request cross."}
+{"id":319,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-ai","variant":"ICAO","text":"Descend flight level seven zero, Speedbird one one eight."}
+{"id":320,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Speed one six zero knots, United eight six fife."}
+{"id":321,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-sample","variant":"ICAO","text":"Tower one one eight decimal fife zero zero, Speedbird four zero."}
+{"id":322,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-sample","variant":"ICAO","text":"Climb flight level eight zero, United eight six fife."}
+{"id":323,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-template","variant":"ICAO","text":"Departure one two fife decimal two zero zero, good day, Speedbird one one eight."}
+{"id":324,"icao":"EGLL","seed":1,"cs":"EIN72","type":"request","variant":"ICAO","text":"Heathrow Ground, Shamrock seven two, stand two fife four, request pushback, information Alpha."}
+{"id":325,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Heading two niner seven, United eight six fife."}
+{"id":326,"icao":"EGLL","seed":1,"cs":"EIN72","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway two seven right, Shamrock seven two."}
+{"id":327,"icao":"EGLL","seed":1,"cs":"SIA983","type":"request","variant":"ICAO","text":"Heathrow Ground, Singapore niner eight tree, ready to taxi, information Alpha."}
+{"id":328,"icao":"EGLL","seed":1,"cs":"DLH153","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha one, Lufthansa one fife tree."}
+{"id":329,"icao":"EGLL","seed":1,"cs":"BAW248","type":"readback-template","variant":"ICAO","text":"Runway two seven right, line up and wait, Speedbird two four eight."}
+{"id":330,"icao":"EGLL","seed":1,"cs":"DLH153","type":"runway_vacated","variant":"ICAO","text":"DLH153 runway 09R/27L vacated"}
+{"id":331,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-sample","variant":"ICAO","text":"Speed one seven zero knots, Speedbird four zero."}
+{"id":332,"icao":"EGLL","seed":1,"cs":"EIN72","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha one, Alpha two, Shamrock seven two."}
+{"id":333,"icao":"EGLL","seed":1,"cs":"UAE761","type":"readback-template","variant":"ICAO","text":"Climb flight level tree fife zero, Emirates seven six one."}
+{"id":334,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-ai","variant":"ICAO","text":"Speed one six zero knots, Speedbird one one eight."}
+{"id":335,"icao":"EGLL","seed":1,"cs":"BAW118","type":"request","variant":"ICAO","text":"Speedbird one one eight, request direct EPM."}
+{"id":336,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-ai","variant":"ICAO","text":"Roger, standing by, Speedbird one one eight."}
+{"id":337,"icao":"EGLL","seed":1,"cs":"BAW265","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha one, Alpha two, Alpha three, Speedbird two six fife."}
+{"id":338,"icao":"EGLL","seed":1,"cs":"BAW265","type":"readback-sample","variant":"ICAO","text":"Tower one one eight decimal fife zero zero, Speedbird two six fife."}
+{"id":339,"icao":"EGLL","seed":1,"cs":"BAW265","type":"readback-template","variant":"ICAO","text":"Climb flight level niner zero, Speedbird two six fife."}
+{"id":340,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-template","variant":"ICAO","text":"Climb flight level one one zero, Speedbird one one eight."}
+{"id":341,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-sample","variant":"ICAO","text":"Right heading two six fife, United eight six fife."}
+{"id":342,"icao":"EGLL","seed":1,"cs":"EIN72","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha one, Alpha two, Alpha three, Shamrock seven two."}
+{"id":343,"icao":"EGLL","seed":1,"cs":"FDB295","type":"readback-template","variant":"ICAO","text":"Squawk four seven two one, Sky Dubai two niner fife."}
+{"id":344,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-sample","variant":"ICAO","text":"Descend one thousand, United eight six fife."}
+{"id":345,"icao":"EGLL","seed":1,"cs":"VIR527","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven left via Alpha one, Alpha two, Alpha three, Virgin fife two seven."}
+{"id":346,"icao":"EGLL","seed":1,"cs":"FDB295","type":"readback-template","variant":"ICAO","text":"Right heading zero niner zero, Sky Dubai two niner fife."}
+{"id":347,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Heading two seven seven, United eight six fife."}
+{"id":348,"icao":"EGLL","seed":1,"cs":"VIR564","type":"readback-ai","variant":"ICAO","text":"Heading one one niner, Virgin fife six four."}
+{"id":349,"icao":"EGLL","seed":1,"cs":"VIR564","type":"request","variant":"ICAO","text":"Heathrow Approach, Virgin fife six four, ILS runway two seven left."}
+{"id":350,"icao":"EGLL","seed":1,"cs":"BAW265","type":"request","variant":"ICAO","text":"Heathrow Ground, Speedbird two six fife, ready to taxi, information Alpha."}
+{"id":351,"icao":"EGLL","seed":1,"cs":"VIR564","type":"readback-ai","variant":"ICAO","text":"Radar contact, QNH one zero two fife, ILS two seven left, Virgin fife six four."}
+{"id":352,"icao":"EGLL","seed":1,"cs":"BAW265","type":"readback-ai","variant":"ICAO","text":"Holding point runway two seven right, Speedbird two six fife."}
+{"id":353,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-sample","variant":"ICAO","text":"Direct LAM, United eight six fife."}
+{"id":354,"icao":"EGLL","seed":1,"cs":"VIR564","type":"readback-sample","variant":"ICAO","text":"Hold at BIG, as published, right turns, one minute legs, Virgin fife six four."}
+{"id":355,"icao":"EGLL","seed":1,"cs":"UAE761","type":"readback-template","variant":"ICAO","text":"Cleared to land runway two seven left, Emirates seven six one."}
+{"id":356,"icao":"EGLL","seed":1,"cs":"BAW248","type":"reached_hold","variant":"ICAO","text":"BAW248 holding short runway 27L"}
+{"id":357,"icao":"EGLL","seed":1,"cs":"BAW248","type":"request","variant":"ICAO","text":"Speedbird two four eight, holding short runway two seven left, request cross."}
+{"id":358,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-ai","variant":"ICAO","text":"Descend four thousand, Speedbird one one eight."}
+{"id":359,"icao":"EGLL","seed":1,"cs":"BAW248","type":"readback-ai","variant":"ICAO","text":"Cross runway two seven left, wilco, Speedbird two four eight."}
+{"id":360,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Heading two seven two, United eight six fife."}
+{"id":361,"icao":"EGLL","seed":1,"cs":"VIR564","type":"readback-sample","variant":"ICAO","text":"Direct BNN, Virgin fife six four."}
+{"id":362,"icao":"EGLL","seed":1,"cs":"BAW20","type":"request","variant":"ICAO","text":"Heathrow Ground, Speedbird two zero, stand two one two Lima, request pushback, information Alpha."}
+{"id":363,"icao":"EGLL","seed":1,"cs":"BAW20","type":"readback-ai","variant":"ICAO","text":"Start-up and pushback approved, expect runway two seven right, Speedbird two zero."}
+{"id":364,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Climb four thousand, Speedbird four zero."}
+{"id":365,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-ai","variant":"ICAO","text":"Descend fife thousand, Speedbird one one eight."}
+{"id":366,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Cancel approach, left heading zero zero fife, climb four thousand, Speedbird four zero."}
+{"id":367,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Speed one niner zero knots, United eight six fife."}
+{"id":368,"icao":"EGLL","seed":1,"cs":"QTR937","type":"readback-sample","variant":"ICAO","text":"Pushback approved, facing east, expect runway two seven right, Qatari niner tree seven."}
+{"id":369,"icao":"EGLL","seed":1,"cs":"SIA983","type":"readback-sample","variant":"ICAO","text":"Hold short two seven right, Singapore niner eight tree."}
+{"id":370,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-template","variant":"ICAO","text":"Climb flight level one fife zero, United eight six fife."}
+{"id":371,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Heading one seven six, United eight six fife."}
+{"id":372,"icao":"EGLL","seed":1,"cs":"BAW248","type":"runway_vacated","variant":"ICAO","text":"BAW248 runway 09R/27L vacated"}
+{"id":373,"icao":"EGLL","seed":1,"cs":"EIN72","type":"request","variant":"ICAO","text":"Heathrow Ground, Shamrock seven two, ready to taxi, information Alpha."}
+{"id":374,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Heading zero one seven, Speedbird four zero."}
+{"id":375,"icao":"EGLL","seed":1,"cs":"EIN72","type":"readback-ai","variant":"ICAO","text":"Holding point runway two seven right, Shamrock seven two."}
+{"id":376,"icao":"EGLL","seed":1,"cs":"UAE761","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right, Emirates seven six one."}
+{"id":377,"icao":"EGLL","seed":1,"cs":"BAW20","type":"readback-template","variant":"ICAO","text":"Speed one eight zero knots, Speedbird two zero."}
+{"id":378,"icao":"EGLL","seed":1,"cs":"QTR937","type":"request","variant":"ICAO","text":"Heathrow Ground, Qatari niner tree seven, stand two one six, request pushback, information Alpha."}
+{"id":379,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Heading one six fife, United eight six fife."}
+{"id":380,"icao":"EGLL","seed":1,"cs":"UAE761","type":"request","variant":"ICAO","text":"Heathrow Ground, Emirates seven six one, ready to taxi, information Alpha."}
+{"id":381,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Heading zero tree zero, Speedbird four zero."}
+{"id":382,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Heading one fife four, United eight six fife."}
+{"id":383,"icao":"EGLL","seed":1,"cs":"EIN72","type":"readback-sample","variant":"ICAO","text":"Stand fife zero niner via Alpha one, Alpha two, Alpha three, Shamrock seven two."}
+{"id":384,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-template","variant":"ICAO","text":"Runway two seven right, line up and wait, Speedbird one one eight."}
+{"id":385,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Heading zero four tree, Speedbird four zero."}
+{"id":386,"icao":"EGLL","seed":1,"cs":"SIA983","type":"readback-sample","variant":"ICAO","text":"Holding position, Singapore niner eight tree."}
+{"id":387,"icao":"EGLL","seed":1,"cs":"VIR527","type":"readback-sample","variant":"ICAO","text":"Hold short two seven left, Virgin fife two seven."}
+{"id":388,"icao":"EGLL","seed":1,"cs":"VIR527","type":"readback-template","variant":"ICAO","text":"Runway two seven left, line up and wait, Virgin fife two seven."}
+{"id":389,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Heading zero eight two, Speedbird four zero."}
+{"id":390,"icao":"EGLL","seed":1,"cs":"QTR937","type":"readback-sample","variant":"ICAO","text":"Standing by, Qatari niner tree seven."}
+{"id":391,"icao":"EGLL","seed":1,"cs":"QTR937","type":"readback-sample","variant":"ICAO","text":"Pushback approved, expect runway two seven right, Qatari niner tree seven."}
+{"id":392,"icao":"EGLL","seed":1,"cs":"BAW248","type":"readback-template","variant":"ICAO","text":"Right heading tree zero zero, Speedbird two four eight."}
+{"id":393,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Heading zero niner niner, United eight six fife."}
+{"id":394,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-sample","variant":"ICAO","text":"Expediting, Speedbird four zero."}
+{"id":395,"icao":"EGLL","seed":1,"cs":"BAW248","type":"readback-sample","variant":"ICAO","text":"Continue taxi, Speedbird two four eight."}
+{"id":396,"icao":"EGLL","seed":1,"cs":"FDB295","type":"readback-template","variant":"ICAO","text":"Runway two seven left, line up and wait, Sky Dubai two niner fife."}
+{"id":397,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-sample","variant":"ICAO","text":"Direct BUZAD, United eight six fife."}
+{"id":398,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-sample","variant":"ICAO","text":"Hold at LAM, as published, right turns, one minute legs, Speedbird one one eight."}
+{"id":399,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-template","variant":"ICAO","text":"Right heading two seven zero, Speedbird one one eight."}
+{"id":400,"icao":"EGLL","seed":1,"cs":"VIR564","type":"request","variant":"ICAO","text":"Virgin fife six four, request descent to four thousand."}
+{"id":401,"icao":"EGLL","seed":1,"cs":"BAW118","type":"readback-ai","variant":"ICAO","text":"Heading zero niner two, Speedbird one one eight."}
+{"id":402,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Heading zero eight eight, United eight six fife."}
+{"id":403,"icao":"EGLL","seed":1,"cs":"DLH153","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha one, Alpha two, Alpha three, Lufthansa one fife tree."}
+{"id":404,"icao":"EGLL","seed":1,"cs":"BAW20","type":"readback-sample","variant":"ICAO","text":"Stopping, Speedbird two zero."}
+{"id":405,"icao":"EGLL","seed":1,"cs":"DLH153","type":"reached_hold","variant":"ICAO","text":"DLH153 holding short runway 27R"}
+{"id":406,"icao":"EGLL","seed":1,"cs":"DLH153","type":"readback-ai","variant":"ICAO","text":"Cleared for takeoff runway two seven right, Lufthansa one fife tree."}
+{"id":407,"icao":"EGLL","seed":1,"cs":"DLH153","type":"handoff","variant":"ICAO","text":"DLH153 contact Heathrow Tower 118.500"}
+{"id":408,"icao":"EGLL","seed":1,"cs":"QTR937","type":"request","variant":"ICAO","text":"Qatari niner tree seven, standing by."}
+{"id":409,"icao":"EGLL","seed":1,"cs":"DLH153","type":"request","variant":"ICAO","text":"Heathrow Tower, Lufthansa one fife tree, holding point runway two seven right, ready for departure."}
+{"id":410,"icao":"EGLL","seed":1,"cs":"DLH153","type":"info","variant":"ICAO","text":"DLH153 rolling runway 27R"}
+{"id":411,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-ai","variant":"ICAO","text":"Heading zero niner two, Speedbird four zero."}
+{"id":412,"icao":"EGLL","seed":1,"cs":"BAW40","type":"readback-sample","variant":"ICAO","text":"Climb flight level one eight zero, Speedbird four zero."}
+{"id":413,"icao":"EGLL","seed":1,"cs":"BAW20","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha one, Speedbird two zero."}
+{"id":414,"icao":"EGLL","seed":1,"cs":"BAW265","type":"readback-sample","variant":"ICAO","text":"Stand four two four via Alpha one, Speedbird two six fife."}
+{"id":415,"icao":"EGLL","seed":1,"cs":"VIR564","type":"readback-template","variant":"ICAO","text":"Runway two seven left, line up and wait, Virgin fife six four."}
+{"id":416,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Heading tree fife four, United eight six fife."}
+{"id":417,"icao":"EGLL","seed":1,"cs":"VIR527","type":"reached_hold","variant":"ICAO","text":"VIR527 holding short runway 27L"}
+{"id":418,"icao":"EGLL","seed":1,"cs":"BAW20","type":"readback-sample","variant":"ICAO","text":"Holding point runway two seven right via Alpha one, Alpha two, Speedbird two zero."}
+{"id":419,"icao":"EGLL","seed":1,"cs":"DLH153","type":"readback-template","variant":"ICAO","text":"Departure one two fife decimal two zero zero, good day, Lufthansa one fife tree."}
+{"id":420,"icao":"EGLL","seed":1,"cs":"VIR527","type":"handoff","variant":"ICAO","text":"VIR527 contact Heathrow Tower 118.500"}
+{"id":421,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Heading tree four tree, United eight six fife."}
+{"id":422,"icao":"EGLL","seed":1,"cs":"VIR527","type":"request","variant":"ICAO","text":"Heathrow Tower, Virgin fife two seven, holding point runway two seven left, ready for departure."}
+{"id":423,"icao":"EGLL","seed":1,"cs":"DLH153","type":"airborne","variant":"ICAO","text":"DLH153 airborne runway 27R"}
+{"id":424,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Heading tree tree two, United eight six fife."}
+{"id":425,"icao":"EGLL","seed":1,"cs":"VIR527","type":"readback-ai","variant":"ICAO","text":"Holding position, Virgin fife two seven."}
+{"id":426,"icao":"EGLL","seed":1,"cs":"EIN72","type":"readback-sample","variant":"ICAO","text":"Give way to the Singapore niner eight tree, Shamrock seven two."}
+{"id":427,"icao":"EGLL","seed":1,"cs":"BAW248","type":"readback-template","variant":"ICAO","text":"Climb flight level one one zero, Speedbird two four eight."}
+{"id":428,"icao":"EGLL","seed":1,"cs":"BAW265","type":"reached_hold","variant":"ICAO","text":"BAW265 holding short runway 27R"}
+{"id":429,"icao":"EGLL","seed":1,"cs":"UAL865","type":"readback-ai","variant":"ICAO","text":"Heading tree one eight, United eight six fife."}
+{"id":430,"icao":"EGLL","seed":1,"cs":"BAW265","type":"handoff","variant":"ICAO","text":"BAW265 contact Heathrow Tower 118.500"}

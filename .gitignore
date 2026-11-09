@@ -71,3 +71,10 @@ tsconfig.tsbuildinfo
 /blob-report/
 /playwright/.cache/
 .scratch-e2e/
+
+# TTS benchmark (ml/tts): venvs, downloads, build output, generated clips
+ml/tts/venvs/
+ml/tts/cache/
+ml/tts/.build/
+ml/tts/out/
+ml/tts/.build-test/

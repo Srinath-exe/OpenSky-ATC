@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Neural Pilot Voices</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* voice-ai.html's tokens: dark first, like the game. */
+:root {
+  --bg: #0e0f11; --surface: #141416; --raise: #1c1c1e; --line: rgba(255,255,255,.09); --line-strong: rgba(255,255,255,.16);
+  --ink-1: #f4f4f5; --ink-2: #c4c5c8; --ink-3: #a0a1a6; --ink-4: #7f8086;
+  --accent: #f5933f; --accent-tint: rgba(245,147,63,.14); --s-before: #5b8fd6;
+  --good: #57cd50; --good-tint: rgba(87,205,80,.13); --neutral-tint: rgba(255,255,255,.07); --bar: #5f6168;
+  --font: "DM Sans", "Helvetica Neue", Arial, sans-serif; --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12); --s-before: #3f78c2;
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --neutral-tint: rgba(20,20,24,.06); --bar: #9a9ba1;
+  color-scheme: light;
+} }
+:root[data-theme="light"] {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12); --s-before: #3f78c2;
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --neutral-tint: rgba(20,20,24,.06); --bar: #9a9ba1;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink-2); font-family: var(--font); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 72px; }
+.wrap { max-width: 960px; margin: 0 auto; display: grid; gap: 56px; }
+h1, h2, h3 { color: var(--ink-1); text-wrap: balance; margin: 0; font-weight: 600; letter-spacing: -.01em; }
+h1 { font-size: clamp(28px, 4.4vw, 40px); line-height: 1.12; }
+h2 { font-size: 22px; line-height: 1.25; }
+h3 { font-size: 15px; line-height: 1.35; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+code { font-family: var(--mono); font-size: .9em; overflow-wrap: anywhere; }
+.eyebrow { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+section, header { display: grid; gap: 18px; min-width: 0; }
+.lede { font-size: 17px; max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--ink-3); font-size: 13px; }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 2px; min-width: 0; }
+.tile .v { font-size: clamp(26px, 4.6vw, 34px); line-height: 1.1; color: var(--ink-1); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.tile .v small { font-size: .5em; color: var(--ink-3); font-weight: 500; letter-spacing: 0; }
+.tile .k { font-size: 13px; color: var(--ink-2); font-weight: 600; }
+.tile .d { font-size: 12.5px; color: var(--ink-3); line-height: 1.4; }
+.tile.key { border-color: var(--accent); background: linear-gradient(var(--accent-tint), var(--accent-tint)), var(--surface); }
+@media (max-width: 760px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; display: grid; gap: 12px; min-width: 0; }
+.hbars { display: grid; gap: 8px; }
+.hb { display: grid; grid-template-columns: minmax(0, 190px) minmax(0, 1fr) 76px; gap: 4px 12px; align-items: center; }
+.hb .hl { font-size: 13px; color: var(--ink-2); font-weight: 500; line-height: 1.25; min-width: 0; }
+.hb.is-hi .hl { color: var(--ink-1); font-weight: 700; }
+.hb .hl small { display: block; font-size: 11.5px; color: var(--ink-4); font-weight: 400; }
+.hb .ht { position: relative; height: 14px; background: linear-gradient(var(--line), var(--line)) left center / 100% 1px no-repeat; }
+.hb .ht i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 4px 4px 0; background: var(--bar); min-width: 2px; }
+.hb .ht i.hi { background: var(--accent); }
+.hb:hover .ht i { filter: brightness(1.15); }
+.hb .hv { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); text-align: right; font-variant-numeric: tabular-nums; }
+.hb .na { font-size: 12px; color: var(--ink-4); }
+.hb.axis .ht { height: 16px; background: none; }
+.hb .ticks span { position: absolute; top: 0; transform: translateX(-50%); font-size: 11px; color: var(--ink-4); white-space: nowrap; }
+.hb .ticks span:first-child { transform: none; } .hb .ticks span:last-child { transform: translateX(-100%); }
+@media (max-width: 560px) {
+  .hb { grid-template-columns: minmax(0, 1fr) 70px; }
+  .hb .hl { grid-column: 1 / -1; }
+  .hb.axis .hl { display: none; }
+}
+.note { font-size: 13px; color: var(--ink-3); }
+.scroll { overflow-x: auto; min-width: 0; -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); font-weight: 600; }
+td.n { text-align: right; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+td small { display: block; color: var(--ink-4); font-family: var(--font); font-size: 11.5px; white-space: normal; }
+td strong { color: var(--ink-1); font-weight: 600; }
+tr.hi td { background: var(--accent-tint); }
+.models { min-width: 720px; }
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+.kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; font-size: 14px; }
+.kv b { color: var(--ink-1); font-weight: 600; font-family: var(--mono); font-size: 13px; text-align: right; }
+.flow svg { width: 100%; height: auto; display: block; }
+.flow .box { fill: var(--surface); stroke: var(--line-strong); }
+.flow .box.key { stroke: var(--accent); fill: var(--accent-tint); }
+.flow .t { fill: var(--ink-1); font: 600 14px var(--font); }
+.flow .s { fill: var(--ink-3); font: 12px var(--font); }
+.flow .m { fill: var(--ink-4); font: 11px var(--mono); }
+.flow .arrow { stroke: var(--ink-4); stroke-width: 1.5; fill: none; marker-end: url(#ah); }
+.flow .ahead { fill: var(--ink-4); }
+.flow .wide { display: block; } .flow .narrow { display: none; max-width: 440px; }
+@media (max-width: 760px) { .flow .wide { display: none; } .flow .narrow { display: block; } }
+.listen { display: grid; gap: 10px; }
+.listen .said { color: var(--ink-1); }
+.pl { display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 10px; align-items: center; }
+.pl span { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-4); font-weight: 600; }
+audio { width: 100%; height: 36px; display: block; min-width: 0; }
+ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 72ch; }
+details summary { cursor: pointer; font-size: 13.5px; color: var(--ink-2); font-weight: 500; }
+</style>
+</head>
+<body>
+<main class="wrap">
+<header>
+  <span class="eyebrow">OpenATC · ml/tts · 2026-11-09</span>
+  <h1>Neural pilot voices that run in the browser</h1>
+  <p class="lede">Pilot readbacks were spoken by the browser's one robotic voice, which is often missing in the phone app. Now they are made on the player's device by Paradee-8M v1.2, an 8.5 MB model distilled from Kokoro-82M: four voices, one per aircraft, with an ATC text normaliser in front and a VHF radio effect behind. On 60 real pilot lines it is as intelligible as its 82M-parameter teacher.</p>
+  <div class="meta"><span>Paradee-8M v1.2, int8 ONNX</span><span>onnxruntime-web 1.30, WASM</span><span>Whisper base.en word error</span><span>Shared 8-core CPU (load average 9–22)</span></div>
+  <p class="meta"><a href="voice-tts-samples.html">Listen to all four voices and Kokoro, dry and over the radio →</a></p>
+</header>
+
+<section aria-label="Headline numbers">
+  <div class="tiles">
+    <div class="tile key"><span class="k">Word error, Paradee</span><span class="v">5.7<small> %</small></span><span class="d">Whisper base.en on 60 lines × 4 voices (n = 240)</span></div>
+    <div class="tile"><span class="k">Word error, Kokoro-82M</span><span class="v">7.1<small> %</small></span><span class="d">the teacher, same lines, af_heart + bm_fable (n = 120); Paradee on those two: 5.6 %</span></div>
+    <div class="tile"><span class="k">In the browser</span><span class="v">7.3<small>× real time</small></span><span class="d">WASM, one thread, 667 ms median per line; a new line is heard after 733 ms (median)</span></div>
+    <div class="tile"><span class="k">Download, once</span><span class="v">11.6<small> MB</small></span><span class="d">model 8.5 MB + runtime 3.1 MB + lexicon 27 kB, on the first pilot line</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>How a pilot line is spoken</h2>
+  <p>The engine's line goes through four steps in the browser. Only the model and the runtime are downloaded; everything else is a few kilobytes of code.</p>
+  <div class="card flow">
+    <svg class="wide" viewBox="0 0 900 150" role="img" aria-label="Pipeline: engine text, ATC normaliser, G2P, Paradee, radio effect">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ahead"/></marker></defs>
+      <rect x="4" y="20" width="160" height="104" rx="12" class="box"/>
+      <text x="18" y="46" class="t">Pilot line</text><text x="18" y="66" class="s">from the engine</text><text x="18" y="92" class="m">JBU248 holding</text><text x="18" y="108" class="m">short runway 04L</text>
+      <rect x="188" y="20" width="160" height="104" rx="12" class="box"/>
+      <text x="202" y="46" class="t">ATC normaliser</text><text x="202" y="66" class="s">codes → spoken words</text><text x="202" y="92" class="m">JetBlue two forty-</text><text x="202" y="108" class="m">eight … zero four left</text>
+      <rect x="372" y="20" width="160" height="104" rx="12" class="box"/>
+      <text x="386" y="46" class="t">G2P</text><text x="386" y="66" class="s">misaki lexicon, eSpeak</text><text x="386" y="92" class="m">ʤˈɛtblˌu tˈu</text><text x="386" y="108" class="m">fˈɔɹTiˌAt …</text>
+      <rect x="556" y="20" width="160" height="104" rx="12" class="box key"/>
+      <text x="570" y="46" class="t">Paradee-8M</text><text x="570" y="66" class="s">worker, WASM, int8</text><text x="570" y="92" class="m">phoneme ids, voice,</text><text x="570" y="108" class="m">speed → 24 kHz</text>
+      <rect x="740" y="20" width="156" height="104" rx="12" class="box"/>
+      <text x="754" y="46" class="t">Radio effect</text><text x="754" y="66" class="s">WebAudio</text><text x="754" y="92" class="m">300–3400 Hz, soft</text><text x="754" y="108" class="m">clip, hiss, squelch</text>
+      <path d="M166 72 H184" class="arrow"/><path d="M350 72 H368" class="arrow"/><path d="M534 72 H552" class="arrow"/><path d="M718 72 H736" class="arrow"/>
+    </svg>
+    <svg class="narrow" viewBox="0 0 340 470" role="img" aria-label="Pipeline: engine text, ATC normaliser, G2P, Paradee, radio effect">
+      <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ahead"/></marker></defs>
+      <rect x="4" y="8" width="332" height="70" rx="12" class="box"/><text x="18" y="34" class="t">Pilot line</text><text x="18" y="54" class="s">JBU248 holding short runway 04L</text><path d="M170 80 V98" class="arrow" style="marker-end:url(#ah2)"/><rect x="4" y="102" width="332" height="70" rx="12" class="box"/><text x="18" y="128" class="t">ATC normaliser</text><text x="18" y="148" class="s">JetBlue two forty-eight … zero four left</text><path d="M170 174 V192" class="arrow" style="marker-end:url(#ah2)"/><rect x="4" y="196" width="332" height="70" rx="12" class="box"/><text x="18" y="222" class="t">G2P</text><text x="18" y="242" class="s">misaki lexicon; eSpeak NG for unknown words</text><path d="M170 268 V286" class="arrow" style="marker-end:url(#ah2)"/><rect x="4" y="290" width="332" height="70" rx="12" class="box key"/><text x="18" y="316" class="t">Paradee-8M (worker)</text><text x="18" y="336" class="s">phonemes, voice, speed → 24 kHz audio</text><path d="M170 362 V380" class="arrow" style="marker-end:url(#ah2)"/><rect x="4" y="384" width="332" height="70" rx="12" class="box"/><text x="18" y="410" class="t">Radio effect (WebAudio)</text><text x="18" y="430" class="s">band-pass, soft clip, hiss, squelch</text>
+    </svg>
+  </div>
+  <ul>
+    <li><strong>ATC normaliser</strong> (<code>src/lib/tts/pilotSpeech.ts</code>): callsign codes become the engine's telephony (ICAO "fife, tree, niner" or FAA grouping, as <code>phraseology.ts</code> says them), FL350, runways (04L, 16R/34L), frequencies, altitudes, headings, squawks, units; fix names that read as words are said as words.</li>
+    <li><strong>G2P</strong> (<code>public/voice/tts-g2p.js</code>): Paradee only heard misaki's phonemes in training, and misaki is Python. A 91 kB lexicon (27 kB compressed) holds misaki's own phonemes for the game's vocabulary in both accents (about 2,000 words), and the spoken names of the airspace fixes ("EPM" says "Epsom"). Unknown capitals are spelled with misaki's letter names; any other unknown word loads eSpeak NG (the <code>phonemizer</code> package kokoro-js uses, 0.7 MB compressed, only then) through paradee's eSpeak-to-misaki table.</li>
+    <li><strong>Paradee</strong> (<code>public/voice/tts-worker.js</code>): one clause per call, in a module worker, so the first clause plays while the rest is made.</li>
+    <li><strong>Radio</strong> (<code>src/components/atc/pilotVoice.ts</code>): two high-pass and two low-pass biquads (300–3400 Hz), a tanh soft clip and a light compressor, a faint hiss under the speech, a squelch click at the start and a squelch tail at the end.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Intelligibility on 60 real pilot lines</h2>
+  <p>The lines are what the game speaks: readbacks, requests and status lines exported from the engine at six airports (KJFK, EGLL, KLAX, OMDB, YSSY, LFPG; 39 ICAO, 21 FAA), passed through the normaliser. Each clip was transcribed by Whisper base.en (faster-whisper, beam 5, no prompt) and scored against the words it was given; numbers count digit by digit whether written or spoken.</p>
+  <div class="card">
+    <h3>Word error rate, lower is better</h3>
+    <div class="hbars" role="list" aria-label="Word error rate by model"><div class="hb is-hi" role="listitem" title="Paradee-8M v1.2: 5.7 %"><span class="hl">Paradee-8M v1.2<small>n = 240</small></span><span class="ht"><i class="hi" style="width:28.6%"></i></span><span class="hv">5.7 %</span></div><div class="hb" role="listitem" title="Kokoro-82M: 7.1 %"><span class="hl">Kokoro-82M<small>n = 120</small></span><span class="ht"><i class="" style="width:35.5%"></i></span><span class="hv">7.1 %</span></div><div class="hb" role="listitem" title="Leokani-tts-7M: 6.2 %"><span class="hl">Leokani-tts-7M<small>n = 60</small></span><span class="ht"><i class="" style="width:30.9%"></i></span><span class="hv">6.2 %</span></div><div class="hb" role="listitem" title="PiVo-1.4M: 10.8 %"><span class="hl">PiVo-1.4M<small>n = 60</small></span><span class="ht"><i class="" style="width:54.1%"></i></span><span class="hv">10.8 %</span></div><div class="hb" role="listitem" title="Phonon-31M-en: 5.6 %"><span class="hl">Phonon-31M-en<small>n = 60</small></span><span class="ht"><i class="" style="width:28.1%"></i></span><span class="hv">5.6 %</span></div><div class="hb" role="listitem" title="Supertonic 3: 4.9 %"><span class="hl">Supertonic 3<small>n = 60</small></span><span class="ht"><i class="" style="width:24.6%"></i></span><span class="hv">4.9 %</span></div><div class="hb" role="listitem" title="Audio8-TTS-Realistic-Air: 4.5 %"><span class="hl">Audio8-TTS-Realistic-Air<small>n = 5</small></span><span class="ht"><i class="" style="width:22.8%"></i></span><span class="hv">4.5 %</span></div><div class="hb axis" aria-hidden="true"><span class="hl"></span><span class="ht ticks"><span style="left:0%">0 %</span><span style="left:25%">5 %</span><span style="left:50%">10 %</span><span style="left:75%">15 %</span><span style="left:100%">20 %</span></span><span class="hv"></span></div></div>
+    <p class="note">Paradee: all four voices. Kokoro and the other models: the voices named below, on the same 60 lines (n is clips). The table has every number.</p>
+  </div>
+  <div class="cols">
+    <div class="card">
+      <h3>Per voice</h3>
+      <div class="scroll"><table><thead><tr><th>Voice</th><th>Paradee</th><th>Kokoro</th></tr></thead><tbody><tr><td><code>af_heart</code></td><td class="n">5.6 %</td><td class="n">4.8 %</td></tr><tr><td><code>am_puck</code></td><td class="n">6.6 %</td><td class="n">—</td></tr><tr><td><code>bf_isabella</code></td><td class="n">5.2 %</td><td class="n">—</td></tr><tr><td><code>bm_fable</code></td><td class="n">5.5 %</td><td class="n">9.4 %</td></tr></tbody></table></div>
+      <p class="note">af_heart and am_puck read American phonemes, bf_isabella and bm_fable British ones, as in training.</p>
+    </div>
+    <div class="card">
+      <h3>What changes the error</h3>
+      <div class="kv">
+        <span>Paradee, dry</span><b>5.6 %</b>
+        <span>Same clips through the radio effect</span><b>10.6 %</b>
+        <span>A lighter radio (less clipping, hiss -40 dB)</span><b>9.8 %</b>
+        <span>eSpeak-only G2P instead of the lexicon</span><b>6.5 %</b>
+        <span>Made in the browser (10 lines)</span><b>3.5 %</b>
+      </div>
+      <p class="note">af_heart + bm_fable, 60 lines each, except the browser row (10 lines from the headless run, the voices the game picks). The radio effect is meant to sound like a radio; Whisper is not trained on it.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Pronunciation in the browser</h2>
+  <p>The browser G2P was compared with misaki on the same 60 lines × 4 voices, using a lexicon built without those lines.</p>
+  <div class="cols">
+    <div class="card">
+      <h3>Lexicon + eSpeak (shipped)</h3>
+      <div class="kv"><span>Lines identical to misaki</span><b>96.7 %</b><span>Phoneme character error</span><b>0.47 %</b><span>Time per line</span><b>0.13 ms</b><span>Words that needed eSpeak</span><b>0</b></div>
+      <p class="note">The only lines that differ are the two with a fix: the lexicon says the airspace file's spoken name ("C D G north west") where misaki spells five letters.</p>
+    </div>
+    <div class="card">
+      <h3>eSpeak NG + misaki table only</h3>
+      <div class="kv"><span>Lines identical to misaki</span><b>0.0 %</b><span>Phoneme character error</span><b>5.37 %</b><span>Time per line</span><b>74.5 ms</b><span>Download</span><b>1.3 MB</b></div>
+      <p class="note">What kokoro-js does. Typical slips: British "one" as wɒn, "zero" as zˈiəɹO, a missing secondary stress in "runway".</p>
+    </div>
+  </div>
+  <div class="card">
+    <h3>The ATC words the brief named</h3>
+    <div class="scroll"><table><thead><tr><th>Text</th><th>Accent</th><th>Browser (lexicon)</th><th>eSpeak only</th></tr></thead><tbody>
+    <tr><td>niner</td><td>US</td><td><code>nˈInəɹ</code></td><td><code>nˈInəɹ</code></td></tr><tr><td>niner</td><td>GB</td><td><code>nˈInə</code></td><td><code>nˈInə</code></td></tr><tr><td>Speedbird</td><td>US</td><td><code>spˈidbɜɹd</code></td><td><code>spˈidbɜɹd</code></td></tr><tr><td>Speedbird</td><td>GB</td><td><code>spˈiːdbɜːd</code></td><td><code>spˈiːdbɜːd</code></td></tr><tr><td>flight level</td><td>US</td><td><code>flˈIt lˈɛvᵊl</code></td><td><code>flˈIt lˈɛvᵊl</code></td></tr><tr><td>flight level</td><td>GB</td><td><code>flˈIt lˈɛvᵊl</code></td><td><code>flˈIt lˈɛvᵊl</code></td></tr><tr><td>runway two seven left</td><td>US</td><td><code>ɹˈʌnwˌA tˈu sˈɛvən lˈɛft</code></td><td><code>ɹˈʌnwA tˈu sˈɛvən lˈɛft</code></td></tr><tr><td>runway two seven left</td><td>GB</td><td><code>ɹˈʌnwA tˈuː sˈɛvᵊn lˈɛft</code></td><td><code>ɹˈʌnwA tˈuː sˈɛvən lˈɛft</code></td></tr><tr><td>fife</td><td>US</td><td><code>fˈIf</code></td><td><code>fˈIf</code></td></tr><tr><td>fife</td><td>GB</td><td><code>fˈIf</code></td><td><code>fˈIf</code></td></tr><tr><td>tree</td><td>US</td><td><code>tɹˈi</code></td><td><code>tɹˈi</code></td></tr><tr><td>tree</td><td>GB</td><td><code>tɹˈiː</code></td><td><code>tɹˈiː</code></td></tr><tr><td>wilco</td><td>US</td><td><code>wˈɪlkO</code></td><td><code>wˈɪlkO</code></td></tr><tr><td>wilco</td><td>GB</td><td><code>wˈɪlkQ</code></td><td><code>wˈɪlkQ</code></td></tr><tr><td>Shamrock seven two</td><td>US</td><td><code>ʃˈæmɹˌɑk sˈɛvən tˈu</code></td><td><code>ʃˈæmɹɑk sˈɛvən tˈu</code></td></tr><tr><td>Shamrock seven two</td><td>GB</td><td><code>ʃˈamɹɒk sˈɛvᵊn tˈuː</code></td><td><code>ʃˈamɹɒk sˈɛvən tˈuː</code></td></tr>
+    </tbody></table></div>
+  </div>
+</section>
+
+<section>
+  <h2>Speed and size</h2>
+  <div class="card">
+    <h3>Times faster than real time, higher is better</h3>
+    <div class="hbars" role="list" aria-label="Synthesis speed by model"><div class="hb is-hi" role="listitem" title="Paradee-8M v1.2: 27.7×"><span class="hl">Paradee-8M v1.2<small>1 thread</small></span><span class="ht"><i class="hi" style="width:92.2%"></i></span><span class="hv">27.7×</span></div><div class="hb" role="listitem" title="Kokoro-82M: 0.764×"><span class="hl">Kokoro-82M<small>1 thread</small></span><span class="ht"><i class="" style="width:2.5%"></i></span><span class="hv">0.764×</span></div><div class="hb" role="listitem" title="Leokani-tts-7M: 12.5×"><span class="hl">Leokani-tts-7M<small>1 thread</small></span><span class="ht"><i class="" style="width:41.7%"></i></span><span class="hv">12.5×</span></div><div class="hb" role="listitem" title="PiVo-1.4M: 6.9×"><span class="hl">PiVo-1.4M<small>1 thread</small></span><span class="ht"><i class="" style="width:23.0%"></i></span><span class="hv">6.9×</span></div><div class="hb" role="listitem" title="Phonon-31M-en: 3.2×"><span class="hl">Phonon-31M-en<small>1 thread</small></span><span class="ht"><i class="" style="width:10.7%"></i></span><span class="hv">3.2×</span></div><div class="hb" role="listitem" title="Supertonic 3: 1.0×"><span class="hl">Supertonic 3<small>1 thread</small></span><span class="ht"><i class="" style="width:3.4%"></i></span><span class="hv">1.0×</span></div><div class="hb" role="listitem" title="Audio8-TTS-Realistic-Air: 0.013×"><span class="hl">Audio8-TTS-Realistic-Air<small>3 threads</small></span><span class="ht"><i class="" style="width:0.6%"></i></span><span class="hv">0.013×</span></div><div class="hb axis" aria-hidden="true"><span class="hl"></span><span class="ht ticks"><span style="left:0%">0×</span><span style="left:25%">7.5×</span><span style="left:50%">15×</span><span style="left:75%">22.5×</span><span style="left:100%">30×</span></span><span class="hv"></span></div></div>
+    <p class="note">Native CPU (Python onnxruntime / PyTorch), one thread unless shown, on a shared 8-core EPYC with a load average of 9–22 from other jobs, so all speeds here are pessimistic. Paradee's model card reports about 62× on one M4 Pro core.</p>
+  </div>
+  <div class="card">
+    <h3>Every model</h3>
+    <div class="scroll"><table class="models"><thead><tr><th>Model</th><th>Params</th><th>Download</th><th>Speed</th><th>WER</th><th>Licence</th><th>Browser</th></tr></thead><tbody><tr class=hi><td><strong>Paradee-8M v1.2</strong><small>4 voices: US and UK, female and male</small></td><td class="n">7.9M</td><td class="n">8.5 MB<small>int8 ONNX, 4 voices</small></td><td class="n">27.7×<small>0.19 s / line</small></td><td class="n">5.7 %<small>n = 240</small></td><td>Apache-2.0</td><td>yes (this work)</td></tr><tr><td><strong>Kokoro-82M (teacher)</strong><small>Paradee&#x27;s teacher; measured on af_heart and bm_fable</small></td><td class="n">82M</td><td class="n">327.2 MB<small>PyTorch .pth</small></td><td class="n">0.764×<small>7.03 s / line</small></td><td class="n">7.1 %<small>n = 120</small></td><td>Apache-2.0</td><td>kokoro-js, 82-330 MB</td></tr><tr><td><strong>Leokani-tts-7M</strong><small>one voice (Dala); needs eSpeak NG</small></td><td class="n">7.0M</td><td class="n">7.8 MB<small>int8 ONNX + eSpeak NG</small></td><td class="n">12.5×<small>0.46 s / line</small></td><td class="n">6.2 %<small>n = 60</small></td><td>Milliwatt Labs Model Licence 1.0 (free under US$1M revenue)</td><td>possible (ONNX)</td></tr><tr><td><strong>PiVo-1.4M</strong><small>CMUdict words only: unknown words need ARPAbet overrides</small></td><td class="n">1.4M</td><td class="n">5.8 MB<small>4 ONNX files + 3.6 MB CMUdict</small></td><td class="n">6.9×<small>0.69 s / line</small></td><td class="n">10.8 %<small>n = 60</small></td><td>Apache-2.0</td><td>possible (ONNX)</td></tr><tr><td><strong>Phonon-31M-en</strong><small>via the ptts package</small></td><td class="n">31M</td><td class="n">64.5 MB<small>q8 GGUF</small></td><td class="n">3.2×<small>1.53 s / line</small></td><td class="n">5.6 %<small>n = 60</small></td><td>Apache-2.0</td><td>not shown</td></tr><tr><td><strong>Supertonic 3</strong><small>flow matching; many languages</small></td><td class="n">99M</td><td class="n">398.0 MB<small>ONNX, 4 files</small></td><td class="n">1.0×<small>5.07 s / line</small></td><td class="n">4.9 %<small>n = 60</small></td><td>OpenRAIL-M</td><td>yes (their demo), 400 MB</td></tr><tr><td><strong>Audio8-TTS-Realistic-Air</strong><small>0.6B DualAR, 44.1 kHz, voice cloning; n = 5 lines</small></td><td class="n">601M + codec</td><td class="n">2.55 GB<small>safetensors + codec</small></td><td class="n">0.013×<small>504.01 s / line</small></td><td class="n">4.5 %<small>n = 5</small></td><td>Apache-2.0</td><td>no</td></tr><tr><td><strong>KittenTTS 2</strong><small>skipped: needs a ~1 GB language model, not tiny</small></td><td class="n">~1B LM + decoder</td><td class="n">—<small>≥ 0.5 GB (ternary LM) + 39 MB decoder</small></td><td class="n">—<small></small></td><td class="n">—<small>not run</small></td><td>Stellon Labs Community Licence</td><td>no</td></tr></tbody></table></div>
+    <p class="note">WER: Paradee over four voices; others over the voices run (Kokoro af_heart + bm_fable; PiVo Pi; Leokani Dala; Phonon Easton; Supertonic M1; Audio8 its default voice, 5 lines). Speeds are per line of about 5 s.</p>
+  </div>
+</section>
+
+<section>
+  <h2>In the browser</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>Worker, headless Chromium (Chrome/153.0.8010.12)</h3>
+      <div class="kv">
+        <span>Load (download + compile), local server</span><b>1986 ms</b>
+        <span>Second worker, from the HTTP cache</span><b>1122 ms</b>
+        <span>Synthesis per line, median (10 lines)</span><b>667 ms</b>
+        <span>Slowest line</span><b>1156 ms</b>
+        <span>Speed</span><b>7.3× real time</b>
+        <span>G2P per line</span><b>0.10 ms</b>
+        <span>int8 / fp32, 3 alternating runs each</span><b>6.1× / 8.0×</b>
+        <span>Threads</span><b>1 (page not cross-origin isolated)</b>
+        <span>Page errors</span><b>0</b>
+      </div>
+      <p class="note">WASM ran about 3.8× slower than native onnxruntime on the same line and load. A profile puts 39 % of the time in convolutions and 15 % in the vocoder's sine, which WASM computes one value at a time. The fp32 file is about 1.3× faster in WASM but 35 MB instead of 8.5 MB, so the int8 file ships. WebGPU: the original int8 uses dynamic quantisation that WebGPU cannot run, and the WebGPU re-quantisation (danyalmalik/Paradee-8M-ONNX-WebGPU) is of v1.1, which has one voice.</p>
+    </div>
+    <div class="card">
+      <h3>The game's path: line to first sound</h3>
+      <div class="kv">
+        <span>First clause audible, median (lines not queued)</span><b>733 ms</b>
+        <span>Lines spaced like traffic</span><b>469 ms, 1187 ms, 552 ms</b>
+        <span>Five lines at once</span><b>2 dropped, the rest read faster</b>
+      </div>
+      <p class="note">On top of the pilot's own reply delay (2–8 s). Long lines are cut at their commas into clauses of at least three words: the first is heard while the next is made. When lines pile up, at most two wait behind the one playing, the oldest waiting ones are dropped, a line that cannot start within 12 s is dropped, and lines with others ahead of them are read up to 24 % faster.</p>
+      <details><summary>Per line</summary><div class="scroll"><table><thead><tr><th>Line (normalised)</th><th>Voice</th><th>Clauses</th><th>First sound</th><th>Synth</th><th>Audio</th></tr></thead><tbody><tr><td>Descend flight level seven zero, Speedbird four zero.</td><td><code>bf_isabella</code></td><td class="n">2</td><td class="n">733 ms</td><td class="n">1059 ms</td><td class="n">4.9 s</td></tr><tr><td>Lufthansa one fife tree contact Heathrow Tower one one eight decimal f…</td><td><code>bm_fable</code></td><td class="n">1</td><td class="n">4681 ms</td><td class="n">630 ms</td><td class="n">4.5 s</td></tr><tr><td>Cleared to land runway two seven left, Shamrock seven two.</td><td><code>bm_fable</code></td><td class="n">2</td><td class="n">8766 ms</td><td class="n">584 ms</td><td class="n">4.7 s</td></tr><tr><td>Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, …</td><td><code>af_heart</code></td><td class="n">3</td><td class="n">469 ms</td><td class="n">1114 ms</td><td class="n">8.3 s</td></tr><tr><td>Emirates seven six one climbing flight level one two zero heading two …</td><td><code>bm_fable</code></td><td class="n">1</td><td class="n">1187 ms</td><td class="n">568 ms</td><td class="n">5.3 s</td></tr><tr><td>Right heading one niner zero, Speedbird two four eight.</td><td><code>bf_isabella</code></td><td class="n">2</td><td class="n">552 ms</td><td class="n">1641 ms</td><td class="n">4.9 s</td></tr></tbody></table></div></details>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Download, the first time a pilot speaks</h3>
+    <div class="kv">
+      <span>Paradee-8M v1.2 int8 (self-hosted, /models/tts/paradee-8m-v1.2/, cached a year)</span><b>8.46 MB</b>
+      <span>onnxruntime-web 1.30.0 WASM + loader (jsDelivr, brotli)</span><b>3.10 MB</b>
+      <span>ATC lexicon (/models/tts/atc-lexicon-v1.json, gzip)</span><b>27 kB</b>
+      <span>eSpeak NG, only if a word is not in the lexicon (jsDelivr, gzip)</span><b>0.69 MB</b>
+      <span>Total, usual case</span><b>11.6 MB</b>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Hear it</h2>
+  <div class="card listen">
+    <p class="said">“Departure one two fife decimal two zero zero, good day, Speedbird two four eight.” <span class="note">— made in headless Chromium by the worker, voice bf_isabella</span></p>
+    <div class="pl"><span>Dry</span><audio controls preload="none" src="audio/voice-tts-browser-dry.wav"></audio></div>
+    <div class="pl"><span>Radio</span><audio controls preload="none" src="audio/voice-tts-browser-radio.wav"></audio></div>
+    <p class="note">The radio clip is the browser's audio through the same effect rendered offline (ml/tts/synth.py). <a href="voice-tts-samples.html">Eight more lines, every voice, Kokoro and Audio8 →</a></p>
+  </div>
+</section>
+
+<section>
+  <h2>Audio8: a big model, for offline work</h2>
+  <p>Audio8-TTS-Realistic-Air (Edge0, Apache-2.0) is a 0.6B-parameter DualAR model with a 44.1 kHz codec: 2.55 GB of weights, 23 languages including Hindi, and zero-shot voice cloning from a reference clip and its transcript. Its custom code was read before running: it only builds, loads and runs the model.</p>
+  <div class="cols">
+    <div class="card">
+      <h3>On this CPU, 3 threads</h3>
+      <div class="kv">
+        <span>Seconds per readback (n = 5)</span><b>504 s</b>
+        <span>Audio per readback</span><b>6.6 s</b>
+        <span>Speed</span><b>0.013× real time</b>
+        <span>Codec decode share</span><b>7 %</b>
+        <span>Word error (Whisper base.en)</span><b>4.5 %</b>
+      </div>
+      <p class="note">Unusable live on a CPU, and far too big for the browser. On one data-centre GPU (L4 or A10 class, bf16, no CUDA graphs) a DualAR model of this size should run at roughly real time per stream, and much faster in aggregate with the SGLang Omni server's batching: an estimate, not measured here.</p>
+    </div>
+    <div class="card">
+      <h3>Why it is still interesting</h3>
+      <ul>
+        <li><strong>Training data, offline.</strong> Speech-to-text needs varied voices saying ATC phrases. Audio8 can read thousands of lines overnight on a GPU, in many accents.</li>
+        <li><strong>The owner's own voice.</strong> Cloning needs only a clean clip and its exact transcript. The owner's own recordings (the gold set) could seed a voice to read new controller lines for fine-tuning, with the owner's consent; nobody else's voice.</li>
+        <li><strong>Hindi and other languages</strong> for accented-English variety.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>In the game</h2>
+  <ul>
+    <li><strong>Settings → Audio → Pilot voices</strong>: <em>Neural (on this device, ~12 MB)</em>, the default, or <em>Browser</em> (speechSynthesis). Stored in <code>skycontrol_pilot_voice</code>.</li>
+    <li>Nothing downloads until the first pilot line. While the model loads, lines use the browser voice if there is one (the phone app's WebView often has none: there the first lines wait, up to two, and stale ones are dropped). If the model cannot load, the browser voice takes over for the session.</li>
+    <li>Each callsign keeps one of the four voices, a speaking rate of 1.00–1.14 and a pitch offset of ±70 cents, from a hash of the callsign; British airlines get the British voices, US airlines the American ones.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Method and caveats</h2>
+  <ul>
+    <li>Lines: <code>ml/tts/lines.sh</code> runs the headless engine in full-auto mode and keeps every pilot line it would speak, plus the readback the engine composes for each AI command, sampled command and template command; <code>ml/tts/pick.py</code> chooses 60 with one per phrase pattern (32 readbacks, 16 requests, 12 status lines).</li>
+    <li>Scoring: <code>ml/tts/bench.py</code>. Clips peak-normalised, 16 kHz. Reference = the normaliser's output. ICAO digits count as digits, spelled letters are joined, a few split names joined.</li>
+    <li>CPU: speeds were measured on a shared machine with other benchmarks running; compare them with each other, not with spec sheets.</li>
+    <li>Whisper base.en is itself a weak ATC listener ("Sky Dubai" → "sky to by" for every model, digit strings written as "1.5.3"), so the floor is not 0 %. With 60 lines, differences of a point or two between models are within noise.</li>
+    <li>The radio effect costs Whisper about 4–5 points (most on the male British voice), and a lighter version barely helps: the 300–3400 Hz band itself is what Whisper was not trained on. People hear radio speech every day; the game keeps the effect.</li>
+  </ul>
+  <p class="note">Code: <code>ml/tts/</code> (RESULTS.md), <code>public/voice/tts-worker.js</code>, <code>public/voice/tts-g2p.js</code>, <code>src/lib/tts/pilotSpeech.ts</code>, <code>src/components/atc/pilotVoice.ts</code>. Paradee-8M v1.2 © Sahil Mahendrakar, Apache-2.0; misaki and Kokoro-82M © hexgrad, Apache-2.0; phonemizer.js (Apache-2.0) bundles eSpeak NG (GPL-3.0); it is loaded from jsDelivr only for a word outside the lexicon, never self-hosted.</p>
+</section>
+</main>
+</body>
+</html>

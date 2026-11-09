@@ -1,0 +1,42 @@
+[
+ {
+  "icao": "EGLL",
+  "note": "ICAO digits: niner, tree; runway",
+  "text": "Cleared for takeoff runway two seven left, Singapore niner eight tree."
+ },
+ {
+  "icao": "EGLL",
+  "note": "flight level, tree fife",
+  "text": "Climb flight level tree fife zero, Emirates seven six one."
+ },
+ {
+  "icao": "KJFK",
+  "note": "FAA grouped callsign, ILS",
+  "text": "Cleared ILS runway three one right, will report established, Air France eight eighty."
+ },
+ {
+  "icao": "EGLL",
+  "note": "frequency, Speedbird",
+  "text": "Departure one two fife decimal two zero zero, good day, Speedbird two four eight."
+ },
+ {
+  "icao": "KJFK",
+  "note": "landing clearance",
+  "text": "Cleared to land runway three one left, Lufthansa eight twenty."
+ },
+ {
+  "icao": "EGLL",
+  "note": "pilot request, stand, information",
+  "text": "Heathrow Ground, Sky Dubai two niner fife, stand fife four fife Lima, request pushback, information Alpha."
+ },
+ {
+  "icao": "EGLL",
+  "note": "squawk, Shamrock",
+  "text": "Squawk two tree six fife, Shamrock seven two."
+ },
+ {
+  "icao": "KJFK",
+  "note": "line up and wait",
+  "text": "Runway three one right, line up and wait, JetBlue two forty-eight."
+ }
+]
