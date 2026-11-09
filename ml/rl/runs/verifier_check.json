@@ -1,0 +1,142 @@
+{
+ "rank_gold_over_alt": 0.9683,
+ "tie": 0.0043,
+ "n": 3000,
+ "gold_mean": 0.914,
+ "alt_mean": 0.11,
+ "val": {
+  "auc": 0.907,
+  "right_mean": 0.922,
+  "wrong_mean": 0.52,
+  "wrong_but_high": 10,
+  "wrong": 58,
+  "examples_wrong_but_high": [
+   [
+    "sky dubai three zero eight cancel approach clearance turn left heading one four zero ah climb one seven thousand",
+    "FDB308 Cancel approach, heading 140, altitude 17000",
+    "FDB308 CANCEL APPROACH LEFT HEADING 140 ALTITUDE 17000",
+    1.0
+   ],
+   [
+    "sky dubai 314 taxi to holding point runway 22 left via whiskey whiskey yankee yankee alpha",
+    "FDB314 Taxi RWY 22L via WW, Y, YA",
+    "FDB314 TAXI RWY 22L VIA W Y YA",
+    0.94
+   ],
+   [
+    "japan er air six forty nine hold position",
+    "JAL649 Hold position (traffic)",
+    "JAL649 HOLD POSITION",
+    1.0
+   ],
+   [
+    "delta sixty one runway one three left taxi via charlie seven charlie alpha",
+    "DAL61 Taxi RWY 13L via C7, CA",
+    "DAL61 TAXI RWY 13L VIA C7 C",
+    0.98
+   ],
+   [
+    "speedbird three two seven proceed direct buzad",
+    "BAW327 Direct BUZAD",
+    "BAW327 DIRECT BUR",
+    0.8
+   ],
+   [
+    "delta 61 taxi to holding point runway 31 left via delta delta alpha hold short of er runway 04 left",
+    "DAL61 Taxi RWY 31L via D, DA, hold short 04L",
+    "DAL61 TAXI RWY 31L VIA D D HOLD SHORT 04L",
+    0.94
+   ]
+  ]
+ },
+ "sydney": {
+  "auc": 0.886,
+  "right_mean": 0.931,
+  "wrong_mean": 0.521,
+  "wrong_but_high": 47,
+  "wrong": 132,
+  "examples_wrong_but_high": [
+   [
+    "emirates 880 direct ssyno",
+    "UAE880 Direct SSYNO",
+    "UAE880 DIRECT HNNO",
+    0.8
+   ],
+   [
+    "qantas one uh eight eight direct ssyso",
+    "QFA188 Direct SSYSO",
+    "QFA188 DIRECT HKGSO",
+    0.8
+   ],
+   [
+    "qantas 103 taxi to stand 314 hold short of runway 07",
+    "QFA103 Taxi stand 31#4, hold short 07",
+    "QFA103 TAXI STAND 314 HOLD SHORT 07",
+    1.0
+   ],
+   [
+    "qantas 103 taxi to holding point 25 ah bravo 9",
+    "QFA103 Taxi RWY 25 via B9",
+    "QFA103 TAXI RWY 25",
+    0.82
+   ],
+   [
+    "jetstar six nine zero hold at ssynw as published right turns won minute legs",
+    "JST690 Hold at SSYNW, right turns, 1 min legs",
+    "JST690 HOLD AT SFONO RIGHT TURNS 1 MIN LEGS",
+    0.89
+   ],
+   [
+    "qantas seven one hold at ssyne as published right turns one minute legs",
+    "QFA71 Hold at SSYNE, right turns, 1 min legs",
+    "QFA71 HOLD AT HKGNE RIGHT TURNS 1 MIN LEGS",
+    0.96
+   ]
+  ]
+ },
+ "stt": {
+  "auc": 0.913,
+  "right_mean": 0.887,
+  "wrong_mean": 0.395,
+  "wrong_but_high": 31,
+  "wrong": 204,
+  "examples_wrong_but_high": [
+   [
+    "scooter scooter 498 hold at s fao s fao as published right turns one minute legs",
+    "SCO498 Hold at SFOWE, right turns, 1 min legs",
+    "SCO498 HOLD AT CDGNO RIGHT TURNS 1 MIN LEGS",
+    0.91
+   ],
+   [
+    "united 84 increased speed to 300",
+    "UAL84 Speed 230",
+    "UAL84 SPEED 300",
+    0.87
+   ],
+   [
+    "air france 222 taxi to holding point runway 26 left via golf golf one whiskey holds short of runway 09 right",
+    "AFR222 Taxi RWY 26L via G, G1W, hold short 09R",
+    "AFR222 TAXI RWY 26L VIA G G HOLD SHORT 09R",
+    0.9
+   ],
+   [
+    "alaska 642 expedite descend",
+    "ASA642 Expedite descent",
+    "ASA642 EXPEDITE CLIMB",
+    1.0
+   ],
+   [
+    "alaska 642 hold at laxwy as published right turns one minute legs",
+    "ASA642 Hold at LAXWE, right turns, 1 min legs",
+    "ASA642 HOLD AT LAXEA RIGHT TURNS 1 MIN LEGS",
+    0.96
+   ],
+   [
+    "hong kong express 527 taxi to stan bravo 2 3 via victor",
+    "HKE527 Taxi stand B23 via V",
+    "HKE527 TAXI STAND X2 VIA V",
+    0.81
+   ]
+  ]
+ }
+}

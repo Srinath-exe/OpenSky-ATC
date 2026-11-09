@@ -1,0 +1,8 @@
+# compiled engine copy, checkpoints, logs and the mined pool (rebuild: build.sh, mine.py, run_all.sh)
+.build/
+__pycache__/
+*.log
+*.pt
+runs/hard.jsonl
+runs/export-check-*/
+runs/ALL-DONE

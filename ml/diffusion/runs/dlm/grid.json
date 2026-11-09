@@ -1,0 +1,84 @@
+{
+ "L": 24,
+ "n": 1000,
+ "fixed": {
+  "val|span|1": {
+   "exact": 0.006,
+   "callsign": 0.056,
+   "n": 1000,
+   "nfe": 1.0
+  },
+  "val|span|4": {
+   "exact": 0.004,
+   "callsign": 0.053,
+   "n": 1000,
+   "nfe": 4.0
+  },
+  "val|span|8": {
+   "exact": 0.006,
+   "callsign": 0.056,
+   "n": 1000,
+   "nfe": 7.82
+  },
+  "val|span|24": {
+   "exact": 0.006,
+   "callsign": 0.056,
+   "n": 1000,
+   "nfe": 14.18
+  },
+  "val|none|8": {
+   "exact": 0.023,
+   "callsign": 0.023,
+   "n": 1000,
+   "nfe": 8.0
+  },
+  "val|snap|8": {
+   "exact": 0.031,
+   "callsign": 0.122,
+   "n": 1000,
+   "nfe": 8.0
+  },
+  "sydney|span|1": {
+   "exact": 0.008,
+   "callsign": 0.054,
+   "n": 1000,
+   "nfe": 1.0
+  },
+  "sydney|span|4": {
+   "exact": 0.005,
+   "callsign": 0.047,
+   "n": 1000,
+   "nfe": 4.0
+  },
+  "sydney|span|8": {
+   "exact": 0.006,
+   "callsign": 0.053,
+   "n": 1000,
+   "nfe": 7.8
+  },
+  "sydney|span|24": {
+   "exact": 0.006,
+   "callsign": 0.053,
+   "n": 1000,
+   "nfe": 14.08
+  },
+  "sydney|none|8": {
+   "exact": 0.023,
+   "callsign": 0.023,
+   "n": 1000,
+   "nfe": 7.99
+  },
+  "sydney|snap|8": {
+   "exact": 0.031,
+   "callsign": 0.117,
+   "n": 1000,
+   "nfe": 7.99
+  }
+ },
+ "threshold": {},
+ "cache": {},
+ "too_long": {
+  "val": 1,
+  "sydney": 0
+ }
+}

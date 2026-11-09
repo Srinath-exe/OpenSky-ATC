@@ -1,0 +1,37 @@
+{
+ "model": {
+  "vocab": 1350,
+  "d": 192,
+  "layers": 4,
+  "heads": 6,
+  "max_len": 512,
+  "ffn_mult": 2.6666666666666665,
+  "dropout": 0.0
+ },
+ "args": {
+  "data": "/root/atc/ml/data/out4/ds",
+  "tok": "/root/atc/ml/tokenizer/atc.json",
+  "out": "ml/diffusion/runs/dlm",
+  "init_ar": null,
+  "d": 192,
+  "layers": 4,
+  "heads": 6,
+  "L": 24,
+  "max_len": 448,
+  "steps": 1200,
+  "batch": 32,
+  "lr": 0.002,
+  "warmup": 100,
+  "wd": 0.1,
+  "eval_every": 300,
+  "eval_n": 200,
+  "eval_S": 8,
+  "threads": 1,
+  "seed": 0,
+  "eps": 0.001,
+  "max_time": null
+ },
+ "params": 2030400,
+ "train_rows": 204342,
+ "dropped": 505
+}

@@ -1,0 +1,24 @@
+{
+ "L": 24,
+ "n": 1000,
+ "fixed": {
+  "val|span|8": {
+   "exact": 0.021,
+   "callsign": 0.193,
+   "n": 1000,
+   "nfe": 7.93
+  },
+  "sydney|span|8": {
+   "exact": 0.02,
+   "callsign": 0.163,
+   "n": 1000,
+   "nfe": 7.92
+  }
+ },
+ "threshold": {},
+ "cache": {},
+ "too_long": {
+  "val": 1,
+  "sydney": 0
+ }
+}

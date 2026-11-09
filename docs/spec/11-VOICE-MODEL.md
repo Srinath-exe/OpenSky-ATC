@@ -5,7 +5,7 @@ already parsed and editable, and the aircraft does it. The pilot then reads it b
 locally in the browser, on a phone, or on a cloud GPU. Latency is about the same as real radio, accuracy is high enough to trust,
 and when the model is unsure the pilot says "say again" instead of doing the wrong thing.
 
-Status (2026-11-08, end of day): **edge solution shipped** in the game: rules (L0) + the 2 MB S1 model in the browser (L1, 94% / 87% at an unseen airport) + confidence gate. Cloud solutions measured on one L4 (Kev-0.8B System One 100%; LFM2.5-230M generator 97% / 93% unseen; vLLM 363 commands/s). Results: `/reports/ai-paths.html`, `docs/learning/ai-engineering-paths.md`.
+Status (2026-11-09, overnight): **edge solution shipped and hardened.** Speech: ATC transcript repair, 5-guess n-best, 0.3 s pre-roll, our server's Whisper (`/api/voice/stt`, inside the Next server) as a second opinion: exact commands from the browser recogniser 52 → 80% on 320 degraded synthetic clips. Model: GRPO-tuned 2M S1 (`/models/s1/2m-grpo-v1`) with likelihood-scored callsign search (Sydney 86 → 94% exact). Gate: round-trip verifier (481-weight MLP + veto rules, 0.2 ms): wrong auto-sends on rules-failed recogniser transcripts 19 → 0.9%; whole chain 17.8 → 5.6% sent wrong at 80% exact. Phone: Flutter app (`mobile/`, sherpa-onnx on device), APK at `/downloads/`. Real-voice gold set: `/voice/record.html`. Diffusion LM measured (AR wins here). Earlier: cloud solutions on one L4 (Kev-0.8B System One 100%; LFM2.5-230M 97% / 93% unseen; vLLM 363 commands/s). Results: `/reports/ai-paths.html`, `docs/learning/ai-engineering-paths.md`.
 
 ## 0. What the game already gives us (*exists*)
 

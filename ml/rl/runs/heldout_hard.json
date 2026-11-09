@@ -1,0 +1,34 @@
+{
+ "n": 500,
+ "noisy": 406,
+ "baseline": {
+  "exact": 0.512,
+  "callsign": 0.634,
+  "n": 500,
+  "s": 33.3
+ },
+ "grpo-exact": {
+  "exact": 0.72,
+  "callsign": 0.822,
+  "n": 500,
+  "s": 30.9
+ },
+ "grpo-shaped": {
+  "exact": 0.722,
+  "callsign": 0.826,
+  "n": 500,
+  "s": 32.0
+ },
+ "grpo-verifier": {
+  "exact": 0.696,
+  "callsign": 0.82,
+  "n": 500,
+  "s": 31.3
+ },
+ "sft-control": {
+  "exact": 0.746,
+  "callsign": 0.84,
+  "n": 500,
+  "s": 29.9
+ }
+}

@@ -1,0 +1,32 @@
+{
+ "arinit_step0_val": {
+  "exact": 0.085,
+  "callsign": 0.535,
+  "nfe": 2.5,
+  "n": 200
+ },
+ "dlm": {
+  "0.1": {
+   "pad": 0.0002,
+   "first_eos": 0.0879,
+   "command": 1.9499
+  },
+  "1.0": {
+   "pad": 0.1081,
+   "first_eos": 0.5361,
+   "command": 2.2894
+  }
+ },
+ "dlm-arinit": {
+  "0.1": {
+   "pad": 0.0,
+   "first_eos": 0.008,
+   "command": 0.0702
+  },
+  "1.0": {
+   "pad": 0.105,
+   "first_eos": 0.4297,
+   "command": 0.4371
+  }
+ }
+}

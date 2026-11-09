@@ -1,0 +1,15 @@
+{
+ "model": "2m-swap-v1",
+ "n": 144,
+ "trie_ms_p50": 125.7,
+ "score_ms_p50": 134,
+ "extra_ms_p50": 8,
+ "extra_ms_p95": 48.7,
+ "extra_ms_mean": 11.6,
+ "extra_ms_max": 278.6,
+ "search_steps_mean": 5.38,
+ "search_steps_p95": 9,
+ "trie_out_tokens_mean": 8.79,
+ "same_line": 134,
+ "loadavg": 4.41
+}

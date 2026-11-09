@@ -293,6 +293,40 @@ NanoJev (games only, CUDA-only server) and Nimble 9B (needs a GPU) were not run.
 The lesson: there is rarely one answer. Pick per constraint (cost, privacy, latency, generalisation), ship the cheap
 one, and keep the strong ones as the upgrade path and as teachers for the next small model.
 
+## 11e. Night two: six more paths, in parallel (CPU only, no GPU)
+
+Six agents worked overnight in the same checkout, each owning its own files; the lead integrated, measured the whole
+chain and shipped. Every number below is on synthetic speech (Kokoro voices, degraded like a laptop mic or a radio)
+until the real-voice gold set is recorded.
+
+| path | what was built | measured result | verdict |
+|---|---|---|---|
+| Speech-to-text fix | 640-clip benchmark (clean / laptop / radio / late start); ATC transcript repair, 5-guess n-best, 0.3 s pre-roll, server Whisper as a second opinion | browser recogniser chain 52 → 80% exact | **shipped** |
+| Verifier gate | say the proposal back in words, compare with what was heard; decoder signals; 481-weight MLP + veto rules | wrong auto-sends on rules-failed proposals 19 → 0.9% (recogniser transcripts) | **shipped** |
+| Callsign search | score every callsign on frequency by its full likelihood (best-first search over a branched KV cache) instead of a greedy trie; found by the diffusion experiment | Sydney exact 86.3 → 94.0%, recogniser transcripts 83.8 → 87.1%, +8 ms median | **shipped** |
+| RL (GRPO) | GRPO from scratch, engine as reward, 3 rewards + an SFT control | recogniser transcripts 79.6 → 83.8% (control 82.0%), Sydney flat | **shipped** (`2m-grpo-v1`) |
+| Diffusion LM | masked diffusion (MDLM/LLaDA objective) on the S1 blocks, low-confidence remasking, cached prompts | same compute: AR 72% vs diffusion ~1%; adapted from AR: 91.5% / 89.4% Sydney, slower than AR here | measured; AR wins on short outputs |
+| Phone app | Flutter shell, game in a WebView, sherpa-onnx streaming zipformer + hotwords, resumable checksummed model download | 44 MB APK, 73 MB model, 62 ms after release on this CPU; hotwords +15.5 pts | built, not yet run on a phone |
+| Real-voice gold set | 100 prompts, recording page, guarded upload API, one-command scoring | pipeline proven on synthetic clips | ready to record |
+
+Whole chain, measured end to end with the airport's real fix/taxiway/runway lists: 80% exact, 5.6% sent wrong (17.8%
+before the fixes). Fixes that came from reading the wrong sends one by one: a heading/altitude/speed command is only
+auto-sent if that kind was heard; "hold" + numbers is never "hold position"; and a bug where the exported verifier
+standardised its inputs with the wrong statistics (now asserted at export).
+
+Lessons:
+- **Generate, then verify.** A small generator plus a cheap checker that reads the answer back beats any single
+  confidence number (AUROC 0.59 → 0.98 on recogniser transcripts).
+- **Most of the gain was engineering around the models** (repair, n-best, verification, pre-roll), not bigger models.
+- **Measure the whole chain with the real context.** Scoring with a loose parse context made the wrong-send rate look
+  twice as bad as it is; scoring components alone hid that rules can send wrong commands too.
+- **RL helps only where the model already sometimes samples the right answer**; it did not fix unseen fix names.
+- **Diffusion's parallel decoding pays off for long outputs on a GPU**, not for 10-token commands on a CPU; and it
+  learns far slower from scratch than autoregressive training. But the experiment found the night's biggest single
+  win for the AR model: scoring whole callsigns instead of committing greedily to the first token.
+- **Check the exported artefact, not just the training run.** The verifier's metrics were right in Python and wrong in
+  the browser for hours because of one reused variable name.
+
 ---
 
 ## 12. What we finalised

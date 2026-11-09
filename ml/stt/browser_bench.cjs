@@ -10,7 +10,7 @@ const { parseCommand } = require(path.join(ROOT, '.tmp/ml/src/lib/sim/commands.j
 
 const dir = path.resolve(process.argv[2] || 'ml/stt/out/clips');
 const base = process.argv[3] || 'http://127.0.0.1:3005';
-const variant = process.argv[4] || '';   // e.g. 'model=base&dtype=fp32'
+const variant = process.argv[4] || 'model=tiny';   // e.g. 'model=base&dtype=fp32' (the worker's default is base since RESULTS2)
 const meta = JSON.parse(fs.readFileSync(path.join(dir, 'meta.json'), 'utf8'));
 
 function pcm16(file) {

@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Callsign by Likelihood</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Tokens: public/reports/voice-ai.html. Blue = the greedy trie (before), orange = likelihood (after), grey = other candidates. */
+:root {
+  --bg: #0e0f11; --surface: #141416; --raise: #1c1c1e; --line: rgba(255,255,255,.09); --line-strong: rgba(255,255,255,.16);
+  --ink-1: #f4f4f5; --ink-2: #c4c5c8; --ink-3: #a0a1a6; --ink-4: #7f8086;
+  --accent: #f5933f; --accent-tint: rgba(245,147,63,.14);
+  --s-before: #5b8fd6; --s-after: #d97626; --s-other: #55565c;
+  --good: #57cd50; --good-tint: rgba(87,205,80,.13); --neutral-tint: rgba(255,255,255,.07);
+  --font: "DM Sans", "Helvetica Neue", Arial, sans-serif; --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12);
+  --s-before: #3f78c2; --s-after: #c8661a; --s-other: #b9b9bd;
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --neutral-tint: rgba(20,20,24,.06);
+  color-scheme: light;
+} }
+:root[data-theme="light"] {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12);
+  --s-before: #3f78c2; --s-after: #c8661a; --s-other: #b9b9bd;
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --neutral-tint: rgba(20,20,24,.06);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink-2); font-family: var(--font); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 72px; }
+.wrap { max-width: 960px; margin: 0 auto; display: grid; gap: 56px; }
+h1, h2, h3 { color: var(--ink-1); text-wrap: balance; margin: 0; font-weight: 600; letter-spacing: -.01em; }
+h1 { font-size: clamp(28px, 4.4vw, 40px); line-height: 1.12; }
+h2 { font-size: 22px; line-height: 1.25; }
+h3 { font-size: 15px; line-height: 1.35; }
+p, ul, ol { margin: 0; max-width: 68ch; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, [tabindex]:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+code, .mono { font-family: var(--mono); font-size: .9em; }
+.eyebrow { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+section { display: grid; gap: 18px; min-width: 0; }
+.lede { font-size: 17px; max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--ink-3); font-size: 13px; }
+header { display: grid; gap: 16px; }
+.headline { display: grid; grid-template-columns: auto 1fr; gap: 20px 28px; align-items: end; padding: 22px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.big { font-size: clamp(40px, 7.5vw, 64px); line-height: 1; font-weight: 600; color: var(--ink-1); font-variant-numeric: tabular-nums; letter-spacing: -.03em; white-space: nowrap; }
+.big .from { color: var(--ink-4); } .big .arrow { color: var(--ink-4); font-weight: 400; padding: 0 .12em; }
+@media (max-width: 620px) { .headline { grid-template-columns: 1fr; } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
+.chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; align-items: baseline; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 12px; height: 8px; border-radius: 2px; display: inline-block; }
+.note { font-size: 13px; color: var(--ink-3); }
+/* SVG figure */
+.svg { width: 100%; height: auto; display: block; font-family: var(--font); }
+.svg .grid { stroke: var(--line); stroke-width: 1; }
+.svg .tick { fill: var(--ink-4); font-size: 11px; font-variant-numeric: tabular-nums; }
+.svg .lab { fill: var(--ink-1); font-size: 13px; font-family: var(--mono); }
+.svg .val { fill: var(--ink-2); font-size: 12px; font-family: var(--mono); }
+.svg .seglab { fill: var(--bg); font-size: 11px; font-family: var(--mono); pointer-events: none; }
+.svg .seg.win { fill: var(--s-after); } .svg .seg.trie { fill: var(--s-before); } .svg .seg.other { fill: var(--s-other); }
+.svg .seg:hover { filter: brightness(1.15); }
+.figscroll { overflow-x: auto; min-width: 0; } .figscroll .svg { min-width: 620px; }
+/* HTML bars */
+.rows { display: grid; gap: 14px; }
+.group { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: center; }
+.group .lab { font-size: 13px; color: var(--ink-1); font-weight: 600; line-height: 1.25; }
+.group .lab small { display: block; font-weight: 400; color: var(--ink-3); font-size: 11.5px; }
+.pair { display: grid; gap: 3px; }
+.bar-row { position: relative; display: grid; grid-template-columns: 92px 1fr 56px; gap: 8px; align-items: center; cursor: default; }
+.blab { font-size: 11.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track { position: relative; height: 11px; }
+.fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 4px 4px 0; min-width: 2px; }
+.fill.trie { background: var(--s-before); } .fill.win { background: var(--s-after); } .fill.other { background: var(--s-other); }
+.val { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; text-align: right; font-family: var(--mono); }
+.tip { position: absolute; left: 100px; bottom: calc(100% + 6px); z-index: 3; background: var(--raise); color: var(--ink-1); border: 1px solid var(--line-strong); border-radius: 8px; padding: 6px 10px; font-size: 12.5px; line-height: 1.4; white-space: nowrap; pointer-events: none; opacity: 0; transform: translateY(3px); transition: opacity .12s, transform .12s; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.bar-row:hover .tip, .bar-row:focus-visible .tip { opacity: 1; transform: none; }
+.bar-row:hover .fill, .bar-row:focus-visible .fill { filter: brightness(1.12); }
+.plot { position: relative; }
+.gridlines { position: absolute; inset: 0 64px 0 232px; pointer-events: none; }
+.gridlines b { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
+.axis { display: grid; grid-template-columns: 232px 1fr; }
+.axis .ticks { position: relative; height: 16px; margin-right: 64px; font-size: 11px; color: var(--ink-4); font-variant-numeric: tabular-nums; }
+.axis .ticks span { position: absolute; transform: translateX(-50%); }
+.axis .ticks span:first-child { transform: none; } .axis .ticks span:last-child { transform: translateX(-100%); }
+.group.wide .bar-row { grid-template-columns: 170px 1fr 56px; } .plot.wide .gridlines { inset: 0 64px 0 310px; } .axis.wide { grid-template-columns: 310px 1fr; }
+.first .bar-row { grid-template-columns: 56px 1fr 56px; } .first .tip { left: 64px; }
+@media (max-width: 620px) {
+  .group { grid-template-columns: 1fr; gap: 6px; } .gridlines { display: none; }
+  .axis { grid-template-columns: 100px 1fr; } .axis.wide { grid-template-columns: 178px 1fr; }
+  .bar-row { grid-template-columns: 84px 1fr 52px; } .group.wide .bar-row { grid-template-columns: 162px 1fr 52px; }
+}
+/* two columns */
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+.said { font-size: 18px; color: var(--ink-1); } .said .q { color: var(--ink-4); }
+.line-out { font-family: var(--mono); font-size: 14px; } .line-out.trie { color: var(--s-before); } .line-out.win { color: var(--s-after); }
+/* search pops */
+ol.pops { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; max-width: none; counter-reset: pop; }
+ol.pops li { counter-increment: pop; background: var(--neutral-tint); border: 1px solid var(--line); border-radius: 8px; padding: 3px 9px; font-size: 12.5px; }
+ol.pops li::before { content: counter(pop); color: var(--ink-4); font-size: 10.5px; margin-right: 6px; font-family: var(--mono); }
+ol.pops li.done { border-color: var(--s-after); background: var(--accent-tint); color: var(--ink-1); }
+ol.pops li.done small { display: block; color: var(--ink-3); font-size: 11px; }
+ol.pops li.after { border-style: dashed; }
+.dim { color: var(--ink-4); }
+.gate-row { display: grid; gap: 3px; } .gate-row .glab { font-size: 13px; color: var(--ink-1); font-weight: 600; }
+.fill.hatch { background-image: repeating-linear-gradient(135deg, transparent 0 3px, var(--surface) 3px 5px); }
+/* tiles */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
+.tile .k { font-size: 12px; color: var(--ink-3); font-family: var(--mono); } .tile .v { font-size: 26px; color: var(--ink-1); font-weight: 600; font-variant-numeric: tabular-nums; }
+.tile .v small { font-size: 13px; color: var(--ink-3); font-weight: 400; } .tile .s { font-size: 12.5px; color: var(--ink-3); }
+/* tables */
+details.table { border-top: 1px solid var(--line); padding-top: 10px; }
+details.table summary { cursor: pointer; font-size: 13px; color: var(--ink-2); font-weight: 500; }
+.scroll { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); font-weight: 600; }
+td.n { text-align: right; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+td strong { color: var(--ink-1); font-weight: 600; }
+ul.lessons { display: grid; gap: 10px; padding-left: 20px; }
+ul.lessons b { color: var(--ink-1); font-weight: 600; }
+</style>
+</head>
+<body>
+<main class="wrap">
+<header>
+  <div class="eyebrow">OpenATC · voice model · decoding</div>
+  <h1>Choosing the aircraft by likelihood, not one token at a time</h1>
+  <p class="lede">The 2M-parameter voice model turns the game state and a transcript into a command line. It used to pick the callsign greedily, token by token, through a trie of the callsigns in the state. Now every callsign is scored by its full likelihood and the best one wins, found by an exact best-first search that costs one or two extra model steps.</p>
+  <div class="headline">
+    <div class="big"><span class="from">13.7%</span><span class="arrow">→</span>6.0%</div>
+    <p>Commands wrong at <b>Sydney</b>, an airport the model never saw (2m-grpo-v1, the model the game ships; n = 1000). Callsign accuracy there went from 91.4% to 99.6%. Same weights, no retraining: only the decoder changed.</p>
+  </div>
+  <div class="meta"><span>n = 1000 per set, paired rows, exact McNemar</span><span>both checkpoints (2m-swap-v1, 2m-grpo-v1)</span><span>browser engine: <code>src/lib/voice/s1.ts</code></span><span>write-up: <code>ml/s1/CALLSIGN_SCORING.md</code></span></div>
+</header>
+
+<section aria-labelledby="h-fail">
+  <div class="eyebrow">The failure</div>
+  <h2 id="h-fail">Greedy decoding commits to the airline before it reads the digits</h2>
+  <p>A real Sydney row, decoded by 2m-swap-v1. The controller only said the flight number. The decoder's first token must be one of the callsigns' first tokens, and greedy picks the most likely one. At Sydney that is Qantas: most traffic is <code>QFA</code>, so the model's prior for <code>QFA</code> is high before any digit has been considered. Once <code>QFA</code> is chosen, the best the digits can do is <code>QFA71</code>, and the trie then stops constraining (a complete callsign), so the model carried on to <code>QFA717</code>, an aircraft that is not in the state.</p>
+  <div class="cols">
+    <div class="card">
+      <div class="said"><span class="q">“</span>527 maintain 210<span class="q">”</span></div>
+      <div class="note">Greedy trie: <span class="line-out trie">QFA717 Speed 210</span><br>Likelihood: <span class="line-out win">VOZ527 Speed 210</span> (gold <code>VOZ527 Speed 210</code>)</div>
+      <h3>Step 1 of the greedy trie: p(first token), among the allowed ones</h3>
+      <div class="rows first" style="gap:4px"><div class="bar-row" tabindex="0"><span class="blab mono">QFA</span><div class="track"><div class="fill trie" style="width:44.79%"></div></div><span class="val">44.8%</span><span class="tip">p("QFA" | allowed first tokens) = 0.4479</span></div>
+<div class="bar-row" tabindex="0"><span class="blab mono">SC</span><div class="track"><div class="fill other" style="width:40.79%"></div></div><span class="val">40.8%</span><span class="tip">p("SC" | allowed first tokens) = 0.4079</span></div>
+<div class="bar-row" tabindex="0"><span class="blab mono">CPA</span><div class="track"><div class="fill other" style="width:6.91%"></div></div><span class="val">6.9%</span><span class="tip">p("CPA" | allowed first tokens) = 0.0691</span></div>
+<div class="bar-row" tabindex="0"><span class="blab mono">SIA</span><div class="track"><div class="fill other" style="width:3.22%"></div></div><span class="val">3.2%</span><span class="tip">p("SIA" | allowed first tokens) = 0.0322</span></div>
+<div class="bar-row" tabindex="0"><span class="blab mono">DAL</span><div class="track"><div class="fill other" style="width:2.97%"></div></div><span class="val">3.0%</span><span class="tip">p("DAL" | allowed first tokens) = 0.0297</span></div>
+<div class="bar-row" tabindex="0"><span class="blab mono">VOZ</span><div class="track"><div class="fill win" style="width:0.44%"></div></div><span class="val">0.4%</span><span class="tip">p("VOZ" | allowed first tokens) = 0.0044</span></div></div>
+    </div>
+    <div class="card">
+      <h3>The state: 13 aircraft</h3>
+      <p class="note mono" style="line-height:1.9">CPA952 · DAL817 · QFA188 · QFA71 · SCO496 · VOZ416 · VOZ527 · JST623 · QFA76 · SIA820 · THY383 · UAE880 · UAL975</p>
+      <p class="note">The digits 5-2-7 point straight at <code>VOZ527</code>. The trie never asks, because by the time it reads digits it has already spent its one choice on the airline.</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chart-head"><h3>What each candidate costs, token by token</h3>
+      <div class="legend" aria-hidden="true"><span><i style="background:var(--s-after)"></i>gold, picked by likelihood</span><span><i style="background:var(--s-before)"></i>the trie's path</span><span><i style="background:var(--s-other)"></i>other candidates</span></div></div>
+    <div class="figscroll"><svg viewBox="0 0 900 340" role="img" aria-labelledby="f1t f1d" class="svg">
+<title id="f1t">Cost of every token, per candidate callsign</title>
+<desc id="f1d">Transcript "527 maintain 210". Bars are minus log probability in nats, one segment per token plus the word boundary. VOZ527 costs 5.9 nats in total, the QFA candidates the trie started on cost 38 or more.</desc>
+<line x1="150.0" x2="150.0" y1="22" y2="296" class="grid"/>
+<text x="150.0" y="314" class="tick" text-anchor="middle">0</text>
+<line x1="305.5" x2="305.5" y1="22" y2="296" class="grid"/>
+<text x="305.5" y="314" class="tick" text-anchor="middle">10</text>
+<line x1="460.9" x2="460.9" y1="22" y2="296" class="grid"/>
+<text x="460.9" y="314" class="tick" text-anchor="middle">20</text>
+<line x1="616.4" x2="616.4" y1="22" y2="296" class="grid"/>
+<text x="616.4" y="314" class="tick" text-anchor="middle">30</text>
+<text x="450.0" y="334" class="tick" text-anchor="middle">nats (− log probability), lower is likelier</text>
+<text x="138" y="45" class="lab win" text-anchor="end">VOZ527</text>
+<rect x="150.0" y="30" width="89.1" height="20" rx="3" class="seg win"><title>VOZ527: "VOZ" costs 5.86 nats (p = 0.00285)</title></rect>
+<text x="194.6" y="44.5" class="seglab" text-anchor="middle">VOZ</text>
+<text x="760" y="45" class="val">5.9 nats · 1.17/token</text>
+<text x="138" y="91" class="lab other" text-anchor="end">SAY AGAIN</text>
+<rect x="150.0" y="76" width="106.5" height="20" rx="3" class="seg other"><title>SAY AGAIN: "SAY" costs 6.98 nats (p = 0.000933)</title></rect>
+<text x="203.2" y="90.5" class="seglab" text-anchor="middle">SAY</text>
+<text x="760" y="91" class="val">7.0 nats · 2.33/token</text>
+<text x="138" y="137" class="lab other" text-anchor="end">DAL817</text>
+<rect x="150.0" y="122" width="59.5" height="20" rx="3" class="seg other"><title>DAL817: "DAL" costs 3.96 nats (p = 0.0191)</title></rect>
+<text x="179.8" y="136.5" class="seglab" text-anchor="middle">DAL</text>
+<rect x="211.5" y="122" width="254.5" height="20" rx="3" class="seg other"><title>DAL817: "8" costs 16.50 nats (p = 6.85e-08)</title></rect>
+<text x="338.7" y="136.5" class="seglab" text-anchor="middle">8</text>
+<rect x="468.0" y="122" width="195.1" height="20" rx="3" class="seg other"><title>DAL817: "1" costs 12.68 nats (p = 3.11e-06)</title></rect>
+<text x="565.6" y="136.5" class="seglab" text-anchor="middle">1</text>
+<text x="760" y="137" class="val">33.1 nats · 6.63/token</text>
+<text x="138" y="183" class="lab other" text-anchor="end">SIA820</text>
+<rect x="150.0" y="168" width="58.3" height="20" rx="3" class="seg other"><title>SIA820: "SIA" costs 3.88 nats (p = 0.0207)</title></rect>
+<text x="179.1" y="182.5" class="seglab" text-anchor="middle">SIA</text>
+<rect x="210.3" y="168" width="273.6" height="20" rx="3" class="seg other"><title>SIA820: "8" costs 17.72 nats (p = 2.01e-08)</title></rect>
+<text x="347.0" y="182.5" class="seglab" text-anchor="middle">8</text>
+<rect x="485.8" y="168" width="199.5" height="20" rx="3" class="seg other"><title>SIA820: "0" costs 12.96 nats (p = 2.35e-06)</title></rect>
+<text x="585.6" y="182.5" class="seglab" text-anchor="middle">0</text>
+<text x="760" y="183" class="val">34.6 nats · 6.92/token</text>
+<text x="138" y="229" class="lab trie" text-anchor="end">QFA71</text>
+<rect x="150.0" y="214" width="17.3" height="20" rx="3" class="seg trie"><title>QFA71: "QFA" costs 1.24 nats (p = 0.289)</title></rect>
+<rect x="169.3" y="214" width="233.5" height="20" rx="3" class="seg trie"><title>QFA71: "7" costs 15.15 nats (p = 2.64e-07)</title></rect>
+<text x="286.1" y="228.5" class="seglab" text-anchor="middle">7</text>
+<rect x="404.8" y="214" width="204.8" height="20" rx="3" class="seg trie"><title>QFA71: "1" costs 13.30 nats (p = 1.68e-06)</title></rect>
+<text x="507.2" y="228.5" class="seglab" text-anchor="middle">1</text>
+<rect x="611.6" y="214" width="128.3" height="20" rx="3" class="seg trie"><title>QFA71: "␣" costs 8.38 nats (p = 0.00023)</title></rect>
+<text x="675.7" y="228.5" class="seglab" text-anchor="middle">␣</text>
+<text x="760" y="229" class="val">38.1 nats · 9.52/token</text>
+<text x="138" y="275" class="lab other" text-anchor="end">QFA76</text>
+<rect x="150.0" y="260" width="17.3" height="20" rx="3" class="seg other"><title>QFA76: "QFA" costs 1.24 nats (p = 0.289)</title></rect>
+<rect x="169.3" y="260" width="233.5" height="20" rx="3" class="seg other"><title>QFA76: "7" costs 15.15 nats (p = 2.64e-07)</title></rect>
+<text x="286.1" y="274.5" class="seglab" text-anchor="middle">7</text>
+<rect x="404.8" y="260" width="212.5" height="20" rx="3" class="seg other"><title>QFA76: "6" costs 13.79 nats (p = 1.02e-06)</title></rect>
+<text x="511.1" y="274.5" class="seglab" text-anchor="middle">6</text>
+<rect x="619.3" y="260" width="128.7" height="20" rx="3" class="seg other"><title>QFA76: "␣" costs 8.41 nats (p = 0.000223)</title></rect>
+<text x="683.6" y="274.5" class="seglab" text-anchor="middle">␣</text>
+<text x="760" y="275" class="val">38.6 nats · 9.65/token</text>
+</svg></div>
+    <p class="note">Each segment is one token's − log probability (hover for the number); the last one, “␣”, is the word boundary: the probability that the callsign ends there. <code>QFA</code> is cheap (1.2 nats) but its digits cost 15 and 13 nats; <code>VOZ</code> is expensive (5.9 nats) and then every digit is free. Summed over the whole callsign, the gold one wins by 32 nats.</p>
+  </div>
+</section>
+
+<section aria-labelledby="h-how">
+  <div class="eyebrow">The decoder</div>
+  <h2 id="h-how">Score the whole callsign, and search for the best one exactly</h2>
+  <p><b>Score.</b> score(callsign) = Σ log p(token) over <code>" VOZ527"</code> + log p(word boundary after it). The boundary is any token that starts with a space, or <code>&lt;eos&gt;</code>. Without it <code>UAL12</code> would always beat <code>UAL123</code>, because a shorter prefix has fewer tokens to pay for. The shipped score is length-normalised: divided by (tokens + 1). It ties the plain sum on validation and Sydney, and wins on real recognisers, where the sum over-prefers the 2-token <code>SAY AGAIN</code> (table below).</p>
+  <p><b>Search.</b> Scoring all ~14 candidates of a state means ~47 model steps (shared prefixes counted once) against ~4 for the greedy path. But log-probabilities are ≤ 0, so a prefix's score is an upper bound on every callsign below it. A max-queue over the trie can therefore stop at the first complete callsign it pops: nothing left can beat it. That is best-first search, A* when length-normalised (bound: prefix log-prob ÷ (longest callsign below it + 1)). It returns exactly the full-scoring argmax: same pick on all 6,000 eval rows.</p>
+  <div class="card">
+    <h3>The search on this row, in pop order (bound = log-prob per token, higher first)</h3>
+    <ol class="pops"><li class=""><span class="mono">SC</span> <span class="mono dim">-0.22</span></li>
+<li class=""><span class="mono">SCO</span> <span class="mono dim">-0.22</span></li>
+<li class=""><span class="mono">QFA</span> <span class="mono dim">-0.25</span></li>
+<li class=""><span class="mono">CPA</span> <span class="mono dim">-0.62</span></li>
+<li class=""><span class="mono">SIA</span> <span class="mono dim">-0.78</span></li>
+<li class=""><span class="mono">DAL</span> <span class="mono dim">-0.79</span></li>
+<li class=""><span class="mono">VOZ</span> <span class="mono dim">-1.17</span></li>
+<li class=""><span class="mono">VOZ5</span> <span class="mono dim">-1.17</span></li>
+<li class=""><span class="mono">VOZ52</span> <span class="mono dim">-1.17</span></li>
+<li class=""><span class="mono">VOZ527</span> <span class="mono dim">-1.17</span></li>
+<li class="done"><b>VOZ527</b> complete <span class="mono">-1.17</span><small>every bound left is lower: this is the best</small></li>
+<li class="after"><span class="mono">JST</span> <span class="mono dim">-1.23</span></li>
+<li class="after"><span class="mono">UAE</span> <span class="mono dim">-1.30</span></li>
+<li class="after"><span class="mono">UAL</span> <span class="mono dim">-1.37</span></li>
+<li class="after"><span class="mono">THY</span> <span class="mono dim">-1.82</span></li>
+<li class="after"><span class="mono">SAY</span> <span class="mono dim">-2.33</span></li></ol>
+    <p class="note">14 model steps. The first 10 find the answer (the airlines the prior likes are tried first; one step each shows that the next digit does not fit). The dashed ones look for the runner-up, for the verifier's margin signal; that phase gets at most 4 steps, then the margin is reported as best minus the highest bound left (1.15 here) — a lower bound, never an over-estimate.</p>
+  </div>
+  <p>In the browser the KV cache is branched per trie node: each stepped node's keys and values (4 layers × 2 × 192 floats) are saved, and before a node is stepped its ancestors' are copied back into positions P, P+1, … of the one preallocated cache. The arithmetic is the same <code>step()</code> as before, so the result is identical to a straight decode of that callsign.</p>
+</section>
+
+<section aria-labelledby="h-res">
+  <div class="eyebrow">Results</div>
+  <h2 id="h-res">Fewer wrong commands on every set, for both checkpoints</h2>
+  <div class="card">
+    <div class="chart-head"><h3>Commands wrong (exact match), n = 1000 per bar</h3>
+      <div class="legend" aria-hidden="true"><span><i style="background:var(--s-before)"></i>greedy trie</span><span><i style="background:var(--s-after)"></i>likelihood (shipped decoder)</span></div></div>
+    <div class="plot"><div class="gridlines" aria-hidden="true"><b style="left:0%"></b><b style="left:20%"></b><b style="left:40%"></b><b style="left:60%"></b><b style="left:80%"></b><b style="left:100%"></b></div><div class="rows"><div class="group"><div class="lab">Validation<small>11 training airports, held-out sessions</small></div><div class="pair"><div class="bar-row" tabindex="0"><span class="blab">2m-swap-v1</span><div class="track"><div class="fill trie" style="width:23.20%"></div></div><span class="val">5.8%</span><span class="tip">Validation, 2m-swap-v1, greedy trie: 5.8% of commands wrong (n = 1000)</span></div><div class="bar-row" tabindex="0"><span class="blab">2m-swap-v1</span><div class="track"><div class="fill win" style="width:7.20%"></div></div><span class="val">1.8%</span><span class="tip">Validation, 2m-swap-v1, likelihood: 1.8% of commands wrong (n = 1000)</span></div><div class="bar-row" tabindex="0"><span class="blab">2m-grpo-v1</span><div class="track"><div class="fill trie" style="width:18.00%"></div></div><span class="val">4.5%</span><span class="tip">Validation, 2m-grpo-v1, greedy trie: 4.5% of commands wrong (n = 1000)</span></div><div class="bar-row" tabindex="0"><span class="blab">2m-grpo-v1</span><div class="track"><div class="fill win" style="width:8.40%"></div></div><span class="val">2.1%</span><span class="tip">Validation, 2m-grpo-v1, likelihood: 2.1% of commands wrong (n = 1000)</span></div></div></div><div class="group"><div class="lab">Sydney<small>an airport the model never saw</small></div><div class="pair"><div class="bar-row" tabindex="0"><span class="blab">2m-swap-v1</span><div class="track"><div class="fill trie" style="width:52.80%"></div></div><span class="val">13.2%</span><span class="tip">Sydney, 2m-swap-v1, greedy trie: 13.2% of commands wrong (n = 1000)</span></div><div class="bar-row" tabindex="0"><span class="blab">2m-swap-v1</span><div class="track"><div class="fill win" style="width:23.20%"></div></div><span class="val">5.8%</span><span class="tip">Sydney, 2m-swap-v1, likelihood: 5.8% of commands wrong (n = 1000)</span></div><div class="bar-row" tabindex="0"><span class="blab">2m-grpo-v1</span><div class="track"><div class="fill trie" style="width:54.80%"></div></div><span class="val">13.7%</span><span class="tip">Sydney, 2m-grpo-v1, greedy trie: 13.7% of commands wrong (n = 1000)</span></div><div class="bar-row" tabindex="0"><span class="blab">2m-grpo-v1</span><div class="track"><div class="fill win" style="width:24.00%"></div></div><span class="val">6.0%</span><span class="tip">Sydney, 2m-grpo-v1, likelihood: 6.0% of commands wrong (n = 1000)</span></div></div></div><div class="group"><div class="lab">Real recognisers<small>spoken commands through 5 speech-to-text models</small></div><div class="pair"><div class="bar-row" tabindex="0"><span class="blab">2m-swap-v1</span><div class="track"><div class="fill trie" style="width:81.60%"></div></div><span class="val">20.4%</span><span class="tip">Real recognisers, 2m-swap-v1, greedy trie: 20.4% of commands wrong (n = 1000)</span></div><div class="bar-row" tabindex="0"><span class="blab">2m-swap-v1</span><div class="track"><div class="fill win" style="width:63.60%"></div></div><span class="val">15.9%</span><span class="tip">Real recognisers, 2m-swap-v1, likelihood: 15.9% of commands wrong (n = 1000)</span></div><div class="bar-row" tabindex="0"><span class="blab">2m-grpo-v1</span><div class="track"><div class="fill trie" style="width:64.80%"></div></div><span class="val">16.2%</span><span class="tip">Real recognisers, 2m-grpo-v1, greedy trie: 16.2% of commands wrong (n = 1000)</span></div><div class="bar-row" tabindex="0"><span class="blab">2m-grpo-v1</span><div class="track"><div class="fill win" style="width:51.60%"></div></div><span class="val">12.9%</span><span class="tip">Real recognisers, 2m-grpo-v1, likelihood: 12.9% of commands wrong (n = 1000)</span></div></div></div></div></div>
+<div class="axis" aria-hidden="true"><span></span><div class="ticks"><span style="left:0%">0%</span><span style="left:20%">5%</span><span style="left:40%">10%</span><span style="left:60%">15%</span><span style="left:80%">20%</span><span style="left:100%">25%</span></div></div>
+    <p class="note">Same rows as every S1 eval (ml/rl/common.py eval_sets): validation and Sydney picked as ml/s1/train.py picks them, and 1,000 real speech-to-text transcripts. Rows paired, exact two-sided McNemar.</p>
+    <details class="table"><summary>All variants as a table (exact / callsign)</summary><div class="scroll"><table>
+      <thead><tr><th>Model</th><th>Set</th><th style="text-align:right">Greedy trie</th><th style="text-align:right">Sum, no boundary</th><th style="text-align:right">Sum</th><th style="text-align:right">Length-normalised</th><th style="text-align:right">Shipped decoder</th><th style="text-align:right">vs trie (fixed −broken)</th><th style="text-align:right">Say again missed / false</th></tr></thead>
+      <tbody><tr><td>2m-swap-v1</td><td>Validation</td><td class="n">94.2% / 95.6%</td><td class="n">98.2% / 99.7%</td><td class="n">98.2% / 99.7%</td><td class="n">98.2% / 99.7%</td><td class="n"><strong>98.2% / 99.7%</strong></td><td class="n">+40 −0, p &lt; 0.001</td><td class="n">1 / 3 → 0 / 3</td></tr>
+<tr><td>2m-swap-v1</td><td>Sydney</td><td class="n">86.8% / 91.9%</td><td class="n">93.4% / 98.9%</td><td class="n">94.1% / 99.6%</td><td class="n">94.2% / 99.7%</td><td class="n"><strong>94.2% / 99.7%</strong></td><td class="n">+74 −0, p &lt; 0.001</td><td class="n">3 / 1 → 1 / 2</td></tr>
+<tr><td>2m-swap-v1</td><td>Real recognisers</td><td class="n">79.6% / 88.5%</td><td class="n">83.3% / 92.2%</td><td class="n">83.0% / 91.9%</td><td class="n">84.1% / 93.3%</td><td class="n"><strong>84.1% / 93.3%</strong></td><td class="n">+54 −9, p &lt; 0.001</td><td class="n">0 / 41 → 0 / 55</td></tr>
+<tr><td>2m-grpo-v1</td><td>Validation</td><td class="n">95.5% / 97.0%</td><td class="n">98.0% / 99.5%</td><td class="n">98.0% / 99.5%</td><td class="n">97.9% / 99.4%</td><td class="n"><strong>97.9% / 99.4%</strong></td><td class="n">+25 −1, p &lt; 0.001</td><td class="n">5 / 3 → 3 / 3</td></tr>
+<tr><td>2m-grpo-v1</td><td>Sydney</td><td class="n">86.3% / 91.4%</td><td class="n">93.0% / 98.6%</td><td class="n">93.9% / 99.5%</td><td class="n">94.0% / 99.6%</td><td class="n"><strong>94.0% / 99.6%</strong></td><td class="n">+78 −1, p &lt; 0.001</td><td class="n">4 / 0 → 3 / 1</td></tr>
+<tr><td>2m-grpo-v1</td><td>Real recognisers</td><td class="n">83.8% / 92.3%</td><td class="n">86.3% / 95.1%</td><td class="n">86.1% / 94.8%</td><td class="n">87.1% / 96.0%</td><td class="n"><strong>87.1% / 96.0%</strong></td><td class="n">+34 −1, p &lt; 0.001</td><td class="n">0 / 33 → 0 / 40</td></tr></tbody></table></div></details>
+  </div>
+  <p>Where it helps: callsign errors nearly vanish on validation and Sydney (≥ 99.4% right). On real recognisers the remaining errors are mostly in the instruction (a mis-heard number), which this change does not touch. The rows it breaks there are mostly <code>SAY AGAIN</code> answers to badly garbled transcripts, a safe failure: the player repeats the call.</p>
+</section>
+
+<section aria-labelledby="h-cost">
+  <div class="eyebrow">Cost</div>
+  <h2 id="h-cost">One or two extra model steps per command</h2>
+  <div class="card">
+    <h3>Model steps per command, after the transcript (2m-grpo-v1)</h3>
+    <div class="plot wide"><div class="gridlines" aria-hidden="true"><b style="left:0%"></b><b style="left:17%"></b><b style="left:33%"></b><b style="left:50%"></b><b style="left:67%"></b><b style="left:83%"></b><b style="left:100%"></b></div><div class="rows"><div class="group wide"><div class="lab">Validation</div><div class="pair"><div class="bar-row" tabindex="0"><span class="blab">greedy trie (before)</span><div class="track"><div class="fill trie" style="width:14.48%"></div></div><span class="val">8.7</span><span class="tip">Validation: 8.7 model steps per command (greedy trie (before))</span></div><div class="bar-row" tabindex="0"><span class="blab">best-first search (shipped)</span><div class="track"><div class="fill win" style="width:16.17%"></div></div><span class="val">9.7</span><span class="tip">Validation: 9.7 model steps per command (best-first search (shipped))</span></div><div class="bar-row" tabindex="0"><span class="blab">beam search, width 4</span><div class="track"><div class="fill other" style="width:32.18%"></div></div><span class="val">19.3</span><span class="tip">Validation: 19.3 model steps per command (beam search, width 4)</span></div><div class="bar-row" tabindex="0"><span class="blab">every candidate, shared prefixes</span><div class="track"><div class="fill other" style="width:85.90%"></div></div><span class="val">51.5</span><span class="tip">Validation: 51.5 model steps per command (every candidate, shared prefixes)</span></div></div></div><div class="group wide"><div class="lab">Sydney</div><div class="pair"><div class="bar-row" tabindex="0"><span class="blab">greedy trie (before)</span><div class="track"><div class="fill trie" style="width:14.37%"></div></div><span class="val">8.6</span><span class="tip">Sydney: 8.6 model steps per command (greedy trie (before))</span></div><div class="bar-row" tabindex="0"><span class="blab">best-first search (shipped)</span><div class="track"><div class="fill win" style="width:16.89%"></div></div><span class="val">10.1</span><span class="tip">Sydney: 10.1 model steps per command (best-first search (shipped))</span></div><div class="bar-row" tabindex="0"><span class="blab">beam search, width 4</span><div class="track"><div class="fill other" style="width:32.23%"></div></div><span class="val">19.3</span><span class="tip">Sydney: 19.3 model steps per command (beam search, width 4)</span></div><div class="bar-row" tabindex="0"><span class="blab">every candidate, shared prefixes</span><div class="track"><div class="fill other" style="width:81.72%"></div></div><span class="val">49.0</span><span class="tip">Sydney: 49.0 model steps per command (every candidate, shared prefixes)</span></div></div></div><div class="group wide"><div class="lab">Real recognisers</div><div class="pair"><div class="bar-row" tabindex="0"><span class="blab">greedy trie (before)</span><div class="track"><div class="fill trie" style="width:14.17%"></div></div><span class="val">8.5</span><span class="tip">Real recognisers: 8.5 model steps per command (greedy trie (before))</span></div><div class="bar-row" tabindex="0"><span class="blab">best-first search (shipped)</span><div class="track"><div class="fill win" style="width:17.18%"></div></div><span class="val">10.3</span><span class="tip">Real recognisers: 10.3 model steps per command (best-first search (shipped))</span></div><div class="bar-row" tabindex="0"><span class="blab">beam search, width 4</span><div class="track"><div class="fill other" style="width:32.25%"></div></div><span class="val">19.4</span><span class="tip">Real recognisers: 19.4 model steps per command (beam search, width 4)</span></div><div class="bar-row" tabindex="0"><span class="blab">every candidate, shared prefixes</span><div class="track"><div class="fill other" style="width:85.70%"></div></div><span class="val">51.4</span><span class="tip">Real recognisers: 51.4 model steps per command (every candidate, shared prefixes)</span></div></div></div></div></div>
+<div class="axis wide" aria-hidden="true"><span></span><div class="ticks"><span style="left:0%">0</span><span style="left:17%">10</span><span style="left:33%">20</span><span style="left:50%">30</span><span style="left:67%">40</span><span style="left:83%">50</span><span style="left:100%">60</span></div></div>
+    <p class="note">A step is one token through the network at ~350 tokens of context. “Every candidate” counts shared prefixes once (a trie); beam search keeps the 4 best prefixes per depth. The shipped count includes the runner-up phase (≤ 4 steps) and the instruction tokens.</p>
+  </div>
+  <div class="tiles"><div class="tile"><div class="k">2m-swap-v1</div><div class="v">+8 ms <small>median</small></div><div class="s">+49 ms at p95 · trie 126 ms → 134 ms per complete() · n = 144</div></div><div class="tile"><div class="k">2m-grpo-v1</div><div class="v">+8 ms <small>median</small></div><div class="s">+47 ms at p95 · trie 119 ms → 134 ms per complete() · n = 144</div></div></div>
+  <p class="note">Added complete() time in node (the browser engine, one thread), same rows decoded both ways in one process, on a shared 8-core host under load; absolute times on a desktop browser are lower. A search that would need more than 48 steps falls back to the greedy trie (bounded worst case).</p>
+</section>
+
+<section aria-labelledby="h-ver">
+  <div class="eyebrow">Verifier</div>
+  <h2 id="h-ver">The gate was refitted on the new decoder's signals</h2>
+  <p>The decoder's per-token signals feed the verifier that decides send / check / say again. They are now taken along the chosen callsign's path (the trie margin can be negative when the likelihood overrules the greedy choice), and two are new: the chosen callsign's log-likelihood and its margin over the runner-up. The gate was refitted per model with <code>ml/verify/refit.sh</code>.</p>
+  <p><b>A bug surfaced on the way.</b> <code>ml/verify/fit.py</code> reused the names <code>mu, sd</code> for the S1-trunk experiment, so the exported gate carried the 384 hidden-state means and deviations instead of its 28–30 feature statistics. The game standardised every feature with the wrong numbers: the gate that ran sent far more wrong commands than the report said. Fixed, and fit.py now asserts that the exported gate reproduces the fitted one. To separate the two effects, the greedy-trie decoder also got a correctly exported gate (middle row).</p>
+  <div class="card"><h3>What the gate does with the model's proposals</h3><div class="rows"><div class="gate-row"><div class="glab">Greedy trie, gate as it ran (export bug)</div><div class="bar-row" tabindex="0"><span class="blab">sent, right</span><div class="track"><div class="fill other" style="width:60.21%"></div></div><span class="val">60.2%</span><span class="tip">3251 of 5399 transcripts the rules could not parse: sent, and the right command</span></div><div class="bar-row" tabindex="0"><span class="blab">sent, wrong</span><div class="track"><div class="fill other hatch" style="width:7.26%"></div></div><span class="val">7.3%</span><span class="tip">392 of 5399: sent, but not the command that was said</span></div></div><div class="gate-row"><div class="glab">Greedy trie, gate exported correctly</div><div class="bar-row" tabindex="0"><span class="blab">sent, right</span><div class="track"><div class="fill trie" style="width:48.66%"></div></div><span class="val">48.7%</span><span class="tip">2627 of 5399 transcripts the rules could not parse: sent, and the right command</span></div><div class="bar-row" tabindex="0"><span class="blab">sent, wrong</span><div class="track"><div class="fill trie hatch" style="width:0.56%"></div></div><span class="val">0.6%</span><span class="tip">30 of 5399: sent, but not the command that was said</span></div></div><div class="gate-row"><div class="glab">Likelihood decoder, refitted gate (shipped)</div><div class="bar-row" tabindex="0"><span class="blab">sent, right</span><div class="track"><div class="fill win" style="width:60.21%"></div></div><span class="val">60.2%</span><span class="tip">3251 of 5399 transcripts the rules could not parse: sent, and the right command</span></div><div class="bar-row" tabindex="0"><span class="blab">sent, wrong</span><div class="track"><div class="fill win hatch" style="width:1.09%"></div></div><span class="val">1.1%</span><span class="tip">59 of 5399: sent, but not the command that was said</span></div></div></div><p class="note">2m-grpo-v1 (the model the game ships), the four scored sets pooled (5399 transcripts the rules could not parse). Bars on one 0–100% scale of those transcripts.</p></div>
+  <div class="card"><div class="scroll"><table>
+    <thead><tr><th>Model</th><th>Set</th><th style="text-align:right">Rules failed</th><th style="text-align:right">Model + fusion right</th><th style="text-align:right">Sent and right</th><th style="text-align:right">Sent wrong</th><th style="text-align:right">Say again</th></tr></thead>
+    <tbody><tr><td>2m-swap-v1</td><td>Validation</td><td class="n">1585</td><td class="n">92.5% → <strong>95.5%</strong></td><td class="n">60.0% → 57.0% → <strong>59.7%</strong></td><td class="n">36 → 4 → <strong>4</strong></td><td class="n">464 → 528 → <strong>511</strong></td></tr>
+<tr><td>2m-swap-v1</td><td>Sydney</td><td class="n">1629</td><td class="n">87.3% → <strong>91.7%</strong></td><td class="n">59.1% → 55.5% → <strong>59.1%</strong></td><td class="n">97 → 9 → <strong>10</strong></td><td class="n">406 → 540 → <strong>517</strong></td></tr>
+<tr><td>2m-swap-v1</td><td>Real recognisers</td><td class="n">456</td><td class="n">70.8% → <strong>73.2%</strong></td><td class="n">68.9% → 62.1% → <strong>61.6%</strong></td><td class="n">32 → 4 → <strong>3</strong></td><td class="n">26 → 108 → <strong>108</strong></td></tr>
+<tr><td>2m-swap-v1</td><td>Heavy noise</td><td class="n">1729</td><td class="n">54.3% → <strong>63.0%</strong></td><td class="n">50.6% → 41.5% → <strong>51.4%</strong></td><td class="n">177 → 27 → <strong>36</strong></td><td class="n">87 → 598 → <strong>547</strong></td></tr>
+<tr><td>2m-grpo-v1</td><td>Validation</td><td class="n">1585</td><td class="n">92.8% → <strong>95.6%</strong></td><td class="n">61.3% → 52.9% → <strong>59.2%</strong></td><td class="n">40 → 3 → <strong>6</strong></td><td class="n">456 → 490 → <strong>496</strong></td></tr>
+<tr><td>2m-grpo-v1</td><td>Sydney</td><td class="n">1629</td><td class="n">86.1% → <strong>90.0%</strong></td><td class="n">59.5% → 51.8% → <strong>59.5%</strong></td><td class="n">132 → 4 → <strong>10</strong></td><td class="n">380 → 473 → <strong>490</strong></td></tr>
+<tr><td>2m-grpo-v1</td><td>Real recognisers</td><td class="n">456</td><td class="n">75.7% → <strong>79.6%</strong></td><td class="n">73.2% → 60.3% → <strong>71.1%</strong></td><td class="n">29 → 1 → <strong>4</strong></td><td class="n">20 → 86 → <strong>74</strong></td></tr>
+<tr><td>2m-grpo-v1</td><td>Heavy noise</td><td class="n">1729</td><td class="n">60.4% → <strong>69.7%</strong></td><td class="n">56.4% → 38.8% → <strong>58.9%</strong></td><td class="n">191 → 22 → <strong>39</strong></td><td class="n">56 → 364 → <strong>369</strong></td></tr></tbody></table></div>
+    <p class="note">Columns with arrows: greedy trie + gate as it ran → greedy trie + correctly exported gate (– where not fitted) → <strong>likelihood decoder + refitted gate</strong>. Same transcripts and rules parser (ml/s1/callsign_gate.py). Population: transcripts the rules could not parse. “Sent and right”: auto-sent and equal to the gold command, as a share of those transcripts; the rest are left in the bar (check) or answered with say again. Each gate is tuned for at most ~1% of auto-sent commands wrong on its training-session dev fold.</p></div>
+</section>
+
+<section aria-labelledby="h-par">
+  <div class="eyebrow">Parity</div>
+  <h2 id="h-par">The browser decodes what PyTorch decodes</h2>
+  <ul class="lessons">
+    <li>300 of 300 Sydney commands token-for-token identical to <code>decode.generate_scored</code>, search signals equal.</li>
+    <li>Verifier parity (<code>ml/verify/parity.cjs</code>, s1.ts vs <code>ml/verify/gen.py</code>): 2m-swap-v1: 200/200 lines, 200/200 signals, 2m-grpo-v1: 200/200 lines, 200/200 signals.</li>
+    <li>The greedy trie is kept as <code>callsignMode = 'trie'</code>: token-for-token and confidence identical to the previously committed engine (200/200, 200/200).</li>
+  </ul>
+</section>
+
+<section aria-labelledby="h-learn">
+  <div class="eyebrow">For an AI engineer</div>
+  <h2 id="h-learn">What this teaches</h2>
+  <ul class="lessons">
+    <li><b>Greedy is a search with a horizon of one token.</b> Constrained decoding (grammars, JSON schemas, here a callsign trie) masks invalid tokens but still commits token by token. When the evidence comes late in the sequence, score whole sequences.</li>
+    <li><b>A prior on the first token is how this fails.</b> The model knew <code>VOZ527</code> fit the digits; the decoder never asked. Accuracy went up 7 points at Sydney without touching the weights.</li>
+    <li><b>Compare sequences fairly.</b> Sum of log-probs favours short candidates. A boundary term makes prefixes compete (<code>UAL12</code> vs <code>UAL123</code>); length normalisation removes the bias towards the 2-token <code>SAY AGAIN</code>.</li>
+    <li><b>Bounds make exact search cheap.</b> Log-probs only fall as a sequence grows, so best-first / A* returns the exact argmax after a handful of steps when the model is confident. Beam search would cost twice as much and is only approximate.</li>
+    <li><b>Change the decoder, refit what reads it.</b> The verifier was fitted on the old decoder's signals; new decoder, new distributions, new gate.</li>
+    <li><b>The idea came from the diffusion experiment</b> (<a href="voice-diffusion.html">voice-diffusion</a>), where scoring every callsign by likelihood lifted the diffusion model's Sydney callsign accuracy from 91.9% to 99.1%. It carries over to the autoregressive model unchanged.</li>
+  </ul>
+</section>
+<p class="note">Reproduce: <code>ml/s1/callsign_scoring.py</code> (variants, n = 1000 × 3 sets), <code>ml/s1/callsign_e2e.py</code> (shipped decoder end to end), <code>ml/s1/callsign_report.py</code>, <code>ml/s1/callsign_example.py</code>, <code>node ml/s1/callsign_latency.cjs</code>, <code>ml/verify/refit.sh</code>; this page: <code>python3 ml/s1/build_callsign_report.py</code>.</p>
+</main>
+</body>
+</html>

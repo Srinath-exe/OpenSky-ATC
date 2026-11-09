@@ -1,0 +1,17 @@
+{
+ "run": "ml/gpu/results/s1-2m-11ap-swap",
+ "n": 0,
+ "bench": {
+  "trie": {
+   "p50_ms": 51.0,
+   "p95_ms": 75.6
+  },
+  "span_fast": {
+   "p50_ms": 71.7,
+   "p95_ms": 93.9
+  },
+  "n": 200,
+  "threads": 1,
+  "fast_equals_slow": "200/200"
+ }
+}

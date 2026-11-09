@@ -1,0 +1,10 @@
+.build/
+.build-old/
+.build-test/
+# per-model generator outputs are large and reproducible (refit.sh); keep only the summaries
+out/*
+!out/*/
+out/*/*
+!out/*/results.json
+!out/*/parity.json
+!out/*/bench.json

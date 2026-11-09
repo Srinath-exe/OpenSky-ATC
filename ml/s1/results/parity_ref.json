@@ -1,0 +1,21 @@
+{
+ "n": 300,
+ "tokens_same_as_pytorch": 300,
+ "search_signals_same": 300,
+ "per_model": {
+  "2m-swap-v1": {
+   "n": 150,
+   "decode": "score",
+   "tokens_same_as_pytorch": 150,
+   "search_signals_same": 150
+  },
+  "2m-grpo-v1": {
+   "n": 150,
+   "decode": "score",
+   "tokens_same_as_pytorch": 150,
+   "search_signals_same": 150
+  }
+ },
+ "data": "ml/data/out4/ds/test_airport.jsonl (Sydney), first 150 rows",
+ "how": "ml/edge/parity_ref.py --decode score (decode.generate_scored) vs node ml/verify/parity.cjs --ref"
+}

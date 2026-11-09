@@ -1,0 +1,207 @@
+{
+ "L": 24,
+ "n": 1000,
+ "fixed": {
+  "val|span|1": {
+   "exact": 0.704,
+   "callsign": 0.969,
+   "n": 1000,
+   "nfe": 1.0
+  },
+  "val|span|2": {
+   "exact": 0.715,
+   "callsign": 0.97,
+   "n": 1000,
+   "nfe": 1.94
+  },
+  "val|span|4": {
+   "exact": 0.844,
+   "callsign": 0.969,
+   "n": 1000,
+   "nfe": 3.82
+  },
+  "val|span|8": {
+   "exact": 0.889,
+   "callsign": 0.969,
+   "n": 1000,
+   "nfe": 6.9
+  },
+  "val|span|24": {
+   "exact": 0.915,
+   "callsign": 0.969,
+   "n": 1000,
+   "nfe": 9.88
+  },
+  "val|none|8": {
+   "exact": 0.799,
+   "callsign": 0.886,
+   "n": 1000,
+   "nfe": 7.9
+  },
+  "val|snap|8": {
+   "exact": 0.837,
+   "callsign": 0.933,
+   "n": 1000,
+   "nfe": 7.9
+  },
+  "val|first|8": {
+   "exact": 0.816,
+   "callsign": 0.904,
+   "n": 1000,
+   "nfe": 7.85
+  },
+  "sydney|span|1": {
+   "exact": 0.645,
+   "callsign": 0.991,
+   "n": 1000,
+   "nfe": 1.0
+  },
+  "sydney|span|2": {
+   "exact": 0.64,
+   "callsign": 0.991,
+   "n": 1000,
+   "nfe": 1.96
+  },
+  "sydney|span|4": {
+   "exact": 0.785,
+   "callsign": 0.991,
+   "n": 1000,
+   "nfe": 3.85
+  },
+  "sydney|span|8": {
+   "exact": 0.869,
+   "callsign": 0.991,
+   "n": 1000,
+   "nfe": 7.02
+  },
+  "sydney|span|24": {
+   "exact": 0.894,
+   "callsign": 0.991,
+   "n": 1000,
+   "nfe": 10.1
+  },
+  "sydney|none|8": {
+   "exact": 0.75,
+   "callsign": 0.893,
+   "n": 1000,
+   "nfe": 7.92
+  },
+  "sydney|snap|8": {
+   "exact": 0.801,
+   "callsign": 0.952,
+   "n": 1000,
+   "nfe": 7.92
+  },
+  "sydney|first|8": {
+   "exact": 0.761,
+   "callsign": 0.897,
+   "n": 1000,
+   "nfe": 7.88
+  }
+ },
+ "threshold": {
+  "val|span|0.9": {
+   "exact": 0.858,
+   "callsign": 0.969,
+   "n": 1000,
+   "nfe": 2.15
+  },
+  "sydney|span|0.9": {
+   "exact": 0.802,
+   "callsign": 0.991,
+   "n": 1000,
+   "nfe": 2.42
+  }
+ },
+ "cache": {
+  "val|prompt|4": {
+   "exact": 0.848,
+   "callsign": 0.966,
+   "n": 500,
+   "nfe": 3.84
+  },
+  "val|prompt|8": {
+   "exact": 0.896,
+   "callsign": 0.966,
+   "n": 500,
+   "nfe": 6.94
+  },
+  "val|prompt|24": {
+   "exact": 0.92,
+   "callsign": 0.966,
+   "n": 500,
+   "nfe": 9.93
+  },
+  "val|ctx|4": {
+   "exact": 0.846,
+   "callsign": 0.964,
+   "n": 500,
+   "nfe": 3.85
+  },
+  "val|ctx|8": {
+   "exact": 0.896,
+   "callsign": 0.964,
+   "n": 500,
+   "nfe": 6.94
+  },
+  "val|ctx|24": {
+   "exact": 0.916,
+   "callsign": 0.964,
+   "n": 500,
+   "nfe": 9.98
+  },
+  "val|exact|8": {
+   "exact": 0.894,
+   "callsign": 0.966,
+   "n": 500,
+   "nfe": 6.9
+  },
+  "sydney|prompt|4": {
+   "exact": 0.774,
+   "callsign": 0.994,
+   "n": 500,
+   "nfe": 3.87
+  },
+  "sydney|prompt|8": {
+   "exact": 0.866,
+   "callsign": 0.994,
+   "n": 500,
+   "nfe": 7.1
+  },
+  "sydney|prompt|24": {
+   "exact": 0.894,
+   "callsign": 0.994,
+   "n": 500,
+   "nfe": 10.24
+  },
+  "sydney|ctx|4": {
+   "exact": 0.768,
+   "callsign": 0.994,
+   "n": 500,
+   "nfe": 3.87
+  },
+  "sydney|ctx|8": {
+   "exact": 0.86,
+   "callsign": 0.994,
+   "n": 500,
+   "nfe": 7.1
+  },
+  "sydney|ctx|24": {
+   "exact": 0.898,
+   "callsign": 0.994,
+   "n": 500,
+   "nfe": 10.26
+  },
+  "sydney|exact|8": {
+   "exact": 0.868,
+   "callsign": 0.994,
+   "n": 500,
+   "nfe": 7.08
+  }
+ },
+ "too_long": {
+  "val": 1,
+  "sydney": 0
+ },
+ "n_cache": 500
+}

@@ -1,0 +1,33 @@
+{
+ "model": {
+  "vocab": 1349,
+  "d": 192,
+  "layers": 4,
+  "heads": 6,
+  "max_len": 512,
+  "ffn_mult": 2.6666666666666665,
+  "dropout": 0.0
+ },
+ "args": {
+  "data": "ml/data/out4/ds",
+  "tok": "ml/tokenizer/atc.json",
+  "out": "/opt/atc/results/s1-2m-11ap-swap",
+  "d": 192,
+  "layers": 4,
+  "heads": 6,
+  "max_len": 448,
+  "steps": 6000,
+  "batch": 64,
+  "lr": 0.002,
+  "warmup": 100,
+  "wd": 0.1,
+  "eval_every": 3000,
+  "eval_n": 200,
+  "limit": null,
+  "device": "cuda",
+  "bf16": true,
+  "threads": 2,
+  "seed": 0
+ },
+ "params": 2030208
+}

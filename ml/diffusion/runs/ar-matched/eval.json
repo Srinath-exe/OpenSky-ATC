@@ -1,0 +1,34 @@
+{
+ "val": {
+  "exact": 0.722,
+  "callsign": 0.836,
+  "say_again_tp": 19,
+  "say_again_fp": 0,
+  "say_again_fn": 43,
+  "ms_p50": 50.4,
+  "ms_p95": 66.6,
+  "n": 1000
+ },
+ "val_unconstrained": {
+  "exact": 0.6733,
+  "callsign": 0.7767,
+  "say_again_tp": 0,
+  "say_again_fp": 0,
+  "say_again_fn": 18,
+  "ms_p50": 53.0,
+  "ms_p95": 87.9,
+  "n": 300
+ },
+ "test_airport": {
+  "exact": 0.66,
+  "callsign": 0.824,
+  "say_again_tp": 14,
+  "say_again_fp": 2,
+  "say_again_fn": 33,
+  "ms_p50": 45.9,
+  "ms_p95": 60.2,
+  "n": 1000
+ },
+ "params": 2030208,
+ "train_s": 6342
+}

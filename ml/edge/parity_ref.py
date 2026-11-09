@@ -1,7 +1,10 @@
 """Reference outputs for the browser engine parity test: decode N validation examples in PyTorch using exactly the
 weights in public/models/<name>/model.bin (dequantized the same way the browser does), save the token ids.
 
-    python3 ml/edge/parity_ref.py --model public/models/s1-test --n 50 --out /tmp/ref.json
+    python3 ml/edge/parity_ref.py --model public/models/s1-test --n 50 --out /tmp/ref.json [--decode trie]
+    node ml/verify/parity.cjs --ref /tmp/ref.json public/models/s1-test        (ml/verify/build.sh first)
+
+--decode score (default, as s1.ts): the callsign by full likelihood (decode.generate_scored); trie: the first decoder.
 """
 import argparse, json, sys
 from pathlib import Path
@@ -13,13 +16,14 @@ import numpy as np  # noqa: E402
 import torch  # noqa: E402
 from bpe import BPE  # noqa: E402
 from model import GPT, Config  # noqa: E402
-from decode import generate, CallsignTrie, prefill  # noqa: E402
+from decode import generate, generate_scored, CallsignTrie, prefill  # noqa: E402
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", required=True); ap.add_argument("--n", type=int, default=50); ap.add_argument("--out", required=True)
     ap.add_argument("--data", default=str(ROOT / "ml/data/out/ds/val.jsonl"))
+    ap.add_argument("--decode", choices=["score", "trie"], default="score"); ap.add_argument("--norm", type=int, default=1)
     a = ap.parse_args()
     meta = json.load(open(Path(a.model) / "model.json")); bin_ = (Path(a.model) / "model.bin").read_bytes()
     sd = {}
@@ -39,8 +43,12 @@ def main():
     for ex in rows:
         cs = [l.split()[0] for l in ex["ctx"].split("\n")[1:] if l.strip()]
         ctx_ids = tok.encode("<ctx>" + ex["ctx"]); said_ids = tok.encode("<said> " + ex["said"] + "<cmd>")
-        ids = generate(m, tok, ctx_ids + said_ids, prefix=prefill(m, ctx_ids), trie=CallsignTrie(tok, cs))
-        out.append({"ctx": ex["ctx"], "said": ex["said"], "callsigns": cs, "ctx_ids": ctx_ids, "said_ids": said_ids, "tokens": ids, "line": tok.decode(ids).strip()})
+        if a.decode == "score":
+            ids, sr = generate_scored(m, tok, ctx_ids + said_ids, cs, prefix=prefill(m, ctx_ids), norm=bool(a.norm))
+            extra = {"cs_lh": sr["best"], "cs_lh_margin": sr["margin"], "n_search": sr["nodes"]}
+        else:
+            ids, extra = generate(m, tok, ctx_ids + said_ids, prefix=prefill(m, ctx_ids), trie=CallsignTrie(tok, cs)), {}
+        out.append({"decode": a.decode, **extra, "ctx": ex["ctx"], "said": ex["said"], "callsigns": cs, "ctx_ids": ctx_ids, "said_ids": said_ids, "tokens": ids, "line": tok.decode(ids).strip()})
     json.dump(out, open(a.out, "w"))
     print(json.dumps({"examples": len(out), "out": a.out}))
 

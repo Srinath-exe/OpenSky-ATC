@@ -1,0 +1,15 @@
+{
+ "model": "2m-grpo-v1",
+ "n": 144,
+ "trie_ms_p50": 118.6,
+ "score_ms_p50": 134.4,
+ "extra_ms_p50": 8.5,
+ "extra_ms_p95": 47.2,
+ "extra_ms_mean": 9.2,
+ "extra_ms_max": 115.8,
+ "search_steps_mean": 5.26,
+ "search_steps_p95": 8,
+ "trie_out_tokens_mean": 8.82,
+ "same_line": 139,
+ "loadavg": 3.56
+}

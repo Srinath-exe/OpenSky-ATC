@@ -1,0 +1,9 @@
+{
+ "scored": 42311,
+ "s": 2677,
+ "hard": 10615,
+ "wrong_tf": 7758,
+ "below_floor": 970,
+ "hard_clean": 2218,
+ "hard_noisy": 8397
+}

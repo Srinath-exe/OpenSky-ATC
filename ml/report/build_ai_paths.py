@@ -561,6 +561,65 @@ def solutions_section():
         f'<div class="devs">{html_cards}</div>' + vllm_charts(),
         "There is rarely one answer. The edge solution wins on cost, privacy and latency; the cloud ones win on generalisation. Ship the edge one now, keep the cloud ones as the upgrade path and as teachers for the next edge model.")
 
+def _rl_scores(run):
+    p = ROOT / "ml/rl/runs" / run / "eval_full.json"
+    return json.loads(p.read_text())["scores"] if p.exists() else None
+
+
+def _stt_rows():
+    """Speech chain, exact command, old chain (rules + model on the first guess) vs new (repair + n-best + model)."""
+    R = ROOT / "ml/stt/bench2/results"
+    rows = []
+    for lab, f, cand in [("Browser (Google)", "sum_even_webspeech.json", "webspeech-google"), ("Server Whisper base.en", "sum_even_webspeech.json", "tjs-whisper-base.en"),
+                         ("On-device Moonshine base", "sum_even_tjs-moonshine-base.json", "tjs-moonshine-base"), ("On-device Moonshine tiny (old)", "sum_even_tjs-moonshine-tiny.json", "tjs-moonshine-tiny")]:
+        p = R / f
+        if not p.exists():
+            continue
+        hit = next((x for x in json.loads(p.read_text()) if x["cand"] == cand and x["group"] == "all"), None)
+        if hit:
+            rows.append((lab, "ours" if cand == "webspeech-google" else "", {"new": hit["nbest+S1"], "old": hit["rules+S1"]}))
+    return rows
+
+
+def night2_section():
+    """Night two: six more paths, run in parallel overnight on the CPU of this server."""
+    base, grpo, sft = _rl_scores("baseline"), _rl_scores("grpo-exact"), _rl_scores("sft-control")
+    cards = [
+        ("Speech-to-text fixed", "shipped", "/reports/voice-stt.html", "52% → 79%", "exact commands from Google’s recogniser on 640 degraded synthetic clips: ATC repair, 5 guesses instead of 1, a 0.3 s pre-roll, our server’s Whisper as a second opinion"),
+        ("Verifier gate", "shipped", "/reports/voice-verifier.html", "19% → 0.9%", "wrong model commands sent automatically on recogniser transcripts: the command is said back in words and compared with what was heard, plus the model’s own token signals (481-weight MLP, 0.2 ms)"),
+        ("Callsign search", "shipped", "/reports/voice-callsign.html", "86% → 94%", "exact at the unseen airport: score every callsign on frequency by its full likelihood (best-first search over the KV cache) instead of committing to the first token; +8 ms"),
+        ("RL with the engine as reward", "shipped", "/reports/voice-rl.html", "79.6% → 83.8%", "exact on real recogniser transcripts after GRPO (from scratch); plain extra training on the same examples reached 82.0%"),
+        ("Diffusion LM", "measured", "/reports/voice-diffusion.html", "72% vs 1%", "our autoregressive model vs masked diffusion from scratch, same CPU compute. Started from the AR weights, diffusion reaches 91.5% (89.4% at Sydney) but is slower on 10-token commands: AR wins here"),
+        ("Phone app (Flutter)", "built", "/reports/mobile-app.html", "44 MB app", "the game in a WebView, on-device streaming speech-to-text (sherpa-onnx zipformer + hotwords, 73 MB download, 62 ms), push-to-talk bridge"),
+        ("Real-voice test set", "ready", "/reports/voice-gold.html", "100 prompts", "record yourself once; one command scores every recogniser + rules + model on your voice. Every number above is synthetic speech until then"),
+    ]
+    html_cards = "".join(
+        f'<a class="dev n2" href="{href}"><div class="devh"><b>{E(t)}</b>{pill("shipped" if st == "shipped" else "kept" if st in ("measured", "built") else "planned")}</div>'
+        f'<div class="tv">{E(big)}</div><p class="cap">{E(txt)}</p></a>' for t, st, href, big, txt in cards)
+    stt = _stt_rows()
+    stt_chart = grouped(stt, "new", "old", "new chain", "before tonight", label_w=210) if stt else ""
+    ver_rows = [("Known airports", "", {"v": 0.005, "o": 0.047}), ("Sydney (unseen)", "", {"v": 0.008, "o": 0.10}), ("Recogniser transcripts", "ours", {"v": 0.009, "o": 0.19}), ("Heavy noise", "", {"v": 0.026, "o": 0.31})]
+    ver_chart = grouped(ver_rows, "v", "o", "now: callsign search + verifier", "before: confidence gate", maxv=40, label_w=190)
+    rl_html = ""
+    if base and grpo:
+        rows = [(nm, "ours" if k == "stt" else "", {"g": grpo[k]["exact"], "b": base[k]["exact"]}) for k, nm in (("val", "Known airports"), ("sydney", "Sydney (unseen)"), ("stt", "Recogniser transcripts"))]
+        rl_html = (f'<div class="card"><h3>GRPO: exact command, before → after (n = 1,000 each)</h3>{grouped(rows, "g", "b", "after GRPO", "start model", label_w=190)}'
+                   f'<p class="cap">Same CPU time spent on plain fine-tuning (the control): {100 * sft["stt"]["exact"]:.1f}% on recogniser transcripts vs {100 * grpo["stt"]["exact"]:.1f}% for GRPO. RL helped beyond “more training”, but only where the model already sometimes sampled the right answer; Sydney (unseen fix and airline names) did not move.</p></div>' if sft else "")
+    return sec("16", "Night two: six more paths, in parallel",
+        f'<div class="devs">{html_cards}</div>'
+        f'<div class="two"><div class="card"><h3>Speech chain: exact command</h3>{stt_chart}<p class="cap">320 clips: clean, laptop mic, radio, late start. Synthetic voices (Kokoro); real voices score lower.</p></div>'
+        f'<div class="card"><h3>Wrong commands sent automatically</h3>{ver_chart}<p class="cap">Share of the model’s proposals (transcripts the rules could not parse) that were wrong and still sent; lower is better. Whole chain, every transmission: 17.8% → 5.6% sent wrong at 80% exact.</p></div></div>'
+        + rl_html,
+        "Generate, then verify. A small generator plus a cheap checker that reads the answer back beats trusting one confidence number. Most of tonight’s gain came from engineering around the models (repair, n-best, verification), not from bigger models.")
+
+
+def _gj_abs(p):
+    try:
+        return json.loads(Path(p).read_text())
+    except Exception:
+        return None
+
+
 # ---------- page ----------
 import datetime as _dt
 wer_c, lat_c, und_c = stt_charts()
@@ -669,6 +728,7 @@ section { display: grid; gap: 16px; min-width: 0; }
 /* devices */
 .devs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
 .dev { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 6px; }
+.n2 { text-decoration: none; color: inherit; } .n2:hover { border-color: var(--line-strong); } .n2 .tv { font-size: 26px; }
 .devh { display: flex; align-items: center; gap: 10px; } .devh b { color: var(--ink-1); font-size: 15px; flex: 1; } .ico { width: 34px; height: 34px; color: var(--accent); } .ico svg { width: 100%; height: 100%; }
 .layer { display: grid; gap: 1px; padding: 7px 10px; border-radius: 8px; background: var(--neutral-tint); font-size: 13px; color: var(--ink-1); }
 /* tiles */
@@ -732,13 +792,17 @@ body = [
     system_one_section(),
     gpu_section(),
     solutions_section(),
+    night2_section(),
     '''<section><div class="eyebrow">Where we are</div><h2>Decided, and still open</h2><div class="check">
   <div class="ck"><i>✓</i>Model proposes a command line; the engine decides</div>
   <div class="ck"><i>✓</i>Rules → model → “say again” gate</div>
   <div class="ck"><i>✓</i>Simulator data, self-checking labels, unseen-airport test</div>
   <div class="ck"><i>✓</i>Tiny model for the edge; small LLM for the cloud</div>
   <div class="ck"><i>✓</i>Voice live in the game: browser + on-device</div>
-  <div class="ck open"><i>●</i>GPU: fix speech-to-text, scale the model, fine-tune LLMs</div>
+  <div class="ck"><i>✓</i>Speech-to-text repaired: ATC repair, n-best, pre-roll, server second opinion</div>
+  <div class="ck"><i>✓</i>Generate, then verify: round-trip verifier gate in the browser</div>
+  <div class="ck"><i>✓</i>Phone app: Flutter shell, on-device speech-to-text, model download</div>
+  <div class="ck open"><i>●</i>Your real voice: record the 100 prompts, then tune the defaults on it</div>
   <div class="ck open"><i>●</i>Commercial or not: decides which public data we may use</div>
 </div></section>''',
     '<p class="foot">Text version: <code>docs/learning/ai-engineering-paths.md</code> · Plan: <code>docs/spec/11-VOICE-MODEL.md</code> · Roadmap: <code>ml/README.md</code> · <a href="/reports/voice-ai.html">Voice AI report</a></p>',

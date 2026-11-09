@@ -1,1 +1,9 @@
 out/
+chrome/
+bench2/clips/
+bench2/results/old/
+bench2/results/*.log
+
+# per-clip details (regenerate with score.ts --details)
+bench2/results/*_det.jsonl
+bench2/results/det_*.jsonl

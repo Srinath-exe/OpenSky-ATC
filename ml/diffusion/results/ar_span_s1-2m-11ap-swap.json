@@ -1,0 +1,28 @@
+{
+ "run": "ml/gpu/results/s1-2m-11ap-swap",
+ "n": 1000,
+ "val": {
+  "trie": {
+   "exact": 0.942,
+   "callsign": 0.956,
+   "ms_p50": 47.9
+  },
+  "span": {
+   "exact": 0.982,
+   "callsign": 0.997,
+   "ms_p50": 122.4
+  }
+ },
+ "sydney": {
+  "trie": {
+   "exact": 0.868,
+   "callsign": 0.919,
+   "ms_p50": 45.9
+  },
+  "span": {
+   "exact": 0.939,
+   "callsign": 0.994,
+   "ms_p50": 119.1
+  }
+ }
+}

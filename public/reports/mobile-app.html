@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>OpenATC Phone App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #0e0f11; --surface: #141416; --raise: #1c1c1e; --line: rgba(255,255,255,.09); --line-strong: rgba(255,255,255,.16);
+  --ink-1: #f4f4f5; --ink-2: #c4c5c8; --ink-3: #a0a1a6; --ink-4: #7f8086;
+  --accent: #f5933f; --accent-tint: rgba(245,147,63,.14);
+  --s-before: #5b8fd6; --s-after: #d97626;
+  --good: #57cd50; --good-tint: rgba(87,205,80,.13); --warn-tint: rgba(245,147,63,.14); --neutral-tint: rgba(255,255,255,.07);
+  --font: "DM Sans", "Helvetica Neue", Arial, sans-serif; --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12);
+  --s-before: #3f78c2; --s-after: #c8661a;
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --warn-tint: rgba(200,102,26,.12); --neutral-tint: rgba(20,20,24,.06);
+  color-scheme: light;
+} }
+:root[data-theme="light"] {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12);
+  --s-before: #3f78c2; --s-after: #c8661a;
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --warn-tint: rgba(200,102,26,.12); --neutral-tint: rgba(20,20,24,.06);
+  color-scheme: light;
+}
+:root[data-theme="dark"] { color-scheme: dark; }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink-2); font-family: var(--font); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 72px; }
+.wrap { max-width: 960px; margin: 0 auto; display: grid; gap: 56px; }
+h1, h2, h3 { color: var(--ink-1); text-wrap: balance; margin: 0; font-weight: 600; letter-spacing: -.01em; }
+h1 { font-size: clamp(28px, 4.4vw, 40px); line-height: 1.12; }
+h2 { font-size: 22px; line-height: 1.25; }
+h3 { font-size: 15px; line-height: 1.35; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--accent); text-underline-offset: 2px; }
+code, .mono { font-family: var(--mono); font-size: .9em; }
+.eyebrow { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+section { display: grid; gap: 18px; min-width: 0; }
+.lede { font-size: 17px; max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--ink-3); font-size: 13px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--line-strong); color: var(--ink-2); background: var(--neutral-tint); }
+.pill.done { color: var(--good); background: var(--good-tint); border-color: transparent; }
+.pill.next { color: var(--accent); background: var(--accent-tint); border-color: transparent; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+header { display: grid; gap: 16px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 2px; min-width: 0; }
+.kpi b { font-size: clamp(24px, 4vw, 32px); line-height: 1.1; color: var(--ink-1); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.kpi b small { font-size: .5em; color: var(--ink-3); font-weight: 500; letter-spacing: 0; }
+.kpi span { font-size: 12.5px; color: var(--ink-3); line-height: 1.35; }
+@media (max-width: 720px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; min-width: 0; }
+.diagram { padding: 12px; overflow-x: auto; }
+.diagram svg { display: block; width: 100%; min-width: 720px; height: auto; }
+svg .box { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1; }
+svg .zone { fill: var(--neutral-tint); stroke: var(--line); }
+svg .zone-native { fill: var(--accent-tint); stroke: none; }
+svg .hot { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.2; }
+svg .t1 { fill: var(--ink-1); font: 600 13px var(--font); }
+svg .t2 { fill: var(--ink-3); font: 400 11.5px var(--font); }
+svg .t3 { fill: var(--ink-4); font: 500 10.5px var(--mono); }
+svg .zl { fill: var(--ink-3); font: 600 10.5px var(--font); letter-spacing: .12em; text-transform: uppercase; }
+svg .acc { fill: var(--accent); font: 600 11px var(--mono); }
+svg .arrow { stroke: var(--ink-4); stroke-width: 1.4; fill: none; marker-end: url(#ah); }
+svg .arrow.a { stroke: var(--accent); marker-end: url(#aha); }
+svg .arrow.d { stroke-dasharray: 4 4; }
+.defs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 28px; }
+.defs div { font-size: 13.5px; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 8px; }
+.defs b { color: var(--ink-1); font-weight: 600; }
+@media (max-width: 720px) { .defs { grid-template-columns: 1fr; } }
+.scroll { overflow-x: auto; min-width: 0; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); font-weight: 600; }
+td.n { text-align: right; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+td strong, th strong { color: var(--ink-1); font-weight: 600; }
+tr.pick td { background: var(--accent-tint); }
+.yes { color: var(--good); font-weight: 600; } .no { color: var(--ink-4); } .mid { color: var(--accent); }
+.note { font-size: 13px; color: var(--ink-3); }
+.chart { display: grid; gap: 12px; }
+.brow { display: grid; grid-template-columns: 200px 1fr 64px; gap: 12px; align-items: center; font-size: 13px; }
+.brow .lab { color: var(--ink-1); line-height: 1.25; }
+.brow .lab small { display: block; color: var(--ink-3); font-size: 11.5px; }
+.brow .track { position: relative; height: 12px; background: var(--neutral-tint); border-radius: 0 4px 4px 0; }
+.brow .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 4px 4px 0; background: var(--s-before); }
+.brow .fill.pick { background: var(--s-after); }
+.brow .val { text-align: right; font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); }
+@media (max-width: 620px) { .brow { grid-template-columns: 120px 1fr 52px; } }
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 10px; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+ol.steps li::before { content: counter(s); width: 26px; height: 26px; border-radius: 50%; background: var(--accent-tint); color: var(--accent); font-weight: 700; display: grid; place-items: center; font-size: 13px; }
+ol.steps b { color: var(--ink-1); }
+.read { font-family: var(--mono); font-size: 12.5px; color: var(--accent); }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 720px) { .two { grid-template-columns: 1fr; } }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; }
+footer { font-size: 12.5px; color: var(--ink-4); border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+<header>
+  <div class="eyebrow">OpenATC · phone app · 8 Nov 2026</div>
+  <h1>The game in a WebView, your voice recognised on the phone</h1>
+  <p class="lede">A Flutter app wraps the live game and adds the phone-native half of push-to-talk: it downloads a 73 MB speech model once, records the microphone, transcribes on the device with callsign hotwords, and hands the text to the same rules + S1 pipeline the website runs.</p>
+  <div class="meta">
+    <span class="pill done">APK built · 44.2 MB</span>
+    <span class="pill done">32 Flutter tests · 6 page tests · analyze clean</span>
+    <span class="pill next">Not yet run on a phone</span>
+    <span>Flutter 3.47.9 · sherpa-onnx 2.0.1 · Android 7.0+ arm64</span>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><b>+15.5<small> pts</small></b><span>commands understood from hotwords alone (53.5% → 69.0%, same model)</span></div>
+    <div class="kpi"><b>62<small> ms</small></b><span>recogniser time after PTT release (median, 2 threads on a loaded VPS); the app adds a 120 ms mic tail</span></div>
+    <div class="kpi"><b>72.9<small> MB</small></b><span>one-time model download, SHA-256 pinned per file</span></div>
+    <div class="kpi"><b>44.2<small> MB</small></b><span>APK (arm64), no model inside</span></div>
+  </div>
+</header>
+<section>
+  <div class="eyebrow">Architecture</div>
+  <h2>One game, one understanding path; the phone adds ears</h2>
+  <p>The Flutter app is a thin native shell. The game stays the website inside a WebView, so the rules parser and the S1 model are the same code the browser runs. The app only does what a page cannot do well on a phone: own the microphone, run a speech model natively, and deliver that model.</p>
+  <div class="card diagram">
+    <svg viewBox="0 0 960 560" role="img" aria-labelledby="archT archD">
+      <title id="archT">Phone app architecture</title>
+      <desc id="archD">The Flutter shell records the microphone and runs sherpa-onnx speech-to-text in a background isolate, biased with hotwords sent by the page. Transcripts cross the JS bridge into the WebView, where the existing rules parser and S1 model turn them into a command. A model downloader fetches the pinned model files and checks their SHA-256 against the manifest.</desc>
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-4)"/></marker>
+        <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker>
+      </defs>
+      <!-- zones -->
+      <rect class="zone-native" x="10" y="10" width="440" height="540" rx="16"/>
+      <text class="zl" x="28" y="34">Flutter shell (Dart, native)</text>
+      <rect class="zone" x="480" y="10" width="470" height="540" rx="16"/>
+      <text class="zl" x="498" y="34">WebView: the live game (TypeScript)</text>
+
+      <!-- native column -->
+      <rect class="box" x="30" y="56" width="180" height="62" rx="10"/>
+      <text class="t1" x="44" y="80">Microphone</text>
+      <text class="t2" x="44" y="98">record plugin · 16 kHz PCM16</text>
+      <text class="t3" x="44" y="112">warm 20 s · 200 ms pre-roll</text>
+
+      <rect class="hot" x="30" y="150" width="400" height="104" rx="10"/>
+      <text class="t1" x="44" y="174">Speech-to-text isolate</text>
+      <text class="t2" x="44" y="193">sherpa-onnx → ONNX Runtime (CPU, 2 threads)</text>
+      <text class="t2" x="44" y="210">streaming zipformer transducer, int8, 73 MB</text>
+      <text class="t2" x="44" y="227">modified beam search + hotwords (callsigns on frequency)</text>
+      <text class="t3" x="44" y="245">partials while you talk · flush ~0.4 s on release</text>
+
+      <rect class="box" x="250" y="56" width="180" height="62" rx="10"/>
+      <text class="t1" x="264" y="80">Hotword builder</text>
+      <text class="t2" x="264" y="98">"speedbird 273" →</text>
+      <text class="t3" x="264" y="112">SPEEDBIRD TWO SEVEN THREE :2.0</text>
+
+      <rect class="box" x="30" y="300" width="400" height="74" rx="10"/>
+      <text class="t1" x="44" y="324">VoiceBridge</text>
+      <text class="t2" x="44" y="342">in: <tspan class="t3">OpenATCNative</tspan> channel · out: <tspan class="t3">openatc-native</tspan> event</text>
+      <text class="t3" x="44" y="362">times PTT release → final text on the phone (ms)</text>
+
+      <rect class="box" x="30" y="420" width="190" height="112" rx="10"/>
+      <text class="t1" x="44" y="444">Model downloader</text>
+      <text class="t2" x="44" y="462">HTTP Range resume</text>
+      <text class="t2" x="44" y="478">SHA-256 per file</text>
+      <text class="t2" x="44" y="494">.installed.json last</text>
+      <text class="t3" x="44" y="514">models/&lt;id&gt;/&lt;version&gt;/</text>
+
+      <rect class="box" x="240" y="420" width="190" height="112" rx="10"/>
+      <text class="t1" x="254" y="444">Manifest (in the APK)</text>
+      <text class="t2" x="254" y="462">name · version · kind</text>
+      <text class="t2" x="254" y="478">url pinned to a commit</text>
+      <text class="t2" x="254" y="494">sha256 · size per file</text>
+      <text class="t3" x="254" y="514">assets/stt_models.json</text>
+
+      <!-- web column -->
+      <rect class="box" x="500" y="56" width="430" height="62" rx="10"/>
+      <text class="t1" x="514" y="80">PTT (button / Ctrl+Space) · CommLog</text>
+      <text class="t2" x="514" y="98">voiceContext → biasNames → rec.setHints(names)</text>
+      <text class="t3" x="514" y="112">recogniser = 'native' when the bridge exists</text>
+
+      <rect class="box" x="500" y="300" width="430" height="74" rx="10"/>
+      <text class="t1" x="514" y="324">createNativeRecognizer()</text>
+      <text class="t2" x="514" y="342">Recognizer interface: start() · stop() → transcript</text>
+      <text class="t3" x="514" y="362">src/lib/voice/recognizer.ts</text>
+
+      <rect class="box" x="500" y="400" width="205" height="70" rx="10"/>
+      <text class="t1" x="514" y="424">L0 rules parser</text>
+      <text class="t2" x="514" y="442">spoken phraseology</text>
+      <text class="t3" x="514" y="460">+ n-best callsign repair</text>
+      <rect class="box" x="725" y="400" width="205" height="70" rx="10"/>
+      <text class="t1" x="739" y="424">L1 · S1 model</text>
+      <text class="t2" x="739" y="442">2 MB int8 GPT, Web Worker</text>
+      <text class="t3" x="739" y="460">when the rules fail</text>
+
+      <rect class="box" x="500" y="488" width="430" height="44" rx="10"/>
+      <text class="t1" x="514" y="515">Command: sent · left to check · "say again"</text>
+
+      <!-- cloud -->
+      <text class="t3" x="30" y="548">Hugging Face (k2-fsa models)</text>
+
+      <!-- arrows -->
+      <path class="arrow a" d="M120 118 V150"/>
+      <path class="arrow" d="M340 118 V150"/>
+      <path class="arrow a" d="M230 254 V300"/>
+      <text class="acc" x="238" y="282">partial + final text</text>
+      <path class="arrow a" d="M430 337 H500"/>
+      <path class="arrow" d="M715 118 V300"/>
+      <text class="t3" x="724" y="214">start {id, hotwords}</text>
+      <text class="t3" x="724" y="230">stop {id}</text>
+      <path class="arrow d" d="M500 318 C468 318 468 87 430 87"/>
+      <text class="t3" x="438" y="140">hints</text>
+      <path class="arrow a" d="M715 374 V400"/>
+      <path class="arrow" d="M705 435 H725"/>
+      <path class="arrow" d="M715 470 V488"/>
+      <path class="arrow" d="M240 476 H220"/>
+      <path class="arrow d" d="M30 476 H19 V202 H30"/>
+      <text class="t3" x="40" y="404">loads the verified model dir</text>
+    </svg>
+  </div>
+  <p class="note">Orange = the path your voice takes. Audio exists only in the left half: the page receives text, never samples. The bridge is registered only when a model is installed, so without one the page behaves exactly like a browser.</p>
+</section>
+<section>
+  <div class="eyebrow">Picking the model</div>
+  <h2>Hotwords turn a 73 MB LibriSpeech model into a controller's ear</h2>
+  <p>Same 200 clips as the GPU bake-off (neural voices reading real game commands, each with the game state it was spoken in), now run through <code>mobile/tool/stt_bench.dart</code>: the app's own Dart engine, sherpa-onnx 2.0.1, audio fed in 100 ms chunks like the microphone, hotwords built from each clip's aircraft list exactly as the page sends them. Then <code>ml/stt/score.py</code>'s definitions: rules alone (L0), and rules with the S1 model as the fallback (L0 + L1, the production chain).</p>
+  <div class="card chart" role="img" aria-label="Commands understood end to end (rules plus S1 model), by recogniser">
+    <div class="eyebrow">Commands understood (rules + S1 model), out of 200</div>
+    <div class="brow"><div class="lab">Zipformer + hotwords<small>picked · 73 MB · streaming</small></div><div class="track"><div class="fill pick" style="width:69%"></div></div><div class="val">69.0%</div></div>
+    <div class="brow"><div class="lab">Zipformer, hotwords ×1.5<small>score 3.0 instead of 2.0</small></div><div class="track"><div class="fill" style="width:68.5%"></div></div><div class="val">68.5%</div></div>
+    <div class="brow"><div class="lab">Moonshine tiny, quantised<small>44 MB · on release only</small></div><div class="track"><div class="fill" style="width:69.5%"></div></div><div class="val">69.5%</div></div>
+    <div class="brow"><div class="lab">NeMo FastConformer<small>137 MB · streaming</small></div><div class="track"><div class="fill" style="width:68%"></div></div><div class="val">68.0%</div></div>
+    <div class="brow"><div class="lab">Zipformer, no hotwords<small>same model, greedy</small></div><div class="track"><div class="fill" style="width:53.5%"></div></div><div class="val">53.5%</div></div>
+    <div class="brow"><div class="lab">Zipformer 20M<small>43 MB · no bpe.model, no hotwords</small></div><div class="track"><div class="fill" style="width:15.5%"></div></div><div class="val">15.5%</div></div>
+    <div class="brow"><div class="lab">Whisper turbo + prompt<small>reference: 1.6 GB, GPU server</small></div><div class="track"><div class="fill" style="width:81.0%; opacity:.45"></div></div><div class="val">81.0%</div></div>
+  </div>
+  <div class="card scroll">
+    <table>
+      <thead><tr><th>Recogniser (int8, sherpa-onnx)</th><th>Download</th><th>WER</th><th>Flight no. heard</th><th>Rules (L0)</th><th>Rules + S1</th><th>Recogniser after release p50 / p95</th><th>RTF</th></tr></thead>
+      <tbody>
+        <tr class="pick"><td><strong>zipformer-en-2023-06-26 + hotwords</strong></td><td class="n">72.9 MB</td><td class="n">19.5%</td><td class="n">91%</td><td class="n">44.0%</td><td class="n">69.0%</td><td class="n">62 / 138 ms</td><td class="n">0.18</td></tr>
+        <tr><td>same, hotword score 3.0</td><td class="n">72.9 MB</td><td class="n">18.9%</td><td class="n">91%</td><td class="n">43.0%</td><td class="n">68.5%</td><td class="n">75 / 204 ms</td><td class="n">0.24</td></tr>
+        <tr><td>same, callsigns only (no phraseology list)</td><td class="n">72.9 MB</td><td class="n">21.1%</td><td class="n">91%</td><td class="n">41.5%</td><td class="n">–</td><td class="n">96 / 249 ms</td><td class="n">0.30</td></tr>
+        <tr><td>same, no hotwords (greedy)</td><td class="n">72.9 MB</td><td class="n">32.1%</td><td class="n">74%</td><td class="n">26.5%</td><td class="n">53.5%</td><td class="n">62 / 151 ms</td><td class="n">0.19</td></tr>
+        <tr><td>moonshine-tiny-en-quantized-2026-02-27</td><td class="n">44.2 MB</td><td class="n">19.8%</td><td class="n">97%</td><td class="n">41.0%</td><td class="n">69.5%</td><td class="n">342 / 886 ms</td><td class="n">0.09</td></tr>
+        <tr><td>nemo-streaming-fast-conformer-transducer-en-80ms</td><td class="n">136.9 MB</td><td class="n">18.2%</td><td class="n">89%</td><td class="n">43.5%</td><td class="n">68.0%</td><td class="n">301 / 594 ms</td><td class="n">0.87</td></tr>
+        <tr><td>streaming-zipformer-en-20M-2023-02-17</td><td class="n">43.6 MB</td><td class="n">47.1%</td><td class="n">30%</td><td class="n">1.5%</td><td class="n">15.5%</td><td class="n">55 / 126 ms</td><td class="n">0.17</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="two">
+    <div class="card">
+      <h3>What hotwords fix</h3>
+      <ul class="plain" style="margin-top:10px">
+        <li><code>speedber two seven three</code> → <code>speedbird two seven three</code></li>
+        <li><code>fredex nine four seven</code> → <code>fedex nine four seven</code></li>
+        <li><code>laska six forty two</code> → <code>alaska six forty two</code></li>
+        <li><code>speedbert speedburn</code> → <code>speedbird speedbird</code></li>
+        <li><code>reduced speed</code> → <code>reduce speed</code>, <code>ninor</code> → <code>niner</code></li>
+      </ul>
+      <p class="note" style="margin-top:10px">Flight numbers heard: 74% → 91%. Word error rate: 32% → 19.5%. Commands understood end to end: 53.5% → 69%.</p>
+    </div>
+    <div class="card">
+      <h3>Why the zipformer over Moonshine</h3>
+      <ul class="plain" style="margin-top:10px">
+        <li>Tied on commands (69.0 vs 69.5%), but 5× faster after release (62 vs 342 ms p50, 138 vs 886 ms p95).</li>
+        <li>Streams: words appear while you are still talking.</li>
+        <li>Can be biased with the aircraft actually on frequency; Moonshine cannot, and that matters more on real, accented voices than on these clean ones.</li>
+        <li>Published as single files on Hugging Face (pinned per file); Moonshine's small build only ships as a tar.bz2.</li>
+        <li>Moonshine stays the runner-up: smaller, trained on far more speech, better at bare flight numbers (97%). It is the first on-phone A/B to run.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note">Timings are from this VPS (x86, 2 threads) while three training jobs ran (load average 15–26 on 8 cores), so they are pessimistic; a 2022+ phone core is in the same class. The clips are synthetic neural voices: real microphone speech will score lower for every model, which is what the test plan below measures. "Flight no. heard" = the gold callsign's digits appear in the transcript. Whisper turbo is the GPU bake-off's best, for scale only. L1 here is the CPU-trained S1 v1 (the scorer's default) for every row, so absolute numbers sit below the bake-off page's (Whisper turbo: 81% here, 87.5% there); the ranking is what this table is for.</p>
+</section>
+<section>
+  <div class="eyebrow">Choices</div>
+  <h2>Where should the speech model run on a phone?</h2>
+  <p>An <b>on-device runtime</b> is the library that executes a trained network on the phone's own CPU/GPU/NPU (no server round-trip, works offline, audio stays local). Four ways to get speech-to-text into the app were on the table:</p>
+  <div class="card scroll">
+    <table>
+      <thead><tr><th>Option</th><th>Streaming partials</th><th>Bias to callsigns</th><th>Audio stays on phone</th><th>Download</th><th>iOS + Android</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr class="pick"><td><strong>sherpa-onnx</strong> (ONNX Runtime) in Flutter<br><span class="note">official <code>sherpa_onnx</code> package, FFI to a C API</span></td><td class="yes">yes (transducers)</td><td class="yes">hotwords, per utterance</td><td class="yes">yes</td><td>44–137 MB per model</td><td class="yes">same Dart API</td><td><strong>Picked.</strong> One runtime runs streaming transducers <em>and</em> Moonshine/Whisper, so the model can change without changing code.</td></tr>
+        <tr><td><strong>whisper.cpp</strong></td><td class="no">no (30 s windows)</td><td class="mid">initial prompt only</td><td class="yes">yes</td><td>tiny 75 MB, base 142 MB (q5 ≈ ⅓)</td><td class="mid">community Flutter bindings</td><td>Best accuracy per byte for Whisper, but the turbo model that won the bake-off is 1.6 GB; tiny/base lose on callsigns and give no partials.</td></tr>
+        <tr><td><strong>Platform recogniser</strong><br><span class="note">Android SpeechRecognizer, iOS SFSpeechRecognizer</span></td><td class="yes">yes</td><td class="mid">only some versions / engines honour hints</td><td class="mid">only with the on-device engine; often cloud</td><td>0 MB</td><td class="mid">two different APIs</td><td>Zero download, but quality and privacy vary by phone and OEM, and nothing we measure in the bake-off transfers.</td></tr>
+        <tr><td><strong>Everything in the WebView</strong><br><span class="note">Moonshine via transformers.js, as on the website</span></td><td class="no">no</td><td class="no">no</td><td class="yes">yes</td><td>28–60 MB</td><td class="mid">WebView-dependent</td><td>One code path, but no Web Speech API in Android WebView, WASM is several times slower than native, and memory is tight. Kept as the fallback.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="defs">
+    <div><b>Transducer.</b> A speech model with an encoder (audio → features), a small prediction network (text so far) and a joiner that picks the next token; it emits text chunk by chunk, so you see words while you speak.</div>
+    <div><b>Hotwords (contextual biasing).</b> Phrases given at run time get a score bonus inside the beam search, so "SPEEDBIRD TWO SEVEN THREE" beats "SPEED BIRD TO SEVEN THREE" when that aircraft is on the scope. No retraining.</div>
+    <div><b>Quantisation.</b> Storing weights as 8-bit integers instead of 32-bit floats: about 4× smaller and faster on phone CPUs for a small accuracy cost. All the models here are int8.</div>
+    <div><b>Model delivery.</b> Getting the weights onto the phone after install: a manifest pinned in the app names each file, its URL (a fixed commit) and its SHA-256, so updates are a manifest change and corrupted bytes are never loaded.</div>
+    <div><b>Real-time factor (RTF).</b> Compute time ÷ audio time. 0.1 means one second of speech costs 0.1 s of CPU.</div>
+    <div><b>Isolate.</b> Dart's thread with its own memory. Decoding runs in one, so the WebView never stutters while the phone transcribes.</div>
+  </div>
+</section>
+<section>
+  <div class="eyebrow">Model delivery</div>
+  <h2>73 MB, fetched once, verified file by file</h2>
+  <p>The weights are not in the APK (it would triple its size and every model update would need a new install) and not in this git repository. The APK carries a manifest; the first run downloads what it names.</p>
+  <div class="two">
+    <div class="card">
+      <h3>assets/stt_models.json (one entry)</h3>
+<pre class="mono" style="margin:10px 0 0; font-size:12px; line-height:1.5; white-space:pre-wrap; overflow-wrap:anywhere; color:var(--ink-2)">{ "id": "zipformer-en-2023-06-26-int8",
+  "version": "2023.06.26-chunk16-left128",
+  "kind": "transducer", "hotwords": true,
+  "license": "Apache-2.0",
+  "files": [
+    { "role": "encoder",
+      "name": "encoder-…-chunk-16-left-128.int8.onnx",
+      "url": "https://huggingface.co/csukuangfj/…/resolve/<span style="color:var(--accent)">672fbf1b…</span>/…",
+      "sha256": "<span style="color:var(--accent)">563fde43…</span>", "size": 71083163 },
+    … decoder 1.3 MB, joiner 0.26 MB, tokens.txt, bpe.model ] }</pre>
+    </div>
+    <div class="card">
+      <h3>What the downloader guarantees</h3>
+      <ul class="plain" style="margin-top:10px">
+        <li>URLs name a commit, so the bytes behind them cannot change under the pinned hash.</li>
+        <li>Each file streams to <code>.part</code>; a dropped connection or a killed app resumes with an HTTP <code>Range</code> request (the bytes on disk are re-hashed first).</li>
+        <li>A file is renamed into place only if its SHA-256 matches; a mismatch deletes it.</li>
+        <li><code>.installed.json</code> is written last; a directory without it is never loaded.</li>
+        <li>Models live in <code>models/&lt;id&gt;/&lt;version&gt;/</code>; installing a new version deletes the old one. Updating a model = a new manifest entry in the next app build.</li>
+        <li>For hotwords sherpa-onnx wants <code>bpe.vocab</code>; the app derives it from the official <code>bpe.model</code> (a small protobuf parser, byte-identical to the Python sentencepiece export).</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Sizes</div>
+  <h2>What lands on the phone</h2>
+  <div class="card scroll">
+    <table>
+      <thead><tr><th>Item</th><th>Size</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr class="pick"><td><strong>APK</strong> (arm64-v8a, release, debug-signed)</td><td class="n">44.2 MB</td><td>Flutter engine + app + ONNX Runtime + sherpa-onnx native libraries; the other three ABIs are filtered out</td></tr>
+        <tr><td><strong>Speech model download</strong></td><td class="n">72.9 MB</td><td>encoder 71.1 · decoder 1.3 · joiner 0.26 · bpe.model 0.24 · tokens 0.005</td></tr>
+        <tr><td>Game</td><td class="n">0 MB</td><td>the live site in the WebView (cached by the WebView like any browser)</td></tr>
+        <tr><td>Runner-up models</td><td class="n">44 / 137 MB</td><td>Moonshine tiny quantised / NeMo FastConformer (not downloaded by default)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section>
+  <div class="eyebrow">Test plan</div>
+  <h2>Five steps on an Android phone, and the numbers to read off</h2>
+  <p>Nothing here ran on a phone yet: this VPS has no KVM (no emulator) and no device. Everything up to the APK is built and unit-tested; the steps below close the loop. The live site must carry the web half (<code>createNativeRecognizer</code>) for step 5, so deploy first.</p>
+  <ol class="steps">
+    <li><div><b>Install.</b> On the phone open <a href="/downloads/openatc-1.0.0.apk">openatc.aeon-labs.site/downloads/openatc-1.0.0.apk</a> and allow "install unknown apps" for the browser (or <code>adb install -r openatc-1.0.0.apk</code>). Android 7.0+, arm64.<br><span class="read">read: APK 44.2 MB; installed size in Settings › Apps › OpenATC › Storage</span></div></li>
+    <li><div><b>First-run download.</b> The model screen shows the model, its licence and <strong>72.9 MB</strong>. Tap Download; switch to airplane mode half-way, then back, then tap Resume: it must continue from the same percentage, not from zero. It finishes by verifying SHA-256 and opens the game.<br><span class="read">read: MB/s and time on your connection; "Speech model ready in N s" (model load) in the top-right chip</span></div></li>
+    <li><div><b>Grant the microphone.</b> The first push-to-talk asks for the microphone. Deny once: the game must say "Microphone permission is off…" instead of hanging. Then allow it in Android Settings › Apps › OpenATC › Permissions.</div></li>
+    <li><div><b>Start an airport.</b> The game opens in landscape at a 1280 px layout, without the "Desktop required" notice. Pick JFK, start a shift, wait for a few aircraft on frequency. Settings › Voice recognition should show <strong>Phone</strong> selected.</div></li>
+    <li><div><b>Hold PTT and talk.</b> Hold the PTT button, say "<em>delta four two one, turn left heading two seven zero</em>" (a callsign that is on the scope), release. Partial text appears while you speak; on release the command lands in the bar and is sent if understood. Try ten commands, including a tricky telephony ("speedbird", "jetblue") and a bare flight number.<br><span class="read">read: the chip "on-device STT N ms · RTF x" after each release (target: under 300 ms and RTF under 0.5); tap it for the median over the last 20; how many of 10 were sent without editing</span></div></li>
+  </ol>
+  <p class="note">Logs: <code>adb logcat | grep -i -E "flutter|sherpa"</code>. If the game page has not been redeployed yet, the app still works as a browser and the chip shows the model status, but PTT uses the page's own recogniser.</p>
+</section>
+<section>
+  <div class="eyebrow">Status</div>
+  <h2>Done, untested, next</h2>
+  <div class="two">
+    <div class="card">
+      <h3>Done and verified here</h3>
+      <ul class="plain" style="margin-top:10px">
+        <li>Toolchain under <code>/opt</code>: Flutter 3.47.9, JDK 17, Android SDK 36 + NDK 28.2.</li>
+        <li><code>mobile/</code>: model screen, game screen, bridge, isolate STT, downloader; Android + iOS projects.</li>
+        <li><code>flutter analyze</code> clean; <code>flutter test</code>: manifest, downloader against a local HTTP server (resume, dropped connection, server ignoring Range, bad checksum, version prune, cancel), bridge protocol and flow with a fake mic and recogniser, hotwords, bpe.vocab.</li>
+        <li>The STT engine itself, on Linux, on 200 clips (the table above), and the bpe.vocab converter byte-identical to sentencepiece's.</li>
+        <li>Web side: <code>createNativeRecognizer()</code> + the <code>'native'</code> engine (auto-selected inside the app, "Phone" in Settings); <code>tests/engine/voice-native.test.ts</code> (mocked bridge); <code>tsc</code> clean.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Not tested without a phone</h3>
+      <ul class="plain" style="margin-top:10px">
+        <li>The APK has never been installed or launched (no KVM for an emulator on this VPS).</li>
+        <li>Mic capture through <code>record</code>, permission dialogs, the WebView bridge on a real Chromium WebView.</li>
+        <li>Phone-CPU latency, model load time and memory use.</li>
+        <li>Layout of the 1280 px game scaled into a landscape phone; pilot voices (Web Speech synthesis is missing or unreliable in Android WebView).</li>
+        <li>iOS: project configured, but it needs a Mac to build.</li>
+      </ul>
+      <h3 style="margin-top:16px">Next</h3>
+      <ul class="plain" style="margin-top:10px">
+        <li>Run the test plan; record ten real commands per model and add them to the bake-off.</li>
+        <li>A/B Moonshine tiny on the phone (needs tar.bz2 extraction in the downloader).</li>
+        <li>Pilot voices natively (sherpa-onnx also does TTS) over the same bridge.</li>
+        <li>A hardware PTT (volume key) and a real signing key for a store build.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<footer>
+  Code: <code>mobile/</code> (README: build, run, update a model) · <code>src/lib/voice/recognizer.ts</code> (<code>createNativeRecognizer</code>) · <code>tests/engine/voice-native.test.ts</code> · bench: <code>mobile/tool/stt_bench.dart</code>, candidates in <code>mobile/tool/bench_models.json</code>, clips <code>ml/gpu/results/stt</code>, scoring <code>ml/stt/score.py</code> definitions. Related: <a href="/reports/voice-ai.html">Voice AI</a> · <a href="/reports/ai-paths.html">AI paths</a>.
+</footer>
+</main>
+</body>
+</html>

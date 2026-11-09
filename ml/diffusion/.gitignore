@@ -1,0 +1,4 @@
+cache/
+logs/
+*.pt
+__pycache__/
