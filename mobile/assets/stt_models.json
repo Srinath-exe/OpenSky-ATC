@@ -1,0 +1,136 @@
+{
+ "schema": 1,
+ "active": "zipformer-en-2023-06-26-int8",
+ "models": [
+  {
+   "id": "zipformer-en-2023-06-26-int8",
+   "name": "Streaming Zipformer (English, LibriSpeech 960 h), int8",
+   "version": "2023.06.26-chunk16-left128",
+   "kind": "transducer",
+   "license": "Apache-2.0",
+   "source": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-2023-06-26",
+   "sampleRate": 16000,
+   "hotwords": true,
+   "notes": "icefall zipformer2 streaming transducer, ~66M params, 320 ms chunks; bpe.model is converted on device to bpe.vocab for hotwords",
+   "files": [
+    {
+     "role": "encoder",
+     "name": "encoder-epoch-99-avg-1-chunk-16-left-128.int8.onnx",
+     "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-2023-06-26/resolve/672fbf1b30579d6585301139bb363f42a0ad4a24/encoder-epoch-99-avg-1-chunk-16-left-128.int8.onnx",
+     "sha256": "563fde436d16cf7607cf408cd6b30909819d03162652ef389c2450ced3f45ac1",
+     "size": 71083163
+    },
+    {
+     "role": "decoder",
+     "name": "decoder-epoch-99-avg-1-chunk-16-left-128.int8.onnx",
+     "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-2023-06-26/resolve/672fbf1b30579d6585301139bb363f42a0ad4a24/decoder-epoch-99-avg-1-chunk-16-left-128.int8.onnx",
+     "sha256": "98da299f471e38bb4e1a8df579b8cc9122d6039576a77e357b3c60f17dd83b02",
+     "size": 1307236
+    },
+    {
+     "role": "joiner",
+     "name": "joiner-epoch-99-avg-1-chunk-16-left-128.int8.onnx",
+     "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-2023-06-26/resolve/672fbf1b30579d6585301139bb363f42a0ad4a24/joiner-epoch-99-avg-1-chunk-16-left-128.int8.onnx",
+     "sha256": "d944208d660d67c8d72cd2acaeac971fa5ceb8c80e76c1968148846fedd6e297",
+     "size": 259335
+    },
+    {
+     "role": "tokens",
+     "name": "tokens.txt",
+     "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-2023-06-26/resolve/672fbf1b30579d6585301139bb363f42a0ad4a24/tokens.txt",
+     "sha256": "49e3c2646595fd907228b3c6787069658f67b17377c60aeb8619c4551b2316fb",
+     "size": 5048
+    },
+    {
+     "role": "bpe_model",
+     "name": "bpe.model",
+     "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-2023-06-26/resolve/672fbf1b30579d6585301139bb363f42a0ad4a24/bpe.model",
+     "sha256": "c53433de083c4a6ad12d034550ef22de68cec62c4f58932a7b6b8b2f1e743fa5",
+     "size": 244865
+    }
+   ]
+  },
+  {
+   "id": "zipformer-en-20M-2023-02-17-int8",
+   "name": "Streaming Zipformer 20M (English), int8",
+   "version": "2023.02.17",
+   "kind": "transducer",
+   "license": "Apache-2.0",
+   "source": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-20M-2023-02-17",
+   "sampleRate": 16000,
+   "hotwords": false,
+   "notes": "smallest English streaming transducer; the repo has no bpe.model, so no hotwords",
+   "files": [
+    {
+     "role": "encoder",
+     "name": "encoder-epoch-99-avg-1.int8.onnx",
+     "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-20M-2023-02-17/resolve/d42f2d9f7ca24806fb667456a18a9f1b60f70d16/encoder-epoch-99-avg-1.int8.onnx",
+     "sha256": "3810755ce7c3ab26b42a8bcf39d191308fa27fb0f53358823ba46141d03b7eb3",
+     "size": 42845182
+    },
+    {
+     "role": "decoder",
+     "name": "decoder-epoch-99-avg-1.int8.onnx",
+     "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-20M-2023-02-17/resolve/d42f2d9f7ca24806fb667456a18a9f1b60f70d16/decoder-epoch-99-avg-1.int8.onnx",
+     "sha256": "21e2a2acd961b3ac72f55be2f10f1a285e1b0b0ba010d7c0b6eab141411b163c",
+     "size": 539499
+    },
+    {
+     "role": "joiner",
+     "name": "joiner-epoch-99-avg-1.int8.onnx",
+     "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-20M-2023-02-17/resolve/d42f2d9f7ca24806fb667456a18a9f1b60f70d16/joiner-epoch-99-avg-1.int8.onnx",
+     "sha256": "e085d73b593cf9b0707f370dbd656d58327d3fe36d80d849202ef81df02cb01e",
+     "size": 259572
+    },
+    {
+     "role": "tokens",
+     "name": "tokens.txt",
+     "url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-20M-2023-02-17/resolve/d42f2d9f7ca24806fb667456a18a9f1b60f70d16/tokens.txt",
+     "sha256": "49e3c2646595fd907228b3c6787069658f67b17377c60aeb8619c4551b2316fb",
+     "size": 5048
+    }
+   ]
+  },
+  {
+   "id": "nemo-fastconformer-en-80ms-int8",
+   "name": "NeMo FastConformer streaming transducer (English, 80 ms), int8",
+   "version": "2024.1",
+   "kind": "transducer",
+   "license": "CC-BY-4.0",
+   "source": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-streaming-fast-conformer-transducer-en-80ms-int8",
+   "sampleRate": 16000,
+   "hotwords": false,
+   "notes": "NVIDIA FastConformer (~114M params) trained on ~10k h of diverse English; 137 MB",
+   "files": [
+    {
+     "role": "encoder",
+     "name": "encoder.int8.onnx",
+     "url": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-streaming-fast-conformer-transducer-en-80ms-int8/resolve/3fafd319033af1c552e7bc8394f7258afdce91b0/encoder.int8.onnx",
+     "sha256": "8b982c67b45e3b735d3fee49a4fea525b3149b450ba437f4c8a933f4aa6744c0",
+     "size": 131507579
+    },
+    {
+     "role": "decoder",
+     "name": "decoder.int8.onnx",
+     "url": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-streaming-fast-conformer-transducer-en-80ms-int8/resolve/3fafd319033af1c552e7bc8394f7258afdce91b0/decoder.int8.onnx",
+     "sha256": "76eec598da07c204747a859a723b99077ef0bbdc19ef4b3f51eb43275662475d",
+     "size": 3955863
+    },
+    {
+     "role": "joiner",
+     "name": "joiner.int8.onnx",
+     "url": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-streaming-fast-conformer-transducer-en-80ms-int8/resolve/3fafd319033af1c552e7bc8394f7258afdce91b0/joiner.int8.onnx",
+     "sha256": "67f4291dc170fd06b3695a8511f5199fd5965ee3c77cfbd59afc10e145f173f2",
+     "size": 1408182
+    },
+    {
+     "role": "tokens",
+     "name": "tokens.txt",
+     "url": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-streaming-fast-conformer-transducer-en-80ms-int8/resolve/3fafd319033af1c552e7bc8394f7258afdce91b0/tokens.txt",
+     "sha256": "618dc110fc2213886b52e063ff42329bbdf37a266ca7705184090fa5f39f3131",
+     "size": 11896
+    }
+   ]
+  }
+ ]
+}

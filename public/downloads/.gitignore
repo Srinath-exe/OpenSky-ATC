@@ -1,0 +1,2 @@
+# APKs are build outputs (mobile/README.md); deployed with the site, never committed
+*.apk
