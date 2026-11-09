@@ -4,7 +4,8 @@
   mic -> AudioWorklet (public/voice/capture-worklet.js) at 16 kHz -> Float32 frames. The microphone opens on the first
   push-to-talk and stays open for a minute after the last one, so later transmissions start instantly; while it is
   open the worklet keeps the last 0.3 s (pre-roll), which is prepended when recording starts. Release keeps
-  recording for a short tail (250 ms) so the last syllable is not cut by a quick release.
+  recording for a short tail (250 ms) so the last syllable is not cut by a quick release, unless the speaker was
+  already quiet for 200 ms. start(onAudio) also hands the frames over as they arrive (streaming, asr-stream.ts).
 
   Digital silence: one Windows Chrome delivered exact zeros through the 16 kHz context while Web Speech heard the
   speech (ml/data/gold v01-v04, 2026-11-09). A transmission of pure zeros moves this browser one step down a ladder,
@@ -13,10 +14,15 @@
 */
 
 export interface MicCapture {
-  /** Start recording (opens the microphone the first time). Resolves once audio is flowing. */
-  start(): Promise<void>;
-  /** Stop after `tailMs`, return the utterance (16 kHz mono, pre-roll included). */
+  /** Start recording (opens the microphone the first time). Resolves once audio is flowing. `onAudio` receives the
+   *  transmission as it is recorded (16 kHz, pre-roll first) for streaming recognition; only when the context runs at
+   *  16 kHz (capture mode 0), otherwise it is never called and the caller sends the whole recording. */
+  start(onAudio?: (pcm: Float32Array) => void): Promise<void>;
+  /** Stop after `tailMs` (skipped when the last LOUD_GAP_MS were quiet: the speaker had already finished), return the
+   *  utterance (16 kHz mono, pre-roll included). */
   stop(tailMs?: number): Promise<Float32Array>;
+  /** The last stop(): the tail actually waited (ms). */
+  readonly lastTailMs: number;
   /** The microphone is open (a transmission starts without delay). */
   readonly isOpen: boolean;
 }
@@ -33,6 +39,10 @@ export function isSilent(a: Float32Array): boolean {
   for (let i = 0; i < a.length; i++) if (a[i] > 3e-5 || a[i] < -3e-5) return false;
   return true;
 }
+
+/** A frame louder than -40 dBFS (mean square) is speech for the release tail; quiet for LOUD_GAP_MS at release = done. */
+const LOUD = 1e-4;
+const LOUD_GAP_MS = 200;
 
 const LADDER_KEY = 'atc-mic-mode';
 const MAX_MODE = 2;
@@ -57,7 +67,8 @@ export function createMicCapture(opts: { preroll?: number; idleCloseMs?: number 
   let stream: MediaStream | null = null;
   // one session per transmission: frames go to the current one, so a quick re-press during the previous release
   // tail starts a fresh utterance instead of clearing (and then cutting) it
-  let cur: { chunks: Float32Array[] } | null = null;
+  let cur: { chunks: Float32Array[]; onAudio?: (pcm: Float32Array) => void; lastLoud: number } | null = null;
+  let lastTailMs = 0;
   let idleTimer: number | null = null;
   let starting: Promise<void> | null = null;
   let rate = RATE;
@@ -72,7 +83,13 @@ export function createMicCapture(opts: { preroll?: number; idleCloseMs?: number 
     rate = ctx.sampleRate;
     await ctx.audioWorklet.addModule('/voice/capture-worklet.js');
     node = new AudioWorkletNode(ctx, 'atc-capture', { processorOptions: { preroll: opts.preroll ?? 0.3 } });
-    node.port.onmessage = (e: MessageEvent<Float32Array>) => { cur?.chunks.push(e.data); };
+    node.port.onmessage = (e: MessageEvent<Float32Array>) => {
+      const c = cur, f = e.data; if (!c) return;
+      c.chunks.push(f);
+      let p = 0; for (let i = 0; i < f.length; i++) p += f[i] * f[i];
+      if (p / f.length > LOUD) c.lastLoud = performance.now();
+      if (c.onAudio && rate === RATE) c.onAudio(f);
+    };
     src.connect(node);
   };
   const closeSoon = () => {
@@ -82,8 +99,9 @@ export function createMicCapture(opts: { preroll?: number; idleCloseMs?: number 
 
   return {
     get isOpen() { return !!(ctx && node); },
-    start() {
-      cur = { chunks: [] };
+    get lastTailMs() { return lastTailMs; },
+    start(onAudio?: (pcm: Float32Array) => void) {
+      cur = { chunks: [], onAudio, lastLoud: 0 };
       if (idleTimer) window.clearTimeout(idleTimer);
       starting = open().then(async () => { await ctx?.resume(); node?.port.postMessage({ recording: true }); });
       return starting;
@@ -91,12 +109,15 @@ export function createMicCapture(opts: { preroll?: number; idleCloseMs?: number 
     async stop(tailMs = 250) {
       const mine = cur;
       try { await starting; } catch { return new Float32Array(0); }
+      // the release tail only when the speaker may still be finishing a word (loud within the last LOUD_GAP_MS)
+      if (mine && performance.now() - mine.lastLoud > LOUD_GAP_MS) tailMs = 0;
+      lastTailMs = tailMs;
       if (tailMs > 0) await new Promise((r) => window.setTimeout(r, tailMs));
       // a new transmission started during the tail: it owns the worklet now, so only this one's frames are taken
       if (cur === mine) {
         node?.port.postMessage({ recording: false });
         closeSoon();
-        await new Promise((r) => window.setTimeout(r, 60));   // the worklet's last frames
+        await new Promise((r) => window.setTimeout(r, 40));   // the worklet's last frames (one every 8 ms)
         cur = null;
       }
       const chunks = mine?.chunks ?? [];

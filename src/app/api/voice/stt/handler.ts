@@ -163,3 +163,13 @@ export async function handleStt(req: Request, deps: SttDeps): Promise<Response> 
     return json({ error: `speech recognition failed: ${err instanceof Error ? err.message : String(err)}` }, 500);
   } finally { if (timer) clearTimeout(timer); }
 }
+
+/** One state per server process, shared by /api/voice/stt and /api/voice/stt/stream (one transcription at a time for both). */
+export type SttLoaded = Record<SttEngineId, boolean>;
+export interface SttState { limiter: RateLimiter; gate: Gate; warm: RateLimiter; loaded: SttLoaded; warned?: boolean; streams?: RateLimiter }
+export function sttState(): SttState {
+  const g = globalThis as unknown as { __openatcStt?: SttState };
+  const st = (g.__openatcStt ??= { limiter: new RateLimiter(), gate: new Gate(1), warm: new RateLimiter(6, 3), loaded: { parakeet: false, whisper: false } });
+  if (typeof st.loaded !== 'object') st.loaded = { parakeet: false, whisper: false };   // a dev server's state from before the cascade
+  return st;
+}

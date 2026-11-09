@@ -13,17 +13,14 @@
   OPENATC_STT_URL (optional) forwards Whisper's requests to a separate faster-whisper service instead (ml/serve/stt_server.py,
   scripts/openatc-stt.service: not installed; it needs the owner's approval).
 */
-import { handleStt, firstEngine, RateLimiter, Gate, clientKey } from './handler';
+import { handleStt, firstEngine, clientKey, sttState } from './handler';
 import type { SttEngineId } from './handler';
 import { transcribe, sttConfig, loadEngine, transcribeParakeet, loadParakeet, parakeetReady, PARAKEET_MODEL } from './engine';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type Loaded = Record<SttEngineId, boolean>;
-const g = globalThis as unknown as { __openatcStt?: { limiter: RateLimiter; gate: Gate; warm: RateLimiter; loaded: Loaded; warned?: boolean } };
-const state = (g.__openatcStt ??= { limiter: new RateLimiter(), gate: new Gate(1), warm: new RateLimiter(6, 3), loaded: { parakeet: false, whisper: false } });
-if (typeof state.loaded !== 'object') state.loaded = { parakeet: false, whisper: false };   // a dev server's state from before the cascade
+const state = sttState();
 
 /** Parakeet when asked for and its files are in place; otherwise Whisper (its model name in the reply tells the client). */
 function engineFor(asked: SttEngineId): SttEngineId {
