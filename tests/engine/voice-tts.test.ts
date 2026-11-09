@@ -66,8 +66,24 @@ test('sentences and clauses', () => {
   const c = speechChunks(s);
   assert.ok(c.length >= 2, JSON.stringify(c));
   assert.equal(c.join(' '), s);
-  for (const x of c) assert.ok(x.split(' ').length >= 3, x);
-  assert.deepEqual(speechChunks('Roger, standing by, Virgin fife one.'), ['Roger, standing by, Virgin fife one.']);   // short: one piece
+  assert.equal(c[0], 'Radar contact,');                                       // the first piece is cut short at an early comma
+  for (const x of c.slice(1)) assert.ok(x.split(' ').length >= 3, x);
+  assert.deepEqual(speechChunks('Roger, standing by, Virgin fife one.'), ['Roger, standing by,', 'Virgin fife one.']);
+  assert.deepEqual(speechChunks('Roger, Virgin one.'), ['Roger, Virgin one.']);   // short: one piece
+  // the pilot's own callsign at the start: a break (and a comma) right after it
+  const lead = speakableAtc('DLH153', 'ICAO');
+  assert.deepEqual(speechChunks('Lufthansa one fife tree holding short runway one six right.', 7, 3, lead),
+    ['Lufthansa one fife tree,', 'holding short runway one six right.']);
+  assert.deepEqual(speechChunks('Southwest five forty-two contact Los Angeles International Tower one one eight point five.', 7, 3, speakableAtc('SWA542', 'FAA')),
+    ['Southwest five forty-two,', 'contact Los Angeles International Tower one one eight point five.']);
+  // no natural break in the first words: unchanged
+  assert.deepEqual(speechChunks('Cleared to land runway three one right, Delta seventy-six.'), ['Cleared to land runway three one right, Delta seventy-six.']);
+  assert.deepEqual(speechChunks('Holding position, American seven niner four.'), ['Holding position,', 'American seven niner four.']);
+  for (const t of ['Roger.', 'Wilco, Speedbird one.', 'Climb flight level eight zero, Speedbird tree two seven.']) {
+    const p = speechChunks(t, 7, 3, 'Speedbird tree two seven');
+    assert.equal(p.join(' ').replace(/,/g, ''), t.replace(/,/g, ''), t);
+    for (const x of p) assert.ok(x.split(' ').length >= 2 || p.length === 1, `${t}: ${x}`);
+  }
   const long = Array.from({ length: 60 }, (_, i) => `word${i % 7}`).join(' ') + '.';
   for (const p of splitSentences(long)) assert.ok(p.length <= 220);
 });

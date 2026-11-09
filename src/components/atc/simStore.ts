@@ -696,6 +696,10 @@ class SimStore implements TestApiHost {
             status: res.ok ? (res.code === 'partial' ? 'partial' : 'ok') : res.code.startsWith('unable') ? 'unable' : res.code === 'queried' ? 'ok' : 'error',
           });
           if (d.who === 'player') sound.play('transmit');
+          // the pilot's readback is already written (engine.onTransmission) and due in 2-8 s: voice it now
+          if (res.readback && ev.callsign && ev.callsign !== 'SYSTEM' && this.settings.tts && this.settings.sound && !this.testMode) {
+            sound.prefetchPilot(res.readback, { callsign: ev.callsign, variant: this.engine?.settings.region });
+          }
           return;
         }
         break;

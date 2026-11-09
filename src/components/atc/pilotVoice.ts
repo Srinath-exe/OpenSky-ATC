@@ -9,6 +9,10 @@
 //  - One line at a time, clauses back to back (the first clause plays while the rest is synthesised). At most two
 //    lines wait behind the one playing (or about to); older waiting lines are dropped, a line that could not start
 //    within 12 s is dropped, and a line queued behind others is read a little faster (8 % per line ahead, up to 24 %).
+//  - The first clause is kept short (speechChunks: cut after the pilot's callsign or at an early comma), since it is
+//    what the player waits for.
+//  - prefetch(): a readback's text is known when the controller transmits, seconds before the pilot answers
+//    (engine pilotDelayS: 2-4 s airborne, 4-8 s on the ground), so it is synthesised then and say() finds it ready.
 //  - If the model cannot load, state becomes 'failed' and sound.ts falls back to speechSynthesis.
 //  Browser-only; nothing runs at import.
 // ============================================================
@@ -17,17 +21,34 @@ import type { PhraseVariant } from '../../lib/sim/phraseology';
 
 export type NeuralState = 'idle' | 'loading' | 'ready' | 'failed';
 
-interface Chunk { id: number; buf: AudioBuffer | null; failed: boolean; sentAt: number; synthMs?: number }
-interface Line { chunks: Chunk[]; detune: number; at: number; next: number; stat: NeuralLineStat }
+interface Chunk { id: number; buf: AudioBuffer | null; failed: boolean; sentAt: number; synthMs?: number; modelMs?: number; readyAt?: number }
+interface Line { chunks: Chunk[]; detune: number; at: number; next: number; stat: NeuralLineStat; hooks?: LineHooks; ended?: boolean }
+
+/** Per-line timing (performance.now() milliseconds), for latency pages and tests: say(text, callsign, variant, hooks). */
+export interface LineStart {
+  calledAt: number;        // say() was called
+  startedAt: number;       // the first clause's speech starts playing (AudioContext time, output latency included; the squelch opens 40 ms before)
+  firstChunkMs: number;    // startedAt - calledAt: what the listener waits
+  firstReadyMs: number;    // say() -> the first clause's audio was ready (0 when prefetched and done)
+  firstSynthMs: number;    // the worker's inference time for the first clause
+  prefetched: boolean;     // the first clause came from prefetch()
+}
+export interface LineEnd { endedAt: number; synthMs: number; audioS: number; chunks: number }
+export interface LineHooks { onStart?: (t: LineStart) => void; onEnd?: (t: LineEnd) => void }
 
 /** Per-line timings of the last lines (tests and the report read them through sound.neuralStats()). */
-export interface NeuralLineStat { text: string; voice: string; chunks: number; firstChunkMs: number; synthMs: number; audioS: number; dropped?: boolean }
+export interface NeuralLineStat { text: string; voice: string; chunks: number; firstChunkMs: number; synthMs: number; audioS: number; dropped?: boolean; prefetched?: number }
 
 const MAX_WAITING = 2;
 const STALE_MS = 12_000;
 const LOAD_TIMEOUT_MS = 90_000;
 const LINE_GAP_S = 0.3;
 const CLAUSE_GAP_S = 0.06;
+const PREFETCH_TTL_MS = 60_000;
+const PREFETCH_MAX = 12;   // clauses
+
+/** A clause synthesised ahead of its line (prefetch): in flight (`pcm` null) or done. */
+interface Prefetched { id: number; at: number; pcm: Float32Array | null; sr: number; ms: number; failed: boolean }
 
 export class NeuralPilotVoice {
   state: NeuralState = 'idle';
@@ -44,6 +65,41 @@ export class NeuralPilotVoice {
   private loadWaiters: ((ok: boolean) => void)[] = [];
   private chain: { input: GainNode; noise: GainNode } | null = null;
   private noiseBuf: AudioBuffer | null = null;
+  private prefetched = new Map<string, Prefetched>();   // key: voice|speed|clause
+  private prefetchIds = new Map<number, string>();
+
+  /** The clauses a line is read as, with its voice and speed (say() and prefetch() must agree). */
+  private plan(text: string, callsign: string | undefined, variant: PhraseVariant, backlog: number) {
+    const words = speakableAtc(text, variant);
+    const lead = callsign ? speakableAtc(callsign, variant) : undefined;
+    const parts = speechChunks(words, undefined, undefined, lead);
+    const pv = voiceFor(callsign || text.split(/[ ,]/)[0] || '');
+    const speed = Math.round(pv.speed * (1 + 0.08 * Math.min(3, backlog)) * 1000) / 1000;   // stacked lines: read faster
+    return { words, parts, pv, speed, key: (t: string) => `${pv.voice}|${speed}|${t}` };
+  }
+
+  /** Synthesise a line that will be said soon (a readback the pilot answers with in a few seconds), at the speed of an
+   *  idle channel. say() with the same text, callsign and variant uses it; unused clauses expire. */
+  prefetch(text: string, callsign: string | undefined, variant: PhraseVariant = 'ICAO'): void {
+    if (this.state !== 'ready' || !this.worker) return;
+    const t = now();
+    for (const [k, p] of this.prefetched) if (t - p.at > PREFETCH_TTL_MS) this.forget(k, p);
+    const { parts, pv, speed, key } = this.plan(text, callsign, variant, 0);
+    for (const part of parts) {
+      const k = key(part);
+      if (this.prefetched.has(k)) continue;
+      while (this.prefetched.size >= PREFETCH_MAX) { const [ok, op] = this.prefetched.entries().next().value as [string, Prefetched]; this.forget(ok, op); }
+      const id = ++this.seq;
+      this.prefetched.set(k, { id, at: t, pcm: null, sr: 24000, ms: 0, failed: false });
+      this.prefetchIds.set(id, k);
+      this.worker.postMessage({ type: 'speak', id, text: part, voice: pv.voice, speed });
+    }
+  }
+
+  private forget(k: string, p: Prefetched): void {
+    this.prefetched.delete(k); this.prefetchIds.delete(p.id);
+    if (!p.pcm && !p.failed) this.worker?.postMessage({ type: 'cancel', id: p.id });   // not started yet: skip it
+  }
 
   constructor(private audio: () => { ctx: AudioContext; out: AudioNode } | null) {}
 
@@ -67,18 +123,25 @@ export class NeuralPilotVoice {
   }
 
   /** Queue a pilot line. False when it cannot be played now (not ready, or audio locked): the caller falls back. */
-  say(text: string, callsign: string | undefined, variant: PhraseVariant = 'ICAO'): boolean {
+  say(text: string, callsign: string | undefined, variant: PhraseVariant = 'ICAO', hooks?: LineHooks): boolean {
     if (this.state !== 'ready' || !this.worker) return false;
     const a = this.audio(); if (!a || a.ctx.state !== 'running') return false;
-    const words = speakableAtc(text, variant);
-    const parts = speechChunks(words);
-    if (!parts.length) return true;
-    const pv = voiceFor(callsign || text.split(/[ ,]/)[0] || '');
     const backlog = this.queue.length + (this.current ? 1 : 0);
-    const speed = Math.round(pv.speed * (1 + 0.08 * Math.min(3, backlog)) * 1000) / 1000;   // stacked lines: read faster
+    const { words, parts, pv, speed, key } = this.plan(text, callsign, variant, backlog);
+    if (!parts.length) return true;
     const stat: NeuralLineStat = { text: words, voice: pv.voice, chunks: parts.length, firstChunkMs: -1, synthMs: 0, audioS: 0 };
-    const line: Line = { chunks: [], detune: pv.detune, at: now(), next: 0, stat };
+    const line: Line = { chunks: [], detune: pv.detune, at: now(), next: 0, stat, hooks };
     for (const t of parts) {
+      const pre = this.prefetched.get(key(t));
+      if (pre) {                                                     // synthesised ahead (prefetch): done or in flight
+        this.prefetched.delete(key(t)); this.prefetchIds.delete(pre.id);
+        const chunk: Chunk = { id: pre.id, buf: null, failed: pre.failed, sentAt: pre.at, ...(pre.pcm ? { readyAt: line.at } : {}) };
+        line.chunks.push(chunk);
+        stat.prefetched = (stat.prefetched ?? 0) + 1;
+        if (pre.pcm) this.fill(chunk, line, pre.pcm, pre.sr, pre.ms);
+        else if (!pre.failed) this.chunkOf.set(pre.id, { line, chunk });
+        continue;
+      }
       const id = ++this.seq;
       const chunk: Chunk = { id, buf: null, failed: false, sentAt: now() };
       line.chunks.push(chunk);
@@ -97,6 +160,7 @@ export class NeuralPilotVoice {
 
   /** Silence everything queued (setting off, sound off, session reset). Lines already sounding finish their clause. */
   stop(): void {
+    for (const [k, p] of [...this.prefetched]) this.forget(k, p);
     for (const l of this.queue) this.drop(l);
     this.queue = [];
     if (this.current && this.current.next < this.current.chunks.length) {
@@ -112,21 +176,33 @@ export class NeuralPilotVoice {
     this.worker = null;
     for (const w of this.loadWaiters.splice(0)) w(false);
     this.queue = []; this.current = null;
+    this.prefetched.clear(); this.prefetchIds.clear();
   }
 
   private onMessage(m: { type: string; id: number; pcm?: Float32Array; sr?: number; ms?: number; message?: string }): void {
     if (m.type === 'ready') { this.state = 'ready'; for (const w of this.loadWaiters.splice(0)) w(true); return; }
     if (m.type === 'error' && this.state === 'loading') { this.fail(m.message || 'load failed'); return; }
+    const pk = this.prefetchIds.get(m.id);
+    if (pk) {                                                        // a prefetched clause no line has claimed yet
+      this.prefetchIds.delete(m.id);
+      const p = this.prefetched.get(pk);
+      if (p) { if (m.type === 'audio' && m.pcm) { p.pcm = m.pcm; p.sr = m.sr ?? 24000; p.ms = m.ms ?? 0; } else p.failed = true; }
+      return;
+    }
     const ref = this.chunkOf.get(m.id);
     if (!ref) return;                                                // cancelled or dropped
     this.chunkOf.delete(m.id);
     const { chunk, line } = ref;
-    if (m.type === 'audio' && m.pcm) {
-      chunk.synthMs = now() - chunk.sentAt;
-      chunk.buf = this.toBuffer(m.pcm, m.sr ?? 24000, line.stat.voice);
-      if (!chunk.buf) chunk.failed = true;
-      line.stat.synthMs += m.ms ?? 0; line.stat.audioS += m.pcm.length / (m.sr ?? 24000);
-    } else chunk.failed = true;
+    if (m.type === 'audio' && m.pcm) this.fill(chunk, line, m.pcm, m.sr ?? 24000, m.ms ?? 0);
+    else { chunk.failed = true; if (line === this.current) this.scheduleReady(); else this.pump(); }
+  }
+
+  /** A clause's audio arrived (or was prefetched): buffer it and play what can play. */
+  private fill(chunk: Chunk, line: Line, pcm: Float32Array, sr: number, ms: number): void {
+    chunk.synthMs = now() - chunk.sentAt; chunk.modelMs = ms; chunk.readyAt = Math.max(chunk.readyAt ?? now(), line.at);
+    chunk.buf = this.toBuffer(pcm, sr, line.stat.voice);
+    if (!chunk.buf) chunk.failed = true;
+    line.stat.synthMs += ms; line.stat.audioS += pcm.length / sr;
     if (line === this.current) this.scheduleReady(); else this.pump();
   }
 
@@ -192,15 +268,30 @@ export class NeuralPilotVoice {
         src.onended = () => { try { src.disconnect(); } catch { /* ignore */ } };
         this.hiss(at, c.buf.duration / rate);
       } catch { /* ignore */ }
+      if (l.next === 0 && l.hooks?.onStart) {
+        const startedAt = this.perfAt(a.ctx, at);
+        try { l.hooks.onStart({ calledAt: l.at, startedAt, firstChunkMs: startedAt - l.at, firstReadyMs: (c.readyAt ?? l.at) - l.at, firstSynthMs: c.modelMs ?? 0, prefetched: c.sentAt < l.at }); } catch { /* caller's problem */ }
+      }
       this.cursor = at + c.buf.duration / rate + (l.next < l.chunks.length - 1 ? CLAUSE_GAP_S : 0);
       l.next++;
     }
     // the whole line is scheduled: squelch tail, then the next line after a short gap
+    if (!l.ended) {
+      l.ended = true;
+      try { l.hooks?.onEnd?.({ endedAt: this.perfAt(a.ctx, this.cursor), synthMs: l.stat.synthMs, audioS: l.stat.audioS, chunks: l.chunks.length }); } catch { /* caller's problem */ }
+    }
     this.squelch(this.cursor, 0.09, 0.04);
     const end = this.cursor + 0.1 + LINE_GAP_S;
     this.cursor = end;
     if (this.endTimer) clearTimeout(this.endTimer);
     this.endTimer = setTimeout(() => { this.endTimer = null; this.current = null; this.pump(); }, Math.max(0, (end - a.ctx.currentTime) * 1000));
+  }
+
+  /** AudioContext time -> performance.now() ms (getOutputTimestamp includes the output latency). */
+  private perfAt(ctx: AudioContext, t: number): number {
+    const ts = typeof ctx.getOutputTimestamp === 'function' ? ctx.getOutputTimestamp() : null;
+    if (ts && ts.contextTime != null && ts.performanceTime != null && ts.performanceTime > 0) return ts.performanceTime + (t - ts.contextTime) * 1000;
+    return now() + (t - ctx.currentTime) * 1000;
   }
 
   /** Band-pass 300-3400 Hz (two high-pass + two low-pass biquads), soft clip, light compression. Built once. */

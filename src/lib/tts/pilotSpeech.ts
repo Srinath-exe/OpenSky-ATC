@@ -124,9 +124,20 @@ export function splitSentences(text: string, maxChars = 220): string[] {
   return out;
 }
 
+/** At most this many words in a line's first synthesis call when the line has a natural break (the callsign at its
+ *  start, or an early comma): a call costs ~90 ms plus ~38 ms a word on one WASM thread, and the first one is what
+ *  the player waits for; the rest is synthesised while it plays. */
+export const FIRST_CHUNK_WORDS = 4;
+
+const nWords = (s: string) => s.split(/\s+/).filter(Boolean).length;
+
 /** What one synthesis call reads: sentences, and a long sentence (more than `maxWords`) cut at its commas into clauses
- *  of at least `minWords`, so the first clause is heard while the rest is synthesised. Each piece keeps its comma. */
-export function speechChunks(text: string, maxWords = 7, minWords = 3): string[] {
+ *  of at least `minWords`, so the first clause is heard while the rest is synthesised. Each piece keeps its comma.
+ *  Then the first piece is cut short when it is longer than FIRST_CHUNK_WORDS and has a natural break: right after
+ *  `lead` (the pilot's own callsign as spoken, e.g. "Lufthansa one fife tree") when the line starts with it, where a
+ *  pilot pauses anyway (a comma is added), else at its first comma after 2 to FIRST_CHUNK_WORDS + 1 words. Both
+ *  halves keep at least 2 words. */
+export function speechChunks(text: string, maxWords = 7, minWords = 3, lead?: string): string[] {
   const out: string[] = [];
   for (const sent of splitSentences(text)) {
     const words = sent.split(/\s+/).length;
@@ -142,5 +153,22 @@ export function speechChunks(text: string, maxWords = 7, minWords = 3): string[]
       else out.push(cur);
     }
   }
+  if (out.length && nWords(out[0]) > FIRST_CHUNK_WORDS) out.splice(0, 1, ...splitFirst(out[0], lead));
   return out;
+}
+
+function splitFirst(piece: string, lead?: string): string[] {
+  const words = piece.split(/\s+/);
+  const cs = (lead ?? '').replace(/[.,;:!?]+$/, '').trim();
+  if (cs) {
+    const n = nWords(cs);
+    const head = words.slice(0, n).join(' ').replace(/[,;:]$/, '');
+    if (n >= 1 && n <= 6 && head.toLowerCase() === cs.toLowerCase() && words.length - n >= 2) {
+      return [`${head},`, words.slice(n).join(' ')];
+    }
+  }
+  for (let i = 1; i < Math.min(words.length - 2, FIRST_CHUNK_WORDS + 1); i++) {   // a comma after words[i]: i+1 words
+    if (/,$/.test(words[i])) return [words.slice(0, i + 1).join(' '), words.slice(i + 1).join(' ')];
+  }
+  return [piece];
 }

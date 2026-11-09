@@ -3,7 +3,7 @@
 // (src/lib/tts/pilotSpeech.ts), one sentence per message; G2P is public/voice/tts-g2p.js (misaki lexicon + eSpeak).
 //   in:  {type:'load', id, model?} | {type:'speak', id, text, voice, speed} | {type:'cancel', id}
 //        model 'fp32' loads paradee.onnx (35 MB; not deployed, for tests/tmp/tts-worker.cjs); default the int8 file
-//   out: {type:'ready', id, ms, threads} | {type:'audio', id, pcm (Float32Array, transferred), sr, ms, g2pMs, phonemes}
+//   out: {type:'ready', id, ms, threads, warmMs} | {type:'audio', id, pcm (Float32Array, transferred), sr, ms, g2pMs, phonemes}
 //        {type:'cancelled', id} | {type:'error', id, message}
 // Messages run in order; a speak whose id was cancelled before its turn is skipped. Nothing downloads before 'load'.
 import { AtcG2P } from './tts-g2p.js';
@@ -39,7 +39,11 @@ async function load(variant) {
   vocab = cfg.vocab; voices = cfg.voices;
   session = await ort.InferenceSession.create(model, { executionProviders: ['wasm'], graphOptimizationLevel: 'all' });
   g2p = new AtcG2P(lex, async () => (await import(PHONEMIZER)).phonemize);
-  return { ms: Math.round(performance.now() - t0), threads };
+  // warm-up: ORT's first run allocates and compiles (~150 ms more than later runs); pay it here, not on the first
+  // pilot line. Lexicon words only, so it never fetches eSpeak. A failure here does not fail the load.
+  const w0 = performance.now();
+  try { await speak({ text: 'Roger, wilco.', voice: voices[0], speed: 1 }); } catch { /* the first real line pays it */ }
+  return { ms: Math.round(performance.now() - t0), threads, warmMs: Math.round(performance.now() - w0) };
 }
 
 async function speak(m) {

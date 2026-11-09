@@ -162,6 +162,13 @@ class SoundEngine {
     this.speakBrowser(text, opts.who);
   }
 
+  /** A pilot line that will be spoken in a few seconds (the readback to a transmission just sent): synthesise it now
+   *  with the neural voice so it starts the moment it is due. Nothing happens unless that voice is chosen and loaded. */
+  prefetchPilot(text: string, opts: { callsign?: string; variant?: PhraseVariant } = {}): void {
+    if (!this.enabled || !this.tts || typeof window === 'undefined' || pilotVoicePref() !== 'neural') return;
+    this.neural.prefetch(text, opts.callsign, opts.variant);
+  }
+
   /** The neural voice's state ('idle' until the first pilot line) and its last line timings (tests, diagnostics). */
   get neuralState(): NeuralState { return this.neural.state; }
   neuralStats(): NeuralLineStat[] { return this.neural.stats.slice(); }
