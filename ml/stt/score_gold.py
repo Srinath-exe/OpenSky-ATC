@@ -234,7 +234,36 @@ def read_wav(path):
         return np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16).astype(np.float32) / 32768.0
 
 
+class ServerRecogniser:
+    """The live game server's engines over HTTP (src/app/api/voice/stt): server-parakeet / server-whisper, with the
+    callsigns on frequency as hints, exactly what the game sends. OPENATC_STT_URL overrides the address."""
+    def __init__(self, tag):
+        self.engine = tag.split("-", 1)[1]
+        self.url = os.environ.get("OPENATC_STT_URL", "http://127.0.0.1:3000/api/voice/stt")
+
+    def __call__(self, audio, ctx):
+        import numpy as np, urllib.error, urllib.parse, urllib.request
+        names = [m.group(1).title() for line in ctx.split("\n")[1:] if (m := re.match(r"^\S+ (.+?) (ARR|DEP) ", line))]
+        pcm = (np.clip(audio, -1, 1) * 32767).astype("<i2").tobytes()
+        req = urllib.request.Request(f"{self.url}?engine={self.engine}", data=pcm, method="POST", headers={
+            "content-type": "audio/l16", "x-stt-names": urllib.parse.quote(json.dumps(names[:40]))})
+        t0 = time.perf_counter()
+        for attempt in range(5):   # 504 / 429: the live server's queue is busy or the model is still loading
+            try:
+                j = json.loads(urllib.request.urlopen(req, timeout=60).read()); break
+            except urllib.error.HTTPError as e:
+                if e.code not in (429, 503, 504) or attempt == 4:
+                    raise
+                time.sleep(3 * (attempt + 1)); t0 = time.perf_counter()
+        return str(j.get("text") or "").strip(), round(j.get("ms") or (time.perf_counter() - t0) * 1000, 1)
+
+
 class Recogniser:
+    def __new__(cls, tag):
+        if tag.startswith("server-"):
+            return ServerRecogniser(tag)
+        return super().__new__(cls)
+
     def __init__(self, tag):
         import torch
         from transformers import pipeline
