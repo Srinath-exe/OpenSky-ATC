@@ -17,9 +17,22 @@ export class L1Client {
   private pending = new Map<number, { ok: (v: any) => void; err: (e: Error) => void }>();
   private ready: Promise<void> | null = null;
 
-  private call<T>(msg: Record<string, unknown>): Promise<T> {
+  private call<T>(msg: Record<string, unknown>, timeoutMs = 20000): Promise<T> {
     const id = this.seq++;
-    return new Promise<T>((ok, err) => { this.pending.set(id, { ok, err }); this.worker!.postMessage({ ...msg, id }); });
+    // a call never hangs push-to-talk: no answer in time (worker stuck or gone) rejects, and the rules' result stands
+    return new Promise<T>((ok, err) => {
+      const timer = setTimeout(() => { if (this.pending.delete(id)) err(new Error('voice model did not answer')); }, timeoutMs);
+      this.pending.set(id, { ok: (v) => { clearTimeout(timer); ok(v); }, err: (e) => { clearTimeout(timer); err(e); } });
+      this.worker!.postMessage({ ...msg, id });
+    });
+  }
+
+  /** The worker failed to load or crashed: fail every waiting call and start afresh on the next one. */
+  private reset(why: string) {
+    for (const p of this.pending.values()) p.err(new Error(why));
+    this.pending.clear(); this.ready = null;
+    try { this.worker?.terminate(); } catch { /* gone */ }
+    this.worker = null;
   }
 
   load(): Promise<void> {
@@ -30,8 +43,13 @@ export class L1Client {
       const m = e.data; const p = this.pending.get(m.id); if (!p) return; this.pending.delete(m.id);
       if (m.type === 'error') p.err(new Error(m.message)); else p.ok(m);
     };
-    this.ready = this.call<void>({ type: 'load', url: S1_MODEL_URL }).then(() => undefined);
-    return this.ready;
+    this.worker.onerror = (e) => { e.preventDefault?.(); this.reset(`voice model worker failed: ${e.message || 'could not start'}`); };
+    this.worker.onmessageerror = () => this.reset('voice model worker sent an unreadable message');
+    // a failed load (network blip) is not cached: the next push-to-talk tries again
+    const ready = this.call<void>({ type: 'load', url: S1_MODEL_URL }, 60000).then(() => undefined);
+    this.ready = ready;
+    ready.catch(() => { if (this.ready === ready) this.reset('voice model could not load'); });
+    return ready;
   }
 
   /** Game state while the player talks. Fire and forget; errors surface on complete(). */

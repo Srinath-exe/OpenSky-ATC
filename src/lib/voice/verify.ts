@@ -24,10 +24,10 @@ import type { ParseCtx } from '../sim/commands';
 // ---------- transcript normalisation (same as ml/data/augment.py stt_normalise + words_to_digits) ----------
 const ONES = 'zero one two three four five six seven eight nine'.split(' ');
 const TEENS = 'ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen'.split(' ');
-const TENS: Record<string, number> = { twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
-const WORD_VAL: Record<string, number> = { oh: 0, niner: 9, tree: 3, fife: 5, fower: 4 };
+const TENS: Record<string, number> = Object.assign(Object.create(null), { twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 });
+const WORD_VAL: Record<string, number> = Object.assign(Object.create(null), { oh: 0, niner: 9, tree: 3, fife: 5, fower: 4 });
 ONES.forEach((w, i) => { WORD_VAL[w] = i; }); TEENS.forEach((w, i) => { WORD_VAL[w] = 10 + i; });
-const ICAO_TO_STT: Record<string, string> = { tree: 'three', niner: 'nine', fife: 'five', fower: 'four', wun: 'one', tousand: 'thousand' };
+const ICAO_TO_STT: Record<string, string> = Object.assign(Object.create(null), { tree: 'three', niner: 'nine', fife: 'five', fower: 'four', wun: 'one', tousand: 'thousand' });
 
 export function sttWords(s: string): string[] {
   const t = s.toLowerCase().replace(/’/g, "'").replace(/(\w)-(\w)/g, '$1 $2').replace(/[^\w\s.]/g, ' ').replace(/\.(?!\d)/g, ' ').replace(/\s+/g, ' ').trim();
@@ -66,10 +66,10 @@ export function wordsToDigits(words: string[]): string[] {
 export const normTokens = (s: string) => wordsToDigits(sttWords(s));
 const isNum = (w: string) => /^\d+$/.test(w);
 
-const DIGIT_HOMOPHONE: Record<string, string> = { to: 'two', too: 'two', for: 'four', ate: 'eight', won: 'one', free: 'three' };
+const DIGIT_HOMOPHONE: Record<string, string> = Object.assign(Object.create(null), { to: 'two', too: 'two', for: 'four', ate: 'eight', won: 'one', free: 'three' });
 const isDigitWord = (w: string | undefined) => w !== undefined && w in WORD_VAL && WORD_VAL[w] < 10;
-const HEARD_FIX: Record<string, string> = { wright: 'right', write: 'right', ills: 'ils', whole: 'hold', hole: 'hold', holds: 'hold', stan: 'stand', centre: 'center' };
-const SIDE: Record<string, string> = { l: 'left', r: 'right', c: 'center' };
+const HEARD_FIX: Record<string, string> = Object.assign(Object.create(null), { wright: 'right', write: 'right', ills: 'ils', whole: 'hold', hole: 'hold', holds: 'hold', stan: 'stand', centre: 'center' });
+const SIDE: Record<string, string> = Object.assign(Object.create(null), { l: 'left', r: 'right', c: 'center' });
 /** What was heard, ready to align: recogniser quirks undone ("25r", "wright", "4-9-8"), "seven to two" -> "722" (a homophone between two digits), and the parts the parser
  *  ignores and the render does not know removed (frequencies, wind, QNH / altimeter). */
 export function heardTokens(transcript: string): string[] {
@@ -354,14 +354,14 @@ export function vetoOf(rt: RoundTrip): string | null {
  * transcript ("increase speed 2230-230" -> "Fly heading 230") is never sent on its own. Recognisers drop or mangle the
  * digits far more often than these words, so a missing keyword means the model guessed the instruction.
  */
-const KIND_WORDS: Record<string, RegExp> = {
+const KIND_WORDS: Record<string, RegExp> = Object.assign(Object.create(null), {
   heading: /\b(heading|hdg|turn|vector|vectors|degrees)\b/,
   altitude: /\b(climb|climbing|descend|descent|descending|maintain|flight level|level|fl|altitude|thousand|feet|ft)\b/,
   speed: /\b(speed|knots|knot|kts|kt|mach|faster|slower)\b/,
-};
+});
 export function kindVeto(transcript: string, ast: CommandAST): string | null {
   const parts = ast.kind === 'sequence' ? ast.parts : [ast];
-  const t = ` ${transcript.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ')} `;
+  const t = ` ${transcript.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/([a-z])(\d)/g, '$1 $2').replace(/(\d)([a-z])/g, '$1 $2')} `;
   for (const p of parts) {
     const re = KIND_WORDS[p.kind];
     if (re && !re.test(t)) return `“${p.kind}” was not heard`;

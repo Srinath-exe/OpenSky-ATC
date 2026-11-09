@@ -60,7 +60,7 @@ export class Tokenizer {
     const out: number[] = [];
     for (const part of text.split(/(<pad>|<bos>|<eos>|<ctx>|<said>|<cmd>)/)) {
       if (!part) continue;
-      if (part in this.special) { out.push(this.special[part]); continue; }
+      if (Object.prototype.hasOwnProperty.call(this.special, part)) { out.push(this.special[part]); continue; }
       for (const m of part.matchAll(PRETOK)) out.push(...this.chunk(m[0]));
     }
     return out;
@@ -110,6 +110,11 @@ export type CallsignMode = 'score' | 'trie';
 
 export interface Completion { line: string; tokens: number[]; confidence: number; ms: number; sayAgain: boolean; signals: Signals }
 
+/** Positions kept free after the game state: transcript (~30 tokens) + <cmd> + up to 48 answer tokens + margin. */
+const CTX_RESERVE = 112;
+/** Positions kept free after the transcript for the answer. */
+const ANSWER_RESERVE = 52;
+
 export class S1Model {
   readonly tok: Tokenizer;
   readonly d: number; readonly H: number; readonly dh: number; readonly hid: number; readonly V: number; readonly maxLen: number; readonly T: number;
@@ -148,7 +153,8 @@ export class S1Model {
   }
 
   static async load(baseUrl: string, fetcher: typeof fetch = fetch): Promise<S1Model> {
-    const [meta, bin] = await Promise.all([fetcher(`${baseUrl}/model.json`).then(r => r.json()), fetcher(`${baseUrl}/model.bin`).then(r => r.arrayBuffer())]);
+    const ok = (r: Response, what: string) => { if (!r.ok) throw new Error(`${what}: HTTP ${r.status}`); return r; };   // a 404 page is not weights
+    const [meta, bin] = await Promise.all([fetcher(`${baseUrl}/model.json`).then(r => ok(r, 'model.json').json()), fetcher(`${baseUrl}/model.bin`).then(r => ok(r, 'model.bin').arrayBuffer())]);
     return new S1Model(meta as S1Meta, bin);
   }
 
@@ -198,14 +204,25 @@ export class S1Model {
   /** Prefill "<ctx>{state}" and keep its KV cache; later complete() calls start from here. Returns the ms it took. */
   prefill(ctx: string): number {
     const t0 = now();
-    const ids = this.tok.encode(`<ctx>${ctx}`);
+    let ids = this.tok.encode(`<ctx>${ctx}`);
+    // keep room for the transcript and the answer: a busy state (the model was trained on up to 14 aircraft) loses
+    // aircraft lines from the end; voiceContext lists the player's own frequency first, so those are kept
+    if (ids.length > this.maxLen - CTX_RESERVE) {
+      let lines = ctx.split('\n');
+      while (lines.length > 1 && ids.length > this.maxLen - CTX_RESERVE) { lines = lines.slice(0, -1); ids = this.tok.encode(`<ctx>${lines.join('\n')}`); }
+    }
     let k = 0;   // reuse the longest common prefix with what is already cached (the state changes a little each second)
     if (this.prefixLen) while (k < ids.length && k < this.prefixLen && ids[k] === this.prefixIds[k]) k++;
+    // only the reused part is valid until the new tokens are in: a step that throws leaves a consistent (shorter) prefix
+    this.prefixIds = ids.slice(0, k); this.prefixLen = k;
     this.pos = k;
     for (let i = k; i < ids.length; i++) this.step(ids[i], false);
     this.prefixIds = ids; this.prefixLen = ids.length;
     return now() - t0;
   }
+
+  /** The last completion hit the context limit before <eos>. */
+  private cut = false;
 
   /** How the callsign is chosen (see CallsignMode); 'score' unless set. */
   callsignMode: CallsignMode = 'score';
@@ -223,8 +240,11 @@ export class S1Model {
   /** Transcript -> command line; the first tokens spell one of `callsigns` (or SAY AGAIN). Uses the prefilled state. */
   complete(said: string, callsigns: string[], maxNew = 48, mode: CallsignMode = this.callsignMode): Completion {
     const t0 = now();
-    this.pos = this.prefixLen;
-    const ids = this.tok.encode(`<said> ${sttNormalise(said)}<cmd>`);
+    this.pos = this.prefixLen; this.cut = false;
+    let words = sttNormalise(said).split(' ');
+    let ids = this.tok.encode(`<said> ${words.join(' ')}<cmd>`);
+    // a very long transcript keeps its start (the callsign) and leaves room for the answer
+    while (words.length > 1 && this.prefixLen + ids.length > this.maxLen - ANSWER_RESERVE) { words = words.slice(0, -1); ids = this.tok.encode(`<said> ${words.join(' ')}<cmd>`); }
     for (let i = 0; i < ids.length; i++) this.step(ids[i], i === ids.length - 1);
     const seqs = [...callsigns.map(c => this.tok.encode(` ${c}`)), this.tok.encode(' SAY AGAIN')];
     let longest = 0; for (const s of seqs) longest = Math.max(longest, s.length);
@@ -232,7 +252,8 @@ export class S1Model {
     let r = mode === 'score' && P + longest < this.maxLen ? this.decodeScored(seqs, maxNew) : null;
     if (!r) { if (this.pos !== P) { this.pos = P; this.logits.set(this.nodeLg[0]); } r = this.decodeTrie(seqs, maxNew); }
     const line = this.tok.decode(r.out).trim();
-    return { line, tokens: r.out, confidence: r.conf, ms: now() - t0, sayAgain: /^SAY AGAIN$/i.test(line), signals: r.sg };
+    // an answer cut off at the context limit ("UAL12 climb 1") is never proposed as a command
+    return { line, tokens: r.out, confidence: r.conf, ms: now() - t0, sayAgain: this.cut || /^SAY AGAIN$/i.test(line), signals: r.sg };
   }
 
   /** The first decoder: greedy, each callsign token the arg-max among the trie's allowed next tokens. */
@@ -269,7 +290,7 @@ export class S1Model {
       }
       if (next === eos) break;
       out.push(next);
-      if (this.pos >= this.maxLen) break;
+      if (this.pos >= this.maxLen) { this.cut = true; break; }
       this.step(next, true);
     }
     if (sg.csMargin === Infinity) sg.csMargin = 20;
@@ -381,7 +402,7 @@ export class S1Model {
       else if (kind === 2) sg.rwyMinP = Math.min(sg.rwyMinP, p);
       if (next === eos) break;
       out.push(next);
-      if (this.pos >= this.maxLen) break;
+      if (this.pos >= this.maxLen) { this.cut = true; break; }
       this.step(next, true);
     }
     if (sg.csMargin === Infinity) sg.csMargin = 20;

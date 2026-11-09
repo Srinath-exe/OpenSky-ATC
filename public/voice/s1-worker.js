@@ -13,7 +13,7 @@ self.onmessage = async (e) => {
   const m = e.data || {};
   try {
     if (m.type === 'load') {
-      loading = loading || S1Model.load(m.url).then((x) => { model = x; });
+      loading = loading || S1Model.load(m.url).then((x) => { model = x; }, (err) => { loading = null; throw err; });   // a failed load is retried next time
       await loading;
       postMessage({ type: 'ready', id: m.id });
     } else if (m.type === 'prefill') {
