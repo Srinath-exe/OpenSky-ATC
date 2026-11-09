@@ -368,6 +368,10 @@ td strong {{ color: var(--ink-1); font-weight: 600; }}
 ul.lessons {{ display: grid; gap: 10px; padding-left: 20px; }}
 ul.lessons b {{ color: var(--ink-1); font-weight: 600; }}
 </style>
+<style>/* phone width: hidden tooltips take no room until shown, wrap inside the screen; charts clip their own labels */
+.tip { display: none; white-space: normal; width: max-content; max-width: min(300px, calc(100vw - 48px)); }
+.bar-row:hover .tip, .bar-row:focus-visible .tip, .brow:hover .tip, .brow:focus-visible .tip { display: block; }
+svg { overflow: hidden; }</style>
 </head>
 <body>
 <main class="wrap">

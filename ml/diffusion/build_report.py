@@ -472,6 +472,10 @@ pre {{ background: var(--surface); border: 1px solid var(--line); border-radius:
 @media (max-width: 620px) {{ .brow {{ grid-template-columns: 100px 1fr 62px; }} }}
 @media (prefers-reduced-motion: reduce) {{ .tip {{ transition: none; }} }}
 </style>
+<style>/* phone width: hidden tooltips take no room until shown, wrap inside the screen; charts clip their own labels */
+.tip { display: none; white-space: normal; width: max-content; max-width: min(300px, calc(100vw - 48px)); }
+.bar-row:hover .tip, .bar-row:focus-visible .tip, .brow:hover .tip, .brow:focus-visible .tip { display: block; }
+svg { overflow: hidden; }</style>
 </head>
 <body>
 <div class="wrap">
