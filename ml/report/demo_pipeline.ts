@@ -28,3 +28,10 @@ export function decide(alternatives: string[], stateText: string, l1: L1Like): P
   const { parse, state } = contextFromText(stateText);
   return understandHeard(alternatives, parse, 0, l1, state);
 }
+
+// the TTS -> STT loopback page (/reports/voice-loopback.html): the game's pilot-line text path, the voice per callsign,
+// the server's engines one at a time, and WAV encoding for playback
+export { speakableAtc, speechChunks, voiceFor, PILOT_VOICES } from '../../src/lib/tts/pilotSpeech';
+export { telephony } from '../../src/lib/sim/phraseology';
+export { postStt } from '../../src/lib/voice/asr-server';
+export { wav16 } from '../../src/lib/voice/asr-diag';

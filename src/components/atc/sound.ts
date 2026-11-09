@@ -64,9 +64,24 @@ class SoundEngine {
   setEnabled(on: boolean): void {
     this.enabled = on;
     if (!on) this.stopSpeech();
-    if (on) this.installUnlock();
+    if (on) { this.installUnlock(); this.warmPilotVoice(); }
   }
-  setTTS(on: boolean): void { this.tts = on; if (!on) this.stopSpeech(); }
+  setTTS(on: boolean): void { this.tts = on; if (!on) this.stopSpeech(); else this.warmPilotVoice(); }
+
+  /** Pilot voices on and Neural: start the model download a few seconds after the page settles, so the first pilot
+   *  line is already in the neural voice (the browser's voice used to read the first lines while it loaded). */
+  warmPilotVoice(): void {
+    if (typeof window === 'undefined' || this.warmTimer || !this.enabled || !this.tts || pilotVoicePref() !== 'neural') return;
+    this.warmTimer = setTimeout(() => { if (this.enabled && this.tts && pilotVoicePref() === 'neural' && this.neural.state === 'idle') this.loadNeural(); }, 3000);
+  }
+  private warmTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Load the neural voice; then read the lines that waited for it (the browser's voice only if it failed). */
+  private loadNeural(): void {
+    void this.neural.load().then((ok) => {
+      const fresh = this.neuralPending.splice(0).filter((p) => performance.now() - p.at < 8000);
+      for (const p of fresh) ok ? this.neural.say(p.text, p.callsign, p.variant) : this.speakBrowser(p.text, 'PILOT');
+    });
+  }
   setVolume(v: number): void {
     this.volume = Math.max(0, Math.min(1, v));
     if (this.master && this.ctx) this.master.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.01);
@@ -136,14 +151,9 @@ class SoundEngine {
     if (opts.who !== 'ATC' && pilotVoicePref() === 'neural' && this.neural.state !== 'failed') {
       const ctx = this.context();
       if (ctx && ctx.state !== 'running') this.unlock();
-      if (this.neural.state === 'idle') {
-        void this.neural.load().then((ok) => {
-          const fresh = this.neuralPending.splice(0).filter((p) => performance.now() - p.at < 8000);
-          for (const p of fresh) ok ? this.neural.say(p.text, p.callsign, p.variant) : this.speakBrowser(p.text, 'PILOT');
-        });
-      }
+      if (this.neural.state === 'idle') this.loadNeural();
       if (this.neural.say(text, opts.callsign, opts.variant)) return;
-      if (this.neural.state === 'loading' && !this.browserVoice()) {   // no browser voice to bridge the download: wait
+      if (this.neural.state === 'loading') {   // wait for the neural voice (the browser's voice only if it fails to load)
         this.neuralPending.push({ text, callsign: opts.callsign, variant: opts.variant, at: performance.now() });
         if (this.neuralPending.length > 2) this.neuralPending.shift();
         return;

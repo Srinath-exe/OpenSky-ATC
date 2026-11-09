@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Pilot Voice Loopback</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* voice-tts.html's tokens: dark first, like the game. */
+:root {
+  --bg: #0e0f11; --surface: #141416; --raise: #1c1c1e; --line: rgba(255,255,255,.09); --line-strong: rgba(255,255,255,.16);
+  --ink-1: #f4f4f5; --ink-2: #c4c5c8; --ink-3: #a0a1a6; --ink-4: #7f8086;
+  --accent: #f5933f; --accent-tint: rgba(245,147,63,.14); --s-before: #5b8fd6;
+  --good: #57cd50; --good-tint: rgba(87,205,80,.13); --neutral-tint: rgba(255,255,255,.07); --bar: #5f6168;
+  --font: "DM Sans", "Helvetica Neue", Arial, sans-serif; --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12); --s-before: #3f78c2;
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --neutral-tint: rgba(20,20,24,.06); --bar: #9a9ba1;
+  color-scheme: light;
+} }
+:root[data-theme="light"] {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12); --s-before: #3f78c2;
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --neutral-tint: rgba(20,20,24,.06); --bar: #9a9ba1;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink-2); font-family: var(--font); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 72px; }
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2 { color: var(--ink-1); margin: 0; font-weight: 600; letter-spacing: -.01em; text-wrap: balance; }
+h1 { font-size: clamp(26px, 4vw, 34px); }
+h2 { font-size: 18px; }
+p { margin: 0; }
+.lede { color: var(--ink-3); max-width: 70ch; }
+.crumb a { color: var(--ink-4); text-decoration: none; font-size: 13px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
+label { color: var(--ink-3); font-size: 13px; display: grid; gap: 6px; }
+input[type=text], select { font: inherit; color: var(--ink-1); background: var(--raise); border: 1px solid var(--line-strong); border-radius: 8px; padding: 9px 11px; width: 100%; min-width: 0; }
+.row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; color: var(--ink-3); font-size: 14px; }
+.opts label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; }
+button { font: inherit; font-weight: 600; border-radius: 8px; padding: 9px 16px; border: 1px solid var(--line-strong); background: var(--raise); color: var(--ink-1); cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #141416; }
+button:disabled { opacity: .5; cursor: default; }
+#model { font-size: 13px; color: var(--ink-4); }
+#model.err { color: #e5534b; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.tile h3 { margin: 0; font-size: 13px; font-weight: 500; color: var(--ink-3); }
+.big { font-size: 26px; font-weight: 600; color: var(--ink-1); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.sub { font-size: 13px; color: var(--ink-4); font-variant-numeric: tabular-nums; }
+.results { display: grid; gap: 12px; }
+.res { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; }
+.res .said { color: var(--ink-1); font-weight: 500; }
+.res .meta { font-size: 13px; color: var(--ink-4); font-variant-numeric: tabular-nums; }
+.res audio { width: 100%; max-width: 420px; height: 34px; }
+.heard { display: grid; grid-template-columns: 76px 1fr auto; gap: 4px 12px; align-items: baseline; font-size: 14px; }
+.heard .eng { color: var(--ink-3); font-size: 13px; }
+.heard .txt { color: var(--ink-2); overflow-wrap: anywhere; }
+.heard .num { font-family: var(--mono); font-size: 12.5px; color: var(--ink-3); white-space: nowrap; text-align: right; }
+.bad { background: rgba(229,83,75,.18); color: var(--ink-1); border-radius: 3px; padding: 0 2px; }
+.miss { color: #e5534b; text-decoration: line-through; opacity: .85; }
+.ok { color: var(--good); }
+.note { font-size: 13px; color: var(--ink-4); max-width: 75ch; }
+@media (max-width: 640px) {
+  .row { grid-template-columns: 1fr; }
+  .tiles { grid-template-columns: 1fr; }
+  .heard { grid-template-columns: 1fr auto; }
+  .heard .txt { grid-column: 1 / -1; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header style="display:grid;gap:10px">
+    <p class="crumb"><a href="/reports/">← Reports</a></p>
+    <h1>Pilot voice loopback</h1>
+    <p class="lede">A pilot line is spoken by the game's neural pilot voice (Paradee-8M, running in this browser), then written back by our
+      server's recognisers. Each line shows how long every step took and which words came back wrong. Nothing here uses Google.</p>
+  </header>
+
+  <section class="card" aria-label="Line to speak">
+    <div class="row">
+      <label>Pilot line (as the game writes it)<input id="text" type="text" autocomplete="off" spellcheck="false"></label>
+      <label>Callsign (picks the voice; hint for the recognisers)<input id="cs" type="text" autocomplete="off" spellcheck="false" placeholder="BAW327"></label>
+      <label>Voice<select id="voice"><option value="">By callsign, as in the game</option></select></label>
+    </div>
+    <div class="opts">
+      <label><input id="radio" type="checkbox" checked> Radio effect (as in the game)</label>
+      <label><input id="eng-parakeet" type="checkbox" checked> Parakeet</label>
+      <label><input id="eng-whisper" type="checkbox" checked> Whisper</label>
+      <label><input id="hints" type="checkbox" checked> Callsign hints</label>
+    </div>
+    <div class="btns">
+      <button id="go" class="primary" type="button">Speak and transcribe</button>
+      <button id="batch10" type="button">Run 10 game lines</button>
+      <button id="batch60" type="button">Run all 60</button>
+      <button id="stop" type="button" hidden>Stop</button>
+    </div>
+    <p id="model">The voice model loads on the first line (about 12 MB, cached afterwards).</p>
+  </section>
+
+  <section style="display:grid;gap:12px" aria-label="Summary">
+    <h2 id="sumh">Summary</h2>
+    <div class="tiles">
+      <div class="tile"><h3>Pilot voice: time to first sound</h3><div class="big" id="t-first">–</div><div class="sub" id="t-first-s">median per line</div></div>
+      <div class="tile"><h3>Parakeet: words wrong</h3><div class="big" id="t-p">–</div><div class="sub" id="t-p-s">server time, median</div></div>
+      <div class="tile"><h3>Whisper: words wrong</h3><div class="big" id="t-w">–</div><div class="sub" id="t-w-s">server time, median</div></div>
+    </div>
+    <p class="note">Words wrong = word error rate against the text the voice was given, with numbers compared digit by digit
+      ("niner" = "nine" = 9, "fife" = 5, "two seven left" = "27L"). Time to first sound = from the line arriving to the first clause
+      being ready to play (the rest is synthesised while it plays). The server times are the recogniser's own time on our server, not
+      counting the upload.</p>
+  </section>
+
+  <section class="results" id="results" aria-label="Lines"></section>
+</main>
+
+<script type="module">
+import { speakableAtc, speechChunks, voiceFor, PILOT_VOICES, telephony, postStt, wav16 } from '/voice/gen/demo-pipeline.js';
+
+const LINES = [{"t":"Holding point runway two seven left, Sky Dubai two niner fife.","cs":"FDB295","v":"ICAO"},{"t":"Cleared ILS runway three one right, will report established, Air France eight eighty.","cs":"AFR880","v":"FAA"},{"t":"Radar contact, altimeter three zero two one, ILS zero six left, Qantas eight eighty.","cs":"QFA880","v":"FAA"},{"t":"Radar contact, QNH one zero two seven, ILS two six right, Delta eight eight zero.","cs":"DAL880","v":"ICAO"},{"t":"Start-up approved, runway tree zero left, QNH one zero one seven, American seven niner four.","cs":"AAL794","v":"ICAO"},{"t":"Expect ILS zero seven, information Alpha, Scooter four niner six.","cs":"SCO496","v":"ICAO"},{"t":"Departure one two fife decimal two zero zero, good day, Speedbird two four eight.","cs":"BAW248","v":"ICAO"},{"t":"Heading one five two, Air France eight sixty-five.","cs":"AFR865","v":"FAA"},{"t":"Runway two five left, Southwest five twenty-seven.","cs":"SWA527","v":"FAA"},{"t":"Holding position, American seven niner four.","cs":"AAL794","v":"ICAO"},{"t":"Roger, standing by, Virgin fife one.","cs":"VIR51","v":"ICAO"},{"t":"Start-up approved, runway zero seven, QNH one zero two four, Velocity fife four two.","cs":"VOZ542","v":"ICAO"},{"t":"Right heading one niner zero, Speedbird two four eight.","cs":"BAW248","v":"ICAO"},{"t":"Runway three one left, line up and wait, Delta seventy-six.","cs":"DAL76","v":"FAA"},{"t":"Start-up approved, runway zero six right, altimeter three zero two one, Southwest five twenty-seven.","cs":"SWA527","v":"FAA"},{"t":"Hold at CDGNW, as published, right turns, one minute legs, Delta eight six fife.","cs":"DAL865","v":"ICAO"},{"t":"Holding point runway tree zero left via Juliett, Juliett one, Juliett two, Emirates two four eight.","cs":"UAE248","v":"ICAO"},{"t":"Speed one six zero knots, Qantas seven six.","cs":"QFA76","v":"ICAO"},{"t":"Descend flight level seven zero, Speedbird four zero.","cs":"BAW40","v":"ICAO"},{"t":"Cleared to land runway three one right, Delta seventy-six.","cs":"DAL76","v":"FAA"},{"t":"Pushback approved, facing south, expect runway two five left, All Nippon six eighteen.","cs":"ANA618","v":"FAA"},{"t":"Runway two six right, line up and wait, UPS niner seven six.","cs":"UPS976","v":"ICAO"},{"t":"Holding point runway tree zero right, hold short one two right, Sky Dubai two niner fife.","cs":"FDB295","v":"ICAO"},{"t":"Cross runway one six right, wilco, Qantas two four eight.","cs":"QFA248","v":"ICAO"},{"t":"Pushback approved, facing east, expect runway two seven right, Qatari niner tree seven.","cs":"QTR937","v":"ICAO"},{"t":"Cleared to land runway three one left, Lufthansa eight twenty.","cs":"DLH820","v":"FAA"},{"t":"Runway two five left, hold short two five right, Delta two forty-eight.","cs":"DAL248","v":"FAA"},{"t":"Tower one one eight decimal fife zero zero, Lufthansa one fife tree.","cs":"DLH153","v":"ICAO"},{"t":"Expect ILS tree zero right, information Alpha, Emirates seven six.","cs":"UAE76","v":"ICAO"},{"t":"Cleared to land runway zero seven, Emirates eight eight zero.","cs":"UAE880","v":"ICAO"},{"t":"Holding point runway two seven right via Alpha one, Alpha two, Alpha three, Speedbird two six fife.","cs":"BAW265","v":"ICAO"},{"t":"Tower one one eight point five, Sky Dubai two ninety-five.","cs":"FDB295","v":"FAA"},{"t":"Heathrow Ground, Shamrock seven two, ready to taxi, information Alpha.","cs":"EIN72","v":"ICAO"},{"t":"Air France eight eighty, request direct JFKSE.","cs":"AFR880","v":"FAA"},{"t":"Los Angeles Intl Ground, Southwest five twenty-seven, stand Romeo four three, request start-up, information Alpha.","cs":"SWA527","v":"FAA"},{"t":"Paris Charles de Gaulle Approach, Air France tree fife four, ILS runway two six left.","cs":"AFR354","v":"ICAO"},{"t":"Dubai Intl Approach, IFly eight eight zero, ILS runway tree zero right.","cs":"IGO880","v":"ICAO"},{"t":"Sydney Kingsford Smith Approach, Emirates eight eight zero, ILS runway zero seven.","cs":"UAE880","v":"ICAO"},{"t":"Heathrow Tower, Lufthansa one fife tree, holding point runway two seven right, ready for departure.","cs":"DLH153","v":"ICAO"},{"t":"Air France eight eighty, request descent to four thousand.","cs":"AFR880","v":"FAA"},{"t":"Los Angeles Intl Ground, Qantas eight seventy, stand six nine Alpha, request pushback, information Bravo.","cs":"QFA870","v":"FAA"},{"t":"Paris Charles de Gaulle Ground, Air France two four eight, stand India tree four # two, request start-up, information Alpha.","cs":"AFR248","v":"ICAO"},{"t":"Sky Dubai two niner fife, holding short runway one two right, request cross.","cs":"FDB295","v":"ICAO"},{"t":"Sydney Kingsford Smith Departure, Lufthansa one fife tree, passing one thousand niner hundred climbing one tree thousand.","cs":"DLH153","v":"ICAO"},{"t":"Heathrow Approach, Speedbird one one eight, ILS runway two seven left.","cs":"BAW118","v":"ICAO"},{"t":"Lufthansa eight twenty, holding short runway zero four left, request cross.","cs":"DLH820","v":"FAA"},{"t":"Southwest five twenty-eight, standing by.","cs":"SWA528","v":"FAA"},{"t":"Paris Charles de Gaulle Ground, UPS niner seven six, ready to taxi, information Alpha.","cs":"UPS976","v":"ICAO"},{"t":"DLH153 runway 09R/27L vacated","cs":"DLH153","v":"ICAO"},{"t":"JBU248 airborne runway 31L","cs":"JBU248","v":"FAA"},{"t":"SWA542 contact Los Angeles Intl Tower 118.500","cs":"SWA542","v":"FAA"},{"t":"AFR248 start aborted, hot start, request five minutes","cs":"AFR248","v":"ICAO"},{"t":"FDB527 contact Dubai Intl Departure 125.200","cs":"FDB527","v":"ICAO"},{"t":"DLH153 holding short runway 16R","cs":"DLH153","v":"ICAO"},{"t":"VIR527 holding short runway 27L","cs":"VIR527","v":"ICAO"},{"t":"JBU248 rolling runway 31L","cs":"JBU248","v":"FAA"},{"t":"DLH153 runway 07L/25R vacated","cs":"DLH153","v":"FAA"},{"t":"DAL865 contact Paris Charles de Gaulle Tower 118.500","cs":"DAL865","v":"ICAO"},{"t":"FDB527 rolling runway 30R","cs":"FDB527","v":"ICAO"},{"t":"DLH153 holding short runway 07","cs":"DLH153","v":"ICAO"}];
+const $ = (id) => document.getElementById(id);
+for (const v of PILOT_VOICES) { const o = document.createElement('option'); o.value = v; o.textContent = v; $('voice').append(o); }
+$('text').value = LINES[0].t; $('cs').value = LINES[0].cs;
+
+// ── the voice model (the game's worker) ──
+let worker = null, ready = null, seq = 0;
+const waiting = new Map();
+function setModel(msg, err = false) { $('model').textContent = msg; $('model').classList.toggle('err', err); }
+function loadVoice() {
+  if (ready) return ready;
+  const t0 = performance.now();
+  setModel('Loading the voice model…');
+  worker = new Worker('/voice/tts-worker.js', { type: 'module' });
+  ready = new Promise((resolve, reject) => {
+    worker.onmessage = (e) => {
+      const m = e.data;
+      if (m.type === 'ready') { setModel(`Voice model ready in ${((performance.now() - t0) / 1000).toFixed(1)} s (the first visit includes the download).`); resolve(); return; }
+      const w = waiting.get(m.id);
+      if (w) { waiting.delete(m.id); w(m); } else if (m.type === 'error') reject(new Error(m.message));
+    };
+    worker.onerror = (e) => reject(new Error(e.message || 'worker error'));
+  }).catch((e) => { setModel(`The voice model did not load: ${e.message}`, true); ready = null; throw e; });
+  worker.postMessage({ type: 'load', id: ++seq });
+  return ready;
+}
+const synth = (text, voice, speed) => new Promise((resolve) => { const id = ++seq; waiting.set(id, resolve); worker.postMessage({ type: 'speak', id, text, voice, speed }); });
+
+// ── the game's radio: band-pass 300-3400 Hz, soft clip, compression, a little hiss (pilotVoice.ts), rendered at 16 kHz ──
+async function render(pcm24, detune, radio) {
+  const rate = Math.pow(2, detune / 1200), RATE = 16000;
+  const len = Math.ceil((pcm24.length / 24000 / rate + 0.15) * RATE);
+  const ctx = new OfflineAudioContext(1, len, RATE);
+  let peak = 0; for (const v of pcm24) peak = Math.max(peak, Math.abs(v));
+  const buf = ctx.createBuffer(1, pcm24.length, 24000), d = buf.getChannelData(0);
+  const g = peak > 0 ? 0.94 / peak : 1; for (let i = 0; i < pcm24.length; i++) d[i] = pcm24[i] * g;
+  const src = ctx.createBufferSource(); src.buffer = buf; src.detune.value = detune;
+  if (!radio) src.connect(ctx.destination);
+  else {
+    const bq = (type, f) => { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = 0.7071; return b; };
+    const input = ctx.createGain(); input.gain.value = 0.9;
+    const hp1 = bq('highpass', 300), hp2 = bq('highpass', 300), lp1 = bq('lowpass', 3400), lp2 = bq('lowpass', 3400);
+    const shaper = ctx.createWaveShaper(); const curve = new Float32Array(1024);
+    for (let i = 0; i < curve.length; i++) { const x = (i / (curve.length - 1)) * 2 - 1; curve[i] = Math.tanh(2.5 * x) / Math.tanh(2.5); }
+    shaper.curve = curve; shaper.oversample = '2x';
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -20; comp.knee.value = 10; comp.ratio.value = 3; comp.attack.value = 0.004; comp.release.value = 0.15;
+    const out = ctx.createGain(); out.gain.value = 0.85;
+    const nb = ctx.createBuffer(1, RATE, RATE), nd = nb.getChannelData(0); let seed = 0x2545f491;
+    for (let i = 0; i < RATE; i++) { seed = (seed * 1664525 + 1013904223) >>> 0; nd[i] = (seed / 4294967296) * 2 - 1; }
+    const ns = ctx.createBufferSource(); ns.buffer = nb; ns.loop = true; const ng = ctx.createGain(); ng.gain.value = 0.02;
+    src.connect(input); input.connect(hp1); ns.connect(ng); ng.connect(hp1);
+    hp1.connect(hp2); hp2.connect(lp1); lp1.connect(lp2); lp2.connect(shaper); shaper.connect(comp); comp.connect(out); out.connect(ctx.destination);
+    ns.start();
+  }
+  src.start();
+  return (await ctx.startRendering()).getChannelData(0).slice();
+}
+
+// ── scoring: words, numbers digit by digit ──
+const DIG = { zero: '0', oh: '0', one: '1', two: '2', three: '3', tree: '3', four: '4', fower: '4', five: '5', fife: '5', six: '6', seven: '7', eight: '8', nine: '9', niner: '9' };
+const TEEN = { ten: '10', eleven: '11', twelve: '12', thirteen: '13', fourteen: '14', fifteen: '15', sixteen: '16', seventeen: '17', eighteen: '18', nineteen: '19' };
+const TENS = { twenty: '2', thirty: '3', forty: '4', fifty: '5', sixty: '6', seventy: '7', eighty: '8', ninety: '9' };
+const SIDE = { l: 'left', r: 'right', c: 'center' };
+function words(s) {
+  const raw = s.toLowerCase().replace(/(\d)\s*-\s*(\d)/g, '$1 $2').replace(/[-–]/g, ' ').replace(/(\d),(\d{3})/g, '$1$2')
+    .replace(/[^a-z0-9.\s]/g, ' ').replace(/\.(?!\d)/g, ' ').split(/\s+/).filter(Boolean);
+  const out = [];
+  for (let i = 0; i < raw.length; i++) {
+    const t = raw[i];
+    let m;
+    if ((m = t.match(/^(\d+)([lrc])$/))) { out.push(...m[1].split(''), SIDE[m[2]]); continue; }
+    if ((m = t.match(/^(\d+)\.(\d+)$/))) { out.push(...m[1].split(''), 'point', ...m[2].split('')); continue; }
+    if (/^\d+$/.test(t)) { out.push(...t.split('')); continue; }
+    if (t === 'decimal' || t === 'point') { out.push('point'); continue; }
+    if (t === 'thousand') { out.push('0', '0', '0'); continue; }
+    if (t === 'hundred') { out.push('0', '0'); continue; }
+    if (DIG[t]) { out.push(DIG[t]); continue; }
+    if (TEEN[t]) { out.push(...TEEN[t].split('')); continue; }
+    if (TENS[t]) { const n = raw[i + 1]; if (n && DIG[n] && DIG[n] !== '0') { out.push(TENS[t], DIG[n]); i++; } else out.push(TENS[t], '0'); continue; }
+    if (t === 'fl') { out.push('flight', 'level'); continue; }
+    out.push(t);
+  }
+  return out;
+}
+/** Word alignment: errors, and the heard words marked (substituted / inserted) plus the reference words missed. */
+function align(ref, hyp) {
+  const n = ref.length, m = hyp.length, D = Array.from({ length: n + 1 }, (_, i) => { const r = new Array(m + 1).fill(0); r[0] = i; return r; });
+  for (let j = 0; j <= m; j++) D[0][j] = j;
+  for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++) D[i][j] = Math.min(D[i - 1][j] + 1, D[i][j - 1] + 1, D[i - 1][j - 1] + (ref[i - 1] === hyp[j - 1] ? 0 : 1));
+  const ops = []; let i = n, j = m;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && D[i][j] === D[i - 1][j - 1] + (ref[i - 1] === hyp[j - 1] ? 0 : 1)) { ops.push({ w: hyp[j - 1], k: ref[i - 1] === hyp[j - 1] ? 'ok' : 'sub' }); i--; j--; }
+    else if (j > 0 && D[i][j] === D[i][j - 1] + 1) { ops.push({ w: hyp[j - 1], k: 'ins' }); j--; }
+    else { ops.push({ w: ref[i - 1], k: 'del' }); i--; }
+  }
+  return { errors: D[n][m], n, ops: ops.reverse() };
+}
+
+// ── one line ──
+const runs = [];
+const median = (a) => { const s = a.filter((x) => x != null).sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : null; };
+const ENGINES = [['parakeet', 'Parakeet'], ['whisper', 'Whisper']];
+async function runLine(text, cs, variant = 'ICAO') {
+  await loadVoice();
+  const spoken = speakableAtc(text, variant);
+  const parts = speechChunks(spoken);
+  if (!parts.length) throw new Error('Nothing to say: type a pilot line.');
+  const pv = voiceFor(cs || text.split(/[ ,]/)[0] || '');
+  const voice = $('voice').value || pv.voice;
+  const radio = $('radio').checked;
+  const t0 = performance.now();
+  const pending = parts.map((p) => synth(p, voice, pv.speed));
+  const first = await pending[0]; const tFirst = performance.now() - t0;
+  const chunks = [first, ...(await Promise.all(pending.slice(1)))];
+  const tAll = performance.now() - t0;
+  const failed = chunks.find((c) => c.type !== 'audio');
+  if (failed) throw new Error(failed.message || 'synthesis failed');
+  const gap = new Float32Array(Math.round(0.06 * 24000));
+  const pcm = new Float32Array(chunks.reduce((s, c) => s + c.pcm.length + gap.length, 0)); let o = 0;
+  for (const c of chunks) { pcm.set(c.pcm, o); o += c.pcm.length + gap.length; }
+  const audioS = pcm.length / 24000;
+  const audio = await render(pcm, $('voice').value ? 0 : pv.detune, radio);
+  const run = { spoken, voice, radio, tFirst, tAll, audioS, modelMs: chunks.reduce((s, c) => s + (c.ms || 0), 0), audio, stt: {} };
+  runs.unshift(run); draw();
+  const ref = words(spoken);
+  const names = $('hints').checked && cs ? [telephony(cs, variant).toLowerCase()] : [];
+  for (const [eng] of ENGINES) {
+    if (!$('eng-' + eng).checked) continue;
+    const r0 = performance.now();
+    try {
+      const r = await postStt(audio, names, eng, 30000);
+      run.stt[eng] = { text: r.text, ms: r.ms, rtt: performance.now() - r0, ...align(ref, words(r.text)) };
+    } catch (e) { run.stt[eng] = { error: e.message }; }
+    draw();
+  }
+  return run;
+}
+
+// ── drawing ──
+let audioUrls = new WeakMap();
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function draw() {
+  const box = $('results'); box.textContent = '';
+  for (const r of runs.slice(0, 80)) {
+    const c = el('article', 'res');
+    c.append(el('p', 'said', r.spoken));
+    c.append(el('p', 'meta', `${r.voice}${r.radio ? ', radio' : ', dry'} · first sound ${Math.round(r.tFirst)} ms · whole line ${Math.round(r.tAll)} ms for ${r.audioS.toFixed(1)} s of speech (${(r.audioS / (r.tAll / 1000)).toFixed(1)}× real time)`));
+    if (!audioUrls.has(r)) audioUrls.set(r, URL.createObjectURL(wav16(r.audio)));
+    const a = el('audio'); a.controls = true; a.preload = 'none'; a.src = audioUrls.get(r); c.append(a);
+    const h = el('div', 'heard');
+    for (const [eng, name] of ENGINES) {
+      const s = r.stt[eng]; if (!s) continue;
+      h.append(el('span', 'eng', name));
+      const t = el('span', 'txt');
+      if (s.error) t.textContent = `error: ${s.error}`;
+      else if (!s.errors) { t.textContent = s.text; t.classList.add('ok'); }
+      else for (const op of s.ops) { t.append(el('span', op.k === 'ok' ? '' : op.k === 'del' ? 'miss' : 'bad', op.w), ' '); }
+      h.append(t);
+      h.append(el('span', 'num', s.error ? '' : `${Math.round((100 * s.errors) / Math.max(1, s.n))}% · ${s.ms != null ? Math.round(s.ms) : '?'} ms`));
+    }
+    c.append(h); box.append(c);
+  }
+  // summary
+  const done = runs.filter((r) => r.tFirst != null);
+  $('sumh').textContent = `Summary (${done.length} line${done.length === 1 ? '' : 's'})`;
+  if (done.length) {
+    $('t-first').textContent = `${Math.round(median(done.map((r) => r.tFirst)))} ms`;
+    const rtf = done.reduce((s, r) => s + r.audioS, 0) / (done.reduce((s, r) => s + r.tAll, 0) / 1000);
+    $('t-first-s').textContent = `median per line · whole lines at ${rtf.toFixed(1)}× real time`;
+  }
+  for (const [eng, , id] of [['parakeet', 'Parakeet', 't-p'], ['whisper', 'Whisper', 't-w']]) {
+    const ss = runs.map((r) => r.stt[eng]).filter((s) => s && !s.error);
+    if (!ss.length) continue;
+    const e = ss.reduce((a, s) => a + s.errors, 0), n = ss.reduce((a, s) => a + s.n, 0);
+    $(id).textContent = `${(100 * e / Math.max(1, n)).toFixed(1)}%`;
+    const perfect = ss.filter((s) => !s.errors).length;
+    $(id + '-s').textContent = `${perfect} of ${ss.length} lines perfect · ${Math.round(median(ss.map((s) => s.ms)))} ms server time, median`;
+  }
+}
+
+// ── controls ──
+let stop = false, busy = false;
+function setBusy(b) { busy = b; for (const id of ['go', 'batch10', 'batch60']) $(id).disabled = b; $('stop').hidden = !b; }
+async function guard(fn) { if (busy) return; setBusy(true); stop = false; try { await fn(); } catch (e) { setModel(e.message, true); } finally { setBusy(false); } }
+$('go').addEventListener('click', () => guard(() => runLine($('text').value.trim(), $('cs').value.trim().toUpperCase())));
+$('text').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('go').click(); });
+const batch = (n) => guard(async () => {
+  const pick = LINES.slice().sort(() => Math.random() - 0.5).slice(0, n);
+  for (const [i, l] of pick.entries()) { if (stop) break; setModel(`Line ${i + 1} of ${pick.length}…`); await runLine(l.t, l.cs, l.v); }
+  setModel(stop ? 'Stopped.' : `Done: ${pick.length} game lines.`);
+});
+$('batch10').addEventListener('click', () => batch(10));
+$('batch60').addEventListener('click', () => batch(60));
+$('stop').addEventListener('click', () => { stop = true; });
+</script>
+</body>
+</html>
