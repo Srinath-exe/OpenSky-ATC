@@ -16,8 +16,18 @@ const nextConfig = {
       // transformers.js imports its own sharp (0.35, libvips 8.18) at load; the tracer misses the native libraries
       './node_modules/@huggingface/transformers/node_modules/@img/sharp-linux-x64/**/*',
       './node_modules/@huggingface/transformers/node_modules/@img/sharp-libvips-linux-x64/**/*',
+      // Parakeet (engine.ts) runs on sherpa-onnx-node: its addon picks the platform package by a computed path, and the
+      // addon loads its own onnxruntime and sherpa libraries from beside it ($ORIGIN)
+      './node_modules/sherpa-onnx-node/package.json',
+      './node_modules/sherpa-onnx-node/*.js',
+      './node_modules/sherpa-onnx-linux-x64/package.json',
+      './node_modules/sherpa-onnx-linux-x64/index.js',
+      './node_modules/sherpa-onnx-linux-x64/sherpa-onnx.node',
+      './node_modules/sherpa-onnx-linux-x64/*.so',
     ],
   },
+  // a native addon: required at run time from node_modules, never bundled
+  serverExternalPackages: ['sherpa-onnx-node'],
   // /api/voice/gold reads and writes ml/data/gold of the checkout at run time (outside the bundle); without this the
   // tracer copies all of ml/ (datasets, checkpoints) and mobile/ (Flutter build) into .next/standalone (~5 GB).
   outputFileTracingExcludes: {

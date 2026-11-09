@@ -128,6 +128,9 @@ def main():
     for k, f in (('latency_quiet', sys.argv[3] if len(sys.argv) > 3 else ''), ('latency_cascade_est', sys.argv[4] if len(sys.argv) > 4 else '')):
         if f and os.path.exists(f): out[k] = json.load(open(f))
     dst = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'server.json')
+    if os.path.exists(dst):   # the report's text (build_report.py) is written by hand: keep it
+        old = json.load(open(dst))
+        out.update({k: old[k] for k in ('title', 'updated', 'lede', 'headline', 'best', 'shipped', 'failed', 'notes', 'method') if k in old})
     json.dump(out, open(dst, 'w'), indent=1)
     print(f"{'engine':28} {'US exact':>8} {'wrong':>6} {'cs':>5} {'WER':>5} | {'IN exact':>8} {'wrong':>6} {'cs':>5} {'WER':>5} | {'p50':>5} {'p95':>5} {'RSS':>5}")
     for n, e in out['engines'].items():

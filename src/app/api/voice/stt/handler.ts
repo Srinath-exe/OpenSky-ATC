@@ -8,6 +8,8 @@
     time      12 s per request, then 504 (the model keeps the CPU it already has; no pile-up behind it)
   Audio: raw 16-bit little-endian PCM at 16 kHz (Content-Type audio/l16 or application/octet-stream) or a 16 kHz WAV.
   Biasing: X-STT-Names = encodeURIComponent(JSON.stringify(["speedbird 963", ...])), the callsigns on frequency.
+  Engine: ?engine=parakeet|whisper or X-STT-Engine; without one, OPENATC_STT_FIRST (default parakeet; whisper = Whisper
+  only, as before the cascade). Both engines share the guards above and the one inference slot.
 */
 
 export const STT_LIMITS = { maxBytes: 1_000_000, maxSeconds: 15, minSeconds: 0.2, perMinute: 30, burst: 10, queue: 4, timeoutMs: 12_000, maxNames: 40 };
@@ -85,6 +87,21 @@ export function parseNames(header: string | null): string[] {
   return v.filter((x): x is string => typeof x === 'string').map((x) => x.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40)).filter(Boolean).slice(0, STT_LIMITS.maxNames);
 }
 
+export type SttEngineId = 'parakeet' | 'whisper';
+
+/** The server's first pass: OPENATC_STT_FIRST=whisper restores Whisper alone; anything else is Parakeet. */
+export function firstEngine(env: Record<string, string | undefined> = process.env): SttEngineId {
+  return env.OPENATC_STT_FIRST?.trim().toLowerCase() === 'whisper' ? 'whisper' : 'parakeet';
+}
+
+/** The engine a request asks for (?engine= first, then X-STT-Engine), else the server's first pass. */
+export function pickEngine(req: Request, env: Record<string, string | undefined> = process.env): SttEngineId {
+  let asked: string | null = null;
+  try { asked = new URL(req.url).searchParams.get('engine'); } catch { /* relative url */ }
+  const v = (asked || req.headers.get('x-stt-engine') || '').trim().toLowerCase();
+  return v === 'parakeet' || v === 'whisper' ? v : firstEngine(env);
+}
+
 export function clientKey(h: Headers): string {
   return h.get('x-real-ip') || h.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
 }
@@ -104,10 +121,12 @@ async function readLimited(req: Request, max: number): Promise<Uint8Array | null
 }
 
 export interface SttDeps {
-  transcribe: (audio: Float32Array, names: string[], alternatives: boolean) => Promise<{ text: string; alternatives: string[]; ms: number; model: string }>;
+  transcribe: (audio: Float32Array, names: string[], alternatives: boolean, engine: SttEngineId) => Promise<{ text: string; alternatives: string[]; ms: number; model: string }>;
   limiter: RateLimiter;
   gate: Gate;
   timeoutMs?: number;
+  /** For OPENATC_STT_FIRST (tests pass their own). */
+  env?: Record<string, string | undefined>;
 }
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
@@ -125,13 +144,14 @@ export async function handleStt(req: Request, deps: SttDeps): Promise<Response> 
   if (sec < STT_LIMITS.minSeconds) return json({ text: '', alternatives: [], ms: 0, model: null });
   const names = parseNames(req.headers.get('x-stt-names'));
   const alternatives = req.headers.get('x-stt-alts') !== '0';
+  const engine = pickEngine(req, deps.env);
   const t0 = Date.now();
   let timer: ReturnType<typeof setTimeout> | null = null;
   try {
     let answered = false;   // set when the request has already been answered (timeout): a queued job is then skipped
     const job = deps.gate.run(async () => {
       if (answered) throw new Error('abandoned');
-      const q = Date.now() - t0; return { ...(await deps.transcribe(audio, names, alternatives)), queueMs: q };
+      const q = Date.now() - t0; return { ...(await deps.transcribe(audio, names, alternatives, engine)), queueMs: q };
     });
     const timeout = new Promise<never>((_, rej) => { timer = setTimeout(() => { answered = true; rej(new Error('timeout')); }, deps.timeoutMs ?? STT_LIMITS.timeoutMs); });
     job.catch(() => undefined);

@@ -7,9 +7,10 @@
 
   Push-to-talk drives it: start() on PTT down, stop() on release; the final transcript arrives through onFinal
   (a short grace period lets the recogniser flush the last words).
-  `server`: src/lib/voice/asr-server.ts (Whisper on this site's server, biased with the callsigns on frequency).
+  `server`: src/lib/voice/asr-server.ts (Parakeet, then Whisper, on this site's server, biased with the callsigns on frequency).
 */
 import { createMicCapture } from './asr-capture';
+import type { Understood } from './asr-server';
 
 export interface Recognizer {
   readonly kind: VoiceEngine;
@@ -22,9 +23,10 @@ export interface Recognizer {
   alternatives?: string[];
   /** The callsigns on frequency as spoken ("speedbird 963"), set on PTT down: biasing for engines that support it. */
   setHints?(names: string[]): void;
-  /** More guesses for the last utterance from another engine, asked only when the first guesses were not understood
-   *  (asr-server.ts withServerSecondOpinion). */
-  secondOpinion?(): Promise<string[]>;
+  /** A second reading of the last utterance by the server's engines, asked only when the first guesses were not
+   *  understood (asr-server.ts cascadeStt): `understand` reads a list of guesses; the best reading comes back with every
+   *  guess the server made. */
+  secondOpinion?<U extends Understood>(understand: (alts: string[]) => Promise<U | null>): Promise<{ result: U | null; alts: string[] }>;
   /** The last transmission's audio (16 kHz mono) when this recogniser records it itself, for the owner's live-attempt log. */
   lastAudio?(): Promise<Float32Array | null>;
 }

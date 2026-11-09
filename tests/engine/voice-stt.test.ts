@@ -7,9 +7,11 @@ import * as path from 'node:path';
 import { repairTranscript, phoneticKey, aircraftFromContext, normaliseTokens, runDigits } from '../../src/lib/voice/asr-repair';
 import { understandHeard } from '../../src/lib/voice/asr-nbest';
 import { understand } from '../../src/lib/voice/understand';
-import { handleStt, RateLimiter, Gate, decodeAudio, parseNames, STT_LIMITS } from '../../src/app/api/voice/stt/handler';
-import type { SttDeps } from '../../src/app/api/voice/stt/handler';
-import { buildPrompt } from '../../src/app/api/voice/stt/engine';
+import { handleStt, RateLimiter, Gate, decodeAudio, parseNames, pickEngine, firstEngine, STT_LIMITS } from '../../src/app/api/voice/stt/handler';
+import type { SttDeps, SttEngineId } from '../../src/app/api/voice/stt/handler';
+import { buildPrompt, bpeVocab, hotwordsFor, parakeetConfig, parakeetReady } from '../../src/app/api/voice/stt/engine';
+import { cascadeStt, better } from '../../src/lib/voice/asr-server';
+import type { SttEngine, SttReply } from '../../src/lib/voice/asr-server';
 
 const CTX = ['@APP 27L', 'BAW273 speedbird 273 ARR APP approach 9000ft h270 27L', 'AFR684 air france 684 ARR APP approach 11000ft h090 27L',
   'UAL335 united 335 DEP TWR lineup h270 27L', 'DAL572 delta 572 DEP GND taxi h180 27L', 'QFA76 qantas 76 ARR APP approach 7000ft h010 27L',
@@ -197,4 +199,99 @@ test('server prompt lists the callsigns as Whisper should write them', () => {
   const p = buildPrompt(['speedbird 273', 'air france 684', 'speedbird 273']);
   assert.match(p, /Speedbird 273, Air France 684\./);
   assert.equal(buildPrompt([]), '');
+});
+
+// ---------- two server engines: Parakeet first, Whisper when not understood (ml/stt/models/SERVER.md) ----------
+test('stt engine: ?engine= or X-STT-Engine picks it, else OPENATC_STT_FIRST (default parakeet)', async () => {
+  const r = (q = '', h: Record<string, string> = {}) => new Request(`http://x/api/voice/stt${q}`, { method: 'POST', headers: h });
+  assert.equal(firstEngine({}), 'parakeet');
+  assert.equal(firstEngine({ OPENATC_STT_FIRST: 'whisper' }), 'whisper');
+  assert.equal(firstEngine({ OPENATC_STT_FIRST: 'nonsense' }), 'parakeet');
+  assert.equal(pickEngine(r(), {}), 'parakeet');
+  assert.equal(pickEngine(r(), { OPENATC_STT_FIRST: ' Whisper ' }), 'whisper');
+  assert.equal(pickEngine(r('?engine=whisper'), {}), 'whisper');
+  assert.equal(pickEngine(r('?engine=parakeet'), { OPENATC_STT_FIRST: 'whisper' }), 'parakeet', 'the request wins over the default');
+  assert.equal(pickEngine(r('', { 'x-stt-engine': 'WHISPER' }), {}), 'whisper');
+  assert.equal(pickEngine(r('?engine=parakeet', { 'x-stt-engine': 'whisper' }), {}), 'parakeet', 'the query wins over the header');
+  assert.equal(pickEngine(r('?engine=gpt', { 'x-stt-engine': 'x' }), { OPENATC_STT_FIRST: 'whisper' }), 'whisper', 'unknown: the default');
+  // the route hands the choice to the engine, behind the same guards
+  const seen: SttEngineId[] = [];
+  const d = deps({ env: { OPENATC_STT_FIRST: 'whisper' }, transcribe: async (_a, _n, _alt, engine) => { seen.push(engine); return { text: '', alternatives: [], ms: 1, model: engine }; } });
+  await handleStt(req(pcm(1)), d);
+  await handleStt(new Request('http://x/api/voice/stt?engine=parakeet', { method: 'POST', body: pcm(1) as unknown as BodyInit, headers: { 'content-type': 'audio/l16' } }), d);
+  assert.deepEqual(seen, ['whisper', 'parakeet']);
+});
+
+test('parakeet hotwords: telephony words of the callsigns on frequency, lower and title case, at most 25', () => {
+  assert.equal(hotwordsFor(['speedbird 273', 'air france 684', 'speedbird 50', 'n123ab', '42']), 'speedbird/Speedbird/air france/Air France/n123ab/N123ab');
+  assert.equal(hotwordsFor([]), '');
+  const many = Array.from({ length: 40 }, (_, i) => `airline${String.fromCharCode(97 + (i % 26))}${i >= 26 ? 'x' : ''} ${i}`);
+  assert.equal(hotwordsFor(many).split('/').length, 50);
+  // the sentencepiece-style vocab sherpa needs, from the model's tokens.txt (as ml/stt/models/srv_run.py writes it)
+  assert.equal(bpeVocab('<unk> 0\n<|nospeech|> 1\n▁the 2\ns 3\n▁Speed 4\n'), '▁the\t-1\ns\t-1\n▁Speed\t-1\n');
+  assert.equal(parakeetReady({ dir: '/nonexistent/parakeet', threads: 2 }), false);
+  assert.match(parakeetConfig({ OPENATC_STT_CACHE: '/c' }).dir, /^\/c\/parakeet-ultra-int8$/);
+  assert.equal(parakeetConfig({ OPENATC_STT_PARAKEET_DIR: '/m', OPENATC_STT_THREADS: '9' }).dir, '/m');
+  assert.equal(parakeetConfig({ OPENATC_STT_THREADS: '9' }).threads, 3, 'never more than 3 threads');
+});
+
+/** A fake server: each engine's guesses for the one transmission, and the calls it got. */
+function fakeServer(replies: Partial<Record<SttEngine | 'default', SttReply | Error>>) {
+  const calls: { engine: SttEngine | undefined; names: string[]; samples: number }[] = [];
+  const post = async (audio: Float32Array, names: string[], engine?: SttEngine): Promise<SttReply> => {
+    calls.push({ engine, names, samples: audio.length });
+    const r = replies[engine ?? 'default'];
+    if (!r) throw new Error('no reply');
+    if (r instanceof Error) throw r;
+    return r;
+  };
+  return { post, calls };
+}
+const reply = (model: string, ...alternatives: string[]): SttReply => ({ text: alternatives[0] ?? '', alternatives, ms: 1, model });
+const read = (alts: string[]) => understandHeard(alts, PCTX, 0, null, STATE);
+const AUDIO = new Float32Array(16000);
+
+test('stt cascade: Parakeet understood -> Whisper is not asked', async () => {
+  const s = fakeServer({ default: reply('parakeet-ultra-int8', 'Speedbird 273 climb one three thousand') });
+  const r = await cascadeStt(AUDIO, ['speedbird 273'], read, { post: s.post });
+  assert.equal(r.result?.ok, true); assert.match(r.result?.line ?? '', /^BAW273 /);
+  assert.deepEqual(s.calls.map((c) => c.engine), [undefined], 'one request, to the server\'s first pass');
+  assert.deepEqual(r.alts, ['Speedbird 273 climb one three thousand']);
+});
+
+test('stt cascade: not understood -> Whisper on the same audio, both lists read together', async () => {
+  const s = fakeServer({ default: reply('parakeet-ultra-int8', 'Speed bird to 73 a climb lever 130'), whisper: reply('whisper-base.en', 'Speedbird 2, 73, Climb 1, 3000.', 'speed bird 273 climb') });
+  const lists: string[][] = [];
+  const r = await cascadeStt(AUDIO, ['speedbird 273'], (a) => { lists.push(a); return read(a); }, { post: s.post });
+  assert.deepEqual(s.calls.map((c) => c.engine), [undefined, 'whisper']);
+  assert.ok(s.calls.every((c) => c.samples === AUDIO.length && c.names[0] === 'speedbird 273'), 'same audio and callsigns');
+  assert.deepEqual(lists[1], ['Speed bird to 73 a climb lever 130', 'Speedbird 2, 73, Climb 1, 3000.', 'speed bird 273 climb'], 'interleaved, Parakeet first');
+  assert.equal(r.result?.ok, true); assert.match(r.result?.line ?? '', /^BAW273 /);
+  assert.equal(r.alts.length, 3);
+});
+
+test('stt cascade: Whisper already answered, failures and the Server recogniser\'s own first pass', async () => {
+  // the server's first pass was Whisper (OPENATC_STT_FIRST=whisper, or no Parakeet files): no second request
+  let s = fakeServer({ default: reply('whisper-base.en', 'delta 582 roger'), whisper: reply('whisper-base.en', 'x') });
+  let r = await cascadeStt(AUDIO, [], read, { post: s.post });
+  assert.equal(s.calls.length, 1); assert.equal(r.result?.ok, false);
+  // Parakeet failed (busy, timed out): Whisper still gets the audio; the error is reported
+  s = fakeServer({ default: new Error('speech server busy, try again'), whisper: reply('whisper-base.en', 'speedbird 273 climb one three thousand') });
+  r = await cascadeStt(AUDIO, [], read, { post: s.post });
+  assert.deepEqual(s.calls.map((c) => c.engine), [undefined, 'whisper']); assert.equal(r.result?.ok, true); assert.match(r.error ?? '', /busy/);
+  // both failed: nothing, no throw
+  s = fakeServer({});
+  r = await cascadeStt(AUDIO, [], read, { post: s.post });
+  assert.equal(r.result, null); assert.deepEqual(r.alts, []);
+  // the Server recogniser already has Parakeet's reply (and the game already read it): only Whisper is asked
+  s = fakeServer({ whisper: reply('whisper-base.en', 'speedbird 273 climb one three thousand') });
+  r = await cascadeStt(AUDIO, [], read, { post: s.post, asked: reply('parakeet-ultra-int8', 'speed bird 274 climb') });
+  assert.deepEqual(s.calls.map((c) => c.engine), ['whisper']); assert.equal(r.result?.ok, true);
+  assert.deepEqual(r.alts, ['speed bird 274 climb', 'speedbird 273 climb one three thousand']);
+});
+
+test('stt cascade: the later reading wins only when understood or more confident', () => {
+  const a = { ok: false, confidence: 0.6 }, b = { ok: false, confidence: 0.4 }, c = { ok: true, confidence: 0.1 };
+  assert.equal(better(a, b), a); assert.equal(better(b, a), a); assert.equal(better(a, c), c);
+  assert.equal(better(null, b), b); assert.equal(better(a, null), a); assert.equal(better(null, null), null);
 });

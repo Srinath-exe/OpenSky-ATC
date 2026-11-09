@@ -1,9 +1,15 @@
 # Server speech-to-text: small CPU models, 2026-11-09
 
-This is a measurement only; nothing in the game or the server changed. The candidates are recognisers that could replace or
-join the server engine, which today is Whisper base.en through transformers.js in the Next process
+This was a measurement; the change it led to is under "Shipped" below. The candidates are recognisers that could replace or
+join the server engine, which was Whisper base.en through transformers.js in the Next process
 (`src/app/api/voice/stt/engine.ts`). They run on this VPS's CPU (AMD EPYC 9354P, 8 cores, AVX-512 VNNI, no GPU) at 3 threads,
 one utterance at a time. All numbers are in `server.json`.
+
+**Shipped (2026-11-09, after the measurement):** the cascade below, Parakeet Ultra int8 through sherpa-onnx-node with
+the callsign hotwords first and Whisper base.en only when the game cannot understand its guesses, is now the server
+engine (`src/app/api/voice/stt/engine.ts`, `src/lib/voice/asr-server.ts` `cascadeStt`; `OPENATC_STT_FIRST=whisper` turns it
+off). The model files are copied once to `~/.cache/openatc-stt/parakeet-ultra-int8`; the setup, the standalone check and
+the measured latency are in `ml/stt/RESULTS2.md` ("Server first pass").
 
 ## Bottom line
 

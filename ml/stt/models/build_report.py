@@ -118,6 +118,54 @@ def ul(title, items):
     return f'<div class="block"><h3>{E(title)}</h3><ul>' + "".join(f"<li>{x}</li>" for x in items) + "</ul></div>"
 
 
+# server.json is srv_summarize.py's output ({"engines": {...}, "latency_quiet": {...}, ...}) plus the report's text keys:
+# its rows are built here, these engines in this order (name, where, latency_quiet key, cascade estimate key)
+SERVER_ROWS = [
+    ("srv-casc1-ultra-sherpa", "Parakeet Ultra, then Whisper (shipped)", "server, Node", None, "ultra-sherpa"),
+    ("srv-tjs-whisper-base.en", "Whisper base.en (before)", "server, Node", "tjs-whisper-base.en-alts", None),
+    ("srv-casc-granite", "Granite TurboCTC, then Whisper", "server", None, "granite"),
+    ("srv-casc1-phonon", "Phonon-2.5-English, then Whisper", "server, Python sidecar", None, "phonon"),
+    ("srv-casc-p110-sherpa", "Parakeet 110M, then Whisper", "server, Node", None, "p110-sherpa"),
+    ("srv-casc-redux-sherpa", "Parakeet Redux, then Whisper", "server, Node", None, None),
+    ("srv-granite", "Granite Speech 5.0 TurboCTC", "server, Python", "granite", None),
+    ("srv-phonon", "Phonon-2.5-English", "server, Python sidecar", "phonon", None),
+    ("srv-ultra-sherpa", "Parakeet Ultra int8", "server, Node", "ultra-sherpa", None),
+    ("srv-redux-sherpa", "Parakeet Redux int8", "server, Node", "redux-sherpa", None),
+    ("srv-ultra-onnxasr", "Parakeet Ultra int8 (onnx-asr, greedy)", "server, Python", "ultra-greedy", None),
+    ("srv-redux-photon", "Parakeet Redux ternary (Photon)", "server, Python", None, None),
+    ("srv-p110-sherpa", "Parakeet TDT-CTC 110M int8", "server, Node", "p110-sherpa", None),
+    ("srv-hima", "Hima-ASR int8", "server, Python", "hima", None),
+    ("srv-canary180", "Canary-180M-Flash int8", "server, Python", "canary180", None),
+    ("nemo-salm-context", "Nemotron 3.5 Transcribe 30B (reference)", "GPU (L4)", None, None),
+    ("webspeech-google", "Google Web Speech (reference)", "browser, Google", None, None),
+]
+
+
+def server_rows(d):
+    eng, lat, est = d.get("engines", {}), d.get("latency_quiet", {}), d.get("latency_cascade_est", {})
+    rows = []
+    for key, name, where, lk, ek in SERVER_ROWS:
+        e = eng.get(key)
+        if not e:
+            continue
+        info = e.get("info") or {}
+        first = eng.get(key.replace("srv-casc1-", "srv-").replace("srv-casc-", "srv-"), {}).get("info", {}) if "casc" in key else info
+        acc = lambda a: None if not a or a.get("exact") is None else {"n": a.get("n"), "exact": a.get("exact"), "wrong": a.get("sent_wrong"),
+                                                                       "cs": a.get("callsign"), "wer": a.get("wer"), "old": a.get("exact_rules_S1_raw")}
+        if lk and lk in lat:
+            q = lat[lk]; latency = f'p50 {q["p50"]} ms, p95 {q["p95"]} ms (quiet pass, n={q["n"]})'
+        elif ek and ek in est:
+            q = est[ek]; latency = f'~p50 {q["p50"]} ms, p95 {q["p95"]} ms (estimate; asks Whisper {round(100 * q["asks_whisper"])}%)'
+        else:
+            latency = None
+        rss = (lat.get(lk) or {}).get("peak_rss_mb") if lk else None
+        rows.append({"name": name, "where": where, "runtime": first.get("runtime") or first.get("model"), "licence": first.get("licence"),
+                     "sizeMB": first.get("download_mb"), "biasing": first.get("biasing"), "streaming": "no",
+                     "us": acc(e.get("us")), "in": acc(e.get("in")), "latency": latency, "ram": f"{rss} MB peak" if rss else None,
+                     "measured": "game chain nbest+S1, ml/stt/models/srv_score.sh", "plot": "casc" not in key and "reference" not in name})
+    return rows
+
+
 def part(key, heading, d):
     hl = "".join(f'<div class="kpi"><div class="big">{E(str(h.get("value", "")))}</div><div class="klab">{E(str(h.get("label", "")))}</div></div>'
                  for h in d.get("headline", []))
@@ -192,7 +240,10 @@ def main():
     for key, heading in PARTS:
         f = HERE / f"{key}.json"
         if f.exists():
-            parts.append((key, heading, json.loads(f.read_text())))
+            d = json.loads(f.read_text())
+            if "rows" not in d and "engines" in d:
+                d["rows"] = server_rows(d)
+            parts.append((key, heading, d))
     if not parts:
         raise SystemExit("no ml/stt/models/edge.json or server.json yet")
     nav = " · ".join(f'<a href="#{k}">{E(h)}</a>' for k, h, _ in parts)

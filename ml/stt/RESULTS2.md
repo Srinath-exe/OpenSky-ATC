@@ -135,6 +135,44 @@ Latency: server engines on this VPS with 2 threads under load average 10-27 (a q
   approval); `OPENATC_STT_URL` switches the route to it. Bigger models: see the clean + late table below.
 <!-- /shipped -->
 
+## Server first pass: Parakeet Ultra, then Whisper (2026-11-09)
+
+From the server model benchmark (`ml/stt/models/SERVER.md`): Parakeet TDT 0.6B "Ultra" int8 with the callsigns on
+frequency as hotwords, as a first pass with Whisper base.en only when the game cannot understand its guesses, gets
+78.1% / 85.6% exact on US/UK / the Indian-accent proxy against 76.9% / 78.8% for Whisper alone (Indian proxy p=0.001).
+
+- **Server** (`src/app/api/voice/stt/engine.ts`): a `parakeet` engine through `sherpa-onnx-node` 2.0.1 (prebuilt addon,
+  its own onnxruntime), in the Next.js process, loaded once on first use (`createAsync`; decoding with `decodeAsync`,
+  so the event loop keeps serving), the same `OPENATC_STT_THREADS` (default 2, at most 3). Per request: hotwords from
+  `X-STT-Names` (the telephony words, lower and title case, at most 25; modified beam search, 4 paths, +1.5 per piece),
+  one biased decode. `?engine=parakeet|whisper` or `X-STT-Engine` picks the engine; without it, `OPENATC_STT_FIRST`
+  (default `parakeet`; `whisper` = Whisper alone, as before). Both engines share the guards and the one inference slot.
+  Without the model files Parakeet requests are answered by Whisper (logged once).
+- **Client** (`src/lib/voice/asr-server.ts` `cascadeStt`): the Server recogniser and the Browser engine's second opinion
+  ask the server's first pass; if `understandHeard` does not accept its guesses, the same audio goes to `?engine=whisper`
+  and both lists are read together (interleaved, Parakeet first: the benchmark's rule), the better reading winning.
+  No second request when the first answer already came from Whisper.
+- **Model files** (never downloaded at run time; 670 MB), once per host:
+
+  ```bash
+  d=~/.cache/openatc-stt/parakeet-ultra-int8; s=ml/stt/models/sherpa/sherpa-onnx-nemo-parakeet-tdt-0.6b-ultra-int8
+  mkdir -p $d && cp $s/encoder.int8.onnx $s/decoder.int8.onnx $s/joiner.int8.onnx $s/tokens.txt $s/README.md $d/
+  ```
+
+  (`$s` is the k2-fsa release `sherpa-onnx-nemo-parakeet-tdt-0.6b-ultra-int8`; `OPENATC_STT_PARAKEET_DIR` overrides `$d`.)
+  The engine writes `bpe.vocab` (from tokens.txt, the same bytes as `srv_run.py`) and a placeholder hotwords file there.
+- **Standalone**: `next.config.js` lists sherpa-onnx-node and the linux-x64 package's addon and libraries in
+  `outputFileTracingIncludes`, and `serverExternalPackages: ['sherpa-onnx-node']` (Turbopack links it as
+  `.next/node_modules/sherpa-onnx-node-<hash>`, a relative symlink into the bundle's node_modules).
+- **Checked**: `npm run build` in a separate worktree, `.next/standalone` copied to an empty directory and run on a spare
+  port. Parakeet's transcripts there are identical to the benchmark's on 40 of 40 clips. Over HTTP, 40 US/UK and 40
+  Indian-proxy clips, the client's cascade with a rules-only reading (no S1 model in Node, so Whisper is asked more
+  often than in the game: 17 and 18 of 40), 2 threads: p50 0.88 s / p95 2.5 s (US/UK) and 0.63 s / 2.8 s (Indian
+  proxy), against Whisper alone 1.32 s / 3.4 s and 1.36 s / 1.9 s. Both models loaded: 2.1-2.3 GB RSS (Whisper alone
+  ~1.2 GB). Parakeet alone: 0.36 s p50 at 3 threads, 0.43 s at 2.
+- **Licences**: Parakeet Ultra weights CC-BY-4.0 (Moondream's post-training of NVIDIA parakeet-tdt-0.6b-v3; ONNX export
+  by the k2-fsa sherpa-onnx project): attribution in the report and in `engine.ts`. sherpa-onnx(-node) Apache-2.0.
+
 ## Not measured yet / caveats
 
 - **Real voices.** Everything above is synthetic. The owner's recordings (gold set, `ml/data/gold`, recorded with

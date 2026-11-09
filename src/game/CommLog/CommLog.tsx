@@ -18,7 +18,7 @@ import { parseCommand } from '@/lib/sim/commands'
 import { describe } from '@/lib/sim/commandAst'
 import { createBrowserRecognizer, createLocalRecognizer, browserSpeechAvailable, localSpeechAvailable, DEFAULT_VOICE_ENGINE, createNativeRecognizer, nativeSpeechAvailable, defaultAccent } from '@/lib/voice/recognizer'
 import type { Recognizer, VoiceEngine } from '@/lib/voice/recognizer'
-import { createServerRecognizer, serverSpeechAvailable, withServerSecondOpinion } from '@/lib/voice/asr-server'
+import { createServerRecognizer, serverSpeechAvailable, withServerSecondOpinion, better } from '@/lib/voice/asr-server'
 import { diagKey, saveAttempt } from '@/lib/voice/asr-diag'
 import { understandHeard, biasNames } from '@/lib/voice/asr-nbest'
 import { L1Client } from '@/lib/voice/l1'
@@ -370,8 +370,8 @@ export function CommLog() {
         const e = sim.engine
         if (!e) return
         // every guess the recogniser had (n-best), repaired against the aircraft on frequency, rules then the model;
-        // not understood (or nothing heard) -> a second opinion from the server engine when the recogniser has one
-        // (asr-server.ts); only the server's guesses go through the second pass, the first ones already failed
+        // not understood (or nothing heard) -> a second opinion from the server's engines when the recogniser has one
+        // (asr-server.ts cascadeStt); only the server's guesses go through the second pass, the first ones already failed
         const alts = text ? (rec.alternatives?.length ? rec.alternatives : [text]) : []
         if (!alts.length && !rec.secondOpinion) return
         const pctx = fromEngine(e, { lastCallsign: sim.lastCallsign, position: sim.position })
@@ -380,13 +380,10 @@ export function CommLog() {
         void firstP
           .then(async (first) => {
             if (first?.ok || !rec.secondOpinion) return first
-            const more = await rec.secondOpinion()
-            serverAlts = more
+            const more = await rec.secondOpinion((a) => understandHeard(a, pctx, e.magVar ?? 0, l1Ref.current, stateRef.current))
+            serverAlts = more.alts
             setHeard('')
-            if (!more.length) return first
-            const second = await understandHeard(more, pctx, e.magVar ?? 0, l1Ref.current, stateRef.current)
-            if (!first) return second
-            return second.ok || (second.confidence ?? 0) > (first.confidence ?? 0) ? second : first
+            return better(first, more.result)
           })
           .then((u) => {
             // the owner's live-attempt log (asr-diag.ts): only with the gold-set key in this browser

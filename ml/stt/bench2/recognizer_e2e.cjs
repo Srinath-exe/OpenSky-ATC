@@ -15,15 +15,16 @@ const WEB = path.join(ROOT, '.tmp/stt-web');
 execSync(`npx tsc src/lib/voice/recognizer.ts src/lib/voice/asr-server.ts --module es2020 --target es2020 --lib es2022,dom --outDir ${WEB} --skipLibCheck --ignoreConfig --ignoreDeprecations 6.0`, { cwd: ROOT, stdio: 'inherit' });
 for (const f of fs.readdirSync(WEB).filter((x) => x.endsWith('.js'))) fs.writeFileSync(path.join(WEB, f), fs.readFileSync(path.join(WEB, f), 'utf8').replace(/from '(\.\/[^']+)'/g, "from '$1.js'"));
 const { handleStt, RateLimiter, Gate } = require(path.join(ROOT, '.tmp/stt/src/app/api/voice/stt/handler.js'));
-const { transcribe } = require(path.join(ROOT, '.tmp/stt/src/app/api/voice/stt/engine.js'));
-const deps = { limiter: new RateLimiter(), gate: new Gate(1), transcribe: (a, n, alts) => transcribe(a, { names: n, alternatives: alts }) };
+const { transcribe, transcribeParakeet, parakeetReady } = require(path.join(ROOT, '.tmp/stt/src/app/api/voice/stt/engine.js'));
+// both server engines, as route.ts: Parakeet when asked for and its files are in place, else Whisper
+const deps = { limiter: new RateLimiter(), gate: new Gate(1), transcribe: (a, n, alts, engine) => engine === 'parakeet' && parakeetReady() ? transcribeParakeet(a, { names: n }) : transcribe(a, { names: n, alternatives: alts }) };
 
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
   if (u.pathname === '/api/voice/stt') {
     if (req.method === 'GET') { res.writeHead(200, { 'content-type': 'application/json' }); res.end('{"ok":true}'); return; }
     const chunks = []; for await (const c of req) chunks.push(c);
-    const r = await handleStt(new Request('http://x/api/voice/stt', { method: 'POST', body: Buffer.concat(chunks), headers: req.headers }), deps);
+    const r = await handleStt(new Request(`http://x${req.url}`, { method: 'POST', body: Buffer.concat(chunks), headers: req.headers }), deps);
     res.writeHead(r.status, { 'content-type': 'application/json' }); res.end(await r.text()); return;
   }
   const f = u.pathname.startsWith('/web/') ? path.join(WEB, path.basename(u.pathname)) : path.join(ROOT, 'public', path.normalize(u.pathname));
@@ -54,7 +55,8 @@ const server = http.createServer(async (req, res) => {
     await new Promise((r) => setTimeout(r, sec * 1000 + 400));
     const tRel = performance.now();
     const text = await rec.stop();
-    const second = rec.secondOpinion ? await rec.secondOpinion() : null;
+    // the server cascade with a reading that never accepts: every engine is asked, all their guesses come back
+    const second = rec.secondOpinion ? (await rec.secondOpinion(async () => ({ ok: false, confidence: 0 }))).alts : null;
     return { text, alternatives: rec.alternatives, second, partials: partials.slice(-4), errors, releaseToTextMs: Math.round(performance.now() - tRel), heldMs: Math.round(tRel - t0) };
   }, [engine, names, sec]);
   console.log(JSON.stringify({ engine, wav: path.basename(wav), ...r }));
