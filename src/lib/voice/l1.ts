@@ -3,9 +3,13 @@
   first push-to-talk. prefill() is called on PTT down with the current game state (the expensive part, done while the
   player is talking); complete() on release with the transcript.
 */
-export const S1_MODEL_URL = '/models/s1/2m-swap-v1';   // versioned: /models/* is cached as immutable for a year
+import type { Signals } from './s1';
 
-export interface L1Result { line: string; confidence: number; ms: number; sayAgain: boolean }
+export const S1_MODEL_URL = '/models/s1/2m-grpo-v1';   // GRPO-tuned (ml/rl, +4 pts on recogniser transcripts); 2m-swap-v1 kept for rollback. Versioned: /models/* is cached for a year
+
+/** `signals` (per-token evidence for the verifier) is null from a worker built before it existed; `model` names the
+ *  weights that answered, so the verifier uses the gate fitted for them. */
+export interface L1Result { line: string; confidence: number; ms: number; sayAgain: boolean; signals: Signals | null; model: string }
 
 export class L1Client {
   private worker: Worker | null = null;
@@ -36,6 +40,6 @@ export class L1Client {
   async complete(said: string, callsigns: string[], ctx?: string): Promise<L1Result> {
     await this.load();
     const r = await this.call<L1Result>({ type: 'complete', said, callsigns, ctx });
-    return { line: r.line, confidence: r.confidence, ms: r.ms, sayAgain: r.sayAgain };
+    return { line: r.line, confidence: r.confidence, ms: r.ms, sayAgain: r.sayAgain, signals: r.signals ?? null, model: S1_MODEL_URL };
   }
 }

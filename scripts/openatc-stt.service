@@ -1,0 +1,18 @@
+# OPTIONAL, NOT INSTALLED: faster-whisper speech-to-text for /api/voice/stt (ml/serve/stt_server.py, ml/stt/RESULTS2.md).
+# Needs the owner's approval. To enable:
+#   cp scripts/openatc-stt.service /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now openatc-stt
+#   then add  Environment=OPENATC_STT_URL=http://127.0.0.1:3006  to the openatc unit and restart it.
+[Unit]
+Description=OpenATC speech-to-text (faster-whisper, CPU)
+After=network.target
+
+[Service]
+WorkingDirectory=/root/atc
+ExecStart=/root/atc/ml/stt/.venv/bin/python ml/serve/stt_server.py --host 127.0.0.1 --port 3006 --model base.en --threads 2
+Restart=on-failure
+Nice=5
+CPUQuota=250%
+MemoryMax=2G
+
+[Install]
+WantedBy=multi-user.target

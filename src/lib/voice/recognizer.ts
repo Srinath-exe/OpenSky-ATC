@@ -7,15 +7,24 @@
 
   Push-to-talk drives it: start() on PTT down, stop() on release; the final transcript arrives through onFinal
   (a short grace period lets the recogniser flush the last words).
+  `server`: src/lib/voice/asr-server.ts (Whisper on this site's server, biased with the callsigns on frequency).
 */
+import { createMicCapture } from './asr-capture';
 
 export interface Recognizer {
-  readonly kind: 'browser' | 'local';
+  readonly kind: VoiceEngine;
   start(): void;
   /** Stop listening; resolves with the final transcript ('' when nothing was heard). */
   stop(): Promise<string>;
   onPartial: ((text: string) => void) | null;
   onError: ((message: string) => void) | null;
+  /** n-best of the last stop(), best first (engines that give more than one guess; src/lib/voice/asr-nbest.ts). */
+  alternatives?: string[];
+  /** The callsigns on frequency as spoken ("speedbird 963"), set on PTT down: biasing for engines that support it. */
+  setHints?(names: string[]): void;
+  /** More guesses for the last utterance from another engine, asked only when the first guesses were not understood
+   *  (asr-server.ts withServerSecondOpinion). */
+  secondOpinion?(): Promise<string[]>;
 }
 
 type SR = {
@@ -24,6 +33,9 @@ type SR = {
   onresult: ((e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string; confidence: number }> & { isFinal: boolean }> }) => void) | null;
   onerror: ((e: { error: string }) => void) | null;
   onend: (() => void) | null;
+  onaudiostart?: (() => void) | null;
+  /** Contextual biasing (Chrome 14x+): phrases the recogniser should prefer. */
+  phrases?: unknown[];
 };
 
 function srConstructor(): (new () => SR) | null {
@@ -38,18 +50,25 @@ export function localSpeechAvailable(): boolean {
   return typeof window !== 'undefined' && typeof Worker !== 'undefined' && typeof AudioWorkletNode !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
 }
 
-export type VoiceEngine = 'browser' | 'local';
+/** 'native': the OpenATC phone app's on-device recogniser over the JS bridge (only offered inside the app). */
+export type VoiceEngine = 'browser' | 'local' | 'server' | 'native';
+
+/** Chosen by measurement (ml/stt/RESULTS2.md): Web Speech with the server engine as a second opinion was the most
+ *  accurate (78 % exact vs 72 % for the server alone, 53 % before) and the fastest (median 0.1 s after speech).
+ *  Browsers without Web Speech (Firefox) fall back to the server engine. */
+export const DEFAULT_VOICE_ENGINE: VoiceEngine = 'browser';
 
 /** Status of the on-device model for the UI: download progress, then ready (with the backend it runs on). */
 export interface LocalStatus { state: 'idle' | 'loading' | 'ready' | 'error'; progress: number; device: string; lastMs: number | null; message: string }
 
-/** On-device recogniser: mic -> AudioWorklet (16 kHz) -> Moonshine in a Web Worker. Not streaming: the utterance is
- *  transcribed when push-to-talk is released (Moonshine tiny takes ~0.1-0.3 s for a few seconds of speech). */
-export function createLocalRecognizer(onStatus?: (s: LocalStatus) => void): Recognizer | null {
+/** On-device recogniser: mic -> AudioWorklet (16 kHz, 0.3 s pre-roll; asr-capture.ts) -> Moonshine in a Web Worker.
+ *  Not streaming: the utterance is transcribed when push-to-talk is released. `?model=base` on the worker selects
+ *  Moonshine base (the default since ml/stt/RESULTS2.md: tiny missed too many callsigns). */
+export function createLocalRecognizer(onStatus?: (s: LocalStatus) => void, model: 'tiny' | 'base' = 'base'): Recognizer | null {
   if (!localSpeechAvailable()) return null;
   const status: LocalStatus = { state: 'idle', progress: 0, device: '', lastMs: null, message: '' };
   const emit = (p: Partial<LocalStatus>) => { Object.assign(status, p); onStatus?.({ ...status }); };
-  const worker = new Worker('/voice/stt-worker.js', { type: 'module' });
+  const worker = new Worker(`/voice/stt-worker.js?model=${model}`, { type: 'module' });
   const files = new Map<string, { loaded: number; total: number }>();
   const pending = new Map<number, (text: string) => void>();
   let nextId = 1;
@@ -60,102 +79,231 @@ export function createLocalRecognizer(onStatus?: (s: LocalStatus) => void): Reco
       let l = 0, t = 0; files.forEach((f) => { l += f.loaded; t += f.total; });
       emit({ state: 'loading', progress: t ? l / t : 0 });
     } else if (m.type === 'ready') emit({ state: 'ready', progress: 1, device: m.device, message: '' });
-    else if (m.type === 'result') { emit({ lastMs: m.ms, device: m.device }); pending.get(m.id)?.(m.text); pending.delete(m.id); }
+    else if (m.type === 'result') { emit({ lastMs: m.ms, device: m.device }); self.alternatives = Array.isArray(m.alternatives) ? m.alternatives : m.text ? [m.text] : []; pending.get(m.id)?.(m.text); pending.delete(m.id); }
     else if (m.type === 'error') { emit({ state: 'error', message: m.message }); self.onError?.(`On-device speech model: ${m.message}`); if (m.id) { pending.get(m.id)?.(''); pending.delete(m.id); } }
   };
   emit({ state: 'loading' });
   worker.postMessage({ type: 'load' });
-
-  let ctx: AudioContext | null = null;
-  let node: AudioWorkletNode | null = null;
-  let stream: MediaStream | null = null;
-  let chunks: Float32Array[] = [];
-  let idleTimer: number | null = null;
-  let starting: Promise<void> | null = null;
-
-  const openMic = async () => {
-    if (ctx && node) return;
-    stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-    ctx = new AudioContext({ sampleRate: 16000 });
-    await ctx.audioWorklet.addModule('/voice/capture-worklet.js');
-    const src = ctx.createMediaStreamSource(stream);
-    node = new AudioWorkletNode(ctx, 'atc-capture');
-    node.port.onmessage = (e: MessageEvent<Float32Array>) => { chunks.push(e.data); };
-    src.connect(node);
-  };
-  // the microphone stays open for a minute after the last transmission (no permission / start-up delay in a busy
-  // session), then it is released so the browser's recording indicator goes off
-  const closeMicSoon = () => {
-    if (idleTimer) window.clearTimeout(idleTimer);
-    idleTimer = window.setTimeout(() => { stream?.getTracks().forEach((t) => t.stop()); void ctx?.close(); ctx = null; node = null; stream = null; }, 60000);
-  };
+  const mic = createMicCapture();
+  let names: string[] = [];
 
   const self: Recognizer = {
     kind: 'local',
     onPartial: null,
     onError: null,
+    alternatives: [],
+    setHints(n: string[]) { names = n.slice(0, 40); },
     start() {
-      chunks = [];
-      if (idleTimer) window.clearTimeout(idleTimer);
-      starting = openMic().then(async () => { await ctx?.resume(); node?.port.postMessage({ recording: true }); self.onPartial?.(status.state === 'ready' ? 'Listening (on-device)…' : `Listening… voice model ${Math.round(status.progress * 100)}%`); })
+      self.alternatives = [];
+      if (!mic.isOpen) self.onPartial?.('Microphone starting…');
+      mic.start().then(() => { self.onPartial?.(status.state === 'ready' ? 'Listening (on-device)…' : `Listening… voice model ${Math.round(status.progress * 100)}%`); })
         .catch((err) => { self.onError?.(/denied|not ?allowed/i.test(String(err)) ? 'Microphone access was blocked. Allow it in the browser to talk.' : `Microphone: ${String(err)}`); });
     },
     async stop() {
-      await starting;
-      node?.port.postMessage({ recording: false });
-      closeMicSoon();
-      // let the worklet's last frames arrive
-      await new Promise((r) => window.setTimeout(r, 60));
-      const n = chunks.reduce((s, c) => s + c.length, 0);
-      if (n < 16000 * 0.25) return '';
-      const audio = new Float32Array(n); let o = 0; for (const c of chunks) { audio.set(c, o); o += c.length; }
-      chunks = [];
+      const audio = await mic.stop();
+      if (audio.length < 16000 * 0.25) return '';
       self.onPartial?.('Transcribing…');
       const id = nextId++;
-      return new Promise<string>((resolve) => { pending.set(id, resolve); worker.postMessage({ type: 'transcribe', id, audio }, [audio.buffer]); });
+      return new Promise<string>((resolve) => { pending.set(id, resolve); worker.postMessage({ type: 'transcribe', id, audio, names }, [audio.buffer]); });
     },
   };
   return self;
 }
 
-/** Web Speech API recogniser. One utterance per start()/stop(). */
+/** ATC phrases worth a boost on top of the callsigns (Web Speech contextual biasing). */
+const ATC_PHRASES = ['flight level', 'heading', 'descend and maintain', 'climb and maintain', 'cleared to land', 'cleared for takeoff',
+  'line up and wait', 'hold short', 'contact tower', 'contact approach', 'contact departure', 'contact ground', 'niner', 'squawk',
+  'reduce speed', 'turn left heading', 'turn right heading', 'ILS approach', 'go around', 'taxi via', 'cross runway', 'expedite', 'roger'];
+let phrasesSupported: boolean | null = null;   // null = not tried; false after 'phrases-not-supported'
+
+const PREROLL_S = 0.3;
+
+/** Web Speech API recogniser. One utterance per start()/stop(). Keeps up to 5 alternatives (n-best) and, where the
+ *  browser supports it (Chrome 14x+ `SpeechRecognition.phrases`, on-device recognition only), biases towards the
+ *  callsigns on frequency.
+ *  Pre-roll: the recogniser listens to our own microphone stream through a 0.3 s delay line
+ *  (`start(MediaStreamTrack)`, Chrome 13x+; older browsers ignore the argument and use the default microphone).
+ *  The line stays open for a minute after the last transmission, so neither the recogniser's start-up nor a word begun
+ *  just before the key press cuts the callsign, which is the first word. */
 export function createBrowserRecognizer(lang = 'en-US'): Recognizer | null {
   const Ctor = srConstructor();
   if (!Ctor) return null;
   let sr: SR | null = null;
-  let finals: string[] = [];
-  let interim = '';
-  let ended: (() => void) | null = null;
+  let flushPending: (() => void) | null = null;   // the previous transmission's delayed stop, while it waits
+  // per transmission: a quick re-press must not mix into the previous one, which is still flushing
+  type Utt = { finals: string[][]; interim: string; ended: (() => void) | null };
+  let utt: Utt = { finals: [], interim: '', ended: null };
+  let names: string[] = [];
+  const PhraseCtor = typeof window !== 'undefined' ? (window as unknown as { SpeechRecognitionPhrase?: new (p: string, boost: number) => unknown }).SpeechRecognitionPhrase : undefined;
+  const joined = (u: Utt, k: number) => `${u.finals.filter(Boolean).map((alts) => alts[k] ?? alts[0]).join(' ')} ${u.interim}`.replace(/\s+/g, ' ').trim();
+  let line: { ctx: AudioContext; stream: MediaStream; track: MediaStreamTrack } | null = null;
+  let idle: number | null = null;
+  let session = 0, active = false, lastTrack: MediaStreamTrack | null = null;
+  const lineOk = typeof AudioContext !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
+  const openLine = async (): Promise<MediaStreamTrack> => {
+    if (line && line.track.readyState === 'live') { await line.ctx.resume(); return line.track; }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    const ctx = new AudioContext();
+    const delay = ctx.createDelay(1); delay.delayTime.value = PREROLL_S;
+    const dst = ctx.createMediaStreamDestination();
+    ctx.createMediaStreamSource(stream).connect(delay); delay.connect(dst);
+    await ctx.resume();
+    line = { ctx, stream, track: dst.stream.getAudioTracks()[0] };
+    return line.track;
+  };
+  const closeLineSoon = () => {
+    if (idle) window.clearTimeout(idle);
+    idle = window.setTimeout(() => { line?.stream.getTracks().forEach((t) => t.stop()); void line?.ctx.close(); line = null; }, 60000);
+  };
+  const begin = (track: MediaStreamTrack | null = lastTrack) => {
+    lastTrack = track;
+    const u = utt;
+    const cur = new Ctor();
+    sr = cur;
+    cur.lang = lang; cur.continuous = true; cur.interimResults = true; cur.maxAlternatives = 5;
+    if (PhraseCtor && phrasesSupported !== false && 'phrases' in cur) {
+      try { cur.phrases = [...names.map((n) => new PhraseCtor(n, 5)), ...ATC_PHRASES.map((p) => new PhraseCtor(p, 2))]; } catch { phrasesSupported = false; }
+    }
+    cur.onresult = (e) => {
+      u.interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) u.finals[i] = Array.from({ length: r.length }, (_, k) => r[k].transcript.trim()); else u.interim += r[0].transcript;
+      }
+      if (u === utt) self.onPartial?.(joined(u, 0));
+    };
+    cur.onaudiostart = () => { if (u === utt && !u.finals.length && !u.interim) self.onPartial?.('Listening…'); };
+    cur.onerror = (e) => {
+      if (e.error === 'phrases-not-supported') {   // e.g. cloud recognition: retry once without biasing
+        phrasesSupported = false;
+        if (sr === cur) { cur.onend = null; try { begin(); } catch { /* ignore */ } }
+        return;
+      }
+      if (e.error !== 'no-speech' && e.error !== 'aborted') self.onError?.(e.error === 'not-allowed' ? 'Microphone access was blocked. Allow it in the browser to talk.' : `Speech recognition error: ${e.error}`);
+    };
+    cur.onend = () => { if (phrasesSupported === null && cur.phrases?.length) phrasesSupported = true; u.ended?.(); u.ended = null; };
+    if (track) (cur.start as (t?: MediaStreamTrack) => void)(track); else cur.start();
+  };
   const self: Recognizer = {
     kind: 'browser',
     onPartial: null,
     onError: null,
+    alternatives: [],
+    setHints(n: string[]) { names = n.slice(0, 40); },
     start() {
       try { sr?.abort(); } catch { /* not running */ }
-      finals = []; interim = '';
-      sr = new Ctor();
-      sr.lang = lang; sr.continuous = true; sr.interimResults = true; sr.maxAlternatives = 1;
-      sr.onresult = (e) => {
-        interim = '';
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          const r = e.results[i];
-          if (r.isFinal) finals[i] = r[0].transcript; else interim += r[0].transcript;
-        }
-        self.onPartial?.(`${finals.filter(Boolean).join(' ')} ${interim}`.trim());
-      };
-      sr.onerror = (e) => { if (e.error !== 'no-speech' && e.error !== 'aborted') self.onError?.(e.error === 'not-allowed' ? 'Microphone access was blocked. Allow it in the browser to talk.' : `Speech recognition error: ${e.error}`); };
-      sr.onend = () => { ended?.(); ended = null; };
-      try { sr.start(); } catch (err) { self.onError?.(String(err)); }
+      flushPending?.();   // a re-press during the previous release tail: that recogniser stops now, with what it has
+      utt = { finals: [], interim: '', ended: null }; self.alternatives = [];
+      self.onPartial?.('Microphone starting…');
+      if (idle) window.clearTimeout(idle);
+      const mine = ++session; active = true;
+      const go = (track: MediaStreamTrack | null) => { if (active && mine === session) { try { begin(track); } catch (err) { self.onError?.(String(err)); } } };
+      if (lineOk) openLine().then(go, () => go(null)); else go(null);
     },
     stop() {
-      const cur = sr;
+      active = false;
+      if (lineOk) closeLineSoon();
+      const cur = sr, u = utt;
       if (!cur) return Promise.resolve('');
+      sr = null;
       return new Promise<string>((resolve) => {
-        const finish = () => { resolve(`${finals.filter(Boolean).join(' ')} ${interim}`.replace(/\s+/g, ' ').trim()); };
-        const timer = window.setTimeout(finish, 1200);          // never hang the command bar on a silent recogniser
-        ended = () => { window.clearTimeout(timer); finish(); };
-        try { cur.stop(); } catch { window.clearTimeout(timer); finish(); }
-        sr = null;
+        const finish = () => {
+          const n = Math.max(1, ...u.finals.filter(Boolean).map((a) => a.length));
+          self.alternatives = [...new Set(Array.from({ length: n }, (_, k) => joined(u, k)).filter(Boolean))];
+          resolve(joined(u, 0));
+        };
+        // a short tail after release so the last word is not cut (plus the delay line), then let the recogniser flush
+        // (never hang the bar)
+        const stopNow = () => {
+          flushPending = null; window.clearTimeout(tail);
+          const timer = window.setTimeout(finish, 2000);
+          u.ended = () => { window.clearTimeout(timer); finish(); };
+          try { cur.stop(); } catch { window.clearTimeout(timer); finish(); }
+        };
+        const tail = window.setTimeout(stopNow, 250 + (lastTrack ? PREROLL_S * 1000 : 0));
+        flushPending = stopNow;
+      });
+    },
+  };
+  return self;
+}
+
+// ---- native: the phone app (mobile/, Flutter) records and transcribes on the device; this page only gets text ----
+// Bridge (mobile/lib/src/bridge/protocol.dart): page -> app via the `OpenATCNative` JavaScriptChannel,
+// app -> page via `openatc-native` CustomEvents on window.
+
+type NativeChannel = { postMessage(message: string): void };
+/** What the app posts back. `ms` = PTT release -> final text, measured on the phone. */
+export type NativeEvent =
+  | { type: 'hello'; state: 'loading' | 'ready' | 'no-model' | 'error'; model?: { id: string; name?: string; version?: string } | null; hotwords?: boolean; streaming?: boolean; appVersion?: string }
+  | { type: 'started'; id: number }
+  | { type: 'partial'; id: number; text: string }
+  | { type: 'final'; id: number; text: string; ms: number; computeMs: number; audioMs: number; rtf: number; model: string }
+  | { type: 'error'; id: number | null; code: string; message: string };
+export const NATIVE_EVENT = 'openatc-native';
+
+function nativeChannel(): NativeChannel | null {
+  if (typeof window === 'undefined') return null;
+  const ch = (window as unknown as { OpenATCNative?: NativeChannel }).OpenATCNative;
+  return ch && typeof ch.postMessage === 'function' ? ch : null;
+}
+
+/** True inside the OpenATC phone app with a speech model installed. */
+export function nativeSpeechAvailable(): boolean { return nativeChannel() != null; }
+
+export interface NativeStatus { state: 'unknown' | 'loading' | 'ready' | 'no-model' | 'error'; model: string; lastMs: number | null; lastRtf: number | null }
+
+/** Push-to-talk through the phone app: start() asks the app to open the mic (with the callsigns on frequency as
+ *  hotwords), stop() resolves with the app's final transcript. Audio never reaches the page. */
+export function createNativeRecognizer(onStatus?: (s: NativeStatus) => void, timeoutMs = 8000): Recognizer | null {
+  const ch = nativeChannel();
+  if (!ch) return null;
+  const status: NativeStatus = { state: 'unknown', model: '', lastMs: null, lastRtf: null };
+  const emit = (p: Partial<NativeStatus>) => { Object.assign(status, p); onStatus?.({ ...status }); };
+  const send = (m: Record<string, unknown>) => { try { ch.postMessage(JSON.stringify({ v: 1, ...m })); } catch (err) { self.onError?.(`Phone app: ${String(err)}`); } };
+  let nextId = 1;
+  let current = 0;
+  let hints: string[] = [];
+  const waiting = new Map<number, (text: string) => void>();
+  // a final can arrive before stop() asks for it (the app ends the utterance itself): keep it until stop() collects it
+  const early = new Map<number, string>();
+  const settle = (id: number, text: string) => {
+    const w = waiting.get(id);
+    if (w) { waiting.delete(id); w(text); return; }
+    early.set(id, text); if (early.size > 8) early.delete(early.keys().next().value as number);
+  };
+
+  window.addEventListener(NATIVE_EVENT, (ev: Event) => {
+    const m = (ev as CustomEvent<NativeEvent>).detail;
+    if (!m || typeof m !== 'object') return;
+    if (m.type === 'hello') emit({ state: m.state, model: m.model?.id ?? '' });
+    else if (m.type === 'partial') { if (m.id === current) self.onPartial?.(m.text); }
+    else if (m.type === 'final') { emit({ lastMs: m.ms, lastRtf: m.rtf }); settle(m.id, m.text.trim()); }
+    else if (m.type === 'error') {
+      if (m.id == null || m.id === current) self.onError?.(m.message);
+      if (m.id != null) settle(m.id, '');
+    }
+  });
+  send({ type: 'hello' });
+
+  const self: Recognizer = {
+    kind: 'native',
+    onPartial: null,
+    onError: null,
+    setHints(names: string[]) { hints = names; },
+    start() {
+      current = nextId++;
+      self.onPartial?.(status.state === 'loading' ? 'Listening… (phone speech model still loading)' : 'Listening (on the phone)…');
+      send({ type: 'start', id: current, hotwords: hints, callsigns: [] });
+    },
+    stop() {
+      const id = current;
+      if (!id) return Promise.resolve('');
+      if (early.has(id)) { const t = early.get(id) ?? ''; early.delete(id); send({ type: 'stop', id }); return Promise.resolve(t); }
+      return new Promise<string>((resolve) => {
+        const timer = window.setTimeout(() => { if (waiting.has(id)) { waiting.delete(id); self.onError?.('The phone app did not return a transcript.'); resolve(''); } }, timeoutMs);
+        waiting.set(id, (text) => { window.clearTimeout(timer); resolve(text); });
+        send({ type: 'stop', id });
       });
     },
   };

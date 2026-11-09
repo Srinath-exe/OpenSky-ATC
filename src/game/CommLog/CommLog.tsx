@@ -16,9 +16,10 @@ import { LS, readJson, writeJson, EV_VOICE_ENGINE } from '../persist'
 import { isSilent, fromEngine } from '@/lib/sim/dispatch'
 import { parseCommand } from '@/lib/sim/commands'
 import { describe } from '@/lib/sim/commandAst'
-import { createBrowserRecognizer, createLocalRecognizer, browserSpeechAvailable, localSpeechAvailable } from '@/lib/voice/recognizer'
+import { createBrowserRecognizer, createLocalRecognizer, browserSpeechAvailable, localSpeechAvailable, DEFAULT_VOICE_ENGINE, createNativeRecognizer, nativeSpeechAvailable } from '@/lib/voice/recognizer'
 import type { Recognizer, VoiceEngine } from '@/lib/voice/recognizer'
-import { understandVoice } from '@/lib/voice/understand'
+import { createServerRecognizer, serverSpeechAvailable, withServerSecondOpinion } from '@/lib/voice/asr-server'
+import { understandHeard, biasNames } from '@/lib/voice/asr-nbest'
 import { L1Client } from '@/lib/voice/l1'
 import { voiceContext, positionOf } from '@/lib/voice/context'
 import type { Position as FreqPosition } from '@/lib/sim/types'
@@ -318,16 +319,20 @@ export function CommLog() {
   const engineRef = React.useRef<VoiceEngine>('browser')
   const recognizerFor = React.useCallback((engine: VoiceEngine): Recognizer | null => {
     const have = recs.current[engine]; if (have) return have
-    const r = engine === 'local' ? createLocalRecognizer() : createBrowserRecognizer()
+    const browser = () => { const b = createBrowserRecognizer(); return b ? withServerSecondOpinion(b) : null }   // Web Speech, the server when it is not understood
+    const r = engine === 'native' ? createNativeRecognizer() : engine === 'server' ? createServerRecognizer() : engine === 'local' ? createLocalRecognizer() : browser()
     if (r) recs.current[engine] = r
     return r
   }, [])
   React.useEffect(() => {
     const sync = () => {
-      const want = readJson<VoiceEngine>(LS.voiceEngine, 'browser')
-      engineRef.current = want === 'local' && localSpeechAvailable() ? 'local' : browserSpeechAvailable() ? 'browser' : localSpeechAvailable() ? 'local' : 'browser'
-      setVoiceAvail(browserSpeechAvailable() || localSpeechAvailable())
-      if (want === 'local' && engineRef.current === 'local') recognizerFor('local')   // chosen in settings: download now, not at the first PTT
+      // inside the phone app (mobile/) the app's own on-device recogniser is the default
+      const want = readJson<VoiceEngine>(LS.voiceEngine, nativeSpeechAvailable() ? 'native' : DEFAULT_VOICE_ENGINE)
+      const avail: Partial<Record<VoiceEngine, boolean>> = { native: nativeSpeechAvailable(), server: serverSpeechAvailable(), browser: browserSpeechAvailable(), local: localSpeechAvailable() }
+      engineRef.current = avail[want] ? want : (['native', 'server', 'browser', 'local'] as VoiceEngine[]).find((x) => avail[x]) ?? 'browser'
+      setVoiceAvail(Object.values(avail).some(Boolean))
+      // chosen in settings: download / load the model now, not at the first PTT
+      if (engineRef.current === 'local' || engineRef.current === 'server' || engineRef.current === 'native') recognizerFor(engineRef.current)
     }
     sync()
     window.addEventListener(EV_VOICE_ENGINE, sync)
@@ -349,6 +354,7 @@ export function CommLog() {
         l1Ref.current = l1Ref.current ?? new L1Client()
         stateRef.current = voiceContext(eng, positionOf(sim.position) ?? 'tower')
         l1Ref.current.prefill(stateRef.current.text)
+        rec.setHints?.(biasNames(stateRef.current))   // the callsigns on frequency bias the recogniser
       }
     } catch { /* the rules path still works without the model */ }
     rec.onPartial = setHeard
@@ -358,9 +364,26 @@ export function CommLog() {
       void rec.stop().then((text) => {
         setHeard('')
         const e = sim.engine
-        if (!e || !text) return
-        void understandVoice(text, fromEngine(e, { lastCallsign: sim.lastCallsign, position: sim.position }), e.magVar ?? 0, l1Ref.current, stateRef.current)
+        if (!e) return
+        // every guess the recogniser had (n-best), repaired against the aircraft on frequency, rules then the model;
+        // not understood (or nothing heard) -> a second opinion from the server engine when the recogniser has one
+        // (asr-server.ts); only the server's guesses go through the second pass, the first ones already failed
+        const alts = text ? (rec.alternatives?.length ? rec.alternatives : [text]) : []
+        if (!alts.length && !rec.secondOpinion) return
+        const pctx = fromEngine(e, { lastCallsign: sim.lastCallsign, position: sim.position })
+        const firstP = alts.length ? understandHeard(alts, pctx, e.magVar ?? 0, l1Ref.current, stateRef.current) : Promise.resolve(null)
+        void firstP
+          .then(async (first) => {
+            if (first?.ok || !rec.secondOpinion) return first
+            const more = await rec.secondOpinion()
+            setHeard('')
+            if (!more.length) return first
+            const second = await understandHeard(more, pctx, e.magVar ?? 0, l1Ref.current, stateRef.current)
+            if (!first) return second
+            return second.ok || (second.confidence ?? 0) > (first.confidence ?? 0) ? second : first
+          })
           .then((u) => {
+            if (!u) return
             if (u.ok) { sendRef.current(u.line); return }
             focus(u.line)
             setError({ text: u.source === 'L1' ? (u.error ?? 'Not understood') : `Heard “${u.transcript}”: ${u.error}`, token: null })

@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Voice Gold Set</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Recording page for the real-voice gold set (ml/stt/GOLD.md). Tokens from /reports/voice-ai.html: dark-first, light via the OS. */
+:root {
+  --bg: #0e0f11; --surface: #141416; --raise: #1c1c1e; --line: rgba(255,255,255,.09); --line-strong: rgba(255,255,255,.16);
+  --ink-1: #f4f4f5; --ink-2: #c4c5c8; --ink-3: #a0a1a6; --ink-4: #7f8086;
+  --accent: #f5933f; --accent-tint: rgba(245,147,63,.14);
+  --good: #57cd50; --good-tint: rgba(87,205,80,.13); --neutral-tint: rgba(255,255,255,.07);
+  --rec: #ef5350; --rec-tint: rgba(239,83,80,.16); --bad: #ef6f6c;
+  --font: "DM Sans", "Helvetica Neue", Arial, sans-serif; --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12);
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --neutral-tint: rgba(20,20,24,.06);
+  --rec: #d32f2f; --rec-tint: rgba(211,47,47,.12); --bad: #c62828;
+  color-scheme: light;
+} }
+:root[data-theme="light"] {
+  --bg: #f6f5f2; --surface: #fbfaf8; --raise: #efeeea; --line: rgba(20,20,24,.10); --line-strong: rgba(20,20,24,.18);
+  --ink-1: #141416; --ink-2: #3c3d42; --ink-3: #56575d; --ink-4: #6c6d73;
+  --accent: #b85a12; --accent-tint: rgba(200,102,26,.12);
+  --good: #23862b; --good-tint: rgba(35,134,43,.12); --neutral-tint: rgba(20,20,24,.06);
+  --rec: #d32f2f; --rec-tint: rgba(211,47,47,.12); --bad: #c62828;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink-2); font-family: var(--font); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 56px; }
+.wrap { max-width: 780px; margin: 0 auto; display: grid; gap: 16px; }
+h1 { color: var(--ink-1); margin: 0; font-size: 22px; line-height: 1.2; font-weight: 600; letter-spacing: -.01em; }
+p { margin: 0; }
+code, .mono { font-family: var(--mono); font-size: .92em; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.eyebrow { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; min-width: 0; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--line-strong); color: var(--ink-2); background: var(--neutral-tint); }
+.pill.accent { color: var(--accent); background: var(--accent-tint); border-color: transparent; }
+.pill.good { color: var(--good); background: var(--good-tint); border-color: transparent; }
+
+/* header + progress */
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 8px 16px; }
+.count { font-size: 14px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.count b { color: var(--ink-1); font-size: 22px; font-weight: 600; }
+.strip { display: grid; grid-template-columns: repeat(50, minmax(0, 1fr)); gap: 3px; }
+.strip button { height: 12px; padding: 0; border: 0; border-radius: 2px; background: var(--neutral-tint); cursor: pointer; }
+.strip button.done { background: var(--good); opacity: .75; }
+.strip button.free { box-shadow: inset 0 -3px 0 var(--accent); }
+.strip button.cur { outline: 2px solid var(--ink-1); outline-offset: 1px; opacity: 1; }
+@media (max-width: 560px) { .strip { grid-template-columns: repeat(25, minmax(0, 1fr)); } .strip button { height: 14px; } }
+
+/* prompt */
+.prompt { display: grid; gap: 12px; }
+.prompt .tags { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.prompt .tags .mono { color: var(--ink-4); font-size: 12px; margin-left: auto; }
+.label { font-size: 13px; color: var(--ink-3); font-weight: 500; }
+.sentence { color: var(--ink-1); font-size: clamp(22px, 5.2vw, 32px); line-height: 1.3; font-weight: 500; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.prompt.free .sentence { color: var(--accent); }
+.target { font-size: 13px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.target code { color: var(--ink-2); background: var(--neutral-tint); padding: 1px 7px; border-radius: 6px; overflow-wrap: anywhere; }
+.hint { font-size: 13px; color: var(--ink-4); }
+
+/* recorder */
+.rec { display: grid; grid-template-columns: auto 1fr; gap: 14px 20px; align-items: center; }
+.recbtn { width: 104px; height: 104px; border-radius: 50%; border: 2px solid var(--rec); background: var(--rec-tint); color: var(--ink-1); cursor: pointer; display: grid; place-items: center; gap: 0;
+  font-size: 13px; font-weight: 600; line-height: 1.2; text-align: center; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: transform .08s; }
+.recbtn .dot { width: 22px; height: 22px; border-radius: 50%; background: var(--rec); margin: 0 auto 6px; transition: border-radius .15s, transform .15s; }
+.recbtn.on { background: var(--rec); color: #fff; transform: scale(1.04); animation: pulse 1.2s ease-in-out infinite; }
+.recbtn.on .dot { background: #fff; border-radius: 4px; transform: scale(.8); }
+.recbtn:disabled { opacity: .5; cursor: default; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 var(--rec-tint); } 50% { box-shadow: 0 0 0 12px var(--rec-tint); } }
+@media (prefers-reduced-motion: reduce) { .recbtn.on { animation: none; } }
+.side { display: grid; gap: 8px; min-width: 0; }
+.meter { height: 6px; border-radius: 3px; background: var(--neutral-tint); overflow: hidden; }
+.meter i { display: block; height: 100%; width: 100%; background: var(--good); transform-origin: left; transform: scaleX(0); transition: transform .06s linear; will-change: transform; }
+.status { color: var(--ink-1); font-weight: 500; min-height: 1.5em; }
+.status.err { color: var(--bad); }
+.status .t { font-family: var(--mono); color: var(--ink-3); font-weight: 400; margin-left: 6px; }
+.heard { font-size: 13px; color: var(--ink-3); min-height: 1.4em; overflow-wrap: anywhere; }
+.heard b { color: var(--ink-2); font-weight: 500; }
+audio { width: 100%; height: 36px; }
+.opts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; font-size: 13px; color: var(--ink-3); border-top: 1px solid var(--line); padding-top: 12px; }
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 4px 12px; cursor: pointer; color: var(--ink-3); font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--accent-tint); color: var(--accent); font-weight: 600; }
+.opts label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.btn { border: 1px solid var(--line-strong); background: var(--raise); color: var(--ink-1); border-radius: 10px; padding: 9px 14px; cursor: pointer; font-weight: 500; font-size: 14px; }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.primary { background: var(--accent-tint); border-color: transparent; color: var(--accent); font-weight: 600; }
+@media (max-width: 480px) { .rec { grid-template-columns: 1fr; justify-items: center; } .side { width: 100%; text-align: center; } }
+
+/* nav */
+.nav { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+.nav .btn:last-child { justify-self: end; }
+.nav .mid { justify-self: center; }
+
+/* situation */
+details.card { padding: 0; }
+details.card > summary { padding: 14px 20px; cursor: pointer; color: var(--ink-1); font-weight: 600; font-size: 14px; list-style-position: inside; }
+details.card > summary span { color: var(--ink-3); font-weight: 400; }
+.scroll { overflow-x: auto; padding: 0 8px 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 10px; border-top: 1px solid var(--line); white-space: nowrap; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-4); font-weight: 600; border-top: 0; }
+td.cs { font-family: var(--mono); color: var(--ink-1); }
+td.n { text-align: right; font-family: var(--mono); font-size: 12.5px; }
+tr.me td { background: var(--accent-tint); }
+tr.me td.cs { color: var(--accent); font-weight: 500; }
+td.dim { color: var(--ink-4); }
+@media (max-width: 560px) { .c-phase, .c-req { display: none; } th, td { padding: 6px 7px; } }
+
+/* key */
+.keybox { display: grid; gap: 10px; border-color: var(--accent); }
+.keybox form { display: flex; gap: 8px; flex-wrap: wrap; }
+.keybox input { flex: 1 1 220px; min-width: 0; font: inherit; font-family: var(--mono); font-size: 13px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--raise); color: var(--ink-1); }
+footer { font-size: 12.5px; color: var(--ink-4); display: grid; gap: 4px; }
+kbd { font-family: var(--mono); font-size: 11.5px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; color: var(--ink-3); }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <div><div class="eyebrow">OpenATC · voice gold set</div><h1>Talk like a controller</h1></div>
+    <div class="count" aria-live="polite"><b id="ndone">0</b> / <span id="ntotal">100</span> recorded</div>
+  </header>
+  <nav id="strip" class="strip" aria-label="Prompts"></nav>
+
+  <section id="keybox" class="card keybox" hidden>
+    <p id="keymsg">This page needs the recording key. Open the link you were given (it ends in <code>#k=…</code>) or paste the key.</p>
+    <form id="keyform"><input id="keyin" type="password" autocomplete="off" placeholder="recording key" aria-label="Recording key"><button class="btn primary" type="submit">Use key</button></form>
+  </section>
+
+  <section id="prompt" class="card prompt" aria-live="polite">
+    <div class="tags"><span id="pgroup" class="pill"></span><span id="pkind" class="pill"></span><span id="pdone" class="pill good" hidden>recorded</span><span id="pid" class="mono"></span></div>
+    <p id="plabel" class="label">Loading prompts…</p>
+    <p id="psaid" class="sentence"></p>
+    <p class="target"><span id="ptlabel">becomes</span><code id="pline"></code></p>
+    <p id="phint" class="hint"></p>
+  </section>
+
+  <section class="card rec">
+    <button id="recbtn" class="recbtn" type="button" aria-label="Record"><span><span class="dot"></span><span id="reclabel">Hold to talk</span></span></button>
+    <div class="side">
+      <div class="meter" aria-hidden="true"><i id="level"></i></div>
+      <p id="status" class="status" role="status">Hold the button or <kbd>Space</kbd> while you speak.</p>
+      <p id="heard" class="heard"></p>
+      <audio id="player" controls preload="none" hidden></audio>
+      <div><button id="retry" class="btn" type="button" hidden>Retry upload</button></div>
+    </div>
+    <div class="opts">
+      <span class="seg" role="group" aria-label="Recording mode"><button id="m-hold" type="button" aria-pressed="true">Hold</button><button id="m-tap" type="button" aria-pressed="false">Tap</button></span>
+      <label id="wsopt"><input id="ws" type="checkbox" checked> Also run the browser's recogniser (Chrome sends that audio to Google)</label>
+      <span id="wsno" hidden>Browser recogniser not available here (Chrome / Edge only): the offline recognisers still score every clip.</span>
+    </div>
+  </section>
+
+  <div class="nav">
+    <button id="prev" class="btn" type="button">← Prev</button>
+    <button id="nextu" class="btn primary mid" type="button">Next to record</button>
+    <button id="next" class="btn" type="button">Next →</button>
+  </div>
+
+  <details id="sit" class="card" open>
+    <summary>Situation <span id="sitsum"></span></summary>
+    <div class="scroll"><table><thead><tr><th>Callsign</th><th>Say</th><th></th><th>Freq</th><th class="c-phase">Phase</th><th class="n">Alt</th><th class="n">Hdg</th><th>Rwy</th><th class="c-req">Req</th></tr></thead><tbody id="actable"></tbody></table></div>
+  </details>
+
+  <footer>
+    <p><kbd>Space</kbd> record · <kbd>←</kbd> <kbd>→</kbd> previous / next · <kbd>Enter</kbd> next to record · <kbd>P</kbd> play. Re-recording a prompt replaces it.</p>
+    <p>Clips are 16 kHz mono WAV, stored on the OpenATC server for scoring (ml/stt/score_gold.py). Nothing here is public.</p>
+    <p id="micinfo"></p>
+  </footer>
+</main>
+<script>
+(() => {
+  'use strict';
+  const API = '/api/voice/gold';
+  const RATE = 16000, PRE_ROLL = 0.35, POST_ROLL = 0.25, MAX_SEC = 25, MIN_SEC = 0.3;
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode */ } },
+    del(k) { try { localStorage.removeItem(k); } catch { /* */ } },
+  };
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+
+  let prompts = [], idx = 0, key = '', mode = store.get('atc-gold-mode') === 'tap' ? 'tap' : 'hold';
+  const recorded = new Set(), takes = {};
+  let state = 'idle', ws = null, pending = null, clipUrl = null, t0 = 0, timer = 0, holdReleased = false;
+
+  // ── key: from the URL fragment (kept out of server logs and the Referer), remembered in localStorage ──
+  const fk = location.hash.match(/(?:^#|&)k=([^&]+)/);
+  if (fk) { key = decodeURIComponent(fk[1]); store.set('atc-gold-key', key); history.replaceState(null, '', location.pathname + location.search); }
+  else key = store.get('atc-gold-key') || '';
+
+  function needKey(msg) {
+    $('keybox').hidden = false;
+    if (msg) $('keymsg').textContent = msg;
+  }
+  $('keyform').addEventListener('submit', (e) => {
+    e.preventDefault(); const v = $('keyin').value.trim(); if (!v) return;
+    key = v; store.set('atc-gold-key', key); $('keyin').value = ''; $('keybox').hidden = true; refresh();
+  });
+
+  async function api(q = '', opts = {}) {
+    const r = await fetch(API + q, { ...opts, headers: { ...(opts.headers || {}), 'x-gold-key': key }, cache: 'no-store' });
+    if (r.status === 401) { store.del('atc-gold-key'); key = ''; needKey('The recording key was not accepted. Paste the key again.'); }
+    if (r.status === 503) needKey('Recording is switched off on this server (no key file).');
+    return r;
+  }
+
+  async function refresh() {
+    if (!key) { needKey(); return; }
+    try {
+      const r = await api();
+      if (!r.ok) return;
+      const j = await r.json();
+      recorded.clear(); j.ids.forEach((id) => recorded.add(id));
+      $('keybox').hidden = true;
+      renderStrip(); renderPrompt();
+    } catch (e) { setStatus(`Server not reachable: ${e.message}`, true); }
+  }
+
+  // ── context parsing: "@APP 31L 31R" then "AFR865 air france 865 ARR APP approach 9000ft h148 31L req:with_you" ──
+  const POS = { APP: 'Approach', TWR: 'Tower', GND: 'Ground' };
+  const title = (s) => s.split(' ').map((w) => (/^(ups|klm|ana|jal|dhl)$/.test(w) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1))).join(' ');
+  function parseCtx(ctx) {
+    const [head, ...lines] = ctx.split('\n');
+    const h = head.replace(/^@/, '').split(' ');
+    const aircraft = lines.filter((l) => l.trim()).map((l) => {
+      const t = l.split(' '); const k = t.findIndex((x) => x === 'ARR' || x === 'DEP');
+      const rest = t.slice(k + 1);
+      const alt = rest.find((x) => /^\d+ft$/.test(x)); const hdg = rest.find((x) => /^h\d{3}$/.test(x)); const req = rest.find((x) => x.startsWith('req:'));
+      const rwy = rest.slice(2).find((x) => /^\d{2}[LRC]?$/.test(x));
+      return { cs: t[0], name: title(t.slice(1, k).join(' ')), kind: t[k], freq: rest[0] || '', phase: rest[1] || '',
+        alt: alt ? Number(alt.slice(0, -2)).toLocaleString('en-US') : '', hdg: hdg ? hdg.slice(1) + '°' : '', rwy: rwy || '', req: req ? req.slice(4).replace(/_/g, ' ') : '' };
+    });
+    return { pos: POS[h[0]] || h[0], runways: h.slice(1), aircraft };
+  }
+
+  // ── rendering ──
+  function renderStrip() {
+    const s = $('strip');
+    if (s.children.length !== prompts.length) {
+      s.textContent = '';
+      prompts.forEach((p, i) => { const b = document.createElement('button'); b.type = 'button'; b.addEventListener('click', () => go(i)); s.appendChild(b); });
+    }
+    prompts.forEach((p, i) => {
+      const b = s.children[i];
+      b.className = (recorded.has(p.id) ? 'done ' : '') + (p.group === 'free' ? 'free ' : '') + (i === idx ? 'cur' : '');
+      b.setAttribute('aria-label', `Prompt ${i + 1} (${p.id}), ${recorded.has(p.id) ? 'recorded' : 'not recorded'}`);
+      b.title = `${i + 1}. ${p.id} · ${p.kind}${recorded.has(p.id) ? ' · recorded' : ''}`;
+    });
+    $('ndone').textContent = prompts.filter((p) => recorded.has(p.id)).length;
+    $('ntotal').textContent = prompts.length;
+  }
+
+  function renderPrompt() {
+    const p = prompts[idx]; if (!p) return;
+    const free = p.show === 'intent';
+    $('prompt').classList.toggle('free', free);
+    $('pgroup').textContent = p.group === 'sydney' ? 'Sydney · unseen airport' : free ? 'Your own words' : `Validation · ${p.icao}`;
+    $('pgroup').className = 'pill' + (free ? ' accent' : '');
+    $('pkind').textContent = p.kind;
+    $('pid').textContent = `${idx + 1}/${prompts.length} · ${p.id}`;
+    $('pdone').hidden = !recorded.has(p.id);
+    $('plabel').textContent = free ? 'Say it your own way, as you would on frequency' : 'Read this aloud';
+    $('psaid').textContent = free ? p.intent : p.said;
+    if (p.expect === 'say again') { $('ptlabel').textContent = 'expected'; $('pline').textContent = 'say again (that callsign is not on frequency)'; }
+    else { $('ptlabel').textContent = free ? 'the command' : 'becomes'; $('pline').textContent = p.line; }
+    $('phint').textContent = free ? 'Start with the callsign. Any phrasing and number style you would really use.'
+      : /\b(tree|fife|niner|fower)\b/i.test(p.said) ? 'ICAO numbers: tree = three, fife = five, niner = nine. Say them however you naturally would.' : '';
+    const c = parseCtx(p.ctx); const me = p.line.split(' ')[0];
+    $('sitsum').textContent = `· you are ${c.pos} · runways ${c.runways.join(' ') || '–'} · ${c.aircraft.length} aircraft`;
+    const tb = $('actable'); tb.textContent = '';
+    for (const a of c.aircraft) {
+      const tr = document.createElement('tr'); if (a.cs === me) tr.className = 'me';
+      const cells = [[a.cs, 'cs'], [a.name, ''], [a.kind, 'dim'], [a.freq, ''], [a.phase, 'c-phase dim'], [a.alt, 'n'], [a.hdg, 'n'], [a.rwy, ''], [a.req, 'c-req dim']];
+      for (const [v, cls] of cells) { const td = document.createElement('td'); td.textContent = v; if (cls) td.className = cls; tr.appendChild(td); }
+      tb.appendChild(tr);
+    }
+    $('heard').textContent = '';
+    $('retry').hidden = true;
+    loadClip(p.id);
+    if (state === 'idle') setStatus(recorded.has(p.id) ? 'Recorded. Record again to replace it.' : mode === 'hold' ? 'Hold the button or Space while you speak.' : 'Tap the button or Space to start, again to stop.');
+    $('prev').disabled = idx === 0; $('next').disabled = idx >= prompts.length - 1;
+    renderStrip();
+  }
+
+  async function loadClip(id) {
+    const pl = $('player');
+    if (clipUrl) { URL.revokeObjectURL(clipUrl); clipUrl = null; }
+    pl.removeAttribute('src'); pl.hidden = true;
+    if (!recorded.has(id) || !key) return;
+    try {
+      const r = await api(`?clip=${encodeURIComponent(id)}`);
+      if (!r.ok || prompts[idx].id !== id) return;
+      setPlayer(await r.blob());
+    } catch { /* playback is optional */ }
+  }
+  function setPlayer(blob) {
+    if (clipUrl) URL.revokeObjectURL(clipUrl);
+    clipUrl = URL.createObjectURL(blob); const pl = $('player'); pl.src = clipUrl; pl.hidden = false;
+  }
+
+  function setStatus(msg, err = false) { const s = $('status'); s.textContent = msg; s.classList.toggle('err', err); }
+
+  function go(i) {
+    if (state !== 'idle' || i < 0 || i >= prompts.length) return;
+    idx = i; store.set('atc-gold-pos', String(i)); renderPrompt();
+  }
+  const nextToRecord = () => { for (let k = 1; k <= prompts.length; k++) { const j = (idx + k) % prompts.length; if (!recorded.has(prompts[j].id)) return j; } return -1; };
+
+  // ── microphone: AudioWorklet at 16 kHz (the game's capture worklet), always running so there is a pre-roll ──
+  const mic = {
+    ctx: null, node: null, stream: null, rate: RATE, ring: [], ringN: 0, chunks: null, n: 0,
+    async open() {
+      if (this.node) { if (this.ctx.state !== 'running') await this.ctx.resume(); return; }
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      try { this.ctx = new AudioContext({ sampleRate: RATE }); await this.connect(); }
+      catch { try { this.ctx && this.ctx.close(); } catch { /* */ } this.node = null; this.ctx = new AudioContext(); await this.connect(); }   // Firefox: no 16 kHz context on a 48 kHz mic -> resample here
+      this.rate = this.ctx.sampleRate;
+      const s = this.stream.getAudioTracks()[0]?.getSettings?.() || {};
+      $('micinfo').textContent = `Microphone: ${s.sampleRate || '?'} Hz in, captured at ${this.rate} Hz${this.rate !== RATE ? ' and resampled to 16 kHz' : ''}; echo cancellation ${s.echoCancellation ? 'on' : 'off'}, noise suppression ${s.noiseSuppression ? 'on' : 'off'}, auto gain ${s.autoGainControl ? 'on' : 'off'} (same as the game).`;
+    },
+    async connect() {
+      await this.ctx.audioWorklet.addModule('/voice/capture-worklet.js');
+      const src = this.ctx.createMediaStreamSource(this.stream);
+      this.node = new AudioWorkletNode(this.ctx, 'atc-capture');
+      this.node.port.onmessage = (e) => this.frame(e.data);
+      src.connect(this.node);
+      this.node.port.postMessage({ recording: true });
+      await this.ctx.resume();
+    },
+    frame(f) {
+      let s = 0; for (let i = 0; i < f.length; i++) s += f[i] * f[i];
+      level(Math.sqrt(s / f.length));
+      if (this.chunks) { this.chunks.push(f); this.n += f.length; if (this.n > MAX_SEC * this.rate && state === 'recording') stopRec(); return; }
+      this.ring.push(f); this.ringN += f.length;
+      while (this.ring.length > 1 && this.ringN - this.ring[0].length >= PRE_ROLL * this.rate) this.ringN -= this.ring.shift().length;
+    },
+    start() { this.chunks = this.ring; this.n = this.ringN; this.ring = []; this.ringN = 0; },
+    async stop() {
+      await new Promise((r) => setTimeout(r, POST_ROLL * 1000));   // people let go a little early
+      const c = this.chunks || []; this.chunks = null;
+      const out = new Float32Array(c.reduce((s, x) => s + x.length, 0)); let o = 0; for (const x of c) { out.set(x, o); o += x.length; }
+      return resample(out, this.rate);
+    },
+    settings() { const s = this.stream?.getAudioTracks()[0]?.getSettings?.() || {}; const t = {};
+      for (const k of ['sampleRate', 'channelCount', 'echoCancellation', 'noiseSuppression', 'autoGainControl', 'latency', 'sampleSize']) if (s[k] != null) t[k] = s[k];
+      return t; },
+  };
+  function resample(x, from) {   // box low-pass + decimate; only used when the browser will not run a 16 kHz context
+    if (from === RATE) return x;
+    const r = from / RATE, n = Math.floor(x.length / r), y = new Float32Array(n);
+    for (let i = 0; i < n; i++) { const a = Math.floor(i * r), b = Math.min(x.length, Math.max(a + 1, Math.floor((i + 1) * r))); let s = 0; for (let j = a; j < b; j++) s += x[j]; y[i] = s / (b - a); }
+    return y;
+  }
+  let lvT = 0;
+  function level(rms) { const now = performance.now(); if (now - lvT < 50) return; lvT = now; $('level').style.transform = `scaleX(${Math.min(1, Math.sqrt(rms) * 2.2).toFixed(3)})`; }
+
+  function wavBlob(f32) {
+    const n = f32.length, b = new ArrayBuffer(44 + n * 2), v = new DataView(b);
+    const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, RATE, true); v.setUint32(28, RATE * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+    for (let i = 0; i < n; i++) { const s = Math.max(-1, Math.min(1, f32[i])); v.setInt16(44 + i * 2, s < 0 ? s * 32768 : s * 32767, true); }
+    return new Blob([b], { type: 'audio/wav' });
+  }
+
+  // ── Web Speech in parallel (it cannot be re-run on a saved clip later, so its live transcript is stored) ──
+  function startWs() {
+    if (!SR || !$('ws').checked) return null;
+    const st = { finals: [], interim: '', alts: [], error: null, sr: new SR() };
+    st.sr.lang = 'en-US'; st.sr.continuous = true; st.sr.interimResults = true; st.sr.maxAlternatives = 3;
+    st.done = new Promise((res) => { st.sr.onend = res; });
+    st.sr.onresult = (e) => {
+      st.interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) { st.finals[i] = r[0].transcript; st.alts[i] = Array.from(r, (a) => ({ transcript: a.transcript, confidence: a.confidence })); } else st.interim += r[0].transcript;
+      }
+      showHeard(text(st));
+    };
+    st.sr.onerror = (e) => { st.error = e.error || 'error'; };
+    try { st.sr.start(); } catch (err) { st.error = String(err); }
+    return st;
+  }
+  const text = (st) => [st.finals.filter(Boolean).join(' '), st.interim].filter((s) => s && s.trim()).join(' ').replace(/\s+/g, ' ').trim();
+  async function stopWs(st) {
+    if (!st) return { browserTranscript: null, browserEngine: SR ? 'off' : 'unavailable' };
+    try { st.sr.stop(); } catch { /* */ }
+    await Promise.race([st.done, new Promise((r) => setTimeout(r, 2500))]);
+    const t = text(st);
+    return { browserTranscript: t, browserFinal: st.finals.some(Boolean), browserAlternatives: st.alts.filter(Boolean).flat().slice(0, 8),
+      browserEngine: window.SpeechRecognition ? 'SpeechRecognition' : 'webkitSpeechRecognition', browserError: st.error };
+  }
+  function showHeard(t) { const h = $('heard'); h.textContent = ''; if (!t) return; const b = document.createElement('b'); b.textContent = 'Browser heard: '; h.append(b, t); }
+
+  // ── record / stop / upload ──
+  async function startRec() {
+    if (state !== 'idle' || !prompts.length) return;
+    if (!key) { needKey(); return; }
+    state = 'opening'; holdReleased = false;
+    try { await mic.open(); }
+    catch (e) { state = 'idle'; setStatus(/denied|not ?allowed|permission/i.test(String(e)) ? 'Microphone access was blocked. Allow it for this site and try again.' : `Microphone: ${e.message || e}`, true); return; }
+    if (mode === 'hold' && holdReleased) { state = 'idle'; setStatus('Keep holding while you speak.'); return; }
+    mic.start(); ws = startWs(); state = 'recording'; t0 = performance.now();
+    $('recbtn').classList.add('on'); $('reclabel').textContent = mode === 'hold' ? 'Release to stop' : 'Tap to stop';
+    $('heard').textContent = ''; $('retry').hidden = true;
+    const tick = () => { setStatus('Recording'); const t = document.createElement('span'); t.className = 't'; t.textContent = `${((performance.now() - t0) / 1000).toFixed(1)} s`; $('status').appendChild(t); };
+    tick(); timer = setInterval(tick, 100);
+  }
+
+  async function stopRec() {
+    if (state === 'opening') { holdReleased = true; return; }
+    if (state !== 'recording') return;
+    state = 'stopping'; clearInterval(timer);
+    $('recbtn').classList.remove('on'); $('reclabel').textContent = mode === 'hold' ? 'Hold to talk' : 'Tap to talk';
+    setStatus('Finishing…');
+    const p = prompts[idx];
+    const [audio, wsRes] = await Promise.all([mic.stop(), stopWs(ws)]); ws = null;
+    $('level').style.transform = 'scaleX(0)';
+    if (audio.length < MIN_SEC * RATE + PRE_ROLL * RATE) { state = 'idle'; setStatus('Too short. Hold while you speak the whole sentence.', true); return; }
+    showHeard(wsRes.browserTranscript || '');
+    const blob = wavBlob(audio);
+    setPlayer(blob);
+    takes[p.id] = (takes[p.id] || 0) + 1;
+    pending = { id: p.id, blob, meta: { ...wsRes, mode, inputRate: mic.rate, clientSec: Math.round((audio.length / RATE) * 1000) / 1000, take: takes[p.id], clientTs: new Date().toISOString(), track: mic.settings() } };
+    await upload();
+  }
+
+  async function upload() {
+    if (!pending) return;
+    state = 'saving'; setStatus('Saving…'); $('retry').hidden = true;
+    const { id, blob, meta } = pending;
+    const form = new FormData(); form.set('id', id); form.set('wav', blob, `${id}.wav`); form.set('meta', JSON.stringify(meta));
+    try {
+      const r = await api('', { method: 'POST', body: form });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+      recorded.add(id); pending = null; state = 'idle';
+      renderStrip(); if (prompts[idx].id === id) $('pdone').hidden = false;
+      setStatus(`Saved ${j.sec.toFixed(1)} s${j.overwritten ? ' (replaced the earlier take)' : ''}. Enter for the next one.`);
+    } catch (e) { state = 'idle'; setStatus(`Not saved: ${e.message}`, true); $('retry').hidden = false; }
+  }
+  $('retry').addEventListener('click', upload);
+
+  // ── input: hold (pointer / Space down-up) or tap (toggle) ──
+  const btn = $('recbtn');
+  btn.addEventListener('pointerdown', (e) => { if (e.button !== 0) return; e.preventDefault(); if (mode === 'hold') { btn.setPointerCapture?.(e.pointerId); startRec(); } });
+  const release = () => { if (mode === 'hold') stopRec(); };
+  btn.addEventListener('pointerup', release); btn.addEventListener('pointercancel', release);
+  btn.addEventListener('click', () => { if (mode === 'tap') (state === 'recording' ? stopRec() : startRec()); });
+  btn.addEventListener('contextmenu', (e) => e.preventDefault());
+  btn.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') e.preventDefault(); });   // the global Space handler records
+  const typing = (e) => e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') && e.target.type !== 'checkbox';
+  window.addEventListener('keydown', (e) => {
+    if (typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.code === 'Space') { e.preventDefault(); if (e.repeat) return; if (mode === 'hold') startRec(); else (state === 'recording' ? stopRec() : startRec()); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); go(idx + 1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); go(idx - 1); }
+    else if (e.key === 'Enter' && !(e.target.closest && e.target.closest('.nav, #retry, #strip, summary'))) { e.preventDefault(); const j = nextToRecord(); if (j >= 0) go(j); }
+    else if (e.key === 'p' || e.key === 'P') { const pl = $('player'); if (!pl.hidden) { pl.currentTime = 0; pl.play(); } }
+  });
+  window.addEventListener('keyup', (e) => { if (e.code === 'Space' && !typing(e)) { e.preventDefault(); if (mode === 'hold') stopRec(); } });   // no button click on Space-up
+  window.addEventListener('blur', () => { if (mode === 'hold') stopRec(); });
+
+  function setMode(m) {
+    mode = m; store.set('atc-gold-mode', m);
+    $('m-hold').setAttribute('aria-pressed', String(m === 'hold')); $('m-tap').setAttribute('aria-pressed', String(m === 'tap'));
+    $('reclabel').textContent = m === 'hold' ? 'Hold to talk' : 'Tap to talk';
+    if (state === 'idle') renderPrompt();
+  }
+  $('m-hold').addEventListener('click', () => setMode('hold')); $('m-tap').addEventListener('click', () => setMode('tap'));
+  if (!SR) { $('wsopt').hidden = true; $('wsno').hidden = false; }
+  $('ws').checked = store.get('atc-gold-webspeech') !== 'off';
+  $('ws').addEventListener('change', () => store.set('atc-gold-webspeech', $('ws').checked ? 'on' : 'off'));
+  $('prev').addEventListener('click', () => go(idx - 1)); $('next').addEventListener('click', () => go(idx + 1));
+  $('nextu').addEventListener('click', () => { const j = nextToRecord(); if (j >= 0) go(j); else setStatus('All prompts are recorded. Thank you!'); });
+  if (!window.AudioWorkletNode || !navigator.mediaDevices?.getUserMedia) { btn.disabled = true; setStatus('This browser cannot record here (needs AudioWorklet + microphone over HTTPS).', true); }
+
+  // ── start: prompts, then where you left off ──
+  (async () => {
+    try {
+      const r = await fetch('/voice/gold-prompts.json', { cache: 'no-cache' });
+      prompts = (await r.json()).prompts;
+    } catch (e) { setStatus(`Could not load the prompts: ${e.message}`, true); return; }
+    setMode(mode);
+    await refresh();
+    const saved = Number(store.get('atc-gold-pos'));
+    const first = prompts.findIndex((p) => !recorded.has(p.id));
+    idx = first >= 0 ? first : Number.isInteger(saved) && saved >= 0 && saved < prompts.length ? saved : 0;
+    renderPrompt();
+    document.body.dataset.ready = '1';
+  })();
+})();
+</script>
+</body>
+</html>

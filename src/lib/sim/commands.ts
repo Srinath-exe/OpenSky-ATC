@@ -524,7 +524,7 @@ export function resolveCallsign(toks: Token[], i: number, ctx: ParseCtx, exclude
     if (a) return { callsign: a.callsign, consumed: 2, ambiguous: [] };
   }
   // 3. telephony ("SPEEDBIRD 117", "AIR FRANCE 447")
-  for (const words of [2, 1]) {
+  for (const words of [3, 2, 1]) {   // "HONG KONG EXPRESS 527"
     const name = toks.slice(i, i + words).map(t => t.text).join('');
     const icao = TELEPHONY_TO_ICAO[name];
     const num = toks[i + words]?.text ?? '';
@@ -664,7 +664,13 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       if (p.accept('FOR')) { p.skip('WAKE', 'TURBULENCE', 'TRAFFIC'); return done(mk('holdPosition', { reason: 'wake turbulence' })); }
       if (p.at('AT') || p.at('OVER') || p.isFixAhead() || p.at('AS PUBLISHED')) return done(parseHold(p, mk, self));
       if (p.eof) { if (stage && isAirStageName(stage)) p.fail('missing_param', 'Hold at which fix?', ['AT <FIX>']); return done(mk('holdPosition', {})); }
-      // "HOLD TRAFFIC ON FINAL" style reason
+      // airborne, "hold" + anything that is not a fix is a misheard holding clearance ("hold it lax-weed as published"),
+      // never "hold position": fail so the player (or the voice model) fixes the line instead of sending nonsense
+      if (stage && isAirStageName(stage)) p.fail('missing_param', 'Hold at which fix?', ['AT <FIX>']);
+      // "HOLD TRAFFIC ON FINAL" style reason; a tail with numbers is a misheard "hold short of 30L" ("hold shorter 30 less"),
+      // not a reason: fail so it is fixed instead of sent as "hold position"
+      { const tail = p.toks.slice(p.i); const end = tail.findIndex(t => t.text === 'THEN');
+        if ((end < 0 ? tail : tail.slice(0, end)).some(t => /\d/.test(t.text))) p.fail('missing_param', 'Hold short of what?', ['SHORT <RWY>', 'POSITION']); }
       return done(mk('holdPosition', { reason: restText(p) }));
     }
     case 'STOP': {

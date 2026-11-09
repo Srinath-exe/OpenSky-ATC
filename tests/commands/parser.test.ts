@@ -204,6 +204,10 @@ const CASES: Array<[string, Expect, Partial<typeof ctx>?]> = [
   ['DLH2 hold at OCK right turns 4 mile legs', { kind: 'hold', fix: 'OCK', dir: 'R', legNM: 4 }],
   ['DLH2 hold at OCK expect 20 minutes delay', { kind: 'hold', fix: 'OCK', efc: 3600 + 20 * 60 }],
   ['DLH2 hold at OCK EFC 45', { kind: 'hold', fix: 'OCK', efc: 3600 + 45 * 60 }],
+  // three-word telephony
+  ['Hong Kong Express 527 climb and maintain 5000', { kind: 'altitude', callsign: 'HKE527' }, { aircraft: [] }],
+  // airborne "hold" + noise (a misheard fix) is never "hold position"
+  ['DLH2 hold it lax weed as published', { error: 'missing_param' }],
   // ── approach clearances ───────────────────────────────────────────────────
   ['DLH2 cleared ILS 27L', { kind: 'ils', runway: '27L', reportEstablished: true }],
   ['DLH2 I27L', { kind: 'ils', runway: '27L' }],

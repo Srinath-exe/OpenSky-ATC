@@ -10,7 +10,8 @@ export const LS = {
   hotkeyBadges: 'skycontrol_hotkey_badges',
   logFilter: 'skycontrol_log_filter',
   cmdHistory: 'skycontrol_cmd_history',
-  /** Speech recognition engine for push-to-talk: 'browser' (Web Speech API) | 'local' (on-device model). */
+  /** Speech recognition engine for push-to-talk: a VoiceEngine (src/lib/voice/recognizer.ts), e.g. 'browser' (Web Speech
+   *  API), 'local' (in-browser model), 'native' (the phone app's on-device recogniser, only inside the app). */
   voiceEngine: 'skycontrol_voice_engine',
 } as const
 
