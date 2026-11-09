@@ -2,3 +2,4 @@ out/
 out*/
 *.log
 __pycache__/
+stt/

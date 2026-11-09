@@ -74,7 +74,7 @@ cmd_push() {
   rsync -az --delete -e "ssh ${SSH_OPTS[*]}" --exclude '.venv*' --exclude 'ext/' --exclude '__pycache__' --exclude 'ml/stt/out' \
     --exclude 'ml/data/out/*.jsonl' --exclude 'ml/data/out2/*.jsonl' --exclude 'ml/s1/runs' --exclude 'ml/gpu/state' --exclude 'ml/gpu/results' \
     --exclude 'venvs/' --exclude 'ml/stt/models' --exclude 'ml/stt/chrome' --exclude 'ml/verify/out' --exclude 'ml/diffusion/runs' --exclude 'ml/rl/runs' \
-    --exclude 'ml/tts/cache' --exclude 'ml/data/gold' --exclude '*.pt' \
+    --exclude 'ml/tts/cache' --exclude 'ml/data/gold' --exclude '*.pt' --exclude 'ml/data/stt/raw' --exclude 'ml/data/stt/synth/audio' \
     --include 'ml/***' --include 'tests/' --exclude '*' "$ROOT/" "ubuntu@$INSTANCE_IP:/opt/atc/repo/"
   log "pushed ml/ (code, datasets, tokenizer)"
 }
