@@ -127,6 +127,9 @@ def main():
     ap.add_argument("--n-val", type=int, default=100); ap.add_argument("--n-syd", type=int, default=60)
     ap.add_argument("--ds", default=str(ROOT / "ml/data/out4/ds")); ap.add_argument("--out", default=str(ROOT / "ml/stt/bench2/clips"))
     ap.add_argument("--seed", type=int, default=7); ap.add_argument("--threads", type=int, default=2)
+    # --voices hf_alpha,hf_beta,hm_omega,hm_psi: Kokoro's Hindi voices reading the English text through the American
+    # English phonemiser -> an Indian-accented English proxy (the owner's accent); --conds clean,laptop to limit conditions
+    ap.add_argument("--voices", default=None); ap.add_argument("--conds", default=None)
     a = ap.parse_args()
     import torch
     torch.set_num_threads(a.threads)
@@ -135,21 +138,26 @@ def main():
     recs = [("val", r) for r in pick(Path(a.ds) / "val.jsonl", a.n_val, rng, 9)] + [("syd", r) for r in pick(Path(a.ds) / "test_airport.jsonl", a.n_syd, rng, 6)]
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
     pipes = {"a": KPipeline(lang_code="a", repo_id="hexgrad/Kokoro-82M"), "b": KPipeline(lang_code="b", repo_id="hexgrad/Kokoro-82M")}
+    voices = a.voices.split(",") if a.voices else VOICES
+    conds = set(a.conds.split(",")) if a.conds else None
+    pipe_of = lambda v: pipes["b"] if v[0] == "b" else pipes["a"]   # Hindi (h*) and others speak through the US phonemiser
     t0 = time.time()
     mf = out / "meta.jsonl"
     meta = [json.loads(l) for l in open(mf)] if mf.exists() else []
     have = {m["id"] for m in meta}
     with open(mf, "a") as fm:
         for i, (split, r) in enumerate(recs):
-            v = VOICES[i % len(VOICES)]; speed = round(rng.uniform(0.9, 1.3), 2)
+            v = voices[i % len(voices)]; speed = round(rng.uniform(0.9, 1.3), 2)
             if f"{i:04d}" in have:
                 continue
             text = spoken(r["said"])
-            parts = [np.asarray(au.numpy() if hasattr(au, "numpy") else au, dtype=np.float32) for _, _, au in pipes[v[0]](text, voice=v, speed=speed)]
+            parts = [np.asarray(au.numpy() if hasattr(au, "numpy") else au, dtype=np.float32) for _, _, au in pipe_of(v)(text, voice=v, speed=speed)]
             wav = resample_poly(np.concatenate(parts), 2, 3).astype(np.float64)
             wav = wav / (np.abs(wav).max() + 1e-9) * 0.7
             nrng = np.random.default_rng(a.seed * 100003 + i)
             for cond, (x, info) in degrade(wav, nrng).items():
+                if conds and cond not in conds:
+                    continue
                 x = np.clip(x, -1, 1)
                 name = f"{i:04d}_{cond}.wav"
                 sf.write(out / name, (x * 32767).astype(np.int16), SR, subtype="PCM_16")

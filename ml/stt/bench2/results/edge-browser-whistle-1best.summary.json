@@ -1,0 +1,26 @@
+{
+ "variant": "model=whistle&alts=0",
+ "device": "wasm",
+ "clips": 40,
+ "loadS": 2.004,
+ "readyMs": 1969,
+ "downloadedMB": 18.2,
+ "files": {
+  "whistle.cact": 1020,
+  "cactus.js": 330,
+  "cactus.wasm": 1107,
+  "releases%2F4.1.0%2Fwasm%2Fcactus.js": 18108,
+  "7383ea4f0c9883b417e03d426337b4a4c6d63571b8e5d4021b1191dd6d2f7fde": 1243093,
+  "79c17d159d40711289625186506380542c68713097c5d90fd701a843777e8564": 16929537,
+  "842c2c4b-c795-463d-be04-485ae76b82d2": -73
+ },
+ "ramBaseMB": 159,
+ "ramReadyMB": 232,
+ "ramPeakMB": 359,
+ "ramModelMB": 200,
+ "msP50": 1188,
+ "msP90": 2466,
+ "msMean": 1420,
+ "audioSecMean": 4.98,
+ "load": "15.04 17.26 18.00 18/2148 3298008"
+}

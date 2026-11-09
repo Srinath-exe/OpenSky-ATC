@@ -1,0 +1,40 @@
+{"wav":"0000_clean.wav","heard":"Speedbird 50 fly heading 068","alts":["Speedbird 50 fly heading 068"],"ms":1128,"device":"wasm","sec":3.64}
+{"wav":"0000_laptop.wav","heard":"Speed bird 50 fly heading 068.","alts":["Speed bird 50 fly heading 068."],"ms":661,"device":"wasm","sec":3.64}
+{"wav":"0000_radio.wav","heard":"Beaured 50 fly heading 068.","alts":["Beaured 50 fly heading 068."],"ms":1236,"device":"wasm","sec":3.64}
+{"wav":"0000_late.wav","heard":"5-0-fly heading 0-6-8.","alts":["5-0-fly heading 0-6-8."],"ms":765,"device":"wasm","sec":2.63}
+{"wav":"0002_clean.wav","heard":"884 taxi to holding point runway 09 right via alpha 9 whiskey alpha 11","alts":["884 taxi to holding point runway 09 right via alpha 9 whiskey alpha 11"],"ms":1626,"device":"wasm","sec":6.62}
+{"wav":"0002_laptop.wav","heard":"884 taxi to holding point runway 09 right via alpha 9 whiskey alpha 11","alts":["884 taxi to holding point runway 09 right via alpha 9 whiskey alpha 11"],"ms":2214,"device":"wasm","sec":6.62}
+{"wav":"0002_radio.wav","heard":"884 taxis, the holding point runway, 09 right via Alpha 9 whiskey alpha 11.","alts":["884 taxis, the holding point runway, 09 right via Alpha 9 whiskey alpha 11."],"ms":2156,"device":"wasm","sec":6.62}
+{"wav":"0002_late.wav","heard":"For taxi to holding point runway 09 right via alpha 9 whiskey alpha 11","alts":["For taxi to holding point runway 09 right via alpha 9 whiskey alpha 11"],"ms":1413,"device":"wasm","sec":5.78}
+{"wav":"0004_clean.wav","heard":"United 69% to 6000.","alts":["United 69% to 6000."],"ms":1040,"device":"wasm","sec":3.99}
+{"wav":"0004_laptop.wav","heard":"United 69% to 6,000.","alts":["United 69% to 6,000."],"ms":1178,"device":"wasm","sec":3.99}
+{"wav":"0004_radio.wav","heard":"You might have 69 to 500.","alts":["You might have 69 to 500."],"ms":935,"device":"wasm","sec":3.99}
+{"wav":"0004_late.wav","heard":"69% to 6,000.","alts":["69% to 6,000."],"ms":1411,"device":"wasm","sec":2.96}
+{"wav":"0006_clean.wav","heard":"All nip on 344 holds short of runway 23.","alts":["All nip on 344 holds short of runway 23."],"ms":1399,"device":"wasm","sec":4.76}
+{"wav":"0006_laptop.wav","heard":"All nip on 344 holds short of runway 23.","alts":["All nip on 344 holds short of runway 23."],"ms":1750,"device":"wasm","sec":4.76}
+{"wav":"0006_radio.wav","heard":"All nip on 344 hold short of runway 23.","alts":["All nip on 344 hold short of runway 23."],"ms":1899,"device":"wasm","sec":4.76}
+{"wav":"0006_late.wav","heard":"10-11-3-4-4 holds short of runway 2-3.","alts":["10-11-3-4-4 holds short of runway 2-3."],"ms":1656,"device":"wasm","sec":3.84}
+{"wav":"0008_clean.wav","heard":"Sky Dubai 6 Sky Dubai 62312 left taxi via uniform 6 victor victor 1.","alts":["Sky Dubai 6 Sky Dubai 62312 left taxi via uniform 6 victor victor 1."],"ms":2101,"device":"wasm","sec":7.78}
+{"wav":"0008_laptop.wav","heard":"Sky Dubai 6 Sky Dubai 62312 left taxi by a uniform 6 victor victor 1.","alts":["Sky Dubai 6 Sky Dubai 62312 left taxi by a uniform 6 victor victor 1."],"ms":2377,"device":"wasm","sec":7.78}
+{"wav":"0008_radio.wav","heard":"Sky Dubai 6th Sky Dubai 62312 left taxi by a uniform 6-victor-victor-1.","alts":["Sky Dubai 6th Sky Dubai 62312 left taxi by a uniform 6-victor-victor-1."],"ms":2080,"device":"wasm","sec":7.78}
+{"wav":"0008_late.wav","heard":"I do buy 6 sky, do buy 62312, left taxi, by a uniform 6 victor victor 1.","alts":["I do buy 6 sky, do buy 62312, left taxi, by a uniform 6 victor victor 1."],"ms":2523,"device":"wasm","sec":6.91}
+{"wav":"0010_clean.wav","heard":"American 652 taxi stand 90.","alts":["American 652 taxi stand 90."],"ms":650,"device":"wasm","sec":4.1}
+{"wav":"0010_laptop.wav","heard":"American 652 taxi stand 90.","alts":["American 652 taxi stand 90."],"ms":786,"device":"wasm","sec":4.1}
+{"wav":"0010_radio.wav","heard":"American 652 taxi stand 90.","alts":["American 652 taxi stand 90."],"ms":1108,"device":"wasm","sec":4.1}
+{"wav":"0010_late.wav","heard":"652 taxi stand 90.","alts":["652 taxi stand 90."],"ms":876,"device":"wasm","sec":3.19}
+{"wav":"0012_clean.wav","heard":"83 increased speed to 180 knots.","alts":["83 increased speed to 180 knots."],"ms":1310,"device":"wasm","sec":4.1}
+{"wav":"0012_laptop.wav","heard":"83 increased speed, 2180 knots.","alts":["83 increased speed, 2180 knots."],"ms":823,"device":"wasm","sec":4.1}
+{"wav":"0012_radio.wav","heard":"83 in Creepy, 21800.","alts":["83 in Creepy, 21800."],"ms":749,"device":"wasm","sec":4.1}
+{"wav":"0012_late.wav","heard":"3 increased speed to 180 knots.","alts":["3 increased speed to 180 knots."],"ms":684,"device":"wasm","sec":3.09}
+{"wav":"0014_clean.wav","heard":"Easy 101 reduce speed 2190","alts":["Easy 101 reduce speed 2190"],"ms":1014,"device":"wasm","sec":4.68}
+{"wav":"0014_laptop.wav","heard":"Easy 101 reduce speed 2190","alts":["Easy 101 reduce speed 2190"],"ms":1038,"device":"wasm","sec":4.68}
+{"wav":"0014_radio.wav","heard":"Easy 101 reduced seed 2190.","alts":["Easy 101 reduced seed 2190."],"ms":1054,"device":"wasm","sec":4.68}
+{"wav":"0014_late.wav","heard":"101 reduced speed 2190","alts":["101 reduced speed 2190"],"ms":726,"device":"wasm","sec":3.86}
+{"wav":"0016_clean.wav","heard":"Qatari 9: 7/8 fly heading 104","alts":["Qatari 9: 7/8 fly heading 104"],"ms":709,"device":"wasm","sec":3.92}
+{"wav":"0016_laptop.wav","heard":"Qatari 9: 7/8 fly heading 104.","alts":["Qatari 9: 7/8 fly heading 104."],"ms":1290,"device":"wasm","sec":3.92}
+{"wav":"0016_radio.wav","heard":"Katari 9 7 8 fly heading 1 0 4.","alts":["Katari 9 7 8 fly heading 1 0 4."],"ms":1461,"device":"wasm","sec":3.92}
+{"wav":"0016_late.wav","heard":"78 fly heading 104.","alts":["78 fly heading 104."],"ms":1819,"device":"wasm","sec":2.94}
+{"wav":"0018_clean.wav","heard":"Burgeon 35 John F Kennedy Interloproach radar contact Qnh 1029, expect ills approach runway 31 right.","alts":["Burgeon 35 John F Kennedy Interloproach radar contact Qnh 1029, expect ills approach runway 31 right."],"ms":3420,"device":"wasm","sec":8.54}
+{"wav":"0018_laptop.wav","heard":"Virgin 35 John F Kennedy Interloport Radar contact QNH 1029, Expect Ills Approach Runway 31 right.","alts":["Virgin 35 John F Kennedy Interloport Radar contact QNH 1029, Expect Ills Approach Runway 31 right."],"ms":2381,"device":"wasm","sec":8.54}
+{"wav":"0018_radio.wav","heard":"Virgin 35 John F Kennedy Into Approach Radar Contact QNH 1029, Expect Ills Approach Runway 31R.","alts":["Virgin 35 John F Kennedy Into Approach Radar Contact QNH 1029, Expect Ills Approach Runway 31R."],"ms":3321,"device":"wasm","sec":8.54}
+{"wav":"0018_late.wav","heard":"35 John F Kennedy Interlipoach Radar Contact QNH 1029 Expect Ills Approach Runway 31 Ride","alts":["35 John F Kennedy Interlipoach Radar Contact QNH 1029 Expect Ills Approach Runway 31 Ride"],"ms":2408,"device":"wasm","sec":7.72}

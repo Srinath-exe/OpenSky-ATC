@@ -64,7 +64,8 @@ cmd_up() {
   for _ in $(seq 60); do remote true 2>/dev/null && break; sleep 5; done
   remote true || die "SSH never came up (instance still running: ml/gpu/gpu.sh down)"
   cmd_push
-  log "setup (drivers check, Python packages, Kev)"; remote "bash /opt/atc/repo/ml/gpu/remote/setup.sh" 2>&1 | tail -20
+  # SETUP=<script in ml/gpu/remote/> picks a session's own setup (default: setup.sh, the first session's packages + Kev)
+  log "setup (${SETUP:-setup.sh})"; remote "bash /opt/atc/repo/ml/gpu/remote/${SETUP:-setup.sh}" 2>&1 | tail -20
 }
 
 cmd_push() {
@@ -72,10 +73,12 @@ cmd_push() {
   remote "sudo mkdir -p /opt/atc && sudo chown ubuntu /opt/atc && mkdir -p /opt/atc/repo"
   rsync -az --delete -e "ssh ${SSH_OPTS[*]}" --exclude '.venv*' --exclude 'ext/' --exclude '__pycache__' --exclude 'ml/stt/out' \
     --exclude 'ml/data/out/*.jsonl' --exclude 'ml/data/out2/*.jsonl' --exclude 'ml/s1/runs' --exclude 'ml/gpu/state' --exclude 'ml/gpu/results' \
+    --exclude 'venvs/' --exclude 'ml/stt/models' --exclude 'ml/stt/chrome' --exclude 'ml/verify/out' --exclude 'ml/diffusion/runs' --exclude 'ml/rl/runs' \
+    --exclude 'ml/tts/cache' --exclude 'ml/data/gold' --exclude '*.pt' \
     --include 'ml/***' --include 'tests/' --exclude '*' "$ROOT/" "ubuntu@$INSTANCE_IP:/opt/atc/repo/"
   log "pushed ml/ (code, datasets, tokenizer)"
 }
-cmd_jobs() { load; remote "cd /opt/atc/repo && mkdir -p /opt/atc/results && setsid nohup bash ml/gpu/remote/jobs.sh > /opt/atc/results/jobs.log 2>&1 < /dev/null & echo started"; }
+cmd_jobs() { load; remote "cd /opt/atc/repo && mkdir -p /opt/atc/results && setsid nohup bash ml/gpu/remote/${JOBS:-jobs.sh} > /opt/atc/results/jobs.log 2>&1 < /dev/null & echo started"; }
 cmd_pull() { load; mkdir -p "$HERE/results"; rsync -az -e "ssh ${SSH_OPTS[*]}" "ubuntu@$INSTANCE_IP:/opt/atc/results/" "$HERE/results/"; log "results in ml/gpu/results ($(cost))"; }
 cmd_logs() { load; remote "tail -n ${1:-30} /opt/atc/results/jobs.log; nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader"; }
 cmd_status() { load; [[ -n "${INSTANCE_ID:-}" ]] || { echo "no instance"; return; }; echo "$INSTANCE_ID $INSTANCE_TYPE_RUNNING $(state_of "$INSTANCE_ID") at $INSTANCE_IP, $(cost)"; }

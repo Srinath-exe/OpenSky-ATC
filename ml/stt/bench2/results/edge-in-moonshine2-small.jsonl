@@ -1,0 +1,160 @@
+{"wav": "0000_clean.wav", "heard": "Speedbird 505 heading 068", "alts": ["Speedbird 505 heading 068"], "ms": 1498, "moreMs": 1182, "sec": 4.29}
+{"wav": "0000_laptop.wav", "heard": "Speedbird 5-0 fly heading 068", "alts": ["Speedbird 5-0 fly heading 068"], "ms": 1248, "moreMs": 1158, "sec": 4.29}
+{"wav": "0002_clean.wav", "heard": "884 taxi the holding point Runway 09 right via Alpha 9 whiskey alpha 11.", "alts": ["884 taxi the holding point Runway 09 right via Alpha 9 whiskey alpha 11."], "ms": 2888, "moreMs": 6759, "sec": 7.79}
+{"wav": "0002_laptop.wav", "heard": "It poor taxi the holding point Runway 09 right by Alpha 9 whiskey Alpha 11", "alts": ["It poor taxi the holding point Runway 09 right by Alpha 9 whiskey Alpha 11"], "ms": 4270, "moreMs": 3192, "sec": 7.79}
+{"wav": "0004_clean.wav", "heard": "United 69, descend to 6000.", "alts": ["United 69, descend to 6000."], "ms": 1879, "moreMs": 1501, "sec": 4.51}
+{"wav": "0004_laptop.wav", "heard": "United 69, descend to 6000.", "alts": ["United 69, descend to 6000."], "ms": 1602, "moreMs": 1153, "sec": 4.51}
+{"wav": "0006_clean.wav", "heard": "All Nippon 344 Hold short of runway 23.", "alts": ["All Nippon 344 Hold short of runway 23.", "All nipan 344 Hold short of runway 23."], "ms": 1834, "moreMs": 2093, "sec": 5.43}
+{"wav": "0006_laptop.wav", "heard": "All Nippon 344 Hold short of runway 23.", "alts": ["All Nippon 344 Hold short of runway 23.", "Only fun 344 Hold short of runway 23."], "ms": 1451, "moreMs": 1688, "sec": 5.43}
+{"wav": "0008_clean.wav", "heard": "Sky Dubai 6 Sky Dubai 6 2 3 1 2 left taxi via uniform 6 Victor Victor 1", "alts": ["Sky Dubai 6 Sky Dubai 6 2 3 1 2 left taxi via uniform 6 Victor Victor 1"], "ms": 2891, "moreMs": 3145, "sec": 8.58}
+{"wav": "0008_laptop.wav", "heard": "Sky Dubai 6 Sky Dubai 6 2 3 1 2 left taxi via uniform 6 Victor Victor 1", "alts": ["Sky Dubai 6 Sky Dubai 6 2 3 1 2 left taxi via uniform 6 Victor Victor 1", "Sky 2 by 6 sky 2 by 6 2 3 1 2 left taxi via uniform 6 victor victor 1"], "ms": 3023, "moreMs": 2877, "sec": 8.58}
+{"wav": "0010_clean.wav", "heard": "American 652 taxi stand 90.", "alts": ["American 652 taxi stand 90."], "ms": 1384, "moreMs": 1435, "sec": 4.5}
+{"wav": "0010_laptop.wav", "heard": "American 652 taxi stand 90", "alts": ["American 652 taxi stand 90"], "ms": 1392, "moreMs": 1501, "sec": 4.5}
+{"wav": "0012_clean.wav", "heard": "83 increase speed: 2180 knots.", "alts": ["83 increase speed: 2180 knots."], "ms": 1437, "moreMs": 1554, "sec": 4.7}
+{"wav": "0012_laptop.wav", "heard": "83 increased speed - 2180 knots.", "alts": ["83 increased speed - 2180 knots."], "ms": 1309, "moreMs": 1445, "sec": 4.7}
+{"wav": "0014_clean.wav", "heard": "Easy 1-0. 1 reduce speed to 190.", "alts": ["Easy 1-0. 1 reduce speed to 190."], "ms": 1736, "moreMs": 1871, "sec": 5.2}
+{"wav": "0014_laptop.wav", "heard": "Easy 10, 1 reduce speed to 190.", "alts": ["Easy 10, 1 reduce speed to 190."], "ms": 1898, "moreMs": 1489, "sec": 5.2}
+{"wav": "0016_clean.wav", "heard": "Qatari 9 7/8 fly heading 104", "alts": ["Qatari 9 7/8 fly heading 104"], "ms": 1449, "moreMs": 2393, "sec": 4.47}
+{"wav": "0016_laptop.wav", "heard": "Qatari 9 7/8 fly heading 104", "alts": ["Qatari 9 7/8 fly heading 104", "Qatar 978 fly heading 104"], "ms": 3449, "moreMs": 1715, "sec": 4.47}
+{"wav": "0018_clean.wav", "heard": "Virgin 35 John F. Kennedy Intel approach radar contact Qnh 1029 expect ills approach runway 31 right.", "alts": ["Virgin 35 John F. Kennedy Intel approach radar contact Qnh 1029 expect ills approach runway 31 right.", "Version 35 John f kendi intel approach radar contact Qnh 1029 expect ills approach runway 31 right."], "ms": 4043, "moreMs": 3577, "sec": 9.91}
+{"wav": "0018_laptop.wav", "heard": "Version 35 John F. Kennedy Intel approach radar contact 2nh 1029 expect ils approach runway 311", "alts": ["Version 35 John F. Kennedy Intel approach radar contact 2nh 1029 expect ils approach runway 311"], "ms": 3545, "moreMs": 3264, "sec": 9.91}
+{"wav": "0020_clean.wav", "heard": "Air India 466 fly heading 261.", "alts": ["Air India 466 fly heading 261."], "ms": 1362, "moreMs": 1253, "sec": 4.07}
+{"wav": "0020_laptop.wav", "heard": "Air India 466 fly heading 261", "alts": ["Air India 466 fly heading 261"], "ms": 1127, "moreMs": 1136, "sec": 4.07}
+{"wav": "0022_clean.wav", "heard": "Easy 532 Fly heading 072.", "alts": ["Easy 532 Fly heading 072."], "ms": 1854, "moreMs": 1580, "sec": 4.68}
+{"wav": "0022_laptop.wav", "heard": "Easy five three two Fly heading 072", "alts": ["Easy five three two Fly heading 072"], "ms": 1501, "moreMs": 1813, "sec": 4.68}
+{"wav": "0024_clean.wav", "heard": "Air China 978 cleared is, runway 23 approach report established.", "alts": ["Air China 978 cleared is, runway 23 approach report established."], "ms": 1823, "moreMs": 2172, "sec": 6.59}
+{"wav": "0024_laptop.wav", "heard": "Air China 9 78 cleared ills runway 23 approach report established", "alts": ["Air China 9 78 cleared ills runway 23 approach report established"], "ms": 1930, "moreMs": 1890, "sec": 6.59}
+{"wav": "0026_clean.wav", "heard": "Speedbird 50 reduce 160 knots.", "alts": ["Speedbird 50 reduce 160 knots."], "ms": 1376, "moreMs": 1447, "sec": 4.68}
+{"wav": "0026_laptop.wav", "heard": "Speedbird 50 reduce 160 knots", "alts": ["Speedbird 50 reduce 160 knots", "Feedbird 50 reduce 160 knots"], "ms": 1372, "moreMs": 1705, "sec": 4.68}
+{"wav": "0028_clean.wav", "heard": "Japan air 4 1 3 roger", "alts": ["Japan air 4 1 3 roger"], "ms": 1319, "moreMs": 965, "sec": 3.85}
+{"wav": "0028_laptop.wav", "heard": "Japan Air 4 13 budget", "alts": ["Japan Air 4 13 budget", "Japan air 4 13 budget"], "ms": 1062, "moreMs": 1123, "sec": 3.85}
+{"wav": "0030_clean.wav", "heard": "Delta ad-3 raja", "alts": ["Delta ad-3 raja"], "ms": 1094, "moreMs": 1141, "sec": 3.19}
+{"wav": "0030_laptop.wav", "heard": "Delta 83 wajr", "alts": ["Delta 83 wajr"], "ms": 1065, "moreMs": 1045, "sec": 3.19}
+{"wav": "0032_clean.wav", "heard": "Air China 589 cleared ills approach runway 27 established", "alts": ["Air China 589 cleared ills approach runway 27 established"], "ms": 1740, "moreMs": 2059, "sec": 6.3}
+{"wav": "0032_laptop.wav", "heard": "Air China 589 cleared ils approach runway 27 established", "alts": ["Air China 589 cleared ils approach runway 27 established"], "ms": 2343, "moreMs": 3296, "sec": 6.3}
+{"wav": "0034_clean.wav", "heard": "Speedbird 50 expedite the SEN.", "alts": ["Speedbird 50 expedite the SEN.", "Speedbird 50 expedite the send."], "ms": 1542, "moreMs": 1123, "sec": 3.82}
+{"wav": "0034_laptop.wav", "heard": "Speedbird 50 expedite the same.", "alts": ["Speedbird 50 expedite the same.", "Pivot 50 expedite the same"], "ms": 1162, "moreMs": 1173, "sec": 3.82}
+{"wav": "0036_clean.wav", "heard": "All Nippon 85 cross 16 right report vacated", "alts": ["All Nippon 85 cross 16 right report vacated", "On nipan 85 cross 16 right report vacated"], "ms": 1758, "moreMs": 2058, "sec": 5.08}
+{"wav": "0036_laptop.wav", "heard": "On nipan 85 cross 16 right report vacated", "alts": ["On nipan 85 cross 16 right report vacated"], "ms": 1892, "moreMs": 1775, "sec": 5.08}
+{"wav": "0038_clean.wav", "heard": "Hong Kong Express 527 Descend And maintain six thousand.", "alts": ["Hong Kong Express 527 Descend And maintain six thousand.", "Hong Kong expressed 527% And maintain six thousand."], "ms": 1976, "moreMs": 1817, "sec": 6.12}
+{"wav": "0038_laptop.wav", "heard": "Hong Kong Express 527 Descent And maintain 6000", "alts": ["Hong Kong Express 527 Descent And maintain 6000", "Hong Kong expressed 5 to 7 descent And maintain 6000"], "ms": 2029, "moreMs": 2032, "sec": 6.12}
+{"wav": "0040_clean.wav", "heard": "Singapore 5-0, runway 2, one taxi holds short of runway 2-0 left.", "alts": ["Singapore 5-0, runway 2, one taxi holds short of runway 2-0 left."], "ms": 2514, "moreMs": 2237, "sec": 6.16}
+{"wav": "0040_laptop.wav", "heard": "Singapore 50 runway 2 one taxi holds short of runway 2 zero left", "alts": ["Singapore 50 runway 2 one taxi holds short of runway 2 zero left"], "ms": 1796, "moreMs": 2378, "sec": 6.16}
+{"wav": "0042_clean.wav", "heard": "Singapore 5-0 taxi the holding point. Runway 2: 1 via echo 2 echo 4 holds short of runway 03", "alts": ["Singapore 5-0 taxi the holding point. Runway 2: 1 via echo 2 echo 4 holds short of runway 03"], "ms": 2939, "moreMs": 2986, "sec": 9.0}
+{"wav": "0042_laptop.wav", "heard": "Singapore 5-0 taxi the holding point Runway 2 1 by echo echo 2 echo 4 holds short of runway 03", "alts": ["Singapore 5-0 taxi the holding point Runway 2 1 by echo echo 2 echo 4 holds short of runway 03"], "ms": 3286, "moreMs": 3304, "sec": 9.0}
+{"wav": "0044_clean.wav", "heard": "899 roger", "alts": ["899 roger"], "ms": 818, "moreMs": 777, "sec": 3.01}
+{"wav": "0044_laptop.wav", "heard": "899 wajr", "alts": ["899 wajr"], "ms": 751, "moreMs": 938, "sec": 3.01}
+{"wav": "0046_clean.wav", "heard": "If I fold 2/4 taxi, the holding point. Runway 26 left via Gulf Echo 7 Gulf Echo 8 India 5-4", "alts": ["If I fold 2/4 taxi, the holding point. Runway 26 left via Gulf Echo 7 Gulf Echo 8 India 5-4", "If I fold 2/4 taxi, the holding point. Runway 26 left via Gulf, Echo 7 Gulf, Echo 8 India 5-4."], "ms": 3635, "moreMs": 3704, "sec": 8.64}
+{"wav": "0046_laptop.wav", "heard": "If I fold 2 for taxi, the holding point, runway 26 left via golf, echo 7 golf, echo 8 in the 5-4.", "alts": ["If I fold 2 for taxi, the holding point, runway 26 left via golf, echo 7 golf, echo 8 in the 5-4."], "ms": 4487, "moreMs": 6110, "sec": 8.64}
+{"wav": "0048_clean.wav", "heard": "Delta 5-0, hold position traffic.", "alts": ["Delta 5-0, hold position traffic."], "ms": 1580, "moreMs": 1768, "sec": 4.42}
+{"wav": "0048_laptop.wav", "heard": "Delta 5-0 whole position traffic", "alts": ["Delta 5-0 whole position traffic"], "ms": 1267, "moreMs": 1122, "sec": 4.42}
+{"wav": "0050_clean.wav", "heard": "Tau twist 504 reduce speed to 160 knots", "alts": ["Tau twist 504 reduce speed to 160 knots"], "ms": 1445, "moreMs": 1902, "sec": 5.47}
+{"wav": "0050_laptop.wav", "heard": "Outlet 504 reduce speed to 160 knots", "alts": ["Outlet 504 reduce speed to 160 knots"], "ms": 1581, "moreMs": 1728, "sec": 5.47}
+{"wav": "0052_clean.wav", "heard": "Japan Air 649 hold position", "alts": ["Japan Air 649 hold position", "Japan air 649 hold position"], "ms": 916, "moreMs": 947, "sec": 3.88}
+{"wav": "0052_laptop.wav", "heard": "Japan Air 649 hold position", "alts": ["Japan Air 649 hold position", "Japan air 649 hold position"], "ms": 984, "moreMs": 1159, "sec": 3.88}
+{"wav": "0054_clean.wav", "heard": "Alaska 642 hold a luxury as published right turns one minute legs", "alts": ["Alaska 642 hold a luxury as published right turns one minute legs"], "ms": 1932, "moreMs": 2081, "sec": 6.87}
+{"wav": "0054_laptop.wav", "heard": "Alaska 642 hold the luxury as published right turn one minute legs", "alts": ["Alaska 642 hold the luxury as published right turn one minute legs"], "ms": 2160, "moreMs": 2175, "sec": 6.87}
+{"wav": "0056_clean.wav", "heard": "Air France 459 contact tower 118.5", "alts": ["Air France 459 contact tower 118.5"], "ms": 1595, "moreMs": 1888, "sec": 6.09}
+{"wav": "0056_laptop.wav", "heard": "Air France full 59 contact tower 118.5", "alts": ["Air France full 59 contact tower 118.5", "A-France 459 contact tower 118.5"], "ms": 1851, "moreMs": 1889, "sec": 6.09}
+{"wav": "0058_clean.wav", "heard": "Emirates 469 increased speed. Two, two, three, zero, two, three, zero.", "alts": ["Emirates 469 increased speed. Two, two, three, zero, two, three, zero."], "ms": 2509, "moreMs": 2352, "sec": 6.26}
+{"wav": "0058_laptop.wav", "heard": "Emirates 469 increased speed 2230230", "alts": ["Emirates 469 increased speed 2230230"], "ms": 1947, "moreMs": 2036, "sec": 6.26}
+{"wav": "0060_clean.wav", "heard": "Hong Kong Express 504 reduce speed to 160.", "alts": ["Hong Kong Express 504 reduce speed to 160.", "Hong Kong express 504 reduce speed to 160."], "ms": 1810, "moreMs": 2054, "sec": 5.51}
+{"wav": "0060_laptop.wav", "heard": "Hong Kong Express 504 reduce speed to 160", "alts": ["Hong Kong Express 504 reduce speed to 160", "Hong Kong express 504 reduce speed to 160."], "ms": 1566, "moreMs": 1673, "sec": 5.51}
+{"wav": "0062_clean.wav", "heard": "Delta 500 cross Runway three three left report vacated.", "alts": ["Delta 500 cross Runway three three left report vacated."], "ms": 1860, "moreMs": 2482, "sec": 6.43}
+{"wav": "0062_laptop.wav", "heard": "Delta 500 cross Runway 33 left report vacated.", "alts": ["Delta 500 cross Runway 33 left report vacated."], "ms": 5672, "moreMs": 2857, "sec": 6.43}
+{"wav": "0064_clean.wav", "heard": "498 proceed direct idney", "alts": ["498 proceed direct idney"], "ms": 1724, "moreMs": 1316, "sec": 4.01}
+{"wav": "0064_laptop.wav", "heard": "498 proceeds direct i'd name", "alts": ["498 proceeds direct i'd name"], "ms": 1389, "moreMs": 1339, "sec": 4.01}
+{"wav": "0066_clean.wav", "heard": "Transavia 203 hold that ipe As published, Wright turns one minute legs.", "alts": ["Transavia 203 hold that ipe As published, Wright turns one minute legs.", "Transavier 203 hold that eyep As published, Wright turns one minute legs."], "ms": 2821, "moreMs": 2448, "sec": 7.23}
+{"wav": "0066_laptop.wav", "heard": "Transavia 203 all that i As published right turn, one minute legs.", "alts": ["Transavia 203 all that i As published right turn, one minute legs.", "Transavier 203 hold that eye As published right turn, one minute legs."], "ms": 2297, "moreMs": 2083, "sec": 7.23}
+{"wav": "0068_clean.wav", "heard": "Scooter 516 Singapore Changi Approach Radar Contact Altinder 3024 Expect Is Runway 20 left", "alts": ["Scooter 516 Singapore Changi Approach Radar Contact Altinder 3024 Expect Is Runway 20 left"], "ms": 3443, "moreMs": 3722, "sec": 10.84}
+{"wav": "0068_laptop.wav", "heard": "Scooter 516 Singapore Changi Approach Radar Contact Altinder 3024 Expect Aales Runway 20 left", "alts": ["Scooter 516 Singapore Changi Approach Radar Contact Altinder 3024 Expect Aales Runway 20 left", "Scooter 516 Sinopore Changi Approach Radar Contact Altinder 3024 Expect Aales Runway 20 left"], "ms": 3470, "moreMs": 3756, "sec": 10.84}
+{"wav": "0070_clean.wav", "heard": "Hong Kong Express 528 Wind 275\u00b0120 runway 0, one left cleared for takeoff.", "alts": ["Hong Kong Express 528 Wind 275\u00b0120 runway 0, one left cleared for takeoff."], "ms": 2997, "moreMs": 2818, "sec": 9.6}
+{"wav": "0070_laptop.wav", "heard": "Hong Kong Express 528 win 275 DVs 1200 Runway 0: One left cleared for takeoff.", "alts": ["Hong Kong Express 528 win 275 DVs 1200 Runway 0: One left cleared for takeoff.", "Hong Kong express 528 win 275 degrees 1200 Runway 0: One left cleared for takeoff."], "ms": 3213, "moreMs": 3052, "sec": 9.6}
+{"wav": "0072_clean.wav", "heard": "Southwest 504 roger", "alts": ["Southwest 504 roger"], "ms": 868, "moreMs": 1272, "sec": 3.44}
+{"wav": "0072_laptop.wav", "heard": "Saw 504 project", "alts": ["Saw 504 project", "Sublist 504 project"], "ms": 859, "moreMs": 974, "sec": 3.44}
+{"wav": "0074_clean.wav", "heard": "Ryanair 107. Perris charged the gall, Approach radar contact altimeter 3038 expect ILs 27 left approach.", "alts": ["Ryanair 107. Perris charged the gall, Approach radar contact altimeter 3038 expect ILs 27 left approach.", "Rhynet 107. Perris charged the gall, Approach radar contact altimeter 3038 expect ILs 27 left approach."], "ms": 4079, "moreMs": 9044, "sec": 11.36}
+{"wav": "0074_laptop.wav", "heard": "Ryanair 107. Pairs charged the gall. Approach radar contact altimeter 3038 expect ILs to 7-left approach.", "alts": ["Ryanair 107. Pairs charged the gall. Approach radar contact altimeter 3038 expect ILs to 7-left approach.", "Rhino 107. Pairs charged the gall. Approach radar contact altimeter 3038 expect ILs to 7-left approach."], "ms": 5468, "moreMs": 4991, "sec": 11.36}
+{"wav": "0076_clean.wav", "heard": "United 779 expect is: Approach runway 2: 5 right information alpha.", "alts": ["United 779 expect is: Approach runway 2: 5 right information alpha."], "ms": 2480, "moreMs": 2901, "sec": 7.69}
+{"wav": "0076_laptop.wav", "heard": "United 779 expect is approach runway 25 right information output", "alts": ["United 779 expect is approach runway 25 right information output"], "ms": 2226, "moreMs": 2172, "sec": 7.69}
+{"wav": "0078_clean.wav", "heard": "Speedbird 222 standby.", "alts": ["Speedbird 222 standby."], "ms": 1043, "moreMs": 936, "sec": 3.34}
+{"wav": "0078_laptop.wav", "heard": "Speedbird 222 standby", "alts": ["Speedbird 222 standby", "Speed bird 222 standby"], "ms": 927, "moreMs": 915, "sec": 3.34}
+{"wav": "0080_clean.wav", "heard": "Air France 9 78 expedite descent", "alts": ["Air France 9 78 expedite descent"], "ms": 1460, "moreMs": 1205, "sec": 4.96}
+{"wav": "0080_laptop.wav", "heard": "Air France 9 78 expedite descent", "alts": ["Air France 9 78 expedite descent"], "ms": 1197, "moreMs": 1203, "sec": 4.96}
+{"wav": "0082_clean.wav", "heard": "498 contact tower 118.5", "alts": ["498 contact tower 118.5"], "ms": 1330, "moreMs": 1200, "sec": 4.95}
+{"wav": "0082_laptop.wav", "heard": "498 contact tower 118.5", "alts": ["498 contact tower 118.5"], "ms": 1095, "moreMs": 1524, "sec": 4.95}
+{"wav": "0084_clean.wav", "heard": "Speedbird 860 standby", "alts": ["Speedbird 860 standby"], "ms": 1026, "moreMs": 937, "sec": 3.49}
+{"wav": "0084_laptop.wav", "heard": "Speedbird 860 standby", "alts": ["Speedbird 860 standby"], "ms": 997, "moreMs": 1071, "sec": 3.49}
+{"wav": "0086_clean.wav", "heard": "For six nine three zero Right cleared the land win 3-3-6 at 1-3.", "alts": ["For six nine three zero Right cleared the land win 3-3-6 at 1-3."], "ms": 2386, "moreMs": 2262, "sec": 6.26}
+{"wav": "0086_laptop.wav", "heard": "For six, nine, three, zero. Right clear the land win 3-3-6 at 1-3.", "alts": ["For six, nine, three, zero. Right clear the land win 3-3-6 at 1-3."], "ms": 2752, "moreMs": 2633, "sec": 6.26}
+{"wav": "0088_clean.wav", "heard": "Scooter scooter 498 contact tower tower 118 decimal 500", "alts": ["Scooter scooter 498 contact tower tower 118 decimal 500"], "ms": 2348, "moreMs": 3183, "sec": 6.97}
+{"wav": "0088_laptop.wav", "heard": "Scooter Scooter 498 contact tower tower 118 decimal 500", "alts": ["Scooter Scooter 498 contact tower tower 118 decimal 500", "Squares could have 498 contact tower tower 118 decimal 500"], "ms": 3594, "moreMs": 2462, "sec": 6.97}
+{"wav": "0090_clean.wav", "heard": "107 holds short of 30 left.", "alts": ["107 holds short of 30 left."], "ms": 1368, "moreMs": 1411, "sec": 4.76}
+{"wav": "0090_laptop.wav", "heard": "107 holds short of 30 left.", "alts": ["107 holds short of 30 left."], "ms": 1247, "moreMs": 1442, "sec": 4.76}
+{"wav": "0092_clean.wav", "heard": "Cuda498 proceed direct as funnel.", "alts": ["Cuda498 proceed direct as funnel.", "Qura498 proceed direct as Fanwa."], "ms": 1293, "moreMs": 1238, "sec": 3.79}
+{"wav": "0092_laptop.wav", "heard": "2498 proceed direct as farmer", "alts": ["2498 proceed direct as farmer"], "ms": 1206, "moreMs": 1033, "sec": 3.79}
+{"wav": "0094_clean.wav", "heard": "Ifly978 unable traffic standby", "alts": ["Ifly978 unable traffic standby", "If lane 9, 7/8 unable traffic standby."], "ms": 1205, "moreMs": 1671, "sec": 4.34}
+{"wav": "0094_laptop.wav", "heard": "It's a 978 unable traffic standby.", "alts": ["It's a 978 unable traffic standby."], "ms": 1517, "moreMs": 1252, "sec": 4.34}
+{"wav": "0096_clean.wav", "heard": "Speedbird 989 unable traffic standby", "alts": ["Speedbird 989 unable traffic standby"], "ms": 1294, "moreMs": 1165, "sec": 4.47}
+{"wav": "0096_laptop.wav", "heard": "Speedbird 989 unable traffic standby", "alts": ["Speedbird 989 unable traffic standby"], "ms": 1148, "moreMs": 1300, "sec": 4.47}
+{"wav": "0098_clean.wav", "heard": "Southwest 559. 0, 1 left cleared for takeoff win 2, 7-5 at 1-3.", "alts": ["Southwest 559. 0, 1 left cleared for takeoff win 2, 7-5 at 1-3."], "ms": 2930, "moreMs": 2737, "sec": 8.08}
+{"wav": "0098_laptop.wav", "heard": "Southwest 559 0, 1 left cleared for takeoff win 2, 7, 5 at 1, 3.", "alts": ["Southwest 559 0, 1 left cleared for takeoff win 2, 7, 5 at 1, 3."], "ms": 2956, "moreMs": 3039, "sec": 8.08}
+{"wav": "0100_clean.wav", "heard": "Jetblue 886 fly heading 032", "alts": ["Jetblue 886 fly heading 032", "Jeplo 886 fly heading 032"], "ms": 1168, "moreMs": 1397, "sec": 4.58}
+{"wav": "0100_laptop.wav", "heard": "Jetblue 886 fly heading 032", "alts": ["Jetblue 886 fly heading 032", "JetBlue 886 fly heading 032"], "ms": 1237, "moreMs": 1478, "sec": 4.58}
+{"wav": "0102_clean.wav", "heard": "New Zealand 736 heading 264.", "alts": ["New Zealand 736 heading 264."], "ms": 1269, "moreMs": 1118, "sec": 4.64}
+{"wav": "0102_laptop.wav", "heard": "New Zealand 736 heading 264.", "alts": ["New Zealand 736 heading 264.", "New zealand 736 heading 264."], "ms": 1069, "moreMs": 1237, "sec": 4.64}
+{"wav": "0104_clean.wav", "heard": "721 runway 16 right taxi hold short runway 25.", "alts": ["721 runway 16 right taxi hold short runway 25."], "ms": 2135, "moreMs": 2068, "sec": 6.71}
+{"wav": "0104_laptop.wav", "heard": "721 runway 16 right taxi, full short runway 25.", "alts": ["721 runway 16 right taxi, full short runway 25."], "ms": 1857, "moreMs": 1851, "sec": 6.71}
+{"wav": "0106_clean.wav", "heard": "Cathay 9 1 5 direct assign", "alts": ["Cathay 9 1 5 direct assign"], "ms": 1065, "moreMs": 1364, "sec": 4.07}
+{"wav": "0106_laptop.wav", "heard": "Cathay 9 15 direct sign", "alts": ["Cathay 9 15 direct sign"], "ms": 3317, "moreMs": 2073, "sec": 4.07}
+{"wav": "0108_clean.wav", "heard": "Canthus 2 1 4 climb and maintain 6000", "alts": ["Canthus 2 1 4 climb and maintain 6000"], "ms": 2041, "moreMs": 1938, "sec": 4.95}
+{"wav": "0108_laptop.wav", "heard": "Canthus 2 1/4 climb and maintain 6000.", "alts": ["Canthus 2 1/4 climb and maintain 6000."], "ms": 1632, "moreMs": 1461, "sec": 4.95}
+{"wav": "0110_clean.wav", "heard": "235 heading 051.", "alts": ["235 heading 051."], "ms": 1083, "moreMs": 886, "sec": 3.42}
+{"wav": "0110_laptop.wav", "heard": "Two three five heading zero five one", "alts": ["Two three five heading zero five one"], "ms": 781, "moreMs": 876, "sec": 3.42}
+{"wav": "0112_clean.wav", "heard": "721 win 2204 degrees 7 knots runway 16 right cleared for takeoff", "alts": ["721 win 2204 degrees 7 knots runway 16 right cleared for takeoff"], "ms": 2337, "moreMs": 2215, "sec": 7.13}
+{"wav": "0112_laptop.wav", "heard": "721 wind 2204\u00b07'N runway 16 right cleared for takeoff.", "alts": ["721 wind 2204\u00b07'N runway 16 right cleared for takeoff."], "ms": 2012, "moreMs": 1961, "sec": 7.13}
+{"wav": "0114_clean.wav", "heard": "Cantus 2 8 cross 1 6 right report vacated", "alts": ["Cantus 2 8 cross 1 6 right report vacated"], "ms": 1466, "moreMs": 1343, "sec": 4.7}
+{"wav": "0114_laptop.wav", "heard": "Cantus 2 8 cross 1 6 right report vacated", "alts": ["Cantus 2 8 cross 1 6 right report vacated"], "ms": 1232, "moreMs": 1355, "sec": 4.7}
+{"wav": "0116_clean.wav", "heard": "Singapore 822 expedite the send.", "alts": ["Singapore 822 expedite the send."], "ms": 1075, "moreMs": 843, "sec": 3.55}
+{"wav": "0116_laptop.wav", "heard": "Singapore 822 expedite the same", "alts": ["Singapore 822 expedite the same"], "ms": 968, "moreMs": 994, "sec": 3.55}
+{"wav": "0118_clean.wav", "heard": "Canter's 197. Hold short of runway one six right.", "alts": ["Canter's 197. Hold short of runway one six right."], "ms": 1718, "moreMs": 1619, "sec": 5.57}
+{"wav": "0118_laptop.wav", "heard": "Qantas 197 pulled short of runway 16R.", "alts": ["Qantas 197 pulled short of runway 16R.", "Cantors 197 pulled short of runway 165"], "ms": 1472, "moreMs": 1431, "sec": 5.57}
+{"wav": "0120_clean.wav", "heard": "Jetstar Jetstar 6 14 contact tower 118 decimal 500", "alts": ["Jetstar Jetstar 6 14 contact tower 118 decimal 500", "Jetstar jetstar 6 14 contact tower 118 decimal 500"], "ms": 1549, "moreMs": 1686, "sec": 6.14}
+{"wav": "0120_laptop.wav", "heard": "Jetstar Jetstar 6 14 contact tower 118 tesmo 500", "alts": ["Jetstar Jetstar 6 14 contact tower 118 tesmo 500", "Jetstar jetstar 6 14 contact tower 118 tesmo 500"], "ms": 1802, "moreMs": 1787, "sec": 6.14}
+{"wav": "0122_clean.wav", "heard": "Velocity 464 to send the 5000.", "alts": ["Velocity 464 to send the 5000."], "ms": 1133, "moreMs": 1146, "sec": 4.28}
+{"wav": "0122_laptop.wav", "heard": "Velocity 464 to send to 5000", "alts": ["Velocity 464 to send to 5000"], "ms": 1235, "moreMs": 1100, "sec": 4.28}
+{"wav": "0124_clean.wav", "heard": "Qatari 3:19 standby", "alts": ["Qatari 3:19 standby", "Q3: 19 standby"], "ms": 829, "moreMs": 786, "sec": 3.66}
+{"wav": "0124_laptop.wav", "heard": "Qatari 3:19 standby", "alts": ["Qatari 3:19 standby", "Q3 19 standby"], "ms": 1064, "moreMs": 845, "sec": 3.66}
+{"wav": "0126_clean.wav", "heard": "Jetstar 762 Reduce speed to 160.", "alts": ["Jetstar 762 Reduce speed to 160."], "ms": 1776, "moreMs": 1758, "sec": 5.51}
+{"wav": "0126_laptop.wav", "heard": "Jetta 762 Reduce speed to 1 sec view", "alts": ["Jetta 762 Reduce speed to 1 sec view"], "ms": 2937, "moreMs": 3012, "sec": 5.51}
+{"wav": "0128_clean.wav", "heard": "Velocity 404 descend and maintain 88000", "alts": ["Velocity 404 descend and maintain 88000"], "ms": 1872, "moreMs": 1603, "sec": 6.1}
+{"wav": "0128_laptop.wav", "heard": "Velocity 404 descend and maintain 88000", "alts": ["Velocity 404 descend and maintain 88000"], "ms": 1407, "moreMs": 1641, "sec": 6.1}
+{"wav": "0130_clean.wav", "heard": "New Zealand 736 Cross, runway 34 left report vacated.", "alts": ["New Zealand 736 Cross, runway 34 left report vacated."], "ms": 1904, "moreMs": 1838, "sec": 6.34}
+{"wav": "0130_laptop.wav", "heard": "New Zealand 736 cross. Runway 34 left report vacated.", "alts": ["New Zealand 736 cross. Runway 34 left report vacated."], "ms": 1963, "moreMs": 1791, "sec": 6.34}
+{"wav": "0132_clean.wav", "heard": "Singapore 8200 7 taxi via Alpha 1 hold short of 25.", "alts": ["Singapore 8200 7 taxi via Alpha 1 hold short of 25."], "ms": 1932, "moreMs": 2004, "sec": 6.74}
+{"wav": "0132_laptop.wav", "heard": "Singapore 82007 taxi via Alpha 1 hold short of 25.", "alts": ["Singapore 82007 taxi via Alpha 1 hold short of 25."], "ms": 1796, "moreMs": 2182, "sec": 6.74}
+{"wav": "0134_clean.wav", "heard": "Jetstar 658 standby", "alts": ["Jetstar 658 standby"], "ms": 981, "moreMs": 826, "sec": 3.65}
+{"wav": "0134_laptop.wav", "heard": "Jetta 658 standby", "alts": ["Jetta 658 standby"], "ms": 981, "moreMs": 885, "sec": 3.65}
+{"wav": "0136_clean.wav", "heard": "400 hold at S CISO as published right turns 1 minute", "alts": ["400 hold at S CISO as published right turns 1 minute", "400 hold at s siso as published right turns 1 minute"], "ms": 1931, "moreMs": 1629, "sec": 6.55}
+{"wav": "0136_laptop.wav", "heard": "400 hold at SC so as published right turns 1 minute", "alts": ["400 hold at SC so as published right turns 1 minute"], "ms": 1706, "moreMs": 1560, "sec": 6.55}
+{"wav": "0138_clean.wav", "heard": "Velocity 427, they sent the 4000.", "alts": ["Velocity 427, they sent the 4000."], "ms": 1260, "moreMs": 1472, "sec": 4.19}
+{"wav": "0138_laptop.wav", "heard": "Velocity 427 to send to 4000.", "alts": ["Velocity 427 to send to 4000."], "ms": 1452, "moreMs": 1467, "sec": 4.19}
+{"wav": "0140_clean.wav", "heard": "Cantus 2 8 7 descend and maintain 8 000 expedite", "alts": ["Cantus 2 8 7 descend and maintain 8 000 expedite"], "ms": 1557, "moreMs": 1790, "sec": 4.84}
+{"wav": "0140_laptop.wav", "heard": "Cantus 2877 and maintain 8000 expedites", "alts": ["Cantus 2877 and maintain 8000 expedites"], "ms": 1362, "moreMs": 1431, "sec": 4.84}
+{"wav": "0142_clean.wav", "heard": "749 runway 25 cleared for takeoff win 214 at 13 Gus 25.", "alts": ["749 runway 25 cleared for takeoff win 214 at 13 Gus 25."], "ms": 2755, "moreMs": 2463, "sec": 7.6}
+{"wav": "0142_laptop.wav", "heard": "749 runway 25 cleared for takeoff win 214 at 13GAS 25", "alts": ["749 runway 25 cleared for takeoff win 214 at 13GAS 25"], "ms": 2954, "moreMs": 3739, "sec": 7.6}
+{"wav": "0144_clean.wav", "heard": "Velocity 690, runway 25 cleared for take-off wind 146 at 12.", "alts": ["Velocity 690, runway 25 cleared for take-off wind 146 at 12."], "ms": 4033, "moreMs": 3072, "sec": 7.74}
+{"wav": "0144_laptop.wav", "heard": "Velocity 690 runway 25 cleared for takeoff win 146 at 12", "alts": ["Velocity 690 runway 25 cleared for takeoff win 146 at 12"], "ms": 2584, "moreMs": 2637, "sec": 7.74}
+{"wav": "0146_clean.wav", "heard": "New Zealand 780 give way to the Air China 5903 then continue.", "alts": ["New Zealand 780 give way to the Air China 5903 then continue."], "ms": 1940, "moreMs": 1718, "sec": 6.29}
+{"wav": "0146_laptop.wav", "heard": "New Zealand 780 give way to the Air China 5903 then continue.", "alts": ["New Zealand 780 give way to the Air China 5903 then continue."], "ms": 1824, "moreMs": 1860, "sec": 6.29}
+{"wav": "0148_clean.wav", "heard": "117% and maintain 7000.", "alts": ["117% and maintain 7000."], "ms": 1268, "moreMs": 1372, "sec": 5.33}
+{"wav": "0148_laptop.wav", "heard": "117% and maintain 7000.", "alts": ["117% and maintain 7000."], "ms": 1166, "moreMs": 1390, "sec": 5.33}
+{"wav": "0150_clean.wav", "heard": "Velocity 542 Startup approved expect 07, altimeter 3024.", "alts": ["Velocity 542 Startup approved expect 07, altimeter 3024."], "ms": 2160, "moreMs": 2383, "sec": 7.18}
+{"wav": "0150_laptop.wav", "heard": "Velocity 542 Startup approved expect 07, altimeter 3024.", "alts": ["Velocity 542 Startup approved expect 07, altimeter 3024."], "ms": 2309, "moreMs": 2602, "sec": 7.18}
+{"wav": "0152_clean.wav", "heard": "Scooter 4 Scooter 4 9 8 Expect is: Approach Runway 2 5 Information Bravo", "alts": ["Scooter 4 Scooter 4 9 8 Expect is: Approach Runway 2 5 Information Bravo", "Scooter 4 scooter 4 9 8 expect is approach runway 2 5 information bravo"], "ms": 2624, "moreMs": 2588, "sec": 8.05}
+{"wav": "0152_laptop.wav", "heard": "Scooter 4 Scooter 4 9 8 Expect is Approach Runway 2 5 Information Bravo", "alts": ["Scooter 4 Scooter 4 9 8 Expect is Approach Runway 2 5 Information Bravo"], "ms": 2969, "moreMs": 2760, "sec": 8.05}
+{"wav": "0154_clean.wav", "heard": "Emirates 865 proceed direct SIs", "alts": ["Emirates 865 proceed direct SIs"], "ms": 1269, "moreMs": 1165, "sec": 4.41}
+{"wav": "0154_laptop.wav", "heard": "Emirates 865 proceed direct si", "alts": ["Emirates 865 proceed direct si"], "ms": 1192, "moreMs": 1227, "sec": 4.41}
+{"wav": "0156_clean.wav", "heard": "Velocity 697 contact tower 118 decimal 500", "alts": ["Velocity 697 contact tower 118 decimal 500"], "ms": 1761, "moreMs": 1541, "sec": 6.04}
+{"wav": "0156_laptop.wav", "heard": "Velocity 697 contact tower 118-500", "alts": ["Velocity 697 contact tower 118-500"], "ms": 2033, "moreMs": 1879, "sec": 6.04}
+{"wav": "0158_clean.wav", "heard": "Jetstar 597 hold position.", "alts": ["Jetstar 597 hold position.", "Chester 597 hold position"], "ms": 1236, "moreMs": 3049, "sec": 3.84}
+{"wav": "0158_laptop.wav", "heard": "Just a 597 whole position", "alts": ["Just a 597 whole position"], "ms": 2277, "moreMs": 4307, "sec": 3.84}

@@ -1,0 +1,32 @@
+{
+ "variant": "model=tiny",
+ "device": "wasm",
+ "clips": 40,
+ "loadS": 11.92,
+ "readyMs": 11660,
+ "downloadedMB": 34.6,
+ "files": {
+  "transformers@4.3.1": 168565,
+  "config.json": 1773,
+  "tokenizer_config.json": 2749,
+  "preprocessor_config.json": 847,
+  "tokenizer.json": 611662,
+  "decoder_model_merged_quantized.onnx": 1126,
+  "encoder_model_quantized.onnx": 1094,
+  "generation_config.json": 865,
+  "95212792850dd77d8e1c07b8d30973c793b98acaa60f91175a2670e5dc4e7872": 20255289,
+  "1689e6e6f1a24bbaabed8ec1c89cc04d3e0d39028d1492ebc0764b6901a144ad": 7942701,
+  "ort-wasm-simd-threaded.asyncify.mjs": 19918,
+  "ort-wasm-simd-threaded.asyncify.wasm": 5553980,
+  "a5bbda1d-13af-4edb-aa68-6eb5f89e101b": -73
+ },
+ "ramBaseMB": 158,
+ "ramReadyMB": 776,
+ "ramPeakMB": 786,
+ "ramModelMB": 628,
+ "msP50": 699,
+ "msP90": 1546,
+ "msMean": 851,
+ "audioSecMean": 4.98,
+ "load": "15.73 16.54 17.54 12/2157 3304093"
+}

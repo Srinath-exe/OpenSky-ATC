@@ -7,3 +7,4 @@ bench2/results/*.log
 # per-clip details (regenerate with score.ts --details)
 bench2/results/*_det.jsonl
 bench2/results/det_*.jsonl
+bench2/clips_in/

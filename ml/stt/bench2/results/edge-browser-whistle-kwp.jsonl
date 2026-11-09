@@ -1,0 +1,40 @@
+{"wav":"0000_clean.wav","heard":"Speedbird 5.0 fly heading 068.","alts":["Speedbird 5.0 fly heading 068."],"ms":763,"device":"wasm","sec":3.64}
+{"wav":"0000_laptop.wav","heard":"Speedbird 5.0 Fly Heading 068.","alts":["Speedbird 5.0 Fly Heading 068."],"ms":715,"device":"wasm","sec":3.64}
+{"wav":"0000_radio.wav","heard":"Febird 5.0 fly heading 068.","alts":["Febird 5.0 fly heading 068."],"ms":767,"device":"wasm","sec":3.64}
+{"wav":"0000_late.wav","heard":"50 fly heading 068.","alts":["50 fly heading 068."],"ms":409,"device":"wasm","sec":2.63}
+{"wav":"0002_clean.wav","heard":"884 taxi to holding point runway 09 right via alpha 9 whiskey alpha 11.","alts":["884 taxi to holding point runway 09 right via alpha 9 whiskey alpha 11."],"ms":1781,"device":"wasm","sec":6.62}
+{"wav":"0002_laptop.wav","heard":"884 taxi to holding point runway 09 right via alpha 9 whiskey alpha 11.","alts":["884 taxi to holding point runway 09 right via alpha 9 whiskey alpha 11."],"ms":1377,"device":"wasm","sec":6.62}
+{"wav":"0002_radio.wav","heard":"8-84 taxis to holding point runway through a nine-right fire out of the nine whiskey out for one one.","alts":["8-84 taxis to holding point runway through a nine-right fire out of the nine whiskey out for one one."],"ms":4141,"device":"wasm","sec":6.62}
+{"wav":"0002_late.wav","heard":"State for Taxi to holding point runway 09 right via alpha 9 whiskey alpha 11.","alts":["State for Taxi to holding point runway 09 right via alpha 9 whiskey alpha 11."],"ms":1693,"device":"wasm","sec":5.78}
+{"wav":"0004_clean.wav","heard":"United 69 descend to 6,000.","alts":["United 69 descend to 6,000."],"ms":827,"device":"wasm","sec":3.99}
+{"wav":"0004_laptop.wav","heard":"United 69 descend to 6,000.","alts":["United 69 descend to 6,000."],"ms":847,"device":"wasm","sec":3.99}
+{"wav":"0004_radio.wav","heard":"You might have 69 defined specific files.","alts":["You might have 69 defined specific files."],"ms":729,"device":"wasm","sec":3.99}
+{"wav":"0004_late.wav","heard":"69% to 6,000.","alts":["69% to 6,000."],"ms":672,"device":"wasm","sec":2.96}
+{"wav":"0006_clean.wav","heard":"All Nippon 344 hold short of Runway 23.","alts":["All Nippon 344 hold short of Runway 23."],"ms":874,"device":"wasm","sec":4.76}
+{"wav":"0006_laptop.wav","heard":"All Nippon three four four hold short of Runway two three.","alts":["All Nippon three four four hold short of Runway two three."],"ms":866,"device":"wasm","sec":4.76}
+{"wav":"0006_radio.wav","heard":"All Nippon three four four hold short of runway two three.","alts":["All Nippon three four four hold short of runway two three."],"ms":1124,"device":"wasm","sec":4.76}
+{"wav":"0006_late.wav","heard":"Pun 3 4 4 Hold Short of Runway 23.","alts":["Pun 3 4 4 Hold Short of Runway 23."],"ms":920,"device":"wasm","sec":3.84}
+{"wav":"0008_clean.wav","heard":"Sky Dubai Six Sky Dubai 62312 left Taxi by a uniform six-victor victor one.","alts":["Sky Dubai Six Sky Dubai 62312 left Taxi by a uniform six-victor victor one."],"ms":1691,"device":"wasm","sec":7.78}
+{"wav":"0008_laptop.wav","heard":"Sky Dubai 6 Sky Dubai 62312, left Taxi by a uniform 6 Victor Victor 1.","alts":["Sky Dubai 6 Sky Dubai 62312, left Taxi by a uniform 6 Victor Victor 1."],"ms":1614,"device":"wasm","sec":7.78}
+{"wav":"0008_radio.wav","heard":"Sky Dubai 6 Sky Dubai 62312, left Taxi by a uniform 6-victor Victor 1.","alts":["Sky Dubai 6 Sky Dubai 62312, left Taxi by a uniform 6-victor Victor 1."],"ms":1909,"device":"wasm","sec":7.78}
+{"wav":"0008_late.wav","heard":"By Dubai 6 Sky Dubai 62312, left Taxi by a uniform 6 Victor Victor 1.","alts":["By Dubai 6 Sky Dubai 62312, left Taxi by a uniform 6 Victor Victor 1."],"ms":1582,"device":"wasm","sec":6.91}
+{"wav":"0010_clean.wav","heard":"American 652 taxi stand 90.","alts":["American 652 taxi stand 90."],"ms":879,"device":"wasm","sec":4.1}
+{"wav":"0010_laptop.wav","heard":"American 652 taxi stand 90.","alts":["American 652 taxi stand 90."],"ms":678,"device":"wasm","sec":4.1}
+{"wav":"0010_radio.wav","heard":"American 652 taxi stand 90.","alts":["American 652 taxi stand 90."],"ms":1121,"device":"wasm","sec":4.1}
+{"wav":"0010_late.wav","heard":"in 652 taxi stand 90.","alts":["in 652 taxi stand 90."],"ms":641,"device":"wasm","sec":3.19}
+{"wav":"0012_clean.wav","heard":"Eighty-three Increase Speed, two-one eight-zero knots.","alts":["Eighty-three Increase Speed, two-one eight-zero knots."],"ms":953,"device":"wasm","sec":4.1}
+{"wav":"0012_laptop.wav","heard":"Eighty-three increase speed to one eighth zero knots.","alts":["Eighty-three increase speed to one eighth zero knots."],"ms":1123,"device":"wasm","sec":4.1}
+{"wav":"0012_radio.wav","heard":"83 increase speed to 180 knots.","alts":["83 increase speed to 180 knots."],"ms":1316,"device":"wasm","sec":4.1}
+{"wav":"0012_late.wav","heard":"3 increase speed to 180 knots.","alts":["3 increase speed to 180 knots."],"ms":705,"device":"wasm","sec":3.09}
+{"wav":"0014_clean.wav","heard":"Easy 101 Reduce Speed 2190","alts":["Easy 101 Reduce Speed 2190"],"ms":968,"device":"wasm","sec":4.68}
+{"wav":"0014_laptop.wav","heard":"Easy 101 Reduce Speed 2190","alts":["Easy 101 Reduce Speed 2190"],"ms":1187,"device":"wasm","sec":4.68}
+{"wav":"0014_radio.wav","heard":"Easy 101 reduce speed 2190","alts":["Easy 101 reduce speed 2190"],"ms":886,"device":"wasm","sec":4.68}
+{"wav":"0014_late.wav","heard":"101 Reduce Speed 2190","alts":["101 Reduce Speed 2190"],"ms":567,"device":"wasm","sec":3.86}
+{"wav":"0016_clean.wav","heard":"Qatari 9, 78 fly heading 104.","alts":["Qatari 9, 78 fly heading 104."],"ms":886,"device":"wasm","sec":3.92}
+{"wav":"0016_laptop.wav","heard":"Qatari 9, 78 fly heading 104.","alts":["Qatari 9, 78 fly heading 104."],"ms":727,"device":"wasm","sec":3.92}
+{"wav":"0016_radio.wav","heard":"Qatari 9, 78 fly heading 1-04.","alts":["Qatari 9, 78 fly heading 1-04."],"ms":932,"device":"wasm","sec":3.92}
+{"wav":"0016_late.wav","heard":"78 fly heading 104.","alts":["78 fly heading 104."],"ms":547,"device":"wasm","sec":2.94}
+{"wav":"0018_clean.wav","heard":"Virgin 35 John F. Kennedy Intel Approach Raider Contact, Q. H. 1029, Expect Ils Approach Runway 31 Right.","alts":["Virgin 35 John F. Kennedy Intel Approach Raider Contact, Q. H. 1029, Expect Ils Approach Runway 31 Right."],"ms":2480,"device":"wasm","sec":8.54}
+{"wav":"0018_laptop.wav","heard":"Virgin 35 John F. Kennedy Intel Approach Raider Contact Q&H 1029 Expect ILS Approach Runway 31 Right.","alts":["Virgin 35 John F. Kennedy Intel Approach Raider Contact Q&H 1029 Expect ILS Approach Runway 31 Right."],"ms":2135,"device":"wasm","sec":8.54}
+{"wav":"0018_radio.wav","heard":"Virgin 35 John S. Kennedy Intel Approach Raider Contact, UNH1029 Expects Ils Approach Runway 31 Rights.","alts":["Virgin 35 John S. Kennedy Intel Approach Raider Contact, UNH1029 Expects Ils Approach Runway 31 Rights."],"ms":2259,"device":"wasm","sec":8.54}
+{"wav":"0018_late.wav","heard":"35 John F. Kennedy Intel Approach Radar Contact Q&H 1029 Expect ILS Approach Runway 31 Right","alts":["35 John F. Kennedy Intel Approach Radar Contact Q&H 1029 Expect ILS Approach Runway 31 Right"],"ms":2091,"device":"wasm","sec":7.72}
