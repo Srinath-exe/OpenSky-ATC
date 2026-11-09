@@ -9,7 +9,8 @@
   (a short grace period lets the recogniser flush the last words).
   `server`: src/lib/voice/asr-server.ts (Parakeet, then Whisper, on this site's server, biased with the callsigns on frequency).
 */
-import { createMicCapture } from './asr-capture';
+import { createMicCapture, isSilent } from './asr-capture';
+import { silentMessage } from './asr-server';
 import type { Understood } from './asr-server';
 
 export interface Recognizer {
@@ -111,6 +112,7 @@ export function createLocalRecognizer(onStatus?: (s: LocalStatus) => void, model
     async stop() {
       const audio = await mic.stop();
       if (audio.length < 16000 * 0.25) return '';
+      if (isSilent(audio)) { self.onError?.(silentMessage()); return ''; }
       self.onPartial?.('Transcribing…');
       const id = nextId++;
       return new Promise<string>((resolve) => { pending.set(id, resolve); worker.postMessage({ type: 'transcribe', id, audio, names }, [audio.buffer]); });

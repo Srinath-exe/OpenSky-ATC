@@ -131,7 +131,7 @@ function cleanMeta(raw: unknown): Record<string, unknown> {
     browserTranscript: str(m.browserTranscript, 2000), browserFinal: typeof m.browserFinal === 'boolean' ? m.browserFinal : null,
     browserAlternatives: alts, browserEngine: str(m.browserEngine, 40), browserError: str(m.browserError, 200),
     mode: m.mode === 'hold' || m.mode === 'toggle' ? m.mode : null, inputRate: num(m.inputRate), clientSec: num(m.clientSec),
-    take: num(m.take), clientTs: str(m.clientTs, 40), track,
+    take: num(m.take), clientTs: str(m.clientTs, 40), track, mic: cleanMic(m.mic),
   };
 }
 
@@ -145,8 +145,18 @@ function cleanLive(raw: unknown): Record<string, unknown> {
     page: m.page === 'game' || m.page === 'demo' ? m.page : null, engine: str(m.engine, 20), accent: str(m.accent, 12), ctx: str(m.ctx, 8000),
     transcripts, heard: str(m.heard, 500), line: str(m.line, 300), ok: typeof m.ok === 'boolean' ? m.ok : null, source: str(m.source, 8),
     sayAgain: typeof m.sayAgain === 'boolean' ? m.sayAgain : null, error: str(m.error, 300), confidence: num(m.confidence),
-    expected: str(m.expected, 300), example: num(m.example), clientTs: str(m.clientTs, 40),
+    expected: str(m.expected, 300), example: num(m.example), clientTs: str(m.clientTs, 40), mic: cleanMic(m.mic),
   };
+}
+
+/** asr-capture's MicInfo (or the recorder's equivalent): numbers, booleans and short words only. */
+function cleanMic(raw: unknown): Record<string, unknown> | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const m = raw as Record<string, unknown>, out: Record<string, unknown> = {};
+  for (const k of ['mode', 'rate', 'peak', 'trackRate', 'next', 'preRms', 'rms']) { const v = num(m[k]); if (v != null) out[k] = v; }
+  for (const k of ['trackMuted', 'silent', 'webSpeech']) if (typeof m[k] === 'boolean') out[k] = m[k];
+  for (const k of ['ctxState', 'trackState']) { const v = str(m[k], 20); if (v) out[k] = v; }
+  return out;
 }
 
 async function writeAtomic(file: string, data: Buffer | string): Promise<void> {

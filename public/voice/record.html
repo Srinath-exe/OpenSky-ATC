@@ -190,7 +190,7 @@ kbd { font-family: var(--mono); font-size: 11.5px; border: 1px solid var(--line-
 (() => {
   'use strict';
   const API = '/api/voice/gold';
-  const RATE = 16000, PRE_ROLL = 0.35, POST_ROLL = 0.25, MAX_SEC = 25, MIN_SEC = 0.3;
+  const RATE = 16000, PRE_ROLL = 0.35, POST_ROLL = 0.25, MAX_SEC = 25, MIN_SEC = 0.3, MIC_KEY = 'atc-mic-mode';
   const $ = (id) => document.getElementById(id);
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -328,11 +328,14 @@ kbd { font-family: var(--mono); font-size: 11.5px; border: 1px solid var(--line-
 
   // ── microphone: AudioWorklet at 16 kHz (the game's capture worklet), always running so there is a pre-roll ──
   const mic = {
-    ctx: null, node: null, stream: null, rate: RATE, ring: [], ringN: 0, chunks: null, n: 0,
+    ctx: null, node: null, src: null, stream: null, rate: RATE, ring: [], ringN: 0, chunks: null, n: 0,
+    // capture ladder shared with the game (src/lib/voice/asr-capture.ts): a take of pure zeros moves one step down.
+    // 0 = 16 kHz context, 1 = the microphone's own rate (resampled here), 2 = that and no browser voice processing
+    level: (() => { const v = Number(store.get(MIC_KEY)); return v >= 0 && v <= 2 ? Math.floor(v) : 0; })(),
     async open() {
       if (this.node) { if (this.ctx.state !== 'running') await this.ctx.resume(); return; }
-      this.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-      try { this.ctx = new AudioContext({ sampleRate: RATE }); await this.connect(); }
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: this.level >= 2 ? true : { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      try { this.ctx = this.level >= 1 ? new AudioContext() : new AudioContext({ sampleRate: RATE }); await this.connect(); }
       catch { try { this.ctx && this.ctx.close(); } catch { /* */ } this.node = null; this.ctx = new AudioContext(); await this.connect(); }   // Firefox: no 16 kHz context on a 48 kHz mic -> resample here
       this.rate = this.ctx.sampleRate;
       const s = this.stream.getAudioTracks()[0]?.getSettings?.() || {};
@@ -340,10 +343,10 @@ kbd { font-family: var(--mono); font-size: 11.5px; border: 1px solid var(--line-
     },
     async connect() {
       await this.ctx.audioWorklet.addModule('/voice/capture-worklet.js');
-      const src = this.ctx.createMediaStreamSource(this.stream);
+      this.src = this.ctx.createMediaStreamSource(this.stream);   // held: a collected source node goes quiet
       this.node = new AudioWorkletNode(this.ctx, 'atc-capture');
       this.node.port.onmessage = (e) => this.frame(e.data);
-      src.connect(this.node);
+      this.src.connect(this.node);
       this.node.port.postMessage({ recording: true });
       await this.ctx.resume();
     },
@@ -360,6 +363,17 @@ kbd { font-family: var(--mono); font-size: 11.5px; border: 1px solid var(--line-
       const c = this.chunks || []; this.chunks = null;
       const out = new Float32Array(c.reduce((s, x) => s + x.length, 0)); let o = 0; for (const x of c) { out.set(x, o); o += x.length; }
       return resample(out, this.rate);
+    },
+    close() {
+      try { this.stream && this.stream.getTracks().forEach((t) => t.stop()); } catch { /* */ }
+      try { this.ctx && this.ctx.close(); } catch { /* */ }
+      this.ctx = null; this.node = null; this.src = null; this.stream = null; this.ring = []; this.ringN = 0; this.chunks = null;
+    },
+    diag(audio) {
+      const t = this.stream && this.stream.getAudioTracks()[0];
+      let peak = 0; for (let i = 0; i < audio.length; i++) { const v = Math.abs(audio[i]); if (v > peak) peak = v; }
+      return { mode: this.level, rate: this.rate, ctxState: this.ctx ? this.ctx.state : 'closed', trackMuted: t ? t.muted : null,
+        trackState: t ? t.readyState : null, peak: Math.round(peak * 1e4) / 1e4, silent: peak < 3e-5 };
     },
     settings() { const s = this.stream?.getAudioTracks()[0]?.getSettings?.() || {}; const t = {};
       for (const k of ['sampleRate', 'channelCount', 'echoCancellation', 'noiseSuppression', 'autoGainControl', 'latency', 'sampleSize']) if (s[k] != null) t[k] = s[k];
@@ -438,10 +452,22 @@ kbd { font-family: var(--mono); font-size: 11.5px; border: 1px solid var(--line-
     $('level').style.transform = 'scaleX(0)';
     if (audio.length < MIN_SEC * RATE + PRE_ROLL * RATE) { state = 'idle'; setStatus('Too short. Hold while you speak the whole sentence.', true); return; }
     showHeard(wsRes.browserTranscript || '');
+    const diag = { ...mic.diag(audio), webSpeech: !!wsRes.browserEngine && !/off|unavailable/.test(wsRes.browserEngine) };
+    if (diag.silent) {
+      // pure zeros: the page got no sound although the browser's recogniser may have. Not saved; next capture mode.
+      state = 'idle'; mic.close();
+      let what;
+      if (mic.level < 2) { mic.level++; store.set(MIC_KEY, String(mic.level)); what = `Switched to capture mode ${mic.level} of 2`; }
+      else if ($('ws').checked) { $('ws').checked = false; what = 'Turned off the browser recogniser during recording (it may be holding the microphone)'; }
+      else what = 'Every capture mode was tried';
+      setStatus(`Not saved: the recording was pure silence (mode ${diag.mode}, ${diag.rate} Hz, track ${diag.trackState}${diag.trackMuted ? ', muted' : ''}). ${what}. Please record it again.`, true);
+      console.warn('silent take', diag);
+      return;
+    }
     const blob = wavBlob(audio);
     setPlayer(blob);
     takes[p.id] = (takes[p.id] || 0) + 1;
-    pending = { id: p.id, blob, meta: { ...wsRes, mode, inputRate: mic.rate, clientSec: Math.round((audio.length / RATE) * 1000) / 1000, take: takes[p.id], clientTs: new Date().toISOString(), track: mic.settings() } };
+    pending = { id: p.id, blob, meta: { ...wsRes, mode, inputRate: mic.rate, clientSec: Math.round((audio.length / RATE) * 1000) / 1000, take: takes[p.id], clientTs: new Date().toISOString(), track: mic.settings(), mic: diag } };
     await upload();
   }
 

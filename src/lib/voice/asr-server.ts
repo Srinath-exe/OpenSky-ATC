@@ -8,7 +8,7 @@
   not stored.
 */
 import type { Recognizer } from './recognizer';
-import { createMicCapture, micCaptureAvailable, toPcm16 } from './asr-capture';
+import { createMicCapture, isSilent, micCaptureAvailable, micInfo, toPcm16 } from './asr-capture';
 
 export const STT_URL = '/api/voice/stt';
 
@@ -89,12 +89,19 @@ export function withServerSecondOpinion(rec: Recognizer): Recognizer {
   rec.stop = () => { audio = mic.stop().catch(() => new Float32Array(0)); return stop(); };
   rec.secondOpinion = async (understand) => {
     const a = audio ? await audio : null;
-    if (!a || a.length < 16000 * 0.25) return { result: null, alts: [] };
+    if (!a || a.length < 16000 * 0.25 || isSilent(a)) return { result: null, alts: [] };   // a silent capture: nothing to ask
     rec.onPartial?.('Checking with the server…');
     return cascadeStt(a, names, understand);
   };
   rec.lastAudio = async () => (audio ? await audio : null);
   return rec;
+}
+
+/** What to tell the player when the microphone delivered pure zeros (asr-capture moved down its ladder). */
+export function silentMessage(): string {
+  const m = micInfo();
+  return m?.next != null ? 'The microphone sent silence. Switched to another capture mode: please say it again.'
+    : 'The microphone sends silence to this page. Check the browser\'s microphone choice, or use the Browser speech engine.';
 }
 
 export function createServerRecognizer(onStatus?: (s: ServerStatus) => void): Recognizer | null {
@@ -129,6 +136,7 @@ export function createServerRecognizer(onStatus?: (s: ServerStatus) => void): Re
     async stop() {
       const audio = await mic.stop(); last = audio; reply = null;
       if (audio.length < 16000 * 0.25) return '';
+      if (isSilent(audio)) { self.onError?.(silentMessage()); return ''; }
       self.onPartial?.('Transcribing…');
       try {
         const r = await postStt(audio, names);

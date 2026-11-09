@@ -5,6 +5,11 @@
   push-to-talk and stays open for a minute after the last one, so later transmissions start instantly; while it is
   open the worklet keeps the last 0.3 s (pre-roll), which is prepended when recording starts. Release keeps
   recording for a short tail (250 ms) so the last syllable is not cut by a quick release.
+
+  Digital silence: one Windows Chrome delivered exact zeros through the 16 kHz context while Web Speech heard the
+  speech (ml/data/gold v01-v04, 2026-11-09). A transmission of pure zeros moves this browser one step down a ladder,
+  remembered in localStorage: 0 = 16 kHz context, 1 = the microphone's own rate (resampled here), 2 = that and no
+  browser voice processing. Silent audio is never sent to a recogniser (Whisper invents words for it).
 */
 
 export interface MicCapture {
@@ -21,6 +26,22 @@ export function micCaptureAvailable(): boolean {
 }
 
 const RATE = 16000;
+
+/** Pure digital silence (every sample below one 16-bit step): a broken capture path, not a quiet room. */
+export function isSilent(a: Float32Array): boolean {
+  if (a.length < RATE * 0.25) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] > 3e-5 || a[i] < -3e-5) return false;
+  return true;
+}
+
+const LADDER_KEY = 'atc-mic-mode';
+const MAX_MODE = 2;
+let mode = (() => { try { const v = Number(localStorage.getItem(LADDER_KEY)); return v >= 0 && v <= MAX_MODE ? Math.floor(v) : 0; } catch { return 0; } })();
+
+/** What the last transmission's capture looked like (for the live-attempt log and the recorder). */
+export interface MicInfo { mode: number; rate: number; ctxState: string; trackMuted: boolean | null; trackState: string | null; silent: boolean; peak: number; trackRate: number | null; next?: number }
+let info: MicInfo | null = null;
+export function micInfo(): MicInfo | null { return info; }
 
 /** Box low-pass + linear decimation to 16 kHz (only when the browser will not run a 16 kHz AudioContext). */
 function resample(x: Float32Array, from: number): Float32Array {
@@ -40,12 +61,13 @@ export function createMicCapture(opts: { preroll?: number; idleCloseMs?: number 
   let idleTimer: number | null = null;
   let starting: Promise<void> | null = null;
   let rate = RATE;
+  let src: MediaStreamAudioSourceNode | null = null;   // held: a collected source node goes quiet
 
+  const shut = () => { stream?.getTracks().forEach((t) => t.stop()); void ctx?.close(); ctx = null; node = null; stream = null; src = null; };
   const open = async () => {
     if (ctx && node) return;
-    stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-    let src: MediaStreamAudioSourceNode;
-    try { ctx = new AudioContext({ sampleRate: RATE }); src = ctx.createMediaStreamSource(stream); }
+    stream = await navigator.mediaDevices.getUserMedia({ audio: mode >= 2 ? true : { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    try { ctx = mode >= 1 ? new AudioContext() : new AudioContext({ sampleRate: RATE }); src = ctx.createMediaStreamSource(stream); }
     catch { void ctx?.close(); ctx = new AudioContext(); src = ctx.createMediaStreamSource(stream); }   // Firefox: no resampling source
     rate = ctx.sampleRate;
     await ctx.audioWorklet.addModule('/voice/capture-worklet.js');
@@ -55,7 +77,7 @@ export function createMicCapture(opts: { preroll?: number; idleCloseMs?: number 
   };
   const closeSoon = () => {
     if (idleTimer) window.clearTimeout(idleTimer);
-    idleTimer = window.setTimeout(() => { stream?.getTracks().forEach((t) => t.stop()); void ctx?.close(); ctx = null; node = null; stream = null; }, opts.idleCloseMs ?? 60000);
+    idleTimer = window.setTimeout(shut, opts.idleCloseMs ?? 60000);
   };
 
   return {
@@ -80,7 +102,20 @@ export function createMicCapture(opts: { preroll?: number; idleCloseMs?: number 
       const chunks = mine?.chunks ?? [];
       const n = chunks.reduce((s, c) => s + c.length, 0);
       const audio = new Float32Array(n); let o = 0; for (const c of chunks) { audio.set(c, o); o += c.length; }
-      return resample(audio, rate);
+      const out = resample(audio, rate);
+      const track = stream?.getAudioTracks()[0];
+      let peak = 0; for (let i = 0; i < out.length; i++) { const v = Math.abs(out[i]); if (v > peak) peak = v; }
+      const silent = isSilent(out);
+      info = { mode, rate, ctxState: ctx?.state ?? 'closed', trackMuted: track ? track.muted : null, trackState: track?.readyState ?? null, silent,
+        peak: Math.round(peak * 1e4) / 1e4, trackRate: track?.getSettings?.().sampleRate ?? null };
+      // pure zeros: rebuild one step down the ladder for the next transmission (unless a new one already owns it)
+      if (silent && mode < MAX_MODE && cur === null) {
+        mode++; info.next = mode;
+        try { localStorage.setItem(LADDER_KEY, String(mode)); } catch { /* private mode */ }
+        if (idleTimer) window.clearTimeout(idleTimer);
+        shut();
+      }
+      return out;
     },
   };
 }

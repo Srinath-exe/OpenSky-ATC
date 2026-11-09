@@ -4,6 +4,8 @@
   recogniser heard and what the game decided, so speech-to-text can be tuned on the owner's real voice. Nobody else's
   browser has the key, so for everyone else this does nothing. Fire and forget: a failed upload never affects play.
 */
+import { micInfo } from './asr-capture';
+
 const KEY = 'atc-gold-key';
 
 export function diagKey(): string | null {
@@ -34,6 +36,6 @@ export function saveAttempt(audio: Float32Array | null, meta: AttemptMeta): void
   const id = `live-${Date.now()}-${Math.random().toString(36).slice(2).padEnd(4, '0').slice(0, 4)}`;
   const fd = new FormData();
   fd.append('id', id); fd.append('wav', wav16(audio), `${id}.wav`);
-  fd.append('meta', JSON.stringify({ ...meta, ctx: meta.ctx?.slice(0, 8000), clientTs: new Date().toISOString() }));
+  fd.append('meta', JSON.stringify({ ...meta, ctx: meta.ctx?.slice(0, 8000), clientTs: new Date().toISOString(), mic: micInfo() }));
   void fetch('/api/voice/gold', { method: 'POST', headers: { 'x-gold-key': key }, body: fd }).catch(() => undefined);
 }
