@@ -181,7 +181,7 @@ async function pick() {
   const keepTraffic = $('free').checked && cur;
   if (!keepTraffic) cur = prompts[Math.floor(Math.random() * prompts.length)];
   $('readlbl').textContent = $('free').checked ? 'Give any command to this traffic:' : 'Say this (you are the controller):';
-  $('read').textContent = $('free').checked ? 'Your own words.' : cur.said;
+  $('read').textContent = $('free').checked ? 'Your own words.' : cur.written || cur.said;
   $('read').classList.toggle('free', $('free').checked);
   $('traffic').textContent = '';
   for (const l of cur.ctx.split('\n').slice(1)) { const m = l.match(/^(\S+) (.+?) (ARR|DEP) /); if (m) $('traffic').append(Object.assign(document.createElement('span'), { className: 'chip', textContent: `${m[1]} · ${m[2]}` })); }
@@ -343,7 +343,7 @@ function draw() {
     c.append(bar);
     const dl = el('dl', 'lines');
     const add = (k, v) => { dl.append(el('dt', '', k), el('dd', '', v)); };
-    add('You said', r.said ?? '(your own words)');
+    add('You said', r.said ? (r.prompt?.written || r.said) : '(your own words)');
     add('Parakeet heard', r.p?.text || '(nothing)');
     if (r.w) add('Whisper heard', r.w.text || r.w.error || '(nothing)');
     add('Command', u?.line ? `${u.line}${u.source ? ` (${u.source === 'L1' ? 'command model' : 'rules'})` : ''}` : (u?.error || '–'));

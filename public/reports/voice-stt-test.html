@@ -146,7 +146,7 @@ function pick() {
   if ($('free').checked) { cur = null; $('readlbl').textContent = 'Say anything:'; $('read').textContent = 'Anything you like, in your own words.'; $('read').classList.add('free'); return; }
   if (!prompts.length) return;
   cur = prompts[Math.floor(Math.random() * prompts.length)];
-  $('readlbl').textContent = 'Read this out (as a controller):'; $('read').textContent = cur.said; $('read').classList.remove('free');
+  $('readlbl').textContent = 'Read this out (as a controller):'; $('read').textContent = cur.written || cur.said; $('read').classList.remove('free');
 }
 $('next').addEventListener('click', () => { $('free').checked = false; pick(); });
 $('free').addEventListener('change', pick);
@@ -234,7 +234,7 @@ function draw() {
   const box = $('results'); box.textContent = '';
   for (const a of attempts.slice(0, 60)) {
     const c = el('article', 'res');
-    c.append(el('p', a.expected ? 'said' : 'said free', a.expected ? `You read: ${a.expected}` : 'Your own words'));
+    c.append(el('p', a.expected ? 'said' : 'said free', a.expected ? `You read: ${a.prompt?.written || a.expected}` : 'Your own words'));
     c.append(el('p', 'meta', `${a.sec.toFixed(1)} s recorded · play it back to hear what the recognisers got:`));
     if (!urls.has(a)) urls.set(a, URL.createObjectURL(wav16(a.audio)));
     const au = el('audio'); au.controls = true; au.preload = 'none'; au.src = urls.get(a); c.append(au);
