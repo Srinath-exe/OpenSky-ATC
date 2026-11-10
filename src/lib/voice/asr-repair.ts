@@ -219,6 +219,9 @@ export function repairTranscript(raw: string, aircraft: AsrAircraft[]): Repair {
   let toks = normaliseTokens(raw);
   let joined = toks.join(' ');
   for (const [re, to] of PHRASE_FIX) joined = joined.replace(re, (m) => { notes.push(`${m}->${to}`); return to; });
+  // a fix or beacon spelled with the phonetic alphabet after "direct" / "hold at": "direct bravo india golf" = direct big
+  joined = joined.replace(/\b(direct|hold at|holding at|via)((?: (?:alpha|alfa|bravo|charlie|delta|echo|foxtrot|golf|hotel|india|juliet|juliett|kilo|lima|mike|november|oscar|papa|quebec|romeo|sierra|tango|uniform|victor|whiskey|whisky|xray|yankee|zulu)){3,5})\b/g,
+    (m, head: string, run: string) => { if (head === 'via') return m; const id = run.trim().split(' ').map((x) => x[0]).join(''); notes.push(`${run.trim()}->${id}`); return `${head} ${id}`; });
   if (joined !== toks.join(' ')) toks = joined.split(' ').filter(Boolean);
   let w = fixNumbers(toks, notes);
   const cands: Cand[] = aircraft.map((a) => {

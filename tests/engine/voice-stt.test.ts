@@ -312,3 +312,10 @@ test('real-voice slips: runway to five, a clipped name, hand off to, speed to', 
   // "speed to 90" is a missing digit, never 290
   assert.match(repairTranscript('easy 532 increase speed to 90 knots', ez.ac).text, /speed to nine zero knots$/);
 });
+
+test('a fix spelled with the phonetic alphabet after direct / hold at is one identifier; taxiway routes are left alone', () => {
+  const ac = aircraftFromContext(['@APP 27L', 'BAW50 speedbird 50 ARR APP approach 7000ft h270 27L'].join('\n'));
+  assert.match(repairTranscript('speedbird five zero proceed direct bravo india golf', ac).text, /direct big$/);
+  assert.match(repairTranscript('speedbird five zero hold at lima alfa mike', ac).text, /hold at lam$/);
+  assert.match(repairTranscript('speedbird five zero taxi via alpha bravo charlie', ac).text, /via alpha bravo charlie$/);
+});
