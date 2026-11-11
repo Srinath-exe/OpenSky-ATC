@@ -392,10 +392,20 @@ class Parser {
   }
   isTaxiwayAhead(offset = 0): boolean {
     const raw = this.peek(offset); const t = PHONETIC_LETTER[raw] ?? raw;    // "ALPHA" -> A
+    if (this.strict.taxiway && /^\d{1,3}$/.test(raw) && PHONETIC_LETTER[this.peek(offset + 1)] && this.ctx.taxiways!.some(x => x.toUpperCase() === raw + PHONETIC_LETTER[this.peek(offset + 1)])) return true;   // "6 ALPHA" -> 6A
     return !!t && (this.strict.taxiway ? this.ctx.taxiways!.some(x => x.toUpperCase() === t || PHONETIC_LETTER[raw] && x.toUpperCase().startsWith(t)) : TAXIWAY_RE.test(t) && !RUNWAY_RE.test(t));
   }
   /** Spoken identifier: phonetic letters + digits ("INDIA 48" -> I48, "KILO ALPHA" -> KA, "ALPHA 3" -> A3), longest form `ok` accepts. Consumes it. */
-  private phoneticRef(ok: (s: string) => boolean): string | null {
+  private phoneticRef(ok: (s: string) => boolean, longest = false): string | null {
+    if (longest) {
+      // with the airport's own list: the longest run of letters and digits that names a real one ("ZULU 9 ALPHA" -> Z9A,
+      // "6 ALPHA" -> 6A), so a three-part name is not read as two taxiways
+      const parts: string[] = [];
+      for (let k = 0; k < 4; k++) { const t = this.peek(k); const v = PHONETIC_LETTER[t] ?? (/^\d{1,3}[A-Z]?$/.test(t) ? t : null); if (!v) break; parts.push(v); }
+      if (parts.length && (PHONETIC_LETTER[this.peek(0)] || parts.length > 1)) {
+        for (let n = parts.length; n >= 1; n--) { const txt = parts.slice(0, n).join(''); if (ok(txt)) { this.i += n; return txt; } }
+      }
+    }
     const L: string[] = [];
     for (let k = 0; k < 2 && PHONETIC_LETTER[this.peek(k)]; k++) L.push(PHONETIC_LETTER[this.peek(k)]);
     if (!L.length) return null;
@@ -407,7 +417,7 @@ class Parser {
   }
   taxiway(): string {
     this.skip('TAXIWAY', 'TWY');
-    { const ph = this.phoneticRef(x => (this.strict.taxiway ? this.ctx.taxiways!.some(y => y.toUpperCase() === x) : TAXIWAY_RE.test(x))); if (ph) return ph; }
+    { const ph = this.phoneticRef(x => (this.strict.taxiway ? this.ctx.taxiways!.some(y => y.toUpperCase() === x) : TAXIWAY_RE.test(x)), !!this.strict.taxiway); if (ph) return ph; }
     const t = this.peek();
     if (!t) this.fail('missing_param', 'Taxiway required', ['<taxiway>']);
     if (this.strict.taxiway) { if (!this.ctx.taxiways!.some(x => x.toUpperCase() === t)) this.fail('unknown_taxiway', `Unknown taxiway ${t}`, ['<taxiway>']); }
@@ -712,7 +722,9 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
     }
     case 'GIVE': case 'GW': {
       p.next(); p.accept('WAY'); p.skip('TO', 'THE');
-      const to = p.otherAircraft(); restText(p);
+      const to = p.otherAircraft();
+      p.skip(','); p.accept('THEN CONTINUE TAXI', 'THEN CONTINUE', 'AND CONTINUE', 'THEN FOLLOW');   // part of the give-way: not a separate "continue now"
+      restText(p);
       return done(mk('giveWay', { to, mode: 'give_way' }));
     }
     case 'FOLLOW': {

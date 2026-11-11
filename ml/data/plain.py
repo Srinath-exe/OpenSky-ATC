@@ -12,7 +12,7 @@ would reproduce word for word.
 
     python3 ml/data/plain.py ml/data/out3/*.jsonl --out ml/data/out5/ds
 """
-import argparse, json, random, re, sys
+import argparse, collections, json, random, re, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from augment import stt_normalise, ICAO_TO_STT  # noqa: E402
@@ -375,5 +375,143 @@ def main():
         json.dump(same, open(out / "leak.json", "w"), indent=1)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and "--v2" not in sys.argv:
     main()
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# v2: the hard cases (spec 15): several instructions in one breath, corrections, shortened callsigns, questions and
+# negations. Values are drawn fresh; every label is checked by the game's parser before it is kept (validate()).
+# ---------------------------------------------------------------------------------------------------------------------
+ONES = "zero one two three four five six seven eight nine".split()
+digits = lambda n, k=0: " ".join(ONES[int(c)] for c in str(n).zfill(k))
+
+
+def level_words(ft, rng):
+    if ft >= 6000 and ft % 1000 == 0 and rng.random() < 0.4:
+        return "flight level " + digits(ft // 100, 3 if ft >= 10000 else 2)
+    th, h = divmod(ft, 1000)
+    s = (digits(th) if th >= 10 and rng.random() < 0.5 else {10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen", 16: "sixteen"}.get(th, digits(th)) if th >= 10 else ONES[th]) + " thousand"
+    return s + (f" {ONES[h // 100]} hundred" if h else "")
+
+
+def part_heading(rng, airborne_hdg=None):
+    h = rng.randrange(10, 361, 5); d = rng.choice([None, None, "left", "right"])
+    w = pick(rng, HDG_DIR).format(d=d, v=digits(h, 3)) if d else pick(rng, HDG).format(v=digits(h, 3))
+    return w, (f"Turn {d} heading {h:03d}" if d else f"Fly heading {h:03d}")
+
+
+def part_level(rng, alt):
+    ft = rng.choice([x for x in range(3000, 16001, 1000) if abs(x - alt) >= 2000] or [5000])
+    w = pick(rng, CLIMB if ft > alt else DESCEND).format(v=level_words(ft, rng))
+    return w, f"Altitude {ft}"
+
+
+def part_speed(rng):
+    v = rng.randrange(160, 251, 10)
+    return pick(rng, SLOW + FAST[:6]).format(v=digits(v)), f"Speed {v}"
+
+
+LINK = ["", "", " and", " then", " and then", " also"]
+
+
+def airborne_alt(rec):
+    """The aircraft's altitude from its line in the traffic list, when it is airborne above 2,500 ft."""
+    for l in rec["ctx"].splitlines()[1:]:
+        if l.split()[0] == rec["cs"]:
+            m = re.search(r" (?:ARR|DEP) \S+ (?:cruise|descent|climb|approach|departure|holding|go_around) (\d+)ft", l)
+            return int(m.group(1)) if m and int(m.group(1)) >= 2500 else None
+    return None
+
+
+def multi(rec, rng):
+    """2-3 instructions to an airborne aircraft in one transmission."""
+    alt = airborne_alt(rec)
+    if alt is None: return None
+    makers = [lambda: part_heading(rng), lambda: part_level(rng, alt), lambda: part_speed(rng)]
+    rng.shuffle(makers); parts = [f() for f in makers[: rng.choice([2, 2, 3])]]
+    said = parts[0][0] + "".join(pick(rng, LINK) + " " + w for w, _ in parts[1:])
+    return said, " ".join(l for _, l in parts)
+
+
+def correction(rec, rng):
+    """A value corrected mid-sentence: only the corrected one counts."""
+    alt = airborne_alt(rec)
+    if alt is None: return None
+    fix = pick(rng, ["correction", "correction correction", "sorry correction", "i say again", "negative"])
+    if rng.random() < 0.5:
+        a, b = rng.sample(range(10, 361, 5), 2)
+        return f"{pick(rng, ['fly heading', 'turn heading', 'heading'])} {digits(a, 3)} {fix} {pick(rng, ['', 'heading '])}{digits(b, 3)}", f"Fly heading {b:03d}"
+    choices = [x for x in range(3000, 16001, 1000) if abs(x - alt) >= 2000]
+    a, b = rng.sample(choices, 2)
+    if (a > alt) != (b > alt): b = a + 1000 if a > alt else max(2000, a - 1000)
+    verb = "climb" if b > alt else "descend"
+    return f"{verb} {level_words(a, rng)} {fix} {pick(rng, ['', verb + ' '])}{level_words(b, rng)}", f"Altitude {b}"
+
+
+QUESTIONS = ["say your heading", "say altitude", "report your level", "what's your speed", "say your speed", "report passing flight level one zero zero",
+             "are you able to accept runway two seven", "can you accept a visual", "confirm you are on frequency", "say intentions", "report ready",
+             "how do you read", "say again your callsign", "confirm your squawk", "report the field in sight", "are you ready to copy",
+             "can you make the next exit", "do you want the longer runway", "what's your parking stand", "say persons on board", "report established"]
+NEGATIONS = ["do not descend", "don't climb yet", "do not turn", "don't cross yet", "do not push yet", "don't take off", "do not line up yet",
+             "don't contact tower yet", "negative do not descend yet", "not yet stand by for the descent"]
+
+
+def negative_v2(rec, rng):
+    r = rng.random()
+    if r < 0.45: return pick(rng, QUESTIONS)
+    if r < 0.75: return pick(rng, NEGATIONS)
+    # cut off before the value
+    return pick(rng, ["descend to", "climb flight level", "turn left heading", "contact", "taxi to", "cleared to", "reduce speed", "proceed direct",
+                      "line up runway", "cross runway", "hold short of", "expect runway"])
+
+
+def short_callsign(rec, said):
+    """'four nine eight descend ...': the flight number alone, when no other aircraft on frequency shares it."""
+    num = re.sub(r"^[A-Z]+", "", rec["cs"])
+    if sum(1 for l in rec["ctx"].splitlines()[1:] if re.sub(r"^[A-Z]+", "", l.split()[0]) == num) != 1: return None
+    head = callsign_words(rec["say"]["ICAO"].partition(",")[0]).split()
+    name = rec["name"].split()[:-1]
+    if not name or head[: len(name)] != name or not said.startswith(" ".join(head)): return None
+    return " ".join(head[len(name):]) + said[len(" ".join(head)):]
+
+
+def v2_rows(rec, rng):
+    """Extra hard-case rows for one record: (said, line, kind)."""
+    out = []
+    cs_words = callsign_words(rec["say"]["ICAO"].partition(",")[0])
+    if rng.random() < 0.18:
+        m = multi(rec, rng)
+        if m: out.append((f"{cs_words} {m[0]}", f"{rec['cs']} {m[1]}", "multi"))
+    if rng.random() < 0.08:
+        c = correction(rec, rng)
+        if c: out.append((f"{cs_words} {c[0]}", f"{rec['cs']} {c[1]}", "correction"))
+    if rng.random() < 0.06:
+        out.append((f"{cs_words} {negative_v2(rec, rng)}", "SAY AGAIN", "sayAgain"))
+    if rng.random() < 0.08:
+        p = plain(rec, rng)
+        s = p and short_callsign(rec, p)
+        if s: out.append((s, rec["line"], rec["kind"]))
+    return [(re.sub(r"\s+", " ", s.replace("'", "")).strip(), l, k) for s, l, k in out]
+
+
+def main_v2():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("inputs", nargs="+"); ap.add_argument("--out", default="ml/data/out6/ds")
+    ap.add_argument("--holdout", default="YSSY"); ap.add_argument("--val-seed", type=int, default=4); ap.add_argument("--seed", type=int, default=1)
+    a = ap.parse_args()
+    rng = random.Random(a.seed); out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
+    rows = []
+    for path in a.inputs:
+        for line in open(path):
+            rec = json.loads(line)
+            if rec["icao"] == a.holdout: continue
+            split = "val" if rec["seed"] == a.val_seed else "train"
+            for said, l, k in v2_rows(rec, rng):
+                rows.append({"key": f"x{len(rows)}", "split": split, "ctx": rec["ctx"], "said": said, "heard": said, "line": l, "kind": k, "src": "plain2", "icao": rec["icao"]})
+    (out / "v2_unchecked.json").write_text(json.dumps(rows))
+    print(len(rows), "rows", collections.Counter(r["kind"] for r in rows).most_common(8))
+
+
+if __name__ == "__main__" and "--v2" in sys.argv:
+    sys.argv.remove("--v2"); main_v2()

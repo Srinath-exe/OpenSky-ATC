@@ -1,0 +1,780 @@
+{
+ "rows": [
+  {
+   "cat": "correction",
+   "id": "v04",
+   "said": "speedbird three two seven turn left heading two seven zero correction two eight zero",
+   "line": "BAW327 Turn left heading 280"
+  },
+  {
+   "cat": "correction",
+   "id": "v02",
+   "said": "emirates four six niner reduce speed one eight zero correction one niner zero knots",
+   "line": "UAE469 Speed 190"
+  },
+  {
+   "cat": "correction",
+   "id": "s02",
+   "said": "cathay nine three six descend and maintain six thousand correction seven thousand",
+   "line": "CPA936 Altitude 7000"
+  },
+  {
+   "cat": "correction",
+   "id": "v10",
+   "said": "scooter four nine eight fly heading one six zero correction one six five",
+   "line": "SCO498 Fly heading 165"
+  },
+  {
+   "cat": "correction",
+   "id": "v48",
+   "said": "speedbird five zero proceed direct buzad correction direct big",
+   "line": "BAW50 Direct BIG",
+   "note": "fix corrected"
+  },
+  {
+   "cat": "correction",
+   "id": "v33",
+   "said": "united eight eight four correction united eight eight eight stop immediately",
+   "line": "UAL888 Cancel takeoff",
+   "note": "callsign corrected; UAL884 also on frequency"
+  },
+  {
+   "cat": "correction",
+   "id": "v31",
+   "said": "scooter four niner eight runway two five left correction runway two five right cleared to land",
+   "line": "SCO498 Cleared to land 25R",
+   "note": "runway corrected"
+  },
+  {
+   "cat": "correction",
+   "id": "f10",
+   "said": "american three eight seven descend and maintain eight thousand correction niner thousand",
+   "line": "AAL387 Altitude 9000"
+  },
+  {
+   "cat": "correction",
+   "id": "s07",
+   "said": "southwest eight sixty five fly heading three four five correction three five five",
+   "line": "SWA865 Fly heading 355"
+  },
+  {
+   "cat": "correction",
+   "id": "v30",
+   "said": "delta eight niner niner climb uh i mean descend and maintain five thousand",
+   "line": "DAL899 Altitude 5000",
+   "note": "verb corrected with 'i mean'"
+  },
+  {
+   "cat": "partial_callsign",
+   "id": "v04",
+   "said": "three two seven descend to five thousand",
+   "line": "BAW327 Altitude 5000",
+   "note": "327 unique"
+  },
+  {
+   "cat": "partial_callsign",
+   "id": "f03",
+   "said": "nine seven eight turn right heading two four zero",
+   "line": "IGO978 Turn right heading 240",
+   "note": "978 unique; IGO983 similar"
+  },
+  {
+   "cat": "partial_callsign",
+   "id": "v02",
+   "said": "scooter eight four descend to three thousand",
+   "line": "SCO484 Altitude 3000",
+   "note": "ICAO abbreviated: last two digits, unique among scooters"
+  },
+  {
+   "cat": "partial_callsign",
+   "id": "s06",
+   "said": "six one four reduce speed one eight zero",
+   "line": "JST614 Speed 180"
+  },
+  {
+   "cat": "partial_callsign",
+   "id": "v01",
+   "said": "hong kong five two eight pushback approved expect runway two five left",
+   "line": "HKE528 Pushback approved, expect 25L",
+   "note": "shortened airline name"
+  },
+  {
+   "cat": "partial_callsign",
+   "id": "f01",
+   "said": "five oh four cleared ils approach runway two niner left report established",
+   "line": "AIC504 Cleared ILS 29L, report established"
+  },
+  {
+   "cat": "partial_callsign",
+   "id": "v01",
+   "said": "nippon nine seven eight descend to six thousand",
+   "line": "ANA978 Altitude 6000",
+   "note": "shortened airline name"
+  },
+  {
+   "cat": "partial_callsign",
+   "id": "s05",
+   "said": "seven nine one fly heading three one zero",
+   "line": "ANZ791 Fly heading 310"
+  },
+  {
+   "cat": "partial_callsign",
+   "id": "v20",
+   "said": "seven seven one descend to four thousand",
+   "line": "VIR771 Altitude 4000"
+  },
+  {
+   "cat": "partial_callsign",
+   "id": "v23",
+   "said": "four nine eight radar contact expect ils approach runway three zero right",
+   "line": "SCO498 Radar contact, expect 30R"
+  },
+  {
+   "cat": "not_on_frequency",
+   "id": "v04",
+   "said": "speedbird three two eight descend to five thousand",
+   "line": "SAY AGAIN",
+   "note": "BAW328 not in ctx; BAW327 is"
+  },
+  {
+   "cat": "not_on_frequency",
+   "id": "v02",
+   "said": "emirates four six eight reduce speed one eight zero",
+   "line": "SAY AGAIN",
+   "note": "UAE468 not in ctx; UAE469 is"
+  },
+  {
+   "cat": "not_on_frequency",
+   "id": "s06",
+   "said": "qantas four four four fly heading two seven zero",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "not_on_frequency",
+   "id": "v17",
+   "said": "southwest five zero five cross runway two five right",
+   "line": "SAY AGAIN",
+   "note": "SWA504/SWA509 in ctx"
+  },
+  {
+   "cat": "not_on_frequency",
+   "id": "v31",
+   "said": "lufthansa four one two runway two five right cleared to land",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "not_on_frequency",
+   "id": "v58",
+   "said": "sky dubai five six seven start up and pushback approved expect runway three zero left",
+   "line": "SAY AGAIN",
+   "note": "FDB566 is in ctx"
+  },
+  {
+   "cat": "not_on_frequency",
+   "id": "f06",
+   "said": "air india five four taxi to stand romeo one five via foxtrot two foxtrot three",
+   "line": "SAY AGAIN",
+   "note": "AIC504 in ctx"
+  },
+  {
+   "cat": "not_on_frequency",
+   "id": "v35",
+   "said": "american one two three proceed direct sfono",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "not_on_frequency",
+   "id": "s29",
+   "said": "jetstar six three one runway one six left cleared to land",
+   "line": "SAY AGAIN",
+   "note": "swapped digits of JST613"
+  },
+  {
+   "cat": "not_on_frequency",
+   "id": "v38",
+   "said": "lufthansa one five six fly heading one zero seven",
+   "line": "SAY AGAIN",
+   "note": "DLH155 in ctx"
+  },
+  {
+   "cat": "cut_off",
+   "id": "v04",
+   "said": "speedbird three two seven descend to",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "cut_off",
+   "id": "v02",
+   "said": "emirates four six niner reduce speed to one",
+   "line": "SAY AGAIN",
+   "note": "value cut mid-number"
+  },
+  {
+   "cat": "cut_off",
+   "id": "s06",
+   "said": "jetstar six one four fly heading",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "cut_off",
+   "id": "v50",
+   "said": "singapore two two two runway two one cleared for",
+   "line": "SAY AGAIN",
+   "note": "must not clear for takeoff"
+  },
+  {
+   "cat": "cut_off",
+   "id": "v17",
+   "said": "hong kong express five two seven cross runway",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "cut_off",
+   "id": "f02",
+   "said": "easy five three two contact",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "cut_off",
+   "id": "v35",
+   "said": "scooter four nine eight proceed direct",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "cut_off",
+   "id": "s10",
+   "said": "qatari three one niner taxi to holding point",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "cut_off",
+   "id": "s05",
+   "said": "velocity five eight zero",
+   "line": "SAY AGAIN",
+   "note": "callsign only"
+  },
+  {
+   "cat": "cut_off",
+   "id": "v53",
+   "said": "qatari three three two cleared ils approach runway",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "multi",
+   "id": "v04",
+   "said": "speedbird three two seven turn left heading two seven zero descend to five thousand reduce speed two one zero knots",
+   "line": "BAW327 Turn left heading 270 Altitude 5000 Speed 210"
+  },
+  {
+   "cat": "multi",
+   "id": "s02",
+   "said": "cathay nine three six descend to six thousand and reduce speed to two two zero",
+   "line": "CPA936 Altitude 6000 Speed 220"
+  },
+  {
+   "cat": "multi",
+   "id": "v10",
+   "said": "scooter four nine eight fly heading one six one then climb to four thousand",
+   "line": "SCO498 Fly heading 161 Altitude 4000"
+  },
+  {
+   "cat": "multi",
+   "id": "f09",
+   "said": "speedbird three two seven proceed direct buzad descend and maintain six thousand",
+   "line": "BAW327 Direct BUZAD Altitude 6000"
+  },
+  {
+   "cat": "multi",
+   "id": "s11",
+   "said": "qantas two eight seven reduce speed one six zero knots and descend to four thousand",
+   "line": "QFA287 Speed 160 Altitude 4000"
+  },
+  {
+   "cat": "multi",
+   "id": "v36",
+   "said": "delta six three niner climb and maintain one three thousand turn right heading zero niner zero",
+   "line": "DAL639 Altitude 13000 Turn right heading 090"
+  },
+  {
+   "cat": "multi",
+   "id": "v51",
+   "said": "klm seven two two fly heading zero eight five descend to three thousand speed one eight zero",
+   "line": "KLM722 Fly heading 085 Altitude 3000 Speed 180"
+  },
+  {
+   "cat": "multi",
+   "id": "s27",
+   "said": "singapore eight four one proceed direct ssywe and reduce speed to two hundred",
+   "line": "SIA841 Direct SSYWE Speed 200"
+  },
+  {
+   "cat": "multi",
+   "id": "v21",
+   "said": "southwest five zero four turn left heading zero six six descend and maintain three thousand",
+   "line": "SWA504 Turn left heading 066 Altitude 3000"
+  },
+  {
+   "cat": "multi",
+   "id": "s13",
+   "said": "qantas five zero fly heading two six four descend to four thousand and reduce speed to one niner zero",
+   "line": "QFA50 Fly heading 264 Altitude 4000 Speed 190"
+  },
+  {
+   "cat": "numbers",
+   "id": "v04",
+   "said": "speedbird three two seven climb flight level one hundred",
+   "line": "BAW327 Altitude 10000"
+  },
+  {
+   "cat": "numbers",
+   "id": "v35",
+   "said": "scooter four niner eight descend to fife thousand fife hundred",
+   "line": "SCO498 Altitude 5500"
+  },
+  {
+   "cat": "numbers",
+   "id": "s06",
+   "said": "jetstar six one four fly heading two seventy",
+   "line": "JST614 Fly heading 270"
+  },
+  {
+   "cat": "numbers",
+   "id": "f02",
+   "said": "easy five three two contact tower one eighteen point five",
+   "line": "EZY532 Contact tower"
+  },
+  {
+   "cat": "numbers",
+   "id": "f10",
+   "said": "american four thirteen descend and maintain ten thousand five hundred",
+   "line": "AAL413 Altitude 10500"
+  },
+  {
+   "cat": "numbers",
+   "id": "v20",
+   "said": "virgin seven seven one fly heading tree one tree",
+   "line": "VIR771 Fly heading 313"
+  },
+  {
+   "cat": "numbers",
+   "id": "s24",
+   "said": "cathay nine one four climb flight level one six zero",
+   "line": "CPA914 Altitude 16000"
+  },
+  {
+   "cat": "numbers",
+   "id": "v02",
+   "said": "emirates four six niner increase speed to one ninety knots",
+   "line": "UAE469 Speed 190"
+  },
+  {
+   "cat": "numbers",
+   "id": "v22",
+   "said": "japan air nine sixteen fly heading zero six fife",
+   "line": "JAL916 Fly heading 065"
+  },
+  {
+   "cat": "numbers",
+   "id": "v47",
+   "said": "united eight twenty four climb to thirteen thousand",
+   "line": "UAL824 Altitude 13000"
+  },
+  {
+   "cat": "regional",
+   "id": "v25",
+   "said": "united three thirty five descend and maintain four thousand",
+   "line": "UAL335 Altitude 4000",
+   "note": "US"
+  },
+  {
+   "cat": "regional",
+   "id": "f10",
+   "said": "american three eighty seven make it two one zero knots",
+   "line": "AAL387 Speed 210",
+   "note": "US 'make it'"
+  },
+  {
+   "cat": "regional",
+   "id": "v04",
+   "said": "speedbird three two seven descend altitude five thousand feet qnh one zero one three",
+   "line": "BAW327 Altitude 5000",
+   "note": "UK, QNH appended"
+  },
+  {
+   "cat": "regional",
+   "id": "v51",
+   "said": "klm seven two two contact tower one one eight decimal five good day",
+   "line": "KLM722 Contact tower",
+   "note": "UK sign-off"
+  },
+  {
+   "cat": "regional",
+   "id": "s11",
+   "said": "qantas two eight seven reduce speed one six zero cheers",
+   "line": "QFA287 Speed 160",
+   "note": "AU"
+  },
+  {
+   "cat": "regional",
+   "id": "s12",
+   "said": "qantas two seven zero sydney approach good day radar contact expect ils runway three four right",
+   "line": "QFA270 Radar contact, expect 34R",
+   "note": "AU greeting"
+  },
+  {
+   "cat": "regional",
+   "id": "f01",
+   "said": "air india five zero four descend to two thousand five hundred feet do you copy",
+   "line": "AIC504 Altitude 2500",
+   "note": "Indian check phrase"
+  },
+  {
+   "cat": "regional",
+   "id": "v38",
+   "said": "lufthansa one five five kindly turn left heading one zero seven",
+   "line": "DLH155 Turn left heading 107",
+   "note": "Indian 'kindly'"
+  },
+  {
+   "cat": "regional",
+   "id": "v13",
+   "said": "jetblue fifty hold short runway two seven",
+   "line": "JBU50 Hold short 27",
+   "note": "US, no 'of'"
+  },
+  {
+   "cat": "regional",
+   "id": "v27",
+   "said": "virgin four two hold position cheers",
+   "line": "VIR42 Hold position",
+   "note": "UK"
+  },
+  {
+   "cat": "polite_filler",
+   "id": "v04",
+   "said": "uh speedbird three two seven uh descend to five thousand",
+   "line": "BAW327 Altitude 5000"
+  },
+  {
+   "cat": "polite_filler",
+   "id": "v02",
+   "said": "okay so emirates four six niner if you could reduce speed to one eight zero",
+   "line": "UAE469 Speed 180"
+  },
+  {
+   "cat": "polite_filler",
+   "id": "v57",
+   "said": "japan air six four niner um runway three one left taxi uh hold short of runway two two right",
+   "line": "JAL649 Taxi RWY 31L, hold short 22R"
+  },
+  {
+   "cat": "polite_filler",
+   "id": "s05",
+   "said": "velocity five eight zero okay wind two one five degrees one two knots runway two five cleared for takeoff",
+   "line": "VOZ580 Cleared for takeoff 25"
+  },
+  {
+   "cat": "polite_filler",
+   "id": "v03",
+   "said": "jetblue four two two er climb to uh five thousand please",
+   "line": "JBU422 Altitude 5000"
+  },
+  {
+   "cat": "polite_filler",
+   "id": "v48",
+   "said": "right speedbird five zero uh proceed direct to big",
+   "line": "BAW50 Direct BIG"
+  },
+  {
+   "cat": "polite_filler",
+   "id": "v31",
+   "said": "and scooter four nine eight runway two five right cleared to land",
+   "line": "SCO498 Cleared to land 25R"
+  },
+  {
+   "cat": "polite_filler",
+   "id": "v07",
+   "said": "easy five zero four if you'd like to contact tower now one one eight decimal five",
+   "line": "EZY504 Contact tower"
+  },
+  {
+   "cat": "polite_filler",
+   "id": "s14",
+   "said": "qantas one seven seven uh yeah start up and pushback approved expect runway one six right",
+   "line": "QFA177 Pushback + start-up approved, expect 16R"
+  },
+  {
+   "cat": "polite_filler",
+   "id": "v13",
+   "said": "jetblue fifty um just hold short of runway two seven for me",
+   "line": "JBU50 Hold short 27"
+  },
+  {
+   "cat": "question_not_command",
+   "id": "v04",
+   "said": "speedbird three two seven say your heading",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "question_not_command",
+   "id": "v02",
+   "said": "emirates four six niner what's your current speed",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "question_not_command",
+   "id": "f01",
+   "said": "air india five zero four are you able to accept runway two niner right",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "question_not_command",
+   "id": "s06",
+   "said": "jetstar six one four say altitude",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "question_not_command",
+   "id": "v57",
+   "said": "japan air six four niner are you ready to taxi",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "question_not_command",
+   "id": "v50",
+   "said": "singapore two two two are you ready for departure",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "question_not_command",
+   "id": "f04",
+   "said": "klm seven four four confirm you are holding short runway two seven right",
+   "line": "SAY AGAIN",
+   "note": "contains 'holding short'"
+  },
+  {
+   "cat": "question_not_command",
+   "id": "v35",
+   "said": "scooter four nine eight can you accept direct sfono",
+   "line": "SAY AGAIN",
+   "note": "contains 'direct sfono'"
+  },
+  {
+   "cat": "question_not_command",
+   "id": "s11",
+   "said": "qantas two eight seven what speed can you give me",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "question_not_command",
+   "id": "v36",
+   "said": "delta six three niner are you able to climb to one three thousand",
+   "line": "SAY AGAIN",
+   "note": "contains 'climb to one three thousand'"
+  },
+  {
+   "cat": "wrong_stage",
+   "id": "v04",
+   "said": "speedbird three two seven runway two seven left cleared for takeoff",
+   "line": "BAW327 Cleared for takeoff 27L",
+   "note": "airborne arrival at 7000ft"
+  },
+  {
+   "cat": "wrong_stage",
+   "id": "v27",
+   "said": "virgin four two climb to five thousand",
+   "line": "VIR42 Altitude 5000",
+   "note": "on ground pushing back"
+  },
+  {
+   "cat": "wrong_stage",
+   "id": "v01",
+   "said": "hong kong express five two eight runway two five left cleared to land",
+   "line": "HKE528 Cleared to land 25L",
+   "note": "parked departure"
+  },
+  {
+   "cat": "wrong_stage",
+   "id": "s05",
+   "said": "velocity five eight zero go around",
+   "line": "VOZ580 Go around",
+   "note": "holding short on ground"
+  },
+  {
+   "cat": "wrong_stage",
+   "id": "f04",
+   "said": "klm seven four four fly heading two seven zero",
+   "line": "KLM744 Fly heading 270",
+   "note": "holding short on ground"
+  },
+  {
+   "cat": "wrong_stage",
+   "id": "v20",
+   "said": "virgin seven seven one pushback approved expect runway three one right",
+   "line": "VIR771 Pushback approved, expect 31R",
+   "note": "airborne arrival"
+  },
+  {
+   "cat": "wrong_stage",
+   "id": "v42",
+   "said": "scooter four nine eight hold short of runway two two",
+   "line": "SCO498 Hold short 22",
+   "note": "airborne at 3000ft"
+  },
+  {
+   "cat": "wrong_stage",
+   "id": "v33",
+   "said": "air france seven zero one expedite descent",
+   "line": "AFR701 Expedite descent",
+   "note": "arrived on ground"
+  },
+  {
+   "cat": "wrong_stage",
+   "id": "s12",
+   "said": "jetstar six zero seven reduce speed one six zero knots",
+   "line": "JST607 Speed 160",
+   "note": "parked"
+  },
+  {
+   "cat": "wrong_stage",
+   "id": "v36",
+   "said": "delta six three niner cleared ils approach runway zero one right report established",
+   "line": "DAL639 Cleared ILS 01R, report established",
+   "note": "departure climbing"
+  },
+  {
+   "cat": "confusable",
+   "id": "v04",
+   "said": "speedbird three two seven fly heading two two zero",
+   "line": "BAW327 Fly heading 220",
+   "note": "BAW273 same digits reordered"
+  },
+  {
+   "cat": "confusable",
+   "id": "v33",
+   "said": "united eight eight four hold position",
+   "line": "UAL884 Hold position",
+   "note": "UAL888 also on frequency"
+  },
+  {
+   "cat": "confusable",
+   "id": "v06",
+   "said": "hong kong express five two seven pushback approved expect runway two five center",
+   "line": "HKE527 Pushback approved, expect 25C",
+   "note": "HKE528 also parked"
+  },
+  {
+   "cat": "confusable",
+   "id": "s05",
+   "said": "velocity three seven eight runway two five cleared to land",
+   "line": "VOZ378 Cleared to land 25",
+   "note": "VOZ368/VOZ366 similar"
+  },
+  {
+   "cat": "confusable",
+   "id": "f03",
+   "said": "scooter five one six descend to four thousand",
+   "line": "SCO516 Altitude 4000",
+   "note": "SCO504/SCO509/SCO498 similar"
+  },
+  {
+   "cat": "confusable",
+   "id": "v22",
+   "said": "cathay five fly heading zero niner zero",
+   "line": "CPA5 Fly heading 090",
+   "note": "CPA50 also on frequency"
+  },
+  {
+   "cat": "confusable",
+   "id": "v22",
+   "said": "cathay fifty descend to three thousand",
+   "line": "CPA50 Altitude 3000",
+   "note": "CPA5 also on frequency"
+  },
+  {
+   "cat": "confusable",
+   "id": "v36",
+   "said": "alaska three niner eight descend and maintain six thousand",
+   "line": "ASA398 Altitude 6000",
+   "note": "ASA393/ASA382 similar"
+  },
+  {
+   "cat": "confusable",
+   "id": "v54",
+   "said": "jetblue twenty turn right heading one two zero",
+   "line": "JBU20 Turn right heading 120",
+   "note": "JBU50/JBU321 similar"
+  },
+  {
+   "cat": "confusable",
+   "id": "s14",
+   "said": "qantas seventy five hold position",
+   "line": "QFA75 Hold position",
+   "note": "QFA65/QFA177 similar"
+  },
+  {
+   "cat": "negation",
+   "id": "v04",
+   "said": "speedbird three two seven do not descend",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "negation",
+   "id": "v17",
+   "said": "hong kong express five two seven do not cross runway two five right hold short",
+   "line": "HKE527 Hold short 25R"
+  },
+  {
+   "cat": "negation",
+   "id": "v10",
+   "said": "scooter four nine eight negative maintain heading zero five two",
+   "line": "SCO498 Fly heading 052",
+   "note": "current heading 052"
+  },
+  {
+   "cat": "negation",
+   "id": "v40",
+   "said": "hong kong express five two eight negative do not line up hold position",
+   "line": "HKE528 Hold position"
+  },
+  {
+   "cat": "negation",
+   "id": "v02",
+   "said": "emirates four six niner do not increase speed",
+   "line": "SAY AGAIN"
+  },
+  {
+   "cat": "negation",
+   "id": "s02",
+   "said": "cathay nine three six negative maintain niner thousand",
+   "line": "CPA936 Altitude 9000",
+   "note": "current altitude"
+  },
+  {
+   "cat": "negation",
+   "id": "v50",
+   "said": "singapore two two two do not take off",
+   "line": "SAY AGAIN",
+   "note": "must not clear for takeoff"
+  },
+  {
+   "cat": "negation",
+   "id": "v33",
+   "said": "japan air six four niner negative hold short of runway two seven right",
+   "line": "JAL649 Hold short 27R"
+  },
+  {
+   "cat": "negation",
+   "id": "f08",
+   "said": "scooter five zero four you are not cleared to land",
+   "line": "SAY AGAIN",
+   "note": "must not clear to land"
+  },
+  {
+   "cat": "negation",
+   "id": "v28",
+   "said": "speedbird nine three two do not continue hold position",
+   "line": "BAW932 Hold position"
+  }
+ ]
+}

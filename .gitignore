@@ -78,3 +78,6 @@ ml/tts/cache/
 ml/tts/.build/
 ml/tts/out/
 ml/tts/.build-test/
+
+# command-model checkpoints under evaluation (ml/s1/freeword/watch.py)
+/public/models/s1-cand/

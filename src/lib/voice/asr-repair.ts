@@ -105,6 +105,11 @@ const VOCAB = ('climb descend maintain heading turn left right flight level alti
   'when ready immediate immediately then and the to for of at or above below until minimum minute minutes legs published holding as ' +
   'inbound outbound visual final mile miles behind caution wake turbulence good day fly on in your with now number turns').split(' ');
 const VOCAB_SET = new Set(VOCAB);
+/** Everyday words a controller says that sound like command words but are not misheard ones: never snapped onto
+ *  the vocabulary ("cheers" is not "cross", "accept" is not "expedite", "field" is not "flight"). */
+const KEEP = new Set(('cheers mate accept able field copy sight thanks thank please sorry okay yeah nice there where what whats how ' +
+  'gear fuel souls persons people check problem anything something everything today tonight morning evening welcome hello ' +
+  'weather ride level? bumpy smooth crew cabin passengers parked parking need want like could would should maybe sure').replace('level? ', '').split(' '));
 const JUNK = new Set(['and', 'the', 'a', 'an', 'number', 'now', 'its', 'it', 'is', 'in', 'on', 'uh', 'um', 'er', 'ah', 'oh']);
 const VOCAB_KEYS = new Map<string, string[]>();
 for (const w of VOCAB) if (w.length >= 4 && phoneticKey(w).length >= 3) { const k = phoneticKey(w); VOCAB_KEYS.set(k, [...(VOCAB_KEYS.get(k) ?? []), w]); }
@@ -125,7 +130,7 @@ const WORD_FIX: Record<string, string> = {
 const FAC = '(tower|ground|approach|departure|delivery|control|center|director|radar)';
 const NATO = '(?:alpha|alfa|bravo|charlie|delta|echo|foxtrot|golf|hotel|india|juliett?|kilo|lima|mike|november|oscar|papa|quebec|romeo|sierra|tango|uniform|victor|whiskey|xray|x-ray|yankee|zulu)';
 const PLAIN_WORDS: [RegExp, string][] = [
-  [/\b(?:uh+|um+|er+|please|thanks|thank you|good day|bye(?: bye)?)\b/g, ''],
+  [/\b(?:uh+|um+|er+|please|thanks|thank you|good day|bye(?: bye)?|cheers(?: mate)?|do you copy|how copy|over and out|over)\b/g, ''],
   // acknowledgements, wait, refusals
   [/\b(?:copy that|copied|okay understood|understood|roger that)\b/g, 'roger'],
   [/\b(?:hang on(?: a (?:moment|second|sec|minute))?|give me a (?:second|moment|minute|sec)|one moment|i ?ll call you back)\b/g, 'standby'],
@@ -247,7 +252,7 @@ function fixWords(w: string[], from: number, protect: Set<string>, notes: string
     if (x === 'descent' && !/^exp/.test(w[i - 1] ?? '')) { notes.push('descent->descend'); return ['descend']; }
     const f = WORD_FIX[x];
     if (f && f !== x) { notes.push(`${x}->${f}`); return f.split(' '); }
-    if (x.length < 3 || VOCAB_SET.has(x)) return [x];
+    if (x.length < 3 || VOCAB_SET.has(x) || KEEP.has(x)) return [x];
     // "contact cover" = contact tower: the one facility within two letters
     if (w[i - 1] === 'contact' && x.length >= 4) {
       const near = FACILITY.filter((f) => levenshtein(x, f) <= 2);
@@ -345,6 +350,60 @@ export function repairTranscript(raw: string, aircraft: AsrAircraft[]): Repair {
     spanEnd = from + nameNow.length;
   }
   w = fixWords(w, spanEnd, callsign ? new Set() : telWords, notes);
+  w = applyCorrection(w, spanEnd, notes);
+  w = dropCutOffValue(w, notes);
   const text = w.join(' ');
   return { text, changed: notes.length > 0 || text !== raw.trim().toLowerCase(), callsign, fuzzy, notes };
+}
+
+// ---------- corrections and cut-off values ----------
+const VALUE_WORDS = new Set(['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen',
+  'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty',
+  'ninety', 'hundred', 'thousand', 'flight', 'level', 'decimal', 'point', 'knots', 'degrees', 'feet', 'left', 'right', 'center']);
+const isValue = (x: string) => VALUE_WORDS.has(x) || /^\d+$/.test(x);
+const CORRECTION = /^(?:correction|sorry)$/;
+
+/**
+ * "descend four thousand correction five thousand" -> "descend five thousand"; "heading two seven zero correction
+ * two eight zero" -> "heading two eight zero"; "climb flight level eight zero correction climb flight level nine zero"
+ * -> "climb flight level nine zero". A correction that restates a whole instruction replaces the one before it
+ * (from its first word that also occurs before); anything else is left to the parser.
+ */
+function applyCorrection(w: string[], start: number, notes: string[]): string[] {
+  for (let guard = 0; guard < 3; guard++) {
+    const i = w.findIndex((x, k) => k >= start && CORRECTION.test(x));
+    if (i < 0) return w;
+    let j = i + 1;
+    while (j < w.length && (CORRECTION.test(w[j]) || w[j] === 'i' && w[j + 1] === 'say' && w[j + 2] === 'again')) j += w[j] === 'i' ? 3 : 1;
+    const right = w.slice(j);
+    if (!right.length) return w;
+    let left = w.slice(0, i);
+    if (isValue(right[0]) && !(right[0] === 'left' || right[0] === 'right')) {
+      let k = left.length; while (k > start && isValue(left[k - 1]) && !(left[k - 1] === 'flight' && left[k] !== 'level')) k--;
+      if (right[0] === 'flight' || !(left[k] === 'flight')) left = left.slice(0, k);
+      else left = left.slice(0, k);
+    } else {
+      const at = left.lastIndexOf(right[0]);
+      const dir = right[0] === 'left' || right[0] === 'right' ? Math.max(left.lastIndexOf('left'), left.lastIndexOf('right')) : -1;
+      const cut = at >= start ? at : dir >= start ? dir : -1;
+      if (cut < 0) return w;
+      left = left.slice(0, cut);
+    }
+    const out = [...left, ...right];
+    notes.push(`correction: ${w.slice(start).join(' ')} -> ${out.slice(start).join(' ')}`);
+    w = out;
+  }
+  return w;
+}
+
+/** A heading or flight level cut off after one digit ("fly heading two") is not an instruction: drop the value, so the
+ *  parser asks again instead of sending heading 002. */
+function dropCutOffValue(w: string[], notes: string[]): string[] {
+  const n = w.length;
+  const single = (k: number) => k === n - 1 && /^(?:zero|one|two|three|four|five|six|seven|eight|nine)$/.test(w[k]);
+  if (n >= 2 && w[n - 2] === 'heading' && single(n - 1) || n >= 3 && w[n - 3] === 'flight' && w[n - 2] === 'level' && single(n - 1)) {
+    notes.push(`cut off: ${w.slice(-3).join(' ')}`);
+    return w.slice(0, -1);
+  }
+  return w;
 }

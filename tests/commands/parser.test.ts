@@ -546,3 +546,17 @@ test('parse: "go", "stand", "abort" and "expedite" are only the commands they so
   assert.equal(scope('DLH2 expedite climb'), 'climb');
   assert.equal(kind('DLH2 expect 27L ILS'), 'expectRunway', 'not an expectation plus an approach clearance');
 });
+
+test('parse: "give way to X then continue" is one give-way, not a give-way plus a separate continue', () => {
+  const r = parseCommand('EZY99 give way to BAW117 then continue', ctx);
+  assert.ok(r.ok && r.ast && r.ast.kind === 'giveWay', JSON.stringify(r.ast));
+});
+
+test('parse: with the airport list, multi-part taxiway names are read whole (ZULU 9 ALPHA = Z9A, 6 ALPHA = 6A)', () => {
+  const c = { ...ctx, taxiways: ['Z9', 'Z9A', 'A', '6A', '6B', 'W', 'WW', 'N5'] };
+  const via = (t: string) => { const r = parseCommand(t, c); return r.ok && r.ast && r.ast.kind === 'taxi' ? r.ast.via.join(',') : JSON.stringify(r.errors?.[0]); };
+  assert.equal(via('EZY99 taxi to holding point runway 27R via ZULU 9 ALPHA'), 'Z9A');
+  assert.equal(via('EZY99 taxi to holding point runway 27R via ZULU 9 ZULU 9 ALPHA'), 'Z9,Z9A');
+  assert.equal(via('EZY99 taxi to holding point runway 27R via 6 ALPHA 6 BRAVO'), '6A,6B');
+  assert.equal(via('EZY99 taxi to holding point runway 27R via ALPHA NOVEMBER 5'), 'A,N5');
+});

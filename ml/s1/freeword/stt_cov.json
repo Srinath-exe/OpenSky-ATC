@@ -1,0 +1,1642 @@
+[
+ {
+  "key": "cov0005",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "american five eighty runway zero four left taxi via mike delta november hold short of runway one three right",
+  "ctx": "@GND 31L 31R\nAAL580 american 580 DEP GND taxi h101 31L\nAFR874 air france 874 DEP GND taxi h273 31L\nBAW749 speedbird 749 DEP GND taxi h195 31L\nDAL137 delta 137 DEP GND taxi h134 31L\nJBU399 jetblue 399 DEP GND taxi h194 31L\nJBU400 jetblue 400 DEP GND taxi h188 31L\nAAL623 american 623 ARR APP descent 10500ft h321 31R\nAIC405 air india 405 ARR APP approach 9000ft h121 31R\nDAL44 delta 44 ARR APP approach 4000ft h316 31R\nDAL71 delta 71 ARR APP cruise 7000ft h097 31R\nJBU358 jetblue 358 ARR APP approach 10000ft h121 31R\nJBU378 jetblue 378 ARR APP cruise 3000ft h129 31R\nSWR238 swiss 238 ARR APP descent 4600ft h279 31R",
+  "line": "AAL580 Taxi RWY 04L via MD, N, hold short 13R",
+  "icao": "KJFK",
+  "truth": "american five eighty runway zero four left taxi via mike delta november hold short of runway one three right"
+ },
+ {
+  "key": "cov0008",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "ups nine eight five taxi to holding point runway one zero via zulu nine zulu nine alpha",
+  "ctx": "@GND 29L 28\nAIC486 air india 486 DEP GND parked h283 29L\nDLH985 lufthansa 985 DEP GND startup h008 29L\nIGO362 ifly 362 ARR GND arrived h284 28\nSIA926 singapore 926 DEP GND taxi h124 29L\nUPS985 ups 985 DEP GND taxi h104 29L\nAIC453 air india 453 DEP DEP climb 8400ft h316 29L\nAIC551 air india 551 ARR APP cruise 7000ft h313 28\nIGO191 ifly 191 ARR TWR landing 700ft h282 28\nIGO388 ifly 388 ARR APP cruise 5000ft h099 28\nIGO56 ifly 56 ARR APP cruise 3000ft h323 28\nTHY387 turkish 387 ARR APP cruise 6000ft h141 28\nUAE283 emirates 283 DEP TWR climb 600ft h270 29L\nUAE751 emirates 751 ARR APP cruise 8000ft h318 28\nUAL775 united 775 ARR APP cruise 4000ft h278 28",
+  "line": "UPS985 Taxi RWY 10 via Z9, Z9A",
+  "icao": "VIDP",
+  "truth": "ups nine eight five taxi to holding point runway one zero via zulu nine zulu nine alpha"
+ },
+ {
+  "key": "cov0011",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "easy ninety seven runway two five left taxi via charlie three",
+  "ctx": "@GND 25L 25R\nAAL329 american 329 DEP GND taxi h072 25L\nANA827 all nippon 827 DEP GND parked h019 25L req:pushback\nEZY97 easy 97 DEP GND taxi h071 25L\nQFA880 qantas 880 ARR GND taxi h267 25R\nUAL76 united 76 ARR GND taxi h071 25R\nAAL350 american 350 ARR APP cruise 5000ft h255 25R\nAAL373 american 373 ARR APP descent 9200ft h251 25R\nAAL404 american 404 DEP TWR takeoff h251 25L\nASA640 alaska 640 ARR APP cruise 4000ft h225 25R\nBAW953 speedbird 953 ARR APP cruise 7000ft h137 25R\nJAL644 japan air 644 ARR TWR rollout h251 25R\nQFA870 qantas 870 DEP EXT departed 9000ft h167 25L\nSIA470 singapore 470 ARR APP approach 3000ft h257 25R\nSKW779 skw779 ARR APP approach 9000ft h071 25R",
+  "line": "EZY97 Taxi RWY 25L via C3",
+  "icao": "KLAX",
+  "truth": "easy ninety seven runway two five left taxi via charlie three"
+ },
+ {
+  "key": "cov0013",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "ifly one seven five runway two nine left taxi via delta one hold short of runway one one right",
+  "ctx": "@GND 29L 27\nAIC547 air india 547 DEP GND taxi h170 29L\nDLH975 lufthansa 975 DEP GND taxi h194 29L\nEZY80 easy 80 DEP GND taxi h104 29L\nIGO175 ifly 175 DEP GND taxi h193 29L\nIGO197 ifly 197 DEP GND taxi h194 29L\nIGO86 ifly 86 DEP GND parked h194 29L req:pushback\nQFA675 qantas 675 DEP GND parked h013 29L req:pushback\nANA623 all nippon 623 ARR APP cruise 7000ft h043 27\nIGO436 ifly 436 ARR APP cruise 8000ft h108 27\nRYR117 ryanair 117 ARR APP cruise 6000ft h078 27\nUAE282 emirates 282 ARR APP approach 10000ft h069 27\nUPS975 ups 975 ARR APP cruise 5000ft h092 27\nUPS989 ups 989 ARR APP cruise 7000ft h106 27\nVOZ687 velocity 687 ARR TWR approach 2700ft h267 27 req:with_you",
+  "line": "IGO175 Taxi RWY 29L via D1, hold short 11R",
+  "icao": "VIDP",
+  "truth": "ifly one seven five runway two nine left taxi via delta one hold short of runway one one right"
+ },
+ {
+  "key": "cov0016",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "delta five sixty two taxi to holding point runway two two right via hotel juliett juliett one hold short of runway three three right",
+  "ctx": "@GND 22R 22L\nAFR975 air france 975 DEP GND startup h071 22R\nDAL547 delta 547 DEP GND pushback h336 22R\nDAL562 delta 562 DEP GND startup h240 22R\nJBU175 jetblue 175 DEP GND pushback h231 22R\nJBU197 jetblue 197 DEP GND taxi h204 22R\nRYR117 ryanair 117 ARR APP descent 5300ft h042 22L\nUAL735 united 735 ARR APP approach 10000ft h008 22L\nUPS975 ups 975 ARR APP cruise 5000ft h060 22L\nVOZ687 velocity 687 ARR APP descent 7000ft h342 22L",
+  "line": "DAL562 Taxi RWY 22R via H, J, J1, hold short 33R",
+  "icao": "KBOS",
+  "truth": "delta five sixty two taxi to holding point runway two two right via hotel juliett juliett one hold short of runway three three right"
+ },
+ {
+  "key": "cov0018",
+  "style": "stt",
+  "kind": "emergencyAck",
+  "heard": "china eastern five seven eight roger mayday heathrow approach squawk seven seven zero zero say souls on board and fuel remaining in minutes",
+  "ctx": "@APP 27R 27L\nBAW152 speedbird 152 ARR APP cruise 6000ft h134 27R\nBAW31 speedbird 31 ARR APP cruise 5000ft h312 27R\nBAW317 speedbird 317 ARR APP descent 8000ft h082 27R\nBAW318 speedbird 318 ARR APP cruise 4000ft h297 27R\nBAW323 speedbird 323 ARR APP cruise 9000ft h036 27R\nCES578 china eastern 578 ARR APP cruise 3000ft h311 27L\nUAL787 united 787 ARR APP cruise 8000ft h033 27R\nASA906 alaska 906 DEP EXT departed 8800ft h273 27L\nBAW294 speedbird 294 ARR GND taxi h128 27R\nBAW832 speedbird 832 DEP GND parked h179 27L\nDLH660 lufthansa 660 ARR GND arrived h134 27R\nEIN604 shamrock 604 DEP GND pushback h184 27L\nVIR542 virgin 542 DEP TWR climb 900ft h273 27L\nVIR543 virgin 543 DEP GND taxi h132 27L",
+  "line": "CES578 Roger mayday, squawk 7700, say pob/fuel",
+  "icao": "EGLL",
+  "truth": "china eastern five seven eight roger mayday heathrow approach squawk seven seven zero zero say souls on board and fuel remaining in minutes"
+ },
+ {
+  "key": "cov0021",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "delta forty eight taxi to stand five one two via whiskey whiskey whiskey hold short of runway zero four right",
+  "ctx": "@GND 22L 22R\nANZ755 new zealand 755 DEP GND parked h304 22L\nBAW720 speedbird 720 DEP GND taxi h073 22L\nDAL48 delta 48 DEP GND taxi h091 22L\nDLH142 lufthansa 142 DEP GND taxi h073 22L\nJAL631 japan air 631 DEP GND parked h029 22L req:pushback\nJBU247 jetblue 247 DEP GND taxi h121 22L\nUAE287 emirates 287 DEP GND taxi h134 22L\nUAL658 united 658 DEP GND taxi h223 22L\nAAL583 american 583 ARR APP cruise 7000ft h027 22R\nAAL613 american 613 ARR APP cruise 3000ft h050 22R\nFDB312 sky dubai 312 ARR APP cruise 7000ft h096 22R\nQTR947 qatari 947 ARR APP cruise 6000ft h056 22R\nSKW973 skw973 ARR APP cruise 4000ft h092 22R\nVIR769 virgin 769 ARR APP approach 10000ft h008 22R",
+  "line": "DAL48 Taxi stand 512 via W, WW, hold short 04R",
+  "icao": "KJFK",
+  "truth": "delta forty eight taxi to stand five one two via whiskey whiskey whiskey hold short of runway zero four right"
+ },
+ {
+  "key": "cov0024",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "jetblue five sixty two taxi to holding point runway two two left via alpha alpha one alpha four",
+  "ctx": "@GND 31L 31R\nDAL161 delta 161 DEP GND taxi h207 31R\nJAL648 japan air 648 DEP GND taxi h296 31R\nJBU236 jetblue 236 DEP GND taxi h082 31L\nJBU264 jetblue 264 DEP GND pushback h276 31L\nJBU293 jetblue 293 DEP GND parked h121 31L\nJBU301 jetblue 301 DEP GND taxi h133 31L\nJBU358 jetblue 358 DEP GND taxi h188 31L\nJBU562 jetblue 562 DEP GND pushback h057 31L\nAIC400 air india 400 ARR APP cruise 7000ft h163 31L\nDAL95 delta 95 ARR APP cruise 5000ft h312 31R\nDLH135 lufthansa 135 ARR APP cruise 7000ft h072 31R\nUPS996 ups 996 ARR APP descent 5100ft h119 31R",
+  "line": "JBU562 Taxi RWY 22L via A, A1, A4",
+  "icao": "KJFK",
+  "truth": "jetblue five sixty two taxi to holding point runway two two left via alpha alpha one alpha four"
+ },
+ {
+  "key": "cov0027",
+  "style": "stt",
+  "kind": "hold",
+  "heard": "singapore two four four hold at sinwe as published right turns one minute legs",
+  "ctx": "@APP 02R 03 02L 02C\nCCA588 air china 588 ARR APP cruise 7000ft h247 03\nFDB295 sky dubai 295 DEP DEP climb 4000ft h142 02L\nJAL880 japan air 880 ARR APP cruise 3000ft h206 03\nSIA125 singapore 125 ARR APP cruise 6000ft h196 02C\nSIA244 singapore 244 ARR APP cruise 5000ft h342 02C\nSIA76 singapore 76 ARR APP cruise 4000ft h050 02C\nDLH153 lufthansa 153 DEP GND taxi h203 02R\nJAL645 japan air 645 DEP GND taxi h113 02R\nJAL865 japan air 865 ARR TWR landing 1400ft h022 02C\nSCO408 scooter 408 DEP GND taxi h201 02R\nSCO561 scooter 561 DEP GND pushback h042 02L\nSCO564 scooter 564 DEP GND taxi h286 02L\nSIA156 singapore 156 DEP GND taxi h013 02L\nSIA248 singapore 248 DEP GND taxi h120 02R",
+  "line": "SIA244 Hold at SINWE, right turns, 1 min legs",
+  "icao": "WSSS",
+  "truth": "singapore two four four hold at sinwe as published right turns one minute legs"
+ },
+ {
+  "key": "cov0029",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "delta two forty seven runway two five left taxi via echo six echo seven",
+  "ctx": "@GND 25L 25R\nASA658 alaska 658 DEP GND hold_short h131 25L req:cross\nDAL247 delta 247 DEP GND taxi h071 25L\nDLH142 lufthansa 142 DEP GND taxi h071 25L\nUAE287 emirates 287 DEP GND taxi h071 25L\nASA613 alaska 613 ARR APP cruise 3000ft h065 25R\nBAW952 speedbird 952 ARR APP cruise 5000ft h218 25R\nDAL212 delta 212 ARR APP cruise 7000ft h117 25R\nDAL293 delta 293 ARR APP cruise 8000ft h172 25R\nSCO484 scooter 484 ARR APP cruise 9000ft h231 25R\nSKW769 skw769 ARR APP descent 7000ft h262 25R\nSWA521 southwest 521 DEP TWR hold_short h351 25L req:ready\nSWA583 southwest 583 ARR APP cruise 4000ft h066 25R\nUAE973 emirates 973 ARR TWR landing 1600ft h250 25R\nUAL48 united 48 DEP TWR hold_short h085 25L",
+  "line": "DAL247 Taxi RWY 25L via E6, E7",
+  "icao": "KLAX",
+  "truth": "delta two forty seven runway two five left taxi via echo six echo seven"
+ },
+ {
+  "key": "cov0039",
+  "style": "stt",
+  "kind": "pushback",
+  "heard": "sierra kilo whiskey seven sixty two pushback approved expect runway two eight left",
+  "ctx": "@GND 28L 28R\nASA399 alaska 399 DEP GND startup h023 28L\nASA400 alaska 400 DEP GND pushback h345 28L\nDAL580 delta 580 DEP GND pushback h135 28L\nSKW749 skw749 DEP GND pushback h200 28L\nSKW762 skw762 DEP GND parked h285 28L req:pushback\nASA378 alaska 378 ARR APP descent 4500ft h102 28R\nSWR238 swiss 238 ARR APP descent 9700ft h162 28R\nUAL44 united 44 ARR APP descent 8400ft h062 28R\nUAL763 united 763 ARR APP approach 11000ft h133 28R",
+  "line": "SKW762 Pushback approved, expect 28L",
+  "icao": "KSFO",
+  "truth": "sierra kilo whiskey seven sixty two pushback approved expect runway two eight left"
+ },
+ {
+  "key": "cov0042",
+  "style": "stt",
+  "kind": "cancelTakeoff",
+  "heard": "easy four nine six stop immediately easy four nine six stop immediately",
+  "ctx": "@TWR 27L 26R 27R 26L\nAFR417 air france 417 DEP TWR hold_short h174 26R\nEZY496 easy 496 DEP TWR takeoff h346 27L\nEZY529 easy 529 ARR TWR landing 1000ft h262 26L\nEZY596 easy 596 DEP TWR hold_short h004 27R\nAFR134 air france 134 DEP GND taxi h083 26R\nAFR182 air france 182 ARR APP descent 4800ft h120 26L\nAFR470 air france 470 DEP GND taxi h083 26R\nDAL840 delta 840 ARR APP descent 7800ft h175 26L\nDLH734 lufthansa 734 ARR GND taxi h342 26L\nFDX963 fedex 963 ARR APP cruise 5000ft h186 26L\nKLM220 klm 220 DEP DEP climb 4700ft h055 27R\nUAE283 emirates 283 ARR APP cruise 3000ft h252 26L",
+  "line": "EZY496 Cancel takeoff",
+  "icao": "LFPG",
+  "truth": "easy four nine six stop immediately easy four nine six stop immediately"
+ },
+ {
+  "key": "cov0046",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "sky dubai two nine five runway two seven right taxi via echo one zero echo one one echo one two",
+  "ctx": "@GND 27L 26R 27R 26L\nAAL794 american 794 DEP GND startup h055 27L\nAFR248 air france 248 DEP GND startup h353 27L\nDLH153 lufthansa 153 DEP GND startup h177 27L\nEZY527 easy 527 DEP GND pushback h006 27R\nFDB295 sky dubai 295 DEP GND pushback h263 27R\nAFR160 air france 160 ARR APP approach 10000ft h136 26L\nAFR76 air france 76 ARR APP approach 11000ft h082 26L\nDAL865 delta 865 ARR APP cruise 7000ft h111 26L\nDAL880 delta 880 ARR APP descent 7500ft h042 26R",
+  "line": "FDB295 Taxi RWY 27R via E10, E11, E12",
+  "icao": "LFPG",
+  "truth": "sky dubai two nine five runway two seven right taxi via echo one zero echo one one echo one two"
+ },
+ {
+  "key": "cov0051",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "american six twenty seven runway two seven taxi via tango yankee zulu",
+  "ctx": "@GND 27\nAAL627 american 627 DEP GND taxi h091 27\nAFR160 air france 160 ARR GND arrived h085 27\nASA911 alaska 911 DEP GND startup h230 27\nJBU201 jetblue 201 DEP GND taxi h091 27\nDAL354 delta 354 ARR APP cruise 3000ft h128 27\nDAL391 delta 391 ARR TWR landing 300ft h271 27 req:confirm_cleared\nDAL410 delta 410 ARR APP cruise 8000ft h030 27\nDAL468 delta 468 ARR TWR approach 2800ft h273 27 req:with_you\nDAL521 delta 521 ARR APP cruise 6000ft h307 27\nDAL564 delta 564 ARR APP cruise 4000ft h016 27\nJBU112 jetblue 112 ARR APP cruise 5000ft h271 27\nJBU88 jetblue 88 ARR APP cruise 7000ft h143 27\nSWA801 southwest 801 ARR APP approach 10000ft h079 27\nUAL708 united 708 DEP EXT departed 11200ft h142 27",
+  "line": "AAL627 Taxi RWY 27 via T, Y, Z",
+  "icao": "KBOS",
+  "truth": "american six twenty seven runway two seven taxi via tango yankee zulu"
+ },
+ {
+  "key": "cov0052",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "american six fifty two taxi to holding point runway three one left via alpha four bravo",
+  "ctx": "@GND 31L 31R\nAAL652 american 652 DEP GND taxi h054 31L\nDAL61 delta 61 DEP GND hold_short h223 31L\nFDB314 sky dubai 314 DEP GND taxi h133 31L\nJAL649 japan air 649 DEP GND taxi h223 31L\nJBU422 jetblue 422 DEP GND taxi h134 31L\nJBU459 jetblue 459 DEP GND parked h313 31L\nAAL469 american 469 ARR APP cruise 6000ft h274 31R\nAAL504 american 504 ARR TWR landing 1700ft h313 31L\nDAL222 delta 222 DEP EXT departed 11400ft h237 31R\nDAL50 delta 50 DEP TWR climb 600ft h298 31L\nDAL83 delta 83 ARR APP cruise 5000ft h203 31R\nSCO498 scooter 498 ARR APP cruise 3000ft h148 31R\nSKW978 skw978 ARR APP cruise 4000ft h120 31R\nVIR771 virgin 771 ARR APP cruise 7000ft h301 31R",
+  "line": "AAL652 Taxi RWY 31L via A4, B",
+  "icao": "KJFK",
+  "truth": "american six fifty two taxi to holding point runway three one left via alpha four bravo"
+ },
+ {
+  "key": "cov0057",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "china eastern five seven two taxi to holding point runway zero two right via bravo seven bravo eight bravo nine",
+  "ctx": "@GND 02R 03 02L 02C\nCES572 china eastern 572 DEP GND pushback h294 02R\nIGO975 ifly 975 DEP GND taxi h091 02R\nSCO538 scooter 538 DEP GND parked h143 02C\nSCO547 scooter 547 DEP GND startup h113 02R\nSIA175 singapore 175 DEP GND taxi h223 02C\nSIA197 singapore 197 DEP GND taxi h202 02C\nANA609 all nippon 609 ARR APP descent 10500ft h169 03\nRYR117 ryanair 117 ARR APP cruise 4000ft h072 03\nSIA360 singapore 360 ARR APP cruise 7000ft h167 03\nUPS975 ups 975 ARR APP cruise 5000ft h098 03\nVOZ687 velocity 687 ARR APP descent 4900ft h244 02L",
+  "line": "CES572 Taxi RWY 02R via B7, B8, B9",
+  "icao": "WSSS",
+  "truth": "china eastern five seven two taxi to holding point runway zero two right via bravo seven bravo eight bravo nine"
+ },
+ {
+  "key": "cov0059",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "emirates seven six six taxi to holding point runway two seven left via sierra six sierra seven sierra one one",
+  "ctx": "@GND 27L 27R\nAFR681 air france 681 DEP GND taxi h089 27L\nBAW127 speedbird 127 DEP GND taxi h089 27L\nBAW456 speedbird 456 DEP GND startup h179 27L\nEIN616 shamrock 616 DEP GND parked h085 27L req:pushback\nQTR935 qatari 935 DEP GND taxi h089 27L\nUAE766 emirates 766 DEP GND pushback h089 27L\nUAE793 emirates 793 DEP GND taxi h090 27L\nVIR477 virgin 477 DEP GND startup h200 27L\nAAL827 american 827 ARR APP cruise 5000ft h308 27R\nEIN57 shamrock 57 ARR APP cruise 5000ft h086 27R\nJAL642 japan air 642 ARR APP cruise 3000ft h111 27R\nSWR262 swiss 262 ARR APP descent 8300ft h257 27R\nVIR570 virgin 570 ARR TWR landing 2500ft h271 27R req:with_you",
+  "line": "UAE766 Taxi RWY 27L via S6, S7, S11",
+  "icao": "EGLL",
+  "truth": "emirates seven six six taxi to holding point runway two seven left via sierra six sierra seven sierra one one"
+ },
+ {
+  "key": "cov0063",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "scooter four two eight runway two one taxi via sierra three sierra four",
+  "ctx": "@GND 21 20L\nCPA642 cathay 642 DEP GND taxi h113 21\nHKE527 hong kong express 527 DEP GND hold_short h203 21\nHKE528 hong kong express 528 DEP GND taxi h146 21\nIGO983 ifly 983 DEP GND parked h202 21 req:pushback\nSCO428 scooter 428 DEP GND taxi h203 21\nSCO504 scooter 504 ARR GND taxi h016 20L\nSCO509 scooter 509 DEP GND parked h083 21 req:pushback\nSIA222 singapore 222 DEP GND taxi h199 21\nSIA50 singapore 50 DEP GND taxi h150 21\nSIA61 singapore 61 DEP GND taxi h152 21\nANZ737 new zealand 737 ARR APP cruise 4000ft h197 20L\nIGO978 ifly 978 ARR APP cruise 5000ft h199 20L\nSCO498 scooter 498 ARR APP cruise 3000ft h176 20L\nSCO516 scooter 516 ARR APP cruise 6000ft h205 20L",
+  "line": "SCO428 Taxi RWY 21 via S3, S4",
+  "icao": "WSSS",
+  "truth": "scooter four two eight runway two one taxi via sierra three sierra four"
+ },
+ {
+  "key": "cov0065",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "air france four six one runway two seven right taxi via foxtrot foxtrot november one hold short of runway two six right",
+  "ctx": "@GND 27L 26R 27R 26L\nAAL804 american 804 DEP GND taxi h083 26R\nAFR17 air france 17 DEP GND parked h077 26R\nAFR3 air france 3 DEP GND taxi h083 27R\nAFR381 air france 381 DEP GND taxi h100 26R\nAFR461 air france 461 DEP GND startup h173 27R\nAFR85 air france 85 DEP GND taxi h332 27R\nEZY553 easy 553 DEP GND taxi h083 27R\nEZY607 easy 607 DEP GND taxi h274 27R\nTRA681 transavia 681 DEP GND pushback h255 26R\nAFR434 air france 434 ARR APP cruise 5000ft h236 27L\nCPA519 cathay 519 ARR APP cruise 7000ft h139 27L\nEZY526 easy 526 ARR TWR landing 1900ft h265 26L\nFDB300 sky dubai 300 ARR APP approach 4000ft h264 26L\nQFA681 qantas 681 DEP TWR takeoff h263 26R",
+  "line": "AFR461 Taxi RWY 27R via F, FN1, hold short 26R",
+  "icao": "LFPG",
+  "truth": "air france four six one runway two seven right taxi via foxtrot foxtrot november one hold short of runway two six right"
+ },
+ {
+  "key": "cov0068",
+  "style": "stt",
+  "kind": "direct",
+  "heard": "jetblue six ninety proceed direct laxea",
+  "ctx": "@APP 25R 25L 24L 24R\nFDB291 sky dubai 291 ARR APP cruise 5000ft h218 25L\nJAL864 japan air 864 ARR APP cruise 3000ft h254 25L\nJBU686 jetblue 686 ARR APP descent 6400ft h096 25R\nJBU690 jetblue 690 ARR APP cruise 4000ft h225 25R\nSWA608 southwest 608 DEP DEP climb 5700ft h305 24L\nUAL158 united 158 ARR APP cruise 7000ft h222 25L\nAAL456 american 456 DEP GND taxi h071 24L\nBAW935 speedbird 935 DEP GND taxi h039 24R\nEIN79 shamrock 79 DEP GND taxi h033 24L\nJBU681 jetblue 681 DEP EXT departed 11900ft h261 24R\nSKW793 skw793 DEP TWR takeoff 100ft h251 24L\nSWA552 southwest 552 DEP GND taxi h019 24L\nSWA570 southwest 570 ARR TWR landing 1300ft h250 25R\nUAL63 united 63 DEP GND taxi h071 24R",
+  "line": "JBU690 Direct LAXEA",
+  "icao": "KLAX",
+  "truth": "jetblue six ninety proceed direct laxea"
+ },
+ {
+  "key": "cov0075",
+  "style": "stt",
+  "kind": "radarContact",
+  "heard": "hong kong express five zero four hong kong intl approach radar contact altimeter three zero two four expect ils runway two five right approach",
+  "ctx": "@APP 25C 25R 25L\nANA978 all nippon 978 ARR APP approach 11000ft h325 25R req:with_you\nHKE504 hong kong express 504 ARR APP descent 9900ft h183 25R\nSCO498 scooter 498 ARR APP approach 9000ft h087 25R req:with_you\nCPA222 cathay 222 DEP GND parked h074 25L\nCPA61 cathay 61 DEP GND parked h163 25C\nHKE527 hong kong express 527 DEP GND parked h130 25C\nHKE528 hong kong express 528 DEP GND parked h164 25L",
+  "line": "HKE504 Radar contact, expect 25R",
+  "icao": "VHHH",
+  "truth": "hong kong express five zero four hong kong intl approach radar contact altimeter three zero two four expect ils runway two five right approach"
+ },
+ {
+  "key": "cov0076",
+  "style": "stt",
+  "kind": "radarContact",
+  "heard": "sierra kilo whiskey nine three five dubai intl approach radar contact qnh one zero zero four expect ils approach runway three zero right",
+  "ctx": "@APP 30L 30R\nFDB547 sky dubai 547 DEP DEP climb 5500ft h313 30L\nFDB599 sky dubai 599 ARR APP approach 9000ft h107 30R\nJST735 jetstar 735 ARR APP cruise 3000ft h122 30L\nSKW935 skw935 ARR APP approach 11000ft h056 30R\nUAE151 emirates 151 ARR APP approach 10000ft h086 30R\nUAL774 united 774 ARR APP cruise 4000ft h115 30R\nBAW731 speedbird 731 DEP TWR takeoff h300 30L\nDLH987 lufthansa 987 DEP GND taxi h097 30L\nFDB523 sky dubai 523 DEP TWR hold_short h208 30L\nQTR788 qatari 788 DEP GND taxi h105 30L\nUAE175 emirates 175 DEP TWR hold_short h207 30R\nUAE197 emirates 197 DEP EXT departed 12600ft h314 30R\nUAE461 emirates 461 DEP GND pushback h029 30L\nUPS975 ups 975 ARR GND taxi h215 30R",
+  "line": "SKW935 Radar contact, expect 30R",
+  "icao": "OMDB",
+  "truth": "sierra kilo whiskey nine three five dubai intl approach radar contact qnh one zero zero four expect ils approach runway three zero right"
+ },
+ {
+  "key": "cov0082",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "cathay five zero eight runway two seven taxi via november november one november two hold short of runway two two left",
+  "ctx": "@GND 27\nBAW911 speedbird 911 ARR GND taxi h214 27\nCPA508 cathay 508 DEP GND pushback h150 27\nDAL438 delta 438 ARR GND arrived h340 27\nJBU56 jetblue 56 ARR GND taxi h292 27\nUAL696 united 696 ARR GND taxi h137 27\nAAL584 american 584 ARR APP approach 10000ft h093 27\nAAL662 american 662 DEP DEP climb 2000ft h017 27\nAAL687 american 687 ARR APP cruise 4000ft h095 27\nAFR180 air france 180 ARR TWR approach 3000ft h268 27\nDAL414 delta 414 ARR APP cruise 7000ft h171 27\nJBU98 jetblue 98 DEP TWR hold_short h174 27\nSKW852 skw852 ARR APP cruise 6000ft h110 27\nSKW859 skw859 ARR APP cruise 4000ft h194 27\nUAL716 united 716 ARR APP descent 9000ft h127 27",
+  "line": "CPA508 Taxi RWY 27 via N, N1, N2, hold short 22L",
+  "icao": "KBOS",
+  "truth": "cathay five zero eight runway two seven taxi via november november one november two hold short of runway two two left"
+ },
+ {
+  "key": "cov0087",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "american six ninety taxi to holding point runway one nine left via six alpha six bravo",
+  "ctx": "@GND 19L 19R\nAAL690 american 690 DEP GND taxi h105 19L\nFDB293 sky dubai 293 DEP GND pushback h338 19L\nUAL28 united 28 ARR GND taxi h105 19R\nUAL315 united 315 ARR GND taxi h015 19R\nAAL702 american 702 ARR APP cruise 7000ft h054 19R\nASA426 alaska 426 DEP DEP climb 1900ft h213 19L\nETD347 etihad 347 ARR APP cruise 4000ft h019 19R\nEZY103 easy 103 ARR APP cruise 6000ft h013 19R\nHKE537 hong kong express 537 ARR APP cruise 8000ft h217 19R\nIGO439 ifly 439 ARR APP cruise 10000ft h078 19R\nQTR321 qatari 321 ARR APP approach 11000ft h006 19R\nSKW788 skw788 ARR APP cruise 3000ft h168 19R\nUAL141 united 141 ARR APP cruise 5000ft h331 19R\nUAL20 united 20 ARR APP cruise 9000ft h271 19R",
+  "line": "AAL690 Taxi RWY 19L via 6A, 6B",
+  "icao": "KSFO",
+  "truth": "american six ninety taxi to holding point runway one nine left via six alpha six bravo"
+ },
+ {
+  "key": "cov0089",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "qantas eight ninety five taxi to holding point runway two five left via charlie three charlie four charlie five hold short of runway zero seven left",
+  "ctx": "@GND 25R 25L 24L 24R\nAAL399 american 399 DEP GND taxi h162 25L\nAAL400 american 400 DEP GND startup h252 25R\nANA826 all nippon 826 DEP GND taxi h075 25R\nQFA895 qantas 895 DEP GND pushback h299 25L\nSKW749 skw749 DEP GND taxi h072 25L\nSKW785 skw785 DEP GND parked h058 25L\nSWA580 southwest 580 DEP GND taxi h116 25L\nUAL137 united 137 DEP GND taxi h221 25L\nAAL368 american 368 ARR APP cruise 8000ft h120 24R\nAAL378 american 378 ARR APP descent 3300ft h069 24R\nJAL851 japan air 851 ARR APP descent 8900ft h031 24L\nSWR238 swiss 238 ARR APP cruise 5000ft h036 24L\nUAL127 united 127 ARR APP cruise 7000ft h256 24R\nUAL44 united 44 ARR APP cruise 6000ft h043 24L",
+  "line": "QFA895 Taxi RWY 25L via C3, C4, C5, hold short 07L",
+  "icao": "KLAX",
+  "truth": "qantas eight ninety five taxi to holding point runway two five left via charlie three charlie four charlie five hold short of runway zero seven left"
+ },
+ {
+  "key": "cov0092",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "air france eight five runway two seven right taxi via quebec bravo six quebec bravo seven",
+  "ctx": "@GND 27L 26R 27R 26L\nAFR17 air france 17 DEP GND taxi h084 26R\nAFR3 air france 3 DEP GND hold_short h324 27R\nAFR85 air france 85 DEP GND taxi h334 27R\nASA245 alaska 245 DEP GND taxi h083 26R\nEZY526 easy 526 ARR GND taxi h313 26L\nFDB300 sky dubai 300 ARR GND taxi h284 26L\nTRA681 transavia 681 DEP GND taxi h083 26R\nAFR350 air france 350 ARR APP descent 7100ft h137 27L\nAFR381 air france 381 DEP TWR hold_short h174 26R\nAFR434 air france 434 ARR APP cruise 3000ft h236 27L\nAFR461 air france 461 DEP TWR hold_short h003 27R\nCPA519 cathay 519 ARR TWR approach 3000ft h258 27L\nEZY553 easy 553 DEP TWR climb 1000ft h302 27R\nEZY607 easy 607 DEP EXT departed 9000ft h131 27R",
+  "line": "AFR85 Taxi RWY 27R via QB6, QB7",
+  "icao": "LFPG",
+  "truth": "air france eight five runway two seven right taxi via quebec bravo six quebec bravo seven"
+ },
+ {
+  "key": "cov0097",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "alaska four twenty six runway one nine left taxi via six alpha hold short of runway one nine left",
+  "ctx": "@GND 19L 19R\nAAL690 american 690 DEP GND hold_short h024 19L\nASA426 alaska 426 DEP GND hold_short h014 19L req:cross\nUAL28 united 28 ARR GND taxi h321 19R\nAAL702 american 702 ARR APP cruise 8000ft h013 19R\nETD347 etihad 347 ARR APP cruise 4000ft h222 19R\nEZY103 easy 103 ARR APP cruise 5000ft h012 19R\nHKE537 hong kong express 537 ARR APP approach 9000ft h145 19R\nIGO439 ifly 439 ARR APP cruise 10000ft h069 19R\nSKW788 skw788 ARR APP cruise 3000ft h143 19R\nUAL141 united 141 ARR APP cruise 6000ft h355 19R\nUAL174 united 174 DEP EXT departed 12500ft h122 19L\nUAL20 united 20 ARR APP cruise 7000ft h005 19R\nUAL315 united 315 ARR TWR landing 1800ft h193 19R\nUAL89 united 89 DEP DEP climb 7100ft h168 19L",
+  "line": "ASA426 Taxi RWY 19L via 6A, hold short 19L",
+  "icao": "KSFO",
+  "truth": "alaska four twenty six runway one nine left taxi via six alpha hold short of runway one nine left"
+ },
+ {
+  "key": "cov0100",
+  "style": "stt",
+  "kind": "windCheck",
+  "heard": "sierra kilo whiskey nine thirty five wind two two four at eight",
+  "ctx": "@TWR 13R 13L\nAFR866 air france 866 ARR TWR landing 400ft h134 13L\nDAL39 delta 39 DEP TWR hold_short h308 13R\nSKW935 skw935 DEP TWR hold_short h224 13R\nAAL553 american 553 ARR APP cruise 3000ft h297 13L\nAAL639 american 639 DEP GND pushback h174 13R\nDAL129 delta 129 ARR GND taxi h253 13L\nDAL15 delta 15 ARR APP cruise 7000ft h317 13L\nDAL174 delta 174 DEP GND taxi h313 13R\nJBU293 jetblue 293 ARR GND taxi h167 13L\nJBU430 jetblue 430 DEP GND taxi h313 13R\nSKW931 skw931 DEP GND taxi h297 13R\nUAE272 emirates 272 ARR APP cruise 4000ft h021 13L\nUAE914 emirates 914 DEP GND taxi h314 13R\nVOZ697 velocity 697 ARR APP cruise 6000ft h043 13L",
+  "line": "SKW935 Wind check",
+  "icao": "KJFK",
+  "truth": "sierra kilo whiskey nine thirty five wind two two four at eight"
+ },
+ {
+  "key": "cov0103",
+  "style": "stt",
+  "kind": "holdShort",
+  "heard": "sierra kilo whiskey eight fifty three hold short of runway zero four left",
+  "ctx": "@GND 27\nDAL500 delta 500 DEP GND taxi h131 27\nDAL504 delta 504 ARR GND taxi h135 27\nSCO498 scooter 498 ARR GND arrived h287 27\nSKW853 skw853 DEP GND taxi h098 27\nUPS974 ups 974 DEP GND hold_short h064 27\nAFR978 air france 978 ARR TWR landing 1000ft h272 27\nAIC414 air india 414 ARR APP descent 6600ft h126 27\nANZ747 new zealand 747 ARR APP descent 7700ft h091 27\nCCA589 air china 589 ARR APP descent 4200ft h297 27\nHKE528 hong kong express 528 DEP DEP climb 5300ft h144 27\nJBU20 jetblue 20 ARR APP descent 5200ft h321 27\nJBU238 jetblue 238 ARR APP approach 9000ft h079 27\nJBU321 jetblue 321 DEP TWR hold_short h173 27\nJBU50 jetblue 50 ARR APP descent 3100ft h013 27",
+  "line": "SKW853 Hold short 4L",
+  "icao": "KBOS",
+  "truth": "sierra kilo whiskey eight fifty three hold short of runway zero four left"
+ },
+ {
+  "key": "cov0105",
+  "style": "stt",
+  "kind": "direct",
+  "heard": "southwest five thirty five proceed direct laxwe",
+  "ctx": "@TWR 25R 25L 24L 24R\nSKW920 skw920 DEP TWR hold_short h123 25R\nSWA535 southwest 535 DEP TWR takeoff 100ft h251 24R\nUPS975 ups 975 ARR TWR landing 900ft h251 24L\nAAL357 american 357 ARR APP cruise 3000ft h174 25L\nDAL175 delta 175 DEP DEP climb 6200ft h119 24R\nDAL193 delta 193 ARR APP descent 6900ft h120 24L\nKLM227 klm 227 ARR APP cruise 4000ft h279 25L\nRYR117 ryanair 117 ARR GND taxi h299 25L\nSKW729 skw729 ARR APP cruise 5000ft h108 24L\nSKW761 skw761 DEP GND hold_short h358 24R req:cross\nSWA531 southwest 531 DEP GND parked h250 25R\nSWA571 southwest 571 DEP GND taxi h258 25R\nVOZ687 velocity 687 ARR GND arrived h259 25L\nVOZ707 velocity 707 DEP GND parked h348 25R",
+  "line": "SWA535 Direct LAXWE",
+  "icao": "KLAX",
+  "truth": "southwest five thirty five proceed direct laxwe"
+ },
+ {
+  "key": "cov0129",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "delta eight nine nine taxi to stand foxtrot eight four via quebec bravo six quebec bravo seven",
+  "ctx": "@GND 27L 26R 27R 26L\nAFR453 air france 453 DEP GND taxi h083 26L\nCPA509 cathay 509 DEP GND taxi h170 26L\nDAL899 delta 899 ARR GND taxi h155 27L\nIGO424 ifly 424 DEP GND pushback h054 26L\nKLM806 klm 806 DEP GND taxi h162 26L\nQTR978 qatari 978 ARR GND arrived h093 27L\nAFR459 air france 459 ARR APP cruise 6000ft h058 27L\nASA901 alaska 901 ARR APP cruise 3000ft h263 27L\nEZY500 easy 500 ARR APP cruise 7000ft h346 27R\nEZY532 easy 532 ARR APP cruise 4000ft h241 27L\nFDX947 fedex 947 ARR TWR landing 1600ft h264 27L\nRYR107 ryanair 107 ARR APP cruise 5000ft h247 27L\nTRA625 transavia 625 ARR APP cruise 8000ft h129 27R",
+  "line": "DAL899 Taxi stand F84 via QB6, QB7",
+  "icao": "LFPG",
+  "truth": "delta eight nine nine taxi to stand foxtrot eight four via quebec bravo six quebec bravo seven"
+ },
+ {
+  "key": "cov0151",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "emirates two one one taxi to holding point runway three zero right via papa seven papa eight",
+  "ctx": "@GND 30R 30L\nFDB663 sky dubai 663 DEP GND startup h209 30R\nHKE538 hong kong express 538 DEP GND taxi h076 30R\nUAE211 emirates 211 DEP GND pushback h029 30R\nAFR164 air france 164 ARR APP cruise 4000ft h335 30L\nBAW1 speedbird 1 DEP TWR takeoff h030 30R\nCCA581 air china 581 DEP DEP climb 3400ft h360 30R\nFDB523 sky dubai 523 ARR APP cruise 7000ft h108 30L\nIGO445 ifly 445 ARR APP approach 3000ft h296 30L\nUAE19 emirates 19 ARR TWR rollout h223 30L\nUAE28 emirates 28 ARR APP cruise 3000ft h006 30L\nUAE285 emirates 285 DEP EXT departed 12800ft h360 30R\nUAE433 emirates 433 ARR APP cruise 5000ft h266 30L\nUAE460 emirates 460 DEP TWR hold_short h207 30R",
+  "line": "UAE211 Taxi RWY 30R via P7, P8",
+  "icao": "OMDB",
+  "truth": "emirates two one one taxi to holding point runway three zero right via papa seven papa eight"
+ },
+ {
+  "key": "cov0159",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "ifly two eight five runway two nine left taxi via echo four",
+  "ctx": "@GND 29L 27\nAIC460 air india 460 DEP GND taxi h194 29L\nAIC498 air india 498 DEP GND parked h193 29L req:pushback\nBAW881 speedbird 881 DEP GND parked h104 29L req:pushback\nCCA581 air china 581 DEP GND hold_short h193 29L req:cross\nDLH144 lufthansa 144 DEP GND parked h283 29L req:pushback\nIGO285 ifly 285 DEP GND taxi h194 29L\nIGO374 ifly 374 DEP GND taxi h103 29L\nJST733 jetstar 733 DEP GND parked h284 29L req:pushback\nBAW1 speedbird 1 DEP TWR hold_short h185 29L\nIGO19 ifly 19 ARR TWR landing 700ft h270 27\nIGO28 ifly 28 ARR APP cruise 4000ft h091 27\nIGO433 ifly 433 ARR APP cruise 7000ft h068 27\nIGO445 ifly 445 ARR APP cruise 3000ft h243 27\nSIA452 singapore 452 DEP TWR hold_short h133 29L req:ready",
+  "line": "IGO285 Taxi RWY 29L via E4",
+  "icao": "VIDP",
+  "truth": "ifly two eight five runway two nine left taxi via echo four"
+ },
+ {
+  "key": "cov0160",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "american six sixty two taxi to holding point runway one nine right via bravo one bravo two hold short of runway zero one right",
+  "ctx": "@GND 19L 19R\nAAL662 american 662 DEP GND startup h243 19R\nASA388 alaska 388 DEP GND pushback h091 19L\nASA453 alaska 453 DEP GND startup h104 19L\nDAL578 delta 578 DEP GND startup h139 19L\nVOZ698 velocity 698 DEP GND startup h007 19R\nASA362 alaska 362 ARR APP descent 5000ft h145 19R\nUAL127 united 127 ARR APP approach 9000ft h005 19R\nUAL191 united 191 ARR APP descent 6100ft h314 19L\nUAL56 united 56 ARR APP approach 10000ft h020 19R",
+  "line": "AAL662 Taxi RWY 19R via B1, B2, hold short 01R",
+  "icao": "KSFO",
+  "truth": "american six sixty two taxi to holding point runway one nine right via bravo one bravo two hold short of runway zero one right"
+ },
+ {
+  "key": "cov0161",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "delta one seventy four taxi to holding point runway two two right via tango bravo hold short of runway one three right",
+  "ctx": "@GND 13R 13L\nDAL174 delta 174 DEP GND taxi h343 13R\nJBU430 jetblue 430 DEP GND taxi h136 13R\nJST718 jetstar 718 ARR GND taxi h319 13R\nSKW931 skw931 DEP GND taxi h302 13R\nUAE914 emirates 914 DEP GND taxi h279 13R\nAAL553 american 553 ARR APP cruise 7000ft h317 13L\nAFR866 air france 866 ARR APP cruise 3000ft h318 13L\nDAL129 delta 129 ARR APP cruise 4000ft h161 13L\nDAL39 delta 39 DEP TWR hold_short h308 13R\nJBU293 jetblue 293 ARR TWR rollout h247 13L\nJBU444 jetblue 444 DEP EXT departed 11300ft h136 13L\nSKW935 skw935 DEP TWR hold_short h224 13R\nUAE272 emirates 272 ARR APP descent 5200ft h262 13L\nVOZ690 velocity 690 DEP TWR hold_short h347 13L",
+  "line": "DAL174 Taxi RWY 22R via TB, hold short 13R",
+  "icao": "KJFK",
+  "truth": "delta one seventy four taxi to holding point runway two two right via tango bravo hold short of runway one three right"
+ },
+ {
+  "key": "cov0173",
+  "style": "stt",
+  "kind": "cancelTakeoff",
+  "heard": "united seven thirty three stop immediately united seven thirty three stop immediately",
+  "ctx": "@TWR 33L 32\nUAL733 united 733 DEP TWR takeoff h329 33L\nAAL624 american 624 DEP GND taxi h095 33L\nAAL690 american 690 ARR GND taxi h039 32\nANZ361 new zealand 361 ARR APP cruise 7000ft h297 32\nEIN79 shamrock 79 DEP GND taxi h123 33L\nETD357 etihad 357 DEP GND parked h230 33L req:startup\nJAL650 japan air 650 ARR APP cruise 6000ft h169 32\nJBU103 jetblue 103 ARR APP approach 3000ft h315 32\nJBU194 jetblue 194 ARR APP cruise 3000ft h115 32\nJBU878 jetblue 878 ARR APP cruise 4000ft h169 32\nSKW839 skw839 ARR APP cruise 5000ft h093 32\nSKW864 skw864 ARR GND taxi h023 32\nUAL771 united 771 DEP GND taxi h129 33L",
+  "line": "UAL733 Cancel takeoff",
+  "icao": "KBOS",
+  "truth": "united seven thirty three stop immediately united seven thirty three stop immediately"
+ },
+ {
+  "key": "cov0180",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "jetstar seven twenty six runway zero four left taxi via quebec two quebec four hold short of runway three one left",
+  "ctx": "@GND 22R 22L\nAAL570 american 570 ARR GND taxi h334 22R\nAIC402 air india 402 DEP GND taxi h077 22L\nJST726 jetstar 726 DEP GND taxi h282 22L\nUAL690 united 690 ARR GND taxi h228 22R\nAAL463 american 463 ARR APP cruise 3000ft h255 22R\nAFR864 air france 864 ARR TWR landing 1400ft h225 22R\nBAW709 speedbird 709 ARR APP cruise 8000ft h318 22R\nCES577 china eastern 577 DEP TWR takeoff h223 22L\nCPA517 cathay 517 ARR APP cruise 5000ft h010 22R\nDAL214 delta 214 ARR APP cruise 6000ft h320 22R\nJBU323 jetblue 323 ARR APP cruise 4000ft h291 22R\nJBU436 jetblue 436 ARR APP cruise 7000ft h301 22R\nQTR935 qatari 935 DEP EXT departed 10600ft h018 22L\nVIR793 virgin 793 DEP TWR hold_short h158 22L req:ready",
+  "line": "JST726 Taxi RWY 04L via Q2, Q4, hold short 31L",
+  "icao": "KJFK",
+  "truth": "jetstar seven twenty six runway zero four left taxi via quebec two quebec four hold short of runway three one left"
+ },
+ {
+  "key": "cov0184",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "cathay eight ninety eight runway zero one left taxi via hotel juliett kilo hold short of runway one nine left",
+  "ctx": "@GND 01R 01L\nCPA898 cathay 898 DEP GND taxi h105 01L\nDAL572 delta 572 DEP GND pushback h338 01L\nHKE527 hong kong express 527 DEP GND taxi h156 01R\nHKE528 hong kong express 528 DEP GND taxi h132 01L\nRYR118 ryanair 118 DEP GND startup h075 01L\nBAW978 speedbird 978 ARR APP approach 4000ft h005 01L\nBAW989 speedbird 989 ARR APP cruise 5000ft h147 01R\nJAL888 japan air 888 DEP TWR takeoff h015 01L\nSCO498 scooter 498 ARR TWR landing 100ft h015 01R\nSWA504 southwest 504 ARR APP cruise 3000ft h204 01R\nUAL222 united 222 DEP DEP climb 5800ft h205 01L\nUAL335 united 335 ARR APP descent 6200ft h160 01R\nUAL61 united 61 DEP TWR hold_short h121 01R\nVOZ693 velocity 693 ARR APP descent 6800ft h093 01R",
+  "line": "CPA898 Taxi RWY 01L via H, J, K, hold short 19L",
+  "icao": "KSFO",
+  "truth": "cathay eight ninety eight runway zero one left taxi via hotel juliett kilo hold short of runway one nine left"
+ },
+ {
+  "key": "cov0186",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "qatari seven nine three taxi to holding point runway one zero via zulu eight hold short of runway two seven",
+  "ctx": "@GND 11R 11L 10 09\nAIC456 air india 456 DEP GND taxi h014 10\nAIC681 air india 681 DEP GND taxi h271 09\nIGO19 ifly 19 DEP GND startup h013 10\nIGO85 ifly 85 DEP GND pushback h283 09\nJST731 jetstar 731 DEP GND parked h103 10\nQTR793 qatari 793 DEP GND taxi h272 10\nSIA935 singapore 935 DEP GND taxi h197 09\nAIC570 air india 570 ARR TWR landing 600ft h101 11L\nBAW864 speedbird 864 ARR APP cruise 3000ft h323 11L\nDLH949 lufthansa 949 ARR APP descent 9100ft h255 11R\nUAL773 united 773 ARR APP cruise 4000ft h130 11R",
+  "line": "QTR793 Taxi RWY 10 via Z8, hold short 27",
+  "icao": "VIDP",
+  "truth": "qatari seven nine three taxi to holding point runway one zero via zulu eight hold short of runway two seven"
+ },
+ {
+  "key": "cov0189",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "jetblue five sixty two taxi to holding point runway two four left via alpha six alpha seven hold short of runway zero six left",
+  "ctx": "@GND 25R 25L 24L 24R\nAAL358 american 358 DEP GND taxi h072 25R\nDAL188 delta 188 DEP GND pushback h072 25R\nDAL264 delta 264 DEP GND taxi h251 24L\nDAL301 delta 301 DEP GND taxi h072 25R\nJAL648 japan air 648 DEP GND taxi h252 24L\nJBU562 jetblue 562 DEP GND pushback h251 24L\nSKW711 skw711 DEP GND pushback h252 24L\nUAL161 united 161 DEP GND taxi h071 24L\nAIC399 air india 399 ARR APP approach 9000ft h094 24R\nAIC400 air india 400 ARR APP cruise 4000ft h123 24R\nUAL95 united 95 ARR APP cruise 5000ft h166 25L\nUPS996 ups 996 ARR APP descent 5500ft h069 24R",
+  "line": "JBU562 Taxi RWY 24L via A6, A7, hold short 06L",
+  "icao": "KLAX",
+  "truth": "jetblue five sixty two taxi to holding point runway two four left via alpha six alpha seven hold short of runway zero six left"
+ },
+ {
+  "key": "cov0193",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "united eight two four runway two three taxi via bravo nine bravo one zero bravo one one",
+  "ctx": "@GND 22 23\nANA296 all nippon 296 DEP GND taxi h158 23\nANA344 all nippon 344 DEP GND taxi h133 23\nBAW932 speedbird 932 DEP GND taxi h158 23\nDAL888 delta 888 DEP GND taxi h068 23\nHKE528 hong kong express 528 DEP GND taxi h148 23\nJAL504 japan air 504 ARR GND taxi h127 22\nUAL824 united 824 DEP GND taxi h148 23\nVOZ707 velocity 707 DEP GND parked h233 23\nANA222 all nippon 222 DEP TWR hold_short h140 23\nANA61 all nippon 61 DEP TWR takeoff h223 22\nCCA978 air china 978 ARR TWR landing 1100ft h231 23\nJAL563 japan air 563 DEP DEP climb 6000ft h088 23\nSCO498 scooter 498 ARR APP cruise 3000ft h197 22\nVIR52 virgin 52 ARR APP cruise 4000ft h196 22",
+  "line": "UAL824 Taxi RWY 23 via B9, B10, B11",
+  "icao": "RJTT",
+  "truth": "united eight two four runway two three taxi via bravo nine bravo one zero bravo one one"
+ },
+ {
+  "key": "cov0194",
+  "style": "stt",
+  "kind": "direct",
+  "heard": "delta eight six four proceed direct hndse",
+  "ctx": "@APP 16L 16R\nBAW24 speedbird 24 ARR APP approach 10000ft h302 16L\nCPA727 cathay 727 ARR APP cruise 6000ft h320 16L\nDAL864 delta 864 ARR APP descent 8200ft h351 16L\nJAL570 japan air 570 ARR APP cruise 3000ft h061 16L\nJAL690 japan air 690 ARR APP cruise 5000ft h266 16L\nANA261 all nippon 261 DEP GND pushback h068 16R\nBAW935 speedbird 935 DEP GND startup h338 16R\nJAL456 japan air 456 DEP GND taxi h338 16R\nJAL681 japan air 681 DEP GND taxi h338 16R\nSIA793 singapore 793 DEP GND startup h068 16R",
+  "line": "DAL864 Direct HNDSE",
+  "icao": "RJTT",
+  "truth": "delta eight six four proceed direct hndse"
+ },
+ {
+  "key": "cov0197",
+  "style": "stt",
+  "kind": "cancelApproach",
+  "heard": "sierra kilo whiskey eight sixty four cancel approach clearance turn left heading three four five climb and maintain one three thousand",
+  "ctx": "@APP 33L 32\nJAL650 japan air 650 ARR APP cruise 7000ft h319 32\nJBU103 jetblue 103 ARR APP cruise 3000ft h146 32\nJBU194 jetblue 194 ARR APP cruise 4000ft h318 32\nJBU878 jetblue 878 ARR APP cruise 5000ft h286 32\nSKW839 skw839 ARR APP cruise 6000ft h319 32\nSKW864 skw864 ARR APP approach 3000ft h323 32\nAAL570 american 570 ARR GND taxi h039 32\nAAL616 american 616 DEP TWR takeoff h329 33L\nAAL624 american 624 DEP GND taxi h154 33L\nAAL690 american 690 ARR GND taxi h075 32\nDAL456 delta 456 DEP EXT departed 8800ft h189 33L\nEIN79 shamrock 79 DEP GND parked h354 33L\nUAL733 united 733 DEP GND taxi h150 33L\nUAL771 united 771 DEP GND startup h279 33L",
+  "line": "SKW864 Cancel approach, heading 345, altitude 13000",
+  "icao": "KBOS",
+  "truth": "sierra kilo whiskey eight sixty four cancel approach clearance turn left heading three four five climb and maintain one three thousand"
+ },
+ {
+  "key": "cov0199",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "sierra kilo whiskey nine two four runway two seven right taxi",
+  "ctx": "@GND 27R 27L\nETD346 etihad 346 ARR GND taxi h071 27L\nEZY97 easy 97 DEP GND startup h359 27R\nSIA952 singapore 952 ARR GND arrived h180 27L\nSKW924 skw924 DEP GND startup h359 27R\nASA897 alaska 897 ARR APP cruise 4000ft h098 27L\nBAW158 speedbird 158 DEP DEP cruise 8000ft h350 27R\nBAW331 speedbird 331 ARR APP cruise 6000ft h264 27L\nBAW448 speedbird 448 ARR APP cruise 7000ft h122 27L\nBAW50 speedbird 50 ARR APP cruise 5000ft h092 27L\nFDB312 sky dubai 312 ARR APP cruise 3000ft h270 27L\nKLM744 klm 744 DEP DEP climb 3600ft h263 27R\nSWR238 swiss 238 ARR APP approach 8000ft h162 27L\nVIR554 virgin 554 ARR APP approach 9000ft h112 27L",
+  "line": "SKW924 Taxi RWY 27R",
+  "icao": "EGLL",
+  "truth": "sierra kilo whiskey nine two four runway two seven right taxi"
+ },
+ {
+  "key": "cov0200",
+  "style": "stt",
+  "kind": "radarContact",
+  "heard": "emirates two eight two indira gandhi intl approach radar contact altimeter three zero zero six expect ils runway two seven approach",
+  "ctx": "@APP 29L 27\nANA623 all nippon 623 ARR APP descent 8200ft h043 27\nIGO436 ifly 436 ARR APP approach 9000ft h108 27\nRYR117 ryanair 117 ARR APP cruise 7000ft h078 27\nUAE282 emirates 282 ARR APP approach 10000ft h056 27\nUPS975 ups 975 ARR APP cruise 5000ft h092 27\nUPS989 ups 989 ARR APP cruise 7000ft h106 27\nVOZ687 velocity 687 ARR APP cruise 3000ft h121 27\nAIC547 air india 547 DEP GND taxi h104 29L\nDLH975 lufthansa 975 DEP GND hold_short h191 29L\nEZY80 easy 80 DEP GND taxi h104 29L\nIGO175 ifly 175 DEP GND taxi h262 29L\nIGO197 ifly 197 DEP GND taxi h193 29L\nIGO86 ifly 86 DEP GND parked h194 29L req:pushback\nQFA675 qantas 675 DEP GND parked h013 29L req:pushback",
+  "line": "UAE282 Radar contact, expect 27",
+  "icao": "VIDP",
+  "truth": "emirates two eight two indira gandhi intl approach radar contact altimeter three zero zero six expect ils runway two seven approach"
+ },
+ {
+  "key": "cov0212",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "sky dubai three zero six taxi to holding point runway two eight via delta seven echo two",
+  "ctx": "@GND 29L 29R 28 27\nFDB306 sky dubai 306 DEP GND taxi h071 28\nIGO358 ifly 358 DEP GND taxi h189 29L\nUPS996 ups 996 ARR GND taxi h284 29R\nAIC445 air india 445 ARR APP approach 3000ft h288 29R\nAIC533 air india 533 ARR APP cruise 4000ft h310 29R\nIGO161 ifly 161 DEP EXT departed 11200ft h221 28\nIGO291 ifly 291 ARR APP cruise 7000ft h285 29R\nIGO301 ifly 301 DEP DEP climb 2100ft h003 29L\nIGO309 ifly 309 DEP TWR hold_short h014 28\nIGO359 ifly 359 ARR APP cruise 6000ft h085 29R\nIGO392 ifly 392 ARR APP cruise 5000ft h064 29R\nIGO396 ifly 396 ARR TWR landing 1400ft h270 27\nIGO67 ifly 67 ARR APP cruise 7000ft h124 27\nJAL648 japan air 648 DEP EXT departed 10100ft h128 28",
+  "line": "FDB306 Taxi RWY 28 via D7, E2",
+  "icao": "VIDP",
+  "truth": "sky dubai three zero six taxi to holding point runway two eight via delta seven echo two"
+ },
+ {
+  "key": "cov0213",
+  "style": "stt",
+  "kind": "hold",
+  "heard": "ryanair one one seven hold at dxbsw as published right turns one minute legs",
+  "ctx": "@APP 30L 30R\nJST735 jetstar 735 ARR APP descent 9700ft h122 30L\nRYR117 ryanair 117 ARR APP cruise 3000ft h011 30R\nUAL774 united 774 ARR APP cruise 6000ft h081 30R\nUPS975 ups 975 ARR APP cruise 7000ft h107 30R\nBAW719 speedbird 719 DEP GND pushback h119 30L\nBAW731 speedbird 731 DEP GND taxi h119 30L\nDLH975 lufthansa 975 DEP GND taxi h119 30L\nFDB523 sky dubai 523 DEP GND startup h300 30L\nFDB547 sky dubai 547 DEP GND taxi h065 30L\nQTR788 qatari 788 DEP GND parked h119 30L\nUAE175 emirates 175 DEP GND taxi h119 30R\nUAE197 emirates 197 DEP GND taxi h120 30R\nVOZ687 velocity 687 ARR TWR landing 500ft h300 30L",
+  "line": "RYR117 Hold at DXBSW, right turns, 1 min legs",
+  "icao": "OMDB",
+  "truth": "ryanair one one seven hold at dxbsw as published right turns one minute legs"
+ },
+ {
+  "key": "cov0217",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "ifly two six seven taxi to holding point runway two nine left via hotel three",
+  "ctx": "@GND 29L 29R 28 27\nDLH979 lufthansa 979 DEP GND hold_short h193 29L req:cross\nIGO267 ifly 267 DEP GND taxi h194 29L\nUAE734 emirates 734 ARR GND taxi h193 27\nAIC658 air india 658 ARR APP cruise 3000ft h065 27\nAIC688 air india 688 ARR APP cruise 9000ft h250 28\nBAW867 speedbird 867 ARR APP cruise 4000ft h125 27\nFDB306 sky dubai 306 DEP TWR hold_short h190 29L\nIGO182 ifly 182 ARR APP cruise 6000ft h264 27\nIGO200 ifly 200 ARR APP approach 10000ft h050 28\nIGO298 ifly 298 ARR APP approach 11000ft h164 27\nIGO335 ifly 335 ARR APP cruise 8000ft h005 27\nIGO383 ifly 383 ARR APP cruise 7000ft h188 29R\nQTR788 qatari 788 ARR APP cruise 5000ft h237 27\nUAE747 emirates 747 DEP DEP climb 6500ft h320 29L",
+  "line": "IGO267 Taxi RWY 29L via H3",
+  "icao": "VIDP",
+  "truth": "ifly two six seven taxi to holding point runway two nine left via hotel three"
+ },
+ {
+  "key": "cov0219",
+  "style": "stt",
+  "kind": "giveWay",
+  "heard": "sierra kilo whiskey seven thirty four give way to the united one zero nine then continue",
+  "ctx": "@GND 25L 25R\nAAL465 american 465 DEP GND taxi h106 25L\nCCA593 air china 593 DEP GND parked h332 25L req:pushback\nJST721 jetstar 721 DEP GND taxi h161 25L\nKLM220 klm 220 DEP GND taxi h234 25L\nQFA872 qantas 872 DEP GND parked h270 25L req:pushback\nSKW734 skw734 ARR GND taxi h072 25R\nSWA529 southwest 529 ARR GND taxi h071 25R\nTHY381 turkish 381 DEP GND parked h311 25L req:pushback\nUAL109 united 109 DEP GND parked h176 25L req:pushback\nUAL767 united 767 DEP GND parked h071 25L req:pushback\nUAL9 united 9 ARR GND taxi h342 25R\nVIR46 virgin 46 DEP GND parked h304 25L req:pushback\nAAL470 american 470 DEP TWR takeoff h251 25L\nSWA596 southwest 596 ARR APP approach 3000ft h264 25R",
+  "line": "SKW734 Give way to UAL109",
+  "icao": "KLAX",
+  "truth": "sierra kilo whiskey seven thirty four give way to the united one zero nine then continue"
+ },
+ {
+  "key": "cov0223",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "jetblue four thirteen taxi to holding point runway three one left via sierra bravo sierra charlie hold short of runway zero four left",
+  "ctx": "@GND 31L 31R\nDAL44 delta 44 ARR GND arrived h183 31R\nJBU413 jetblue 413 DEP GND taxi h140 31L\nAAL580 american 580 DEP EXT departed 13000ft h243 31L\nAAL623 american 623 ARR APP cruise 6000ft h333 31R\nAAL637 american 637 ARR APP cruise 10000ft h137 31R\nAFR874 air france 874 DEP TWR takeoff h287 31L\nAIC405 air india 405 ARR APP cruise 7000ft h238 31R\nDAL137 delta 137 DEP DEP climb 3900ft h329 31L\nDAL71 delta 71 ARR APP cruise 4000ft h213 31R\nJBU358 jetblue 358 ARR APP cruise 5000ft h345 31R\nJBU378 jetblue 378 ARR TWR rollout h314 31R\nJBU400 jetblue 400 DEP EXT departed 10300ft h190 31L\nSWR238 swiss 238 ARR APP cruise 3000ft h301 31R\nUAL683 united 683 ARR APP descent 9000ft h314 31R",
+  "line": "JBU413 Taxi RWY 31L via SB, SC, hold short 04L",
+  "icao": "KJFK",
+  "truth": "jetblue four thirteen taxi to holding point runway three one left via sierra bravo sierra charlie hold short of runway zero four left"
+ },
+ {
+  "key": "cov0229",
+  "style": "stt",
+  "kind": "contact",
+  "heard": "air france one six zero when vacated contact ground one two one point nine",
+  "ctx": "@TWR 27L 26R 27R 26L\nAFR160 air france 160 ARR TWR rollout h284 26L\nAFR248 air france 248 DEP EXT departed 9500ft h054 27L\nAFR354 air france 354 ARR APP cruise 3000ft h251 26L\nAFR76 air france 76 ARR GND taxi h069 26L\nDAL817 delta 817 DEP GND startup h353 27L\nDAL865 delta 865 ARR GND arrived h225 26L\nDAL880 delta 880 ARR GND taxi h263 26R\nDAL889 delta 889 ARR APP descent 5300ft h070 27R\nDLH742 lufthansa 742 DEP GND startup h353 26R\nEZY511 easy 511 ARR APP cruise 4000ft h016 26L\nEZY564 easy 564 ARR APP cruise 3000ft h017 26L\nEZY605 easy 605 DEP GND taxi h083 26R\nJAL645 japan air 645 DEP DEP climb 2500ft h154 27L\nKLM228 klm 228 DEP GND taxi h263 27L",
+  "line": "AFR160 Contact ground when vacated",
+  "icao": "LFPG",
+  "truth": "air france one six zero when vacated contact ground one two one point nine"
+ },
+ {
+  "key": "cov0230",
+  "style": "stt",
+  "kind": "cancelApproach",
+  "heard": "air france nine seventy eight cancel approach clearance turn right heading two eight five climb to seven thousand",
+  "ctx": "@APP 27\nAFR978 air france 978 ARR APP cruise 3000ft h292 27\nAIC414 air india 414 ARR APP cruise 7000ft h074 27\nANZ747 new zealand 747 ARR APP cruise 8000ft h056 27\nCCA589 air china 589 ARR APP cruise 5000ft h265 27\nJBU20 jetblue 20 ARR APP cruise 6000ft h111 27\nJBU222 jetblue 222 DEP DEP climb 5700ft h240 27\nJBU50 jetblue 50 ARR APP cruise 4000ft h200 27\nDAL500 delta 500 DEP GND parked h138 27 req:pushback\nDAL504 delta 504 ARR TWR landing 500ft h270 27\nHKE528 hong kong express 528 DEP TWR hold_short h171 27\nJBU321 jetblue 321 DEP GND taxi h123 27\nSCO498 scooter 498 ARR GND taxi h039 27\nSKW853 skw853 DEP GND pushback h211 27\nUPS974 ups 974 DEP GND hold_short h034 27 req:cross",
+  "line": "AFR978 Cancel approach, right heading 285, altitude 7000",
+  "icao": "KBOS",
+  "truth": "air france nine seventy eight cancel approach clearance turn right heading two eight five climb to seven thousand"
+ },
+ {
+  "key": "cov0231",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "speedbird five one runway two seven left taxi via november five echo hold short of runway zero nine right",
+  "ctx": "@GND 27L 27R\nANZ757 new zealand 757 DEP GND startup h089 27L\nBAW39 speedbird 39 DEP GND taxi h179 27L\nBAW444 speedbird 444 DEP GND taxi h089 27L\nBAW51 speedbird 51 DEP GND taxi h179 27L\nEIN601 shamrock 601 DEP GND parked h179 27L req:pushback\nJAL645 japan air 645 DEP GND parked h104 27L req:startup\nSKW935 skw935 DEP GND taxi h088 27L\nBAW102 speedbird 102 ARR APP cruise 7000ft h026 27R\nBAW159 speedbird 159 ARR APP cruise 3000ft h229 27R\nDLH135 lufthansa 135 ARR APP approach 10000ft h080 27R\nJST718 jetstar 718 ARR APP cruise 5000ft h086 27R\nKLM739 klm 739 ARR APP cruise 4000ft h095 27R\nVOZ690 velocity 690 DEP TWR takeoff h356 27L req:ready",
+  "line": "BAW51 Taxi RWY 27L via N5E, hold short 09R",
+  "icao": "EGLL",
+  "truth": "speedbird five one runway two seven left taxi via november five echo hold short of runway zero nine right"
+ },
+ {
+  "key": "cov0236",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "air china five eight one runway two nine left taxi via sierra five",
+  "ctx": "@GND 29L 27\nAIC460 air india 460 DEP GND taxi h194 29L\nAIC498 air india 498 DEP GND parked h193 29L req:pushback\nBAW881 speedbird 881 DEP GND parked h104 29L req:pushback\nCCA581 air china 581 DEP GND hold_short h193 29L req:cross\nDLH144 lufthansa 144 DEP GND parked h283 29L req:pushback\nIGO285 ifly 285 DEP GND taxi h194 29L\nIGO374 ifly 374 DEP GND taxi h103 29L\nJST733 jetstar 733 DEP GND parked h284 29L req:pushback\nBAW1 speedbird 1 DEP TWR hold_short h185 29L\nIGO19 ifly 19 ARR TWR landing 700ft h270 27\nIGO28 ifly 28 ARR APP cruise 4000ft h091 27\nIGO433 ifly 433 ARR APP cruise 7000ft h068 27\nIGO445 ifly 445 ARR APP cruise 3000ft h243 27\nSIA452 singapore 452 DEP TWR hold_short h133 29L req:ready",
+  "line": "CCA581 Taxi RWY 29L via S5",
+  "icao": "VIDP",
+  "truth": "air china five eight one runway two nine left taxi via sierra five"
+ },
+ {
+  "key": "cov0238",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "japan air six eight one taxi to holding point runway one six right hold short of runway two two",
+  "ctx": "@GND 16L 16R\nANA261 all nippon 261 DEP GND parked h068 16R\nBAW935 speedbird 935 DEP GND pushback h338 16R\nJAL456 japan air 456 DEP GND taxi h338 16R\nJAL681 japan air 681 DEP GND startup h338 16R\nSIA793 singapore 793 DEP GND startup h068 16R\nBAW24 speedbird 24 ARR APP approach 10000ft h278 16L\nCPA727 cathay 727 ARR APP cruise 6000ft h296 16L\nDAL864 delta 864 ARR APP descent 8600ft h351 16L\nJAL570 japan air 570 ARR APP cruise 3000ft h051 16L\nJAL690 japan air 690 ARR APP cruise 5000ft h301 16L",
+  "line": "JAL681 Taxi RWY 16R, hold short 22",
+  "icao": "RJTT",
+  "truth": "japan air six eight one taxi to holding point runway one six right hold short of runway two two"
+ },
+ {
+  "key": "cov0239",
+  "style": "stt",
+  "kind": "giveWay",
+  "heard": "emirates four six one give way to the qatari three three eight then continue",
+  "ctx": "@GND 30L 30R\nFDB531 sky dubai 531 DEP GND taxi h120 30L\nSIA463 singapore 463 DEP GND taxi h119 30L\nUAE253 emirates 253 DEP GND taxi h177 30L\nUAE461 emirates 461 DEP GND taxi h201 30L\nUAL774 united 774 ARR GND taxi h120 30R\nDLH987 lufthansa 987 DEP EXT departed 13000ft h278 30L\nFDB512 sky dubai 512 ARR APP approach 10000ft h107 30R\nFDB599 sky dubai 599 ARR APP cruise 4000ft h202 30R\nJST735 jetstar 735 ARR TWR landing 1600ft h298 30L\nQTR338 qatari 338 DEP TWR takeoff h226 30L\nSKW935 skw935 ARR APP cruise 6000ft h272 30R\nUAE151 emirates 151 ARR APP cruise 5000ft h327 30R\nUAE173 emirates 173 ARR APP cruise 7000ft h115 30R\nUAE175 emirates 175 DEP DEP climb 5100ft h178 30R",
+  "line": "UAE461 Give way to QTR338",
+  "icao": "OMDB",
+  "truth": "emirates four six one give way to the qatari three three eight then continue"
+ },
+ {
+  "key": "cov0244",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "easy five six nine runway zero eight right taxi via sierra six hold short of runway two six right",
+  "ctx": "@GND 09R 08L 09L 08R\nAFR285 air france 285 DEP GND taxi h271 09L\nBAW1 speedbird 1 DEP GND taxi h248 08R\nCCA581 air china 581 DEP GND taxi h263 08L\nEZY569 easy 569 DEP GND pushback h084 08R\nSIA452 singapore 452 DEP GND taxi h276 09R\nSKW921 skw921 DEP GND startup h353 08L\nAFR19 air france 19 ARR APP descent 9100ft h261 09R\nAFR28 air france 28 ARR APP cruise 5000ft h229 09L\nIGO445 ifly 445 ARR APP descent 5000ft h214 09L\nSWA856 southwest 856 ARR APP approach 9000ft h311 09R",
+  "line": "EZY569 Taxi RWY 08R via S6, hold short 26R",
+  "icao": "LFPG",
+  "truth": "easy five six nine runway zero eight right taxi via sierra six hold short of runway two six right"
+ },
+ {
+  "key": "cov0249",
+  "style": "stt",
+  "kind": "altitude",
+  "heard": "sierra kilo whiskey seven ninety two climb to one five thousand",
+  "ctx": "@APP 28L 28R\nAAL660 american 660 ARR APP cruise 7000ft h286 28R\nASA375 alaska 375 ARR APP cruise 5000ft h258 28R\nASA473 alaska 473 ARR APP descent 3100ft h107 28R\nSKW792 skw792 ARR APP approach 9000ft h109 28R\nSWA500 southwest 500 ARR APP cruise 6000ft h318 28R\nUAL59 united 59 DEP DEP climb 4400ft h162 28L\nASA378 alaska 378 ARR GND taxi h170 28R\nASA392 alaska 392 DEP GND taxi h104 28L\nCPA914 cathay 914 DEP GND parked h267 28L\nJST719 jetstar 719 ARR TWR approach 2900ft h289 28R req:with_you\nSCO489 scooter 489 DEP GND taxi h331 28L\nUAE285 emirates 285 DEP GND pushback h150 28L\nUAL50 united 50 DEP GND startup h206 28L\nUAL763 united 763 ARR GND taxi h285 28R",
+  "line": "SKW792 Altitude 15000",
+  "icao": "KSFO",
+  "truth": "sierra kilo whiskey seven ninety two climb to one five thousand"
+ },
+ {
+  "key": "cov0250",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "air china five eight one taxi to holding point runway two seven left via november seven november eight",
+  "ctx": "@GND 27L 27R\nBAW104 speedbird 104 DEP GND parked h269 27L req:pushback\nCCA581 air china 581 DEP GND taxi h179 27L\nIGO445 ifly 445 ARR GND arrived h128 27R\nTHY377 turkish 377 DEP GND taxi h157 27L\nAFR712 air france 712 ARR APP cruise 3000ft h113 27R\nANZ736 new zealand 736 ARR APP cruise 8000ft h267 27R\nBAW157 speedbird 157 ARR APP cruise 7000ft h247 27R\nEIN578 shamrock 578 ARR APP descent 4800ft h266 27R\nFDX970 fedex 970 ARR APP cruise 7000ft h110 27R\nQFA681 qantas 681 DEP TWR hold_short h164 27L\nSIA972 singapore 972 ARR APP approach 9000ft h054 27R\nSKW927 skw927 ARR TWR landing 1700ft h269 27R\nTHY372 turkish 372 ARR APP descent 5900ft h245 27R\nVIR511 virgin 511 DEP TWR hold_short h179 27L",
+  "line": "CCA581 Taxi RWY 27L via N7, N8",
+  "icao": "EGLL",
+  "truth": "air china five eight one taxi to holding point runway two seven left via november seven november eight"
+ },
+ {
+  "key": "cov0260",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "qantas six eight one taxi to stand bravo one via lima nine mike yankee mike yankee one",
+  "ctx": "@GND 20L 21 20R 20C\nBAW793 speedbird 793 DEP GND taxi h016 20R\nCES577 china eastern 577 DEP GND startup h113 20C\nCES935 china eastern 935 DEP GND taxi h023 20C\nJBU878 jetblue 878 DEP GND parked h184 20C\nQFA681 qantas 681 DEP GND taxi h113 20C\nSCO456 scooter 456 DEP GND taxi h023 20R\nSIA194 singapore 194 DEP GND pushback h204 20C\nCCA601 air china 601 ARR APP approach 11000ft h017 21\nJAL864 japan air 864 ARR APP cruise 7000ft h017 21\nQFA690 qantas 690 ARR APP cruise 5000ft h142 20L\nSCO463 scooter 463 ARR APP descent 6800ft h327 21\nSCO570 scooter 570 ARR APP cruise 3000ft h111 20L",
+  "line": "QFA681 Taxi stand B1 via L9, MY, MY1",
+  "icao": "WSSS",
+  "truth": "qantas six eight one taxi to stand bravo one via lima nine mike yankee mike yankee one"
+ },
+ {
+  "key": "cov0265",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "speedbird nine three five runway one six right taxi hold short of runway zero five",
+  "ctx": "@GND 16L 16R\nANA261 all nippon 261 DEP GND pushback h338 16R\nANA346 all nippon 346 DEP GND pushback h248 16R\nBAW935 speedbird 935 DEP GND taxi h036 16R\nJAL456 japan air 456 DEP GND taxi h338 16R\nJAL681 japan air 681 DEP GND taxi h293 16R\nSIA793 singapore 793 DEP GND taxi h338 16R\nBAW24 speedbird 24 ARR APP approach 10000ft h312 16L\nCPA727 cathay 727 ARR APP cruise 5000ft h120 16L\nDAL864 delta 864 ARR APP cruise 5000ft h351 16L\nEIN72 shamrock 72 ARR APP approach 9000ft h233 16L req:with_you\nJAL570 japan air 570 ARR TWR approach 2700ft h157 16L req:with_you\nJAL690 japan air 690 ARR APP cruise 4000ft h095 16L",
+  "line": "BAW935 Taxi RWY 16R, hold short 05",
+  "icao": "RJTT",
+  "truth": "speedbird nine three five runway one six right taxi hold short of runway zero five"
+ },
+ {
+  "key": "cov0275",
+  "style": "stt",
+  "kind": "cancelTakeoff",
+  "heard": "united one ninety nine hold position cancel takeoff i say again cancel takeoff",
+  "ctx": "@TWR 28L 28R\nSWA529 southwest 529 ARR TWR landing 600ft h286 28R\nUAL199 united 199 DEP TWR takeoff h016 28L\nAAL660 american 660 DEP DEP climb 4200ft h037 28L\nAAL673 american 673 DEP GND startup h015 28L\nDAL596 delta 596 ARR APP cruise 3000ft h307 28R\nJBU872 jetblue 872 DEP GND hold_short h102 28L\nSKW734 skw734 ARR GND taxi h282 28R\nSWA543 southwest 543 DEP GND taxi h105 28L\nSWA556 southwest 556 ARR APP cruise 7000ft h106 28R\nUAL152 united 152 ARR APP cruise 6000ft h047 28R\nUAL286 united 286 ARR APP cruise 4000ft h043 28R\nUAL767 united 767 ARR APP cruise 5000ft h258 28R",
+  "line": "UAL199 Cancel takeoff",
+  "icao": "KSFO",
+  "truth": "united one ninety nine hold position cancel takeoff i say again cancel takeoff"
+ },
+ {
+  "key": "cov0284",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "lufthansa seven four nine taxi to stand india four seven via whiskey four whiskey five whiskey six",
+  "ctx": "@GND 27L 26R 27R 26L\nAFR108 air france 108 DEP GND taxi h162 26R\nDAL895 delta 895 DEP GND taxi h083 26R\nDLH749 lufthansa 749 DEP GND taxi h162 26R\nTRA618 transavia 618 DEP GND parked h125 27L\nUAE271 emirates 271 DEP GND taxi h342 27L\nAFR376 air france 376 DEP DEP climb 3800ft h313 27L\nAFR378 air france 378 ARR TWR landing 600ft h262 26L\nAFR400 air france 400 DEP EXT departed 9800ft h177 27L\nAFR44 air france 44 ARR TWR landing 1800ft h263 27R\nANA617 all nippon 617 ARR APP cruise 4000ft h290 27R\nEZY548 easy 548 ARR APP cruise 5000ft h116 26L\nEZY580 easy 580 DEP TWR takeoff h208 26R\nKLM762 klm 762 ARR APP cruise 3000ft h314 26L\nSWR238 swiss 238 ARR APP cruise 3000ft h284 27R",
+  "line": "DLH749 Taxi stand I47 via W4, W5, W6",
+  "icao": "LFPG",
+  "truth": "lufthansa seven four nine taxi to stand india four seven via whiskey four whiskey five whiskey six"
+ },
+ {
+  "key": "cov0287",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "ifly two eight five taxi to stand one five five via foxtrot foxtrot two hold short of runway two nine right",
+  "ctx": "@GND 29L 27\nAIC460 air india 460 DEP GND startup h013 29L\nBAW1 speedbird 1 DEP GND startup h239 29L\nBAW881 speedbird 881 DEP GND parked h104 29L req:pushback\nCCA581 air china 581 DEP GND taxi h193 29L\nIGO285 ifly 285 DEP GND taxi h163 29L\nIGO374 ifly 374 DEP GND pushback h059 29L\nSIA452 singapore 452 DEP GND taxi h284 29L\nIGO19 ifly 19 ARR APP descent 6400ft h089 27\nIGO28 ifly 28 ARR APP cruise 5000ft h091 27\nIGO445 ifly 445 ARR APP descent 3100ft h127 27",
+  "line": "IGO285 Taxi stand 155 via F, F2, hold short 29R",
+  "icao": "VIDP",
+  "truth": "ifly two eight five taxi to stand one five five via foxtrot foxtrot two hold short of runway two nine right"
+ },
+ {
+  "key": "cov0295",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "ifly two six seven runway two nine left taxi via golf hotel two hotel three hold short of runway one one left",
+  "ctx": "@GND 29L 29R 28 27\nAIC529 air india 529 ARR GND taxi h103 27\nDLH979 lufthansa 979 DEP GND startup h099 29L\nFDB306 sky dubai 306 DEP GND taxi h140 29L\nIGO267 ifly 267 DEP GND taxi h180 29L\nUAE747 emirates 747 DEP GND taxi h194 29L\nAIC658 air india 658 ARR APP cruise 3000ft h300 27\nAIC688 air india 688 ARR APP cruise 9000ft h076 28\nBAW867 speedbird 867 ARR APP cruise 4000ft h243 27\nDLH983 lufthansa 983 DEP DEP cruise 8000ft h124 29L req:higher\nIGO182 ifly 182 ARR APP descent 6600ft h245 27\nIGO335 ifly 335 ARR APP descent 9500ft h133 27\nIGO383 ifly 383 ARR APP climb 6100ft h159 29R\nQTR788 qatari 788 ARR APP cruise 5000ft h238 27\nUAE734 emirates 734 ARR TWR landing 1100ft h269 27",
+  "line": "IGO267 Taxi RWY 29L via G, H2, H3, hold short 11L",
+  "icao": "VIDP",
+  "truth": "ifly two six seven runway two nine left taxi via golf hotel two hotel three hold short of runway one one left"
+ },
+ {
+  "key": "cov0297",
+  "style": "stt",
+  "kind": "heading",
+  "heard": "shamrock six zero five turn right heading one four zero",
+  "ctx": "@APP 27L 27R\nAFR681 air france 681 ARR APP approach 11000ft h082 27R\nAFR687 air france 687 ARR APP cruise 5000ft h275 27R\nANA627 all nippon 627 DEP DEP climb 3300ft h354 27L\nASA897 alaska 897 ARR APP cruise 3000ft h276 27R\nBAW378 speedbird 378 ARR APP cruise 6000ft h266 27R\nBAW395 speedbird 395 ARR APP cruise 4000ft h250 27R\nEIN605 shamrock 605 ARR APP approach 10000ft h082 27R\nUAE792 emirates 792 DEP DEP climb 8600ft h191 27L\nANZ742 new zealand 742 DEP GND taxi h089 27L\nRYR109 ryanair 109 ARR GND arrived h297 27R\nUAL902 united 902 ARR TWR landing 1800ft h268 27R\nVIR35 virgin 35 ARR GND taxi h182 27R\nVIR557 virgin 557 DEP TWR hold_short h179 27L",
+  "line": "EIN605 Turn right heading 140",
+  "icao": "EGLL",
+  "truth": "shamrock six zero five turn right heading one four zero"
+ },
+ {
+  "key": "cov0301",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "jetstar seven thirteen runway two seven taxi hold short of runway three two",
+  "ctx": "@GND 27\nAAL585 american 585 DEP GND taxi h153 27\nAFR971 air france 971 DEP GND pushback h165 27\nAFR978 air france 978 ARR GND taxi h284 27\nJBU50 jetblue 50 ARR GND taxi h043 27\nJST713 jetstar 713 DEP GND taxi h077 27\nAAL693 american 693 ARR APP descent 7800ft h093 27\nAIC414 air india 414 ARR APP descent 4800ft h243 27\nANZ747 new zealand 747 ARR APP cruise 5000ft h090 27\nCCA589 air china 589 ARR TWR landing 2500ft h273 27 req:with_you\nDAL413 delta 413 ARR APP cruise 8000ft h199 27\nDAL500 delta 500 DEP TWR climb 1400ft h208 27\nJBU20 jetblue 20 ARR APP cruise 3000ft h273 27\nJBU238 jetblue 238 ARR APP cruise 6000ft h106 27\nSKW853 skw853 DEP DEP climb 7000ft h285 27",
+  "line": "JST713 Taxi RWY 27, hold short 32",
+  "icao": "KBOS",
+  "truth": "jetstar seven thirteen runway two seven taxi hold short of runway three two"
+ },
+ {
+  "key": "cov0302",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "air france three five two taxi to stand hotel zero five via bravo delta one bravo delta two bravo delta three",
+  "ctx": "@GND 26R 27L\nAFR352 air france 352 DEP GND taxi h116 26R\nAFR453 air france 453 DEP GND taxi h084 26R\nKLM228 klm 228 DEP GND parked h354 26R req:startup\nKLM782 klm 782 DEP GND parked h192 26R req:pushback\nTRA639 transavia 639 DEP GND parked h263 26R req:pushback\nTRA662 transavia 662 DEP GND taxi h083 26R\nVOZ698 velocity 698 DEP GND taxi h161 26R\nAFR191 air france 191 ARR APP cruise 4000ft h222 27L\nAFR362 air france 362 ARR APP cruise 3000ft h237 27L\nAFR388 air france 388 ARR APP cruise 5000ft h345 27L\nAFR56 air france 56 ARR APP cruise 3000ft h080 27L\nEZY578 easy 578 DEP DEP climb 4300ft h269 26R\nRYR126 ryanair 126 ARR APP approach 9000ft h104 27L\nUAE283 emirates 283 ARR APP cruise 6000ft h230 27L",
+  "line": "AFR352 Taxi stand H05 via BD1, BD2, BD3",
+  "icao": "LFPG",
+  "truth": "air france three five two taxi to stand hotel zero five via bravo delta one bravo delta two bravo delta three"
+ },
+ {
+  "key": "cov0309",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "jetblue two eighty five runway three two taxi via yankee zulu",
+  "ctx": "@GND 33L 32\nAFR970 air france 970 DEP GND taxi h229 33L\nBAW1 speedbird 1 DEP GND taxi h140 32\nCCA581 air china 581 DEP GND taxi h149 33L\nDAL460 delta 460 DEP GND hold_short h149 33L req:cross\nJBU285 jetblue 285 DEP GND hold_short h139 32 req:cross\nJBU322 jetblue 322 DEP GND pushback h288 33L\nJBU892 jetblue 892 DEP GND taxi h129 33L\nJST733 jetstar 733 DEP GND taxi h242 33L\nSIA452 singapore 452 DEP GND taxi h143 33L\nIGO445 ifly 445 ARR APP cruise 3000ft h138 32\nJBU174 jetblue 174 ARR APP climb 5900ft h037 32\nJBU19 jetblue 19 ARR TWR landing 2100ft h319 32\nJBU28 jetblue 28 ARR APP cruise 4000ft h150 33L\nSKW857 skw857 ARR APP cruise 7000ft h088 32",
+  "line": "JBU285 Taxi RWY 32 via Y, Z",
+  "icao": "KBOS",
+  "truth": "jetblue two eighty five runway three two taxi via yankee zulu"
+ },
+ {
+  "key": "cov0318",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "sky dubai two ninety five runway two seven taxi via bravo charlie hold short of runway one four",
+  "ctx": "@GND 27\nAAL791 american 791 DEP GND taxi h203 27\nDAL527 delta 527 DEP GND taxi h091 27\nDLH153 lufthansa 153 DEP GND hold_short h094 27\nFDB295 sky dubai 295 DEP GND taxi h129 27\nJBU248 jetblue 248 DEP GND taxi h123 27\nAFR160 air france 160 ARR APP descent 5300ft h133 27\nBAW880 speedbird 880 ARR APP cruise 4000ft h089 27\nDAL354 delta 354 ARR APP approach 9000ft h117 27\nDAL391 delta 391 ARR APP descent 8900ft h055 27\nDAL468 delta 468 ARR APP descent 9900ft h028 27\nDAL564 delta 564 ARR APP descent 10300ft h143 27\nJBU112 jetblue 112 ARR APP approach 11000ft h079 27\nJBU76 jetblue 76 ARR APP cruise 7000ft h093 27\nSKW865 skw865 ARR APP cruise 3000ft h243 27",
+  "line": "FDB295 Taxi RWY 27 via B, C, hold short 14",
+  "icao": "KBOS",
+  "truth": "sky dubai two ninety five runway two seven taxi via bravo charlie hold short of runway one four"
+ },
+ {
+  "key": "cov0319",
+  "style": "stt",
+  "kind": "altitude",
+  "heard": "alaska eight nine seven climb to flight level nine zero",
+  "ctx": "@APP 27R 27L\nASA897 alaska 897 ARR APP cruise 7000ft h305 27L\nBAW48 speedbird 48 DEP DEP climb 7300ft h059 27L\nEIN613 shamrock 613 ARR APP cruise 3000ft h213 27L\nETD346 etihad 346 ARR APP cruise 3000ft h068 27L\nFDB312 sky dubai 312 ARR APP cruise 6000ft h296 27L\nSIA952 singapore 952 ARR APP cruise 5000ft h077 27L\nAFR164 air france 164 DEP GND taxi h089 27R\nBAW247 speedbird 247 DEP GND taxi h324 27R\nBAW407 speedbird 407 DEP GND taxi h033 27R\nDLH142 lufthansa 142 DEP TWR takeoff h269 27R\nDLH658 lufthansa 658 DEP GND taxi h047 27R\nEZY95 easy 95 ARR GND arrived h269 27L\nUAE287 emirates 287 DEP GND taxi h056 27R\nVIR534 virgin 534 DEP GND taxi h071 27R",
+  "line": "ASA897 Altitude 9000",
+  "icao": "EGLL",
+  "truth": "alaska eight nine seven climb to flight level nine zero"
+ },
+ {
+  "key": "cov0320",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "velocity six eight seven taxi to stand echo nine romeo",
+  "ctx": "@GND 30L 30R\nBAW731 speedbird 731 DEP GND taxi h119 30L\nDLH987 lufthansa 987 DEP GND startup h300 30L req:taxi\nFDB523 sky dubai 523 DEP GND taxi h120 30L\nFDB547 sky dubai 547 DEP GND taxi h075 30L\nQTR788 qatari 788 DEP GND taxi h120 30L\nVOZ687 velocity 687 ARR GND taxi h234 30L\nBAW719 speedbird 719 DEP DEP climb 3200ft h084 30L\nDLH975 lufthansa 975 DEP TWR hold_short h206 30L\nJST735 jetstar 735 ARR APP cruise 4000ft h217 30L\nRYR117 ryanair 117 ARR TWR landing 200ft h300 30R\nUAE175 emirates 175 DEP TWR hold_short h207 30R\nUAE197 emirates 197 DEP TWR hold_short h031 30R\nUAL774 united 774 ARR APP cruise 5000ft h319 30R\nUPS975 ups 975 ARR APP cruise 3000ft h298 30R",
+  "line": "VOZ687 Taxi stand E9R",
+  "icao": "OMDB",
+  "truth": "velocity six eight seven taxi to stand echo nine romeo"
+ },
+ {
+  "key": "cov0321",
+  "style": "stt",
+  "kind": "hold",
+  "heard": "ryanair nine three five hold at cdgno as published right turns one minute legs",
+  "ctx": "@APP 26R 27L\nAFR412 air france 412 ARR APP cruise 7000ft h063 27L\nAFR475 air france 475 ARR APP approach 9000ft h107 27L\nKLM763 klm 763 DEP DEP climb 2000ft h006 26R req:with_you\nRYR935 ryanair 935 DEP DEP climb 8200ft h357 26R\nAFR177 air france 177 DEP TWR hold_short h173 26R\nAFR467 air france 467 ARR TWR landing 1100ft h262 27L\nAFR50 air france 50 DEP GND parked h162 26R\nAIC398 air india 398 DEP GND parked h173 26R req:startup\nAIC402 air india 402 DEP GND taxi h175 26R\nDAL864 delta 864 ARR GND arrived h176 27L\nEZY477 easy 477 DEP GND taxi h083 26R\nJBU893 jetblue 893 DEP GND taxi h169 26R\nTRA684 transavia 684 DEP GND taxi h083 26R\nTRA690 transavia 690 ARR GND taxi h120 27L",
+  "line": "RYR935 Hold at CDGNO, right turns, 1 min legs",
+  "icao": "LFPG",
+  "truth": "ryanair nine three five hold at cdgno as published right turns one minute legs"
+ },
+ {
+  "key": "cov0335",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "japan air three eight nine taxi to holding point runway zero four via papa three papa four papa seven",
+  "ctx": "@GND 04 05\nANA285 all nippon 285 DEP GND taxi h158 05\nANA322 all nippon 322 DEP GND taxi h223 04\nBAW1 speedbird 1 DEP GND taxi h191 05\nCCA995 air china 995 DEP GND taxi h235 04\nIGO445 ifly 445 ARR GND taxi h230 05\nJAL389 japan air 389 DEP GND pushback h068 04\nJST733 jetstar 733 DEP GND taxi h338 04\nANA19 all nippon 19 ARR TWR landing 1600ft h042 04\nANA28 all nippon 28 ARR APP cruise 3000ft h210 05\nASA910 alaska 910 DEP DEP climb 7500ft h319 04\nCCA581 air china 581 DEP EXT departed 12600ft h012 04\nEIN55 shamrock 55 ARR APP cruise 5000ft h186 05\nJAL663 japan air 663 ARR APP cruise 4000ft h240 05\nSWA856 southwest 856 DEP DEP climb 2100ft h109 04 req:with_you",
+  "line": "JAL389 Taxi RWY 04 via P3, P4, P7",
+  "icao": "RJTT",
+  "truth": "japan air three eight nine taxi to holding point runway zero four via papa three papa four papa seven"
+ },
+ {
+  "key": "cov0340",
+  "style": "stt",
+  "kind": "giveWay",
+  "heard": "delta two twenty two give way to the hong kong express five twenty eight then continue",
+  "ctx": "@GND 31L 31R\nDAL222 delta 222 DEP GND taxi h093 31R\nDAL50 delta 50 DEP GND taxi h134 31L\nDAL61 delta 61 DEP GND taxi h193 31L\nFDB314 sky dubai 314 DEP GND taxi h256 31L\nJAL649 japan air 649 DEP GND taxi h023 31L\nJBU422 jetblue 422 DEP GND startup h286 31L\nAAL469 american 469 ARR APP cruise 6000ft h039 31R\nAAL504 american 504 ARR APP descent 3600ft h252 31L\nDAL83 delta 83 ARR APP cruise 7000ft h338 31R\nHKE527 hong kong express 527 DEP DEP climb 7200ft h014 31L\nHKE528 hong kong express 528 DEP TWR takeoff h314 31R\nSCO498 scooter 498 ARR APP approach 3000ft h316 31R\nSKW978 skw978 ARR APP cruise 5000ft h359 31R\nVIR771 virgin 771 ARR APP descent 6700ft h136 31R",
+  "line": "DAL222 Give way to HKE528",
+  "icao": "KJFK",
+  "truth": "delta two twenty two give way to the hong kong express five twenty eight then continue"
+ },
+ {
+  "key": "cov0342",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "jetblue eight eighty one runway two eight left taxi via foxtrot two golf hotel",
+  "ctx": "@GND 28L 28R\nAAL804 american 804 DEP GND taxi h294 28L\nJBU881 jetblue 881 DEP GND taxi h105 28L\nSKW770 skw770 DEP GND parked h150 28L req:startup\nSWA865 southwest 865 DEP GND taxi h017 28L\nUAL239 united 239 DEP GND parked h328 28L req:pushback\nUAL312 united 312 DEP GND parked h035 28L\nUAL92 united 92 DEP GND pushback h248 28L\nAAL703 american 703 ARR APP cruise 3000ft h118 28R\nANA835 all nippon 835 ARR APP cruise 5000ft h117 28R\nASA394 alaska 394 ARR APP descent 9900ft h095 28R\nDAL631 delta 631 DEP TWR takeoff 200ft h285 28L\nDLH154 lufthansa 154 ARR APP cruise 7000ft h133 28R\nFDX965 fedex 965 ARR APP cruise 4000ft h258 28R\nUAE287 emirates 287 ARR APP cruise 6000ft h282 28R",
+  "line": "JBU881 Taxi RWY 28L via F2, G, H",
+  "icao": "KSFO",
+  "truth": "jetblue eight eighty one runway two eight left taxi via foxtrot two golf hotel"
+ },
+ {
+  "key": "cov0344",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "united two sixty seven taxi to stand romeo one one two via lima two mike",
+  "ctx": "@GND 01R 01L\nAAL806 american 806 DEP GND startup h304 01L\nANA852 all nippon 852 DEP GND taxi h205 01L\nASA358 alaska 358 DEP GND taxi h105 01R\nCES562 china eastern 562 DEP GND hold_short h105 01L\nUAL161 united 161 DEP GND taxi h167 01L\nUAL267 united 267 DEP GND taxi h162 01L\nUAL301 united 301 DEP GND taxi h163 01R\nUAL67 united 67 DEP GND pushback h106 01L\nAIC400 air india 400 ARR APP cruise 3000ft h182 01R\nCES576 china eastern 576 ARR APP cruise 5000ft h352 01R\nJAL648 japan air 648 DEP DEP climb 2100ft h100 01L\nRYR106 ryanair 106 ARR APP approach 9000ft h199 01R\nUAL95 united 95 ARR APP cruise 4000ft h021 01L\nUPS996 ups 996 ARR TWR landing 100ft h015 01R",
+  "line": "UAL267 Taxi stand R112 via L2, M",
+  "icao": "KSFO",
+  "truth": "united two sixty seven taxi to stand romeo one one two via lima two mike"
+ },
+ {
+  "key": "cov0351",
+  "style": "stt",
+  "kind": "hold",
+  "heard": "united one ninety three hold at sfosw as published right turns one minute legs",
+  "ctx": "@APP 28R 28L\nAAL690 american 690 ARR APP descent 10500ft h109 28R\nASA901 alaska 901 ARR APP cruise 7000ft h202 28R\nDAL575 delta 575 ARR APP cruise 8000ft h046 28R\nJAL864 japan air 864 ARR APP cruise 4000ft h098 28R\nSWA570 southwest 570 ARR APP descent 5800ft h093 28R\nUAL193 united 193 ARR APP descent 8800ft h070 28R\nAAL681 american 681 DEP GND taxi h105 28L\nASA456 alaska 456 DEP GND hold_short h105 28L req:cross\nEIN79 shamrock 79 DEP GND startup h105 28L\nSIA935 singapore 935 DEP GND taxi h239 28L\nSKW793 skw793 DEP GND taxi h098 28L",
+  "line": "UAL193 Hold at SFOSW, right turns, 1 min legs",
+  "icao": "KSFO",
+  "truth": "united one ninety three hold at sfosw as published right turns one minute legs"
+ },
+ {
+  "key": "cov0355",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "cathay six four two taxi to holding point runway two one via alpha eight alpha nine alpha one zero",
+  "ctx": "@GND 21 20L\nCPA642 cathay 642 DEP GND taxi h037 21\nIGO983 ifly 983 DEP GND parked h202 21 req:pushback\nSCO428 scooter 428 DEP GND taxi h047 21\nSCO498 scooter 498 ARR GND taxi h022 20L\nSCO504 scooter 504 ARR GND taxi h203 20L\nSCO509 scooter 509 DEP GND parked h083 21 req:pushback\nSIA104 singapore 104 DEP GND pushback h112 21\nUAE746 emirates 746 DEP GND parked h021 21 req:pushback\nANZ737 new zealand 737 ARR APP cruise 3000ft h138 20L\nHKE527 hong kong express 527 DEP DEP climb 2100ft h307 21 req:with_you\nHKE528 hong kong express 528 DEP TWR hold_short h047 21\nIGO978 ifly 978 ARR APP cruise 4000ft h230 20L\nSCO516 scooter 516 ARR APP cruise 5000ft h072 20L\nSIA61 singapore 61 DEP EXT departed 11200ft h320 21",
+  "line": "CPA642 Taxi RWY 21 via A8, A9, A10",
+  "icao": "WSSS",
+  "truth": "cathay six four two taxi to holding point runway two one via alpha eight alpha nine alpha one zero"
+ },
+ {
+  "key": "cov0360",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "emirates two eight three taxi to holding point runway two nine left via tango four zulu zulu two hold short of runway one one left",
+  "ctx": "@GND 29L 28\nAIC453 air india 453 DEP GND taxi h104 29L\nAIC578 air india 578 DEP GND taxi h104 29L\nAIC662 air india 662 DEP GND taxi h104 29L\nSIA926 singapore 926 DEP GND pushback h144 29L\nUAE283 emirates 283 DEP GND startup h283 29L\nVOZ698 velocity 698 DEP GND taxi h123 29L\nIGO191 ifly 191 ARR APP descent 7000ft h132 28\nIGO362 ifly 362 ARR APP cruise 3000ft h121 28\nIGO388 ifly 388 ARR APP cruise 6000ft h276 28\nIGO56 ifly 56 ARR APP cruise 4000ft h083 28\nUAL775 united 775 ARR APP cruise 8000ft h284 28",
+  "line": "UAE283 Taxi RWY 29L via T4, Z, Z2, hold short 11L",
+  "icao": "VIDP",
+  "truth": "emirates two eight three taxi to holding point runway two nine left via tango four zulu zulu two hold short of runway one one left"
+ },
+ {
+  "key": "cov0366",
+  "style": "stt",
+  "kind": "radarContact",
+  "heard": "emirates nine five dubai intl approach radar contact qnh one zero one nine expect ils approach runway three zero right",
+  "ctx": "@APP 30L 30R\nAIC400 air india 400 ARR APP approach 10000ft h169 30L req:with_you\nUAE95 emirates 95 ARR APP approach 11000ft h313 30R\nUPS996 ups 996 ARR APP approach 9000ft h093 30R req:with_you\nJAL648 japan air 648 DEP GND parked h189 30R\nUAE161 emirates 161 DEP GND parked h208 30R\nUAE301 emirates 301 DEP GND parked h029 30L\nUAE358 emirates 358 DEP GND parked h210 30L",
+  "line": "UAE95 Radar contact, expect 30R",
+  "icao": "OMDB",
+  "truth": "emirates nine five dubai intl approach radar contact qnh one zero one nine expect ils approach runway three zero right"
+ },
+ {
+  "key": "cov0368",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "american five fifteen taxi to holding point runway three one left via tango bravo tango tango uniform",
+  "ctx": "@GND 22R 22L\nAAL515 american 515 DEP GND pushback h080 22R\nDAL175 delta 175 DEP GND taxi h074 22L\nDAL197 delta 197 DEP GND hold_short h134 22L req:cross\nDAL86 delta 86 DEP GND startup h273 22R\nETD368 etihad 368 DEP GND taxi h056 22R\nHKE530 hong kong express 530 DEP GND taxi h349 22R\nJBU436 jetblue 436 DEP GND hold_short h117 22L req:cross\nSKW975 skw975 DEP GND taxi h043 22R\nAAL547 american 547 DEP TWR hold_short h131 22R\nQFA658 qantas 658 ARR APP descent 6000ft h022 22R\nQTR317 qatari 317 ARR APP cruise 6000ft h225 22L\nRYR117 ryanair 117 ARR APP cruise 3000ft h103 22L\nUPS975 ups 975 ARR APP cruise 4000ft h026 22L\nVOZ687 velocity 687 ARR TWR rollout h223 22R",
+  "line": "AAL515 Taxi RWY 31L via TB, TT, U",
+  "icao": "KJFK",
+  "truth": "american five fifteen taxi to holding point runway three one left via tango bravo tango tango uniform"
+ },
+ {
+  "key": "cov0383",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "singapore nine seven five taxi to holding point runway two seven left via november two echo november two whiskey november three",
+  "ctx": "@GND 27L 27R\nBAW175 speedbird 175 DEP GND taxi h023 27L\nBAW197 speedbird 197 DEP GND taxi h089 27L\nKLM719 klm 719 DEP GND parked h269 27L\nSIA551 singapore 551 DEP GND parked h179 27L req:pushback\nSIA975 singapore 975 DEP GND taxi h067 27L\nVIR547 virgin 547 DEP GND taxi h259 27L\nAAL825 american 825 ARR APP descent 5300ft h016 27R\nAAL829 american 829 ARR APP cruise 6000ft h083 27R\nBAW6 speedbird 6 ARR APP cruise 7000ft h092 27R\nVIR731 virgin 731 ARR APP cruise 7000ft h171 27R\nVOZ687 velocity 687 ARR APP descent 3500ft h198 27R",
+  "line": "SIA975 Taxi RWY 27L via N2E, N2W, N3",
+  "icao": "EGLL",
+  "truth": "singapore nine seven five taxi to holding point runway two seven left via november two echo november two whiskey november three"
+ },
+ {
+  "key": "cov0386",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "united two forty eight runway zero one left taxi via six six alpha",
+  "ctx": "@GND 28L 28R\nDLH142 lufthansa 142 DEP GND taxi h014 28L\nDLH153 lufthansa 153 DEP GND taxi h303 28L\nFDB295 sky dubai 295 DEP GND startup h285 28L req:taxi\nSKW761 skw761 DEP GND taxi h116 28L\nSWA527 southwest 527 DEP GND taxi h105 28L\nUAL248 united 248 DEP GND taxi h280 28L\nUAL284 united 284 DEP GND pushback h305 28L\nASA468 alaska 468 ARR APP descent 9300ft h300 28R\nJAL865 japan air 865 ARR APP cruise 3000ft h103 28R\nJAL866 japan air 866 ARR APP approach 9000ft h133 28R\nJAL880 japan air 880 ARR APP cruise 4000ft h098 28R\nUAL76 united 76 ARR APP cruise 5000ft h101 28R\nUAL97 united 97 ARR APP cruise 6000ft h300 28R",
+  "line": "UAL248 Taxi RWY 01L via 6, 6A",
+  "icao": "KSFO",
+  "truth": "united two forty eight runway zero one left taxi via six six alpha"
+ },
+ {
+  "key": "cov0388",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "all nippon three five eight taxi to holding point runway two three via bravo four bravo five bravo six",
+  "ctx": "@GND 23 22\nANA161 all nippon 161 DEP GND taxi h158 23\nANA301 all nippon 301 DEP GND taxi h158 23\nANA358 all nippon 358 DEP GND taxi h158 23\nCPA517 cathay 517 DEP GND parked h248 23\nJAL614 japan air 614 DEP GND pushback h170 23\nJAL648 japan air 648 DEP GND taxi h158 23\nJAL686 japan air 686 DEP GND parked h157 23 req:pushback\nUAL783 united 783 DEP GND startup h158 23\nVOZ707 velocity 707 DEP GND parked h194 23 req:pushback\nAIC400 air india 400 ARR APP cruise 4000ft h171 22\nANA95 all nippon 95 ARR APP cruise 5000ft h010 22\nJBU562 jetblue 562 ARR APP cruise 6000ft h216 22\nUPS996 ups 996 ARR APP descent 4100ft h058 22",
+  "line": "ANA358 Taxi RWY 23 via B4, B5, B6",
+  "icao": "RJTT",
+  "truth": "all nippon three five eight taxi to holding point runway two three via bravo four bravo five bravo six"
+ },
+ {
+  "key": "cov0391",
+  "style": "stt",
+  "kind": "hold",
+  "heard": "hong kong express five seven zero hold at hkgwe as published right turns one minute legs",
+  "ctx": "@APP 25R 25C\nBAW864 speedbird 864 ARR APP cruise 7000ft h053 25C\nCES690 china eastern 690 ARR APP cruise 7000ft h091 25C\nHKE570 hong kong express 570 ARR APP descent 4000ft h074 25C\nCES675 china eastern 675 DEP GND pushback h119 25R\nCES681 china eastern 681 DEP GND pushback h164 25R\nEIN79 shamrock 79 DEP GND parked h254 25R req:startup\nHKE456 hong kong express 456 DEP GND startup h300 25R\nJAL935 japan air 935 DEP GND pushback h254 25R\nUAE793 emirates 793 DEP GND startup h161 25R",
+  "line": "HKE570 Hold at HKGWE, right turns, 1 min legs",
+  "icao": "VHHH",
+  "truth": "hong kong express five seven zero hold at hkgwe as published right turns one minute legs"
+ },
+ {
+  "key": "cov0393",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "alaska nine zero six taxi to holding point runway two seven left via november four echo november four whiskey",
+  "ctx": "@TWR 27R 27L\nASA906 alaska 906 DEP TWR hold_short h179 27L\nBAW152 speedbird 152 ARR APP cruise 8000ft h276 27R\nBAW20 speedbird 20 DEP DEP climb 12500ft h173 27L\nBAW252 speedbird 252 DEP DEP climb 1800ft h351 27L req:with_you\nBAW294 speedbird 294 ARR APP approach 3000ft h268 27R\nBAW31 speedbird 31 ARR APP cruise 7000ft h276 27R\nBAW317 speedbird 317 ARR APP approach 11000ft h082 27R\nBAW318 speedbird 318 ARR APP cruise 4000ft h091 27R\nBAW323 speedbird 323 ARR APP approach 10000ft h157 27R\nCES578 china eastern 578 ARR APP cruise 5000ft h268 27L\nDLH660 lufthansa 660 ARR GND taxi h088 27R\nUAL787 united 787 ARR APP cruise 9000ft h082 27R\nVIR542 virgin 542 DEP GND taxi h286 27L\nVIR543 virgin 543 DEP GND startup h240 27L",
+  "line": "ASA906 Taxi RWY 27L via N4E, N4W",
+  "icao": "EGLL",
+  "truth": "alaska nine zero six taxi to holding point runway two seven left via november four echo november four whiskey"
+ },
+ {
+  "key": "cov0403",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "klm seven nine three runway two six right taxi via echo mike eight foxtrot",
+  "ctx": "@GND 26R 27L\nAFR103 air france 103 DEP GND taxi h090 26R\nAFR177 air france 177 DEP GND parked h084 26R req:pushback\nAFR456 air france 456 DEP GND taxi h038 26R\nEZY477 easy 477 DEP GND parked h225 26R req:pushback\nJBU893 jetblue 893 DEP GND parked h125 26R req:pushback\nKLM763 klm 763 DEP GND parked h263 26R req:pushback\nKLM793 klm 793 DEP GND taxi h084 26R\nRYR935 ryanair 935 DEP GND taxi h078 26R\nTRA675 transavia 675 DEP GND taxi h082 26R\nAFR467 air france 467 ARR APP approach 9000ft h078 27L\nDAL864 delta 864 ARR APP cruise 4000ft h064 27L\nEZY570 easy 570 ARR APP cruise 3000ft h168 27L\nTRA681 transavia 681 DEP DEP climb 2400ft h270 26R\nTRA690 transavia 690 ARR APP cruise 7000ft h093 27L",
+  "line": "KLM793 Taxi RWY 26R via EM8, F",
+  "icao": "LFPG",
+  "truth": "klm seven nine three runway two six right taxi via echo mike eight foxtrot"
+ },
+ {
+  "key": "cov0404",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "southwest five twenty six taxi to stand romeo four three via whiskey yankee zulu hold short of runway zero seven right",
+  "ctx": "@GND 25R 25L 24L 24R\nDLH134 lufthansa 134 DEP GND taxi h071 24L\nDLH136 lufthansa 136 DEP GND taxi h161 25L\nFDB300 sky dubai 300 ARR GND taxi h071 25R\nSWA526 southwest 526 ARR GND taxi h071 25R\nSWA545 southwest 545 DEP GND taxi h072 24L\nSWA553 southwest 553 DEP GND taxi h071 24L\nUAL132 united 132 DEP GND taxi h086 25L\nAAL434 american 434 ARR APP approach 3000ft h248 24R\nAAL436 american 436 ARR APP approach 9000ft h057 25R\nDAL181 delta 181 ARR APP descent 3800ft h177 24R\nQFA681 qantas 681 DEP TWR climb 400ft h252 25L\nSWA607 southwest 607 DEP DEP climb 6800ft h119 24L\nSWA865 southwest 865 DEP TWR hold_short h025 24L\nUPS981 ups 981 ARR APP descent 5000ft h225 24R",
+  "line": "SWA526 Taxi stand R43 via W, Y, Z, hold short 07R",
+  "icao": "KLAX",
+  "truth": "southwest five twenty six taxi to stand romeo four three via whiskey yankee zulu hold short of runway zero seven right"
+ },
+ {
+  "key": "cov0407",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "sierra kilo whiskey nine twenty taxi to holding point runway two five right via papa quebec romeo hold short of runway zero six left",
+  "ctx": "@GND 25R 25L 24L 24R\nDAL175 delta 175 DEP GND taxi h341 24R\nQFA675 qantas 675 DEP GND taxi h121 25R\nSKW920 skw920 DEP GND taxi h072 25R\nSWA535 southwest 535 DEP GND taxi h159 24R\nVOZ687 velocity 687 ARR GND taxi h252 25L\nAAL357 american 357 ARR APP descent 4200ft h182 25L\nDAL197 delta 197 DEP DEP climb 5800ft h304 24R\nKLM227 klm 227 ARR APP descent 5100ft h024 25L\nRYR117 ryanair 117 ARR APP approach 3000ft h248 25L\nSKW729 skw729 ARR APP approach 9000ft h120 24L\nSKW731 skw731 DEP TWR hold_short h134 25R\nUAE272 emirates 272 DEP TWR takeoff h251 24R\nUPS975 ups 975 ARR APP cruise 3000ft h082 24L",
+  "line": "SKW920 Taxi RWY 25R via P, Q, R, hold short 06L",
+  "icao": "KLAX",
+  "truth": "sierra kilo whiskey nine twenty taxi to holding point runway two five right via papa quebec romeo hold short of runway zero six left"
+ },
+ {
+  "key": "cov0409",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "hong kong express five four seven runway zero seven left taxi via november two papa papa one hold short of runway two five right",
+  "ctx": "@GND 07L 07C\nANA975 all nippon 975 DEP GND taxi h254 07L\nCPA175 cathay 175 DEP GND taxi h298 07L\nCPA197 cathay 197 DEP GND taxi h307 07L\nHKE482 hong kong express 482 DEP GND parked h074 07L req:startup\nHKE515 hong kong express 515 DEP GND parked h299 07L req:startup\nHKE547 hong kong express 547 DEP GND taxi h344 07L\nSWA860 southwest 860 DEP GND taxi h254 07L\nUAL783 united 783 DEP GND parked h344 07L req:startup\nUAL883 united 883 DEP GND parked h075 07L req:startup\nCPA102 cathay 102 ARR APP cruise 7000ft h013 07C\nCPA360 cathay 360 ARR APP cruise 6000ft h077 07C\nRYR117 ryanair 117 ARR APP cruise 4000ft h332 07C\nUPS975 ups 975 ARR APP cruise 5000ft h044 07C\nVOZ687 velocity 687 ARR APP cruise 3000ft h047 07C",
+  "line": "HKE547 Taxi RWY 07L via N2, P, P1, hold short 25R",
+  "icao": "VHHH",
+  "truth": "hong kong express five four seven runway zero seven left taxi via november two papa papa one hold short of runway two five right"
+ },
+ {
+  "key": "cov0411",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "singapore three zero one taxi to holding point runway two one via juliett one one juliett one two kilo",
+  "ctx": "@GND 21 20L\nAIC399 air india 399 DEP GND parked h293 21 req:pushback\nEIN59 shamrock 59 DEP GND parked h203 21 req:pushback\nJAL648 japan air 648 DEP GND taxi h203 21\nJBU562 jetblue 562 DEP GND taxi h023 21\nQFA656 qantas 656 DEP GND parked h128 21 req:pushback\nSIA161 singapore 161 DEP GND taxi h202 21\nSIA188 singapore 188 DEP GND parked h240 21 req:pushback\nSIA264 singapore 264 DEP GND pushback h199 21\nSIA301 singapore 301 DEP GND taxi h196 21\nSIA358 singapore 358 DEP GND taxi h203 21\nAIC400 air india 400 ARR TWR landing 800ft h202 20L\nSIA13 singapore 13 ARR APP cruise 5000ft h053 20L\nSIA95 singapore 95 ARR APP cruise 4000ft h271 20L\nUPS996 ups 996 ARR APP cruise 3000ft h175 20L",
+  "line": "SIA301 Taxi RWY 21 via J11, J12, K",
+  "icao": "WSSS",
+  "truth": "singapore three zero one taxi to holding point runway two one via juliett one one juliett one two kilo"
+ },
+ {
+  "key": "cov0413",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "ifly one two two taxi to holding point runway two nine left via zulu two zulu eight hold short of runway one zero",
+  "ctx": "@GND 29L 29R 28 27\nAIC445 air india 445 ARR GND arrived h284 29R\nHKE550 hong kong express 550 DEP GND taxi h017 29L\nIGO122 ifly 122 DEP GND taxi h128 29L\nIGO396 ifly 396 ARR GND taxi h147 27\nQTR334 qatari 334 DEP GND taxi h104 29L\nUPS996 ups 996 ARR GND arrived h267 29R\nAIC533 air india 533 ARR TWR landing 2100ft h285 29R\nANA608 all nippon 608 ARR APP cruise 7000ft h050 29R\nFDB306 sky dubai 306 DEP DEP climb 6100ft h224 28\nIGO291 ifly 291 ARR APP cruise 5000ft h046 29R\nIGO309 ifly 309 DEP DEP cruise 3000ft h131 28 req:higher\nIGO359 ifly 359 ARR APP cruise 4000ft h310 29R\nIGO392 ifly 392 ARR APP cruise 3000ft h107 29R\nIGO67 ifly 67 ARR APP cruise 6000ft h295 27",
+  "line": "IGO122 Taxi RWY 29L via Z2, Z8, hold short 10",
+  "icao": "VIDP",
+  "truth": "ifly one two two taxi to holding point runway two nine left via zulu two zulu eight hold short of runway one zero"
+ },
+ {
+  "key": "cov0422",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "emirates four five six runway three zero right taxi via papa papa one papa two hold short of runway one two left",
+  "ctx": "@GND 30L 30R\nEIN79 shamrock 79 DEP GND taxi h012 30R\nFDB681 sky dubai 681 DEP GND taxi h127 30R\nJAL641 japan air 641 DEP GND parked h120 30R\nQTR793 qatari 793 DEP GND taxi h119 30R\nTHY935 turkish 935 DEP GND taxi h119 30R\nUAE456 emirates 456 DEP GND taxi h301 30R\nASA901 alaska 901 ARR APP cruise 7000ft h136 30L\nFDB570 sky dubai 570 ARR APP descent 5100ft h062 30L\nFDB690 sky dubai 690 ARR APP descent 9600ft h122 30L\nIGO864 ifly 864 ARR APP cruise 4000ft h012 30L\nUAE193 emirates 193 ARR APP descent 7500ft h083 30L\nUAE263 emirates 263 ARR APP approach 9000ft h122 30L",
+  "line": "UAE456 Taxi RWY 30R via P, P1, P2, hold short 12L",
+  "icao": "OMDB",
+  "truth": "emirates four five six runway three zero right taxi via papa papa one papa two hold short of runway one two left"
+ },
+ {
+  "key": "cov0423",
+  "style": "stt",
+  "kind": "cancelTakeoff",
+  "heard": "jetstar seven two one stop immediately jetstar seven two one stop immediately",
+  "ctx": "@TWR 20L 21 20R 20C\nJST721 jetstar 721 DEP TWR takeoff h135 20L\nSCO465 scooter 465 DEP TWR hold_short h113 20R\nQFA654 qantas 654 ARR APP cruise 7000ft h064 20C\nSCO470 scooter 470 DEP GND taxi h114 21\nSCO496 scooter 496 DEP GND taxi h040 20L\nSCO498 scooter 498 ARR APP approach 9000ft h015 20C\nSCO529 scooter 529 ARR APP cruise 3000ft h192 20C\nSCO568 scooter 568 ARR APP cruise 5000ft h184 20C\nSIA31 singapore 31 ARR APP cruise 6000ft h238 20C\nSIA64 singapore 64 ARR APP cruise 4000ft h267 20C\nSIA9 singapore 9 ARR GND taxi h324 20C\nTRA207 transavia 207 ARR APP cruise 7000ft h236 20C\nTRA210 transavia 210 DEP GND taxi h113 21\nUAE734 emirates 734 ARR GND taxi h015 20C",
+  "line": "JST721 Cancel takeoff",
+  "icao": "WSSS",
+  "truth": "jetstar seven two one stop immediately jetstar seven two one stop immediately"
+ },
+ {
+  "key": "cov0429",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "air china five nine nine taxi to stand bravo one four via yankee three yankee four yankee five",
+  "ctx": "@GND 26R 27L\nAAL799 american 799 DEP GND pushback h174 26R\nAFR293 air france 293 ARR GND taxi h174 27L\nCCA599 air china 599 ARR GND taxi h264 27L\nEZY500 easy 500 DEP GND pushback h354 26R\nIGO428 ifly 428 DEP GND taxi h084 26R\nRYR904 ryanair 904 DEP GND hold_short h174 26R\nAFR270 air france 270 ARR APP approach 9000ft h041 27L\nAFR326 air france 326 DEP DEP climb 4000ft h047 26R\nEZY483 easy 483 ARR APP cruise 6000ft h053 27L\nJBU877 jetblue 877 ARR APP cruise 4000ft h078 27L\nQTR963 qatari 963 ARR APP cruise 7000ft h293 27L\nTHY394 turkish 394 ARR APP cruise 3000ft h236 27L\nVOZ690 velocity 690 DEP DEP cruise 8000ft h132 26R req:higher\nVOZ697 velocity 697 ARR APP cruise 5000ft h160 27L",
+  "line": "CCA599 Taxi stand B14 via Y3, Y4, Y5",
+  "icao": "LFPG",
+  "truth": "air china five nine nine taxi to stand bravo one four via yankee three yankee four yankee five"
+ },
+ {
+  "key": "cov0432",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "delta six thirteen taxi to stand foxtrot one four hold short of runway one zero right",
+  "ctx": "@GND 28L 28R\nAAL663 american 663 DEP GND pushback h326 28L\nDAL597 delta 597 DEP GND startup h105 28L\nDAL613 delta 613 ARR GND taxi h150 28R\nDLH143 lufthansa 143 DEP GND startup h194 28L\nJST712 jetstar 712 DEP GND startup h284 28L\nUAL247 united 247 DEP GND startup h168 28L\nUAL48 united 48 DEP GND taxi h026 28L\nAAL658 american 658 DEP DEP climb 5200ft h328 28L\nASA359 alaska 359 ARR APP cruise 4000ft h290 28R\nDLH142 lufthansa 142 DEP TWR takeoff h285 28L\nHKE532 hong kong express 532 ARR APP approach 9000ft h070 28R\nJAL887 japan air 887 ARR APP cruise 5000ft h292 28R\nJST734 jetstar 734 ARR TWR landing 1800ft h286 28R\nSWA556 southwest 556 ARR APP descent 3100ft h182 28R",
+  "line": "DAL613 Taxi stand F14, hold short 10R",
+  "icao": "KSFO",
+  "truth": "delta six thirteen taxi to stand foxtrot one four hold short of runway one zero right"
+ },
+ {
+  "key": "cov0443",
+  "style": "stt",
+  "kind": "altitude",
+  "heard": "sky dubai five zero four climb to flight level one nine zero expedite",
+  "ctx": "@APP 30L 30R\nFDB504 sky dubai 504 ARR APP cruise 3000ft h056 30L\nIGO899 ifly 899 ARR APP cruise 6000ft h013 30R\nJBU887 jetblue 887 ARR APP cruise 5000ft h116 30R\nSCO484 scooter 484 ARR APP cruise 7000ft h116 30R\nUAE469 emirates 469 ARR APP cruise 4000ft h139 30R\nDLH978 lufthansa 978 ARR GND arrived h120 30R\nFDB313 sky dubai 313 DEP GND pushback h209 30L\nFDB623 sky dubai 623 DEP GND taxi h121 30L\nFDB639 sky dubai 639 DEP GND parked h299 30L req:startup\nRYR107 ryanair 107 DEP TWR hold_short h030 30L\nUAE217 emirates 217 DEP TWR hold_short h269 30L req:ready\nUAE222 emirates 222 DEP TWR hold_short h031 30R\nUAE29 emirates 29 DEP GND taxi h120 30L",
+  "line": "FDB504 Altitude 19000, expedite",
+  "icao": "OMDB",
+  "truth": "sky dubai five zero four climb to flight level one nine zero expedite"
+ },
+ {
+  "key": "cov0447",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "shamrock seven nine taxi to holding point runway two five right via lima seven mike",
+  "ctx": "@GND 25R 25C\nCES675 china eastern 675 DEP GND taxi h257 25R\nCES681 china eastern 681 DEP GND taxi h344 25R\nCES686 china eastern 686 DEP GND parked h164 25R req:startup\nEIN79 shamrock 79 DEP GND taxi h072 25R\nJAL935 japan air 935 DEP GND taxi h340 25R\nUAE793 emirates 793 DEP GND taxi h074 25R\nUAL894 united 894 DEP GND parked h118 25R req:pushback\nBAW864 speedbird 864 ARR APP descent 5100ft h265 25C\nCCA601 air china 601 ARR APP descent 7800ft h050 25C\nCES690 china eastern 690 ARR APP cruise 4000ft h310 25C\nFDB291 sky dubai 291 ARR APP cruise 5000ft h251 25C\nHKE456 hong kong express 456 DEP TWR takeoff h311 25R\nHKE570 hong kong express 570 ARR TWR landing 2400ft h252 25C req:with_you\nUPS986 ups 986 ARR APP cruise 7000ft h130 25C",
+  "line": "EIN79 Taxi RWY 25R via L7, M",
+  "icao": "VHHH",
+  "truth": "shamrock seven nine taxi to holding point runway two five right via lima seven mike"
+ },
+ {
+  "key": "cov0452",
+  "style": "stt",
+  "kind": "cross",
+  "heard": "sierra kilo whiskey eight sixty five cross runway zero four left report vacated",
+  "ctx": "@TWR 27\nBAW880 speedbird 880 ARR TWR landing 2000ft h272 27\nJBU248 jetblue 248 DEP TWR hold_short h173 27\nAAL791 american 791 DEP GND taxi h091 27\nAFR160 air france 160 ARR APP cruise 3000ft h249 27\nDAL354 delta 354 ARR APP cruise 5000ft h306 27\nDAL391 delta 391 ARR APP cruise 4000ft h251 27\nDAL468 delta 468 ARR APP cruise 6000ft h054 27\nDAL527 delta 527 DEP DEP climb 1800ft h332 27 req:with_you\nDAL564 delta 564 ARR APP cruise 7000ft h118 27\nDLH153 lufthansa 153 DEP EXT departed 11100ft h335 27\nFDB295 sky dubai 295 DEP GND taxi h095 27\nJBU112 jetblue 112 ARR APP cruise 8000ft h079 27\nJBU76 jetblue 76 ARR APP approach 4200ft h268 27\nSKW865 skw865 ARR GND hold_short h310 27",
+  "line": "SKW865 Cross 4L",
+  "icao": "KBOS",
+  "truth": "sierra kilo whiskey eight sixty five cross runway zero four left report vacated"
+ },
+ {
+  "key": "cov0464",
+  "style": "stt",
+  "kind": "contact",
+  "heard": "sky dubai five zero four contact approach one one nine point seven",
+  "ctx": "@TWR 30L 30R\nFDB504 sky dubai 504 ARR TWR go_around 1600ft h300 30L req:going_around\nUAE222 emirates 222 DEP TWR hold_short h031 30R\nUAE83 emirates 83 DEP TWR climb 700ft h316 30L req:ready\nDLH978 lufthansa 978 ARR GND taxi h041 30R\nFDB623 sky dubai 623 DEP GND parked h029 30L\nIGO899 ifly 899 ARR APP cruise 3000ft h150 30R\nJBU887 jetblue 887 ARR APP cruise 5000ft h116 30R\nRYR107 ryanair 107 DEP GND hold_short h030 30L\nSCO484 scooter 484 ARR APP cruise 6000ft h162 30R\nSCO498 scooter 498 ARR GND arrived h165 30R\nUAE217 emirates 217 DEP GND taxi h230 30L\nUAE29 emirates 29 DEP GND pushback h041 30L\nUAE469 emirates 469 ARR APP cruise 4000ft h103 30R\nUAE61 emirates 61 DEP EXT departed 8300ft h314 30L",
+  "line": "FDB504 Contact approach",
+  "icao": "OMDB",
+  "truth": "sky dubai five zero four contact approach one one nine point seven"
+ },
+ {
+  "key": "cov0467",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "american four seventy runway three one right taxi via sierra sierra alpha sierra bravo",
+  "ctx": "@GND 31R 31L\nAAL465 american 465 DEP GND taxi h346 31R\nAAL470 american 470 DEP GND startup h344 31R\nAAL516 american 516 DEP GND parked h075 31R\nDAL227 delta 227 DEP GND pushback h263 31R\nJST721 jetstar 721 DEP GND taxi h158 31R\nKLM220 klm 220 DEP GND taxi h327 31R\nTRA210 transavia 210 DEP GND pushback h219 31R\nUAL664 united 664 DEP GND pushback h133 31R\nAAL529 american 529 ARR APP cruise 7000ft h118 31L\nBAW734 speedbird 734 ARR APP descent 8800ft h125 31L\nDAL9 delta 9 ARR TWR approach 2800ft h308 31L req:with_you",
+  "line": "AAL470 Taxi RWY 31R via S, SA, SB",
+  "icao": "KJFK",
+  "truth": "american four seventy runway three one right taxi via sierra sierra alpha sierra bravo"
+ },
+ {
+  "key": "cov0470",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "southwest eight sixty four runway one nine left taxi via uniform hold short of runway zero one right",
+  "ctx": "@GND 19L 19R\nCCA599 air china 599 ARR GND arrived h360 19L\nFDB303 sky dubai 303 DEP GND pushback h015 19L\nJST718 jetstar 718 ARR GND taxi h325 19R\nSWA864 southwest 864 DEP GND taxi h074 19L\nUAL76 united 76 DEP GND startup h282 19L req:taxi\nASA360 alaska 360 ARR TWR rollout h195 19R\nDAL584 delta 584 ARR APP descent 3400ft h081 19R\nFDB305 sky dubai 305 ARR APP cruise 7000ft h340 19R\nJAL645 japan air 645 DEP EXT departed 10400ft h119 19L\nJBU877 jetblue 877 ARR APP cruise 5000ft h012 19R\nSKW760 skw760 ARR APP descent 6700ft h209 19R\nUAL293 united 293 ARR APP approach 3000ft h193 19R\nUPS990 ups 990 ARR APP cruise 4000ft h250 19R\nUPS993 ups 993 ARR APP cruise 8000ft h043 19R",
+  "line": "SWA864 Taxi RWY 19L via U, hold short 01R",
+  "icao": "KSFO",
+  "truth": "southwest eight sixty four runway one nine left taxi via uniform hold short of runway zero one right"
+ },
+ {
+  "key": "cov0473",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "sky dubai two nine five taxi to holding point runway two eight via zulu nine alpha hold short of runway one one right",
+  "ctx": "@GND 29L 29R 28 27\nAIC685 air india 685 DEP GND taxi h179 28\nBAW880 speedbird 880 ARR GND taxi h104 29R\nDLH153 lufthansa 153 DEP GND taxi h130 29L\nDLH986 lufthansa 986 DEP GND taxi h191 29L\nEIN74 shamrock 74 DEP GND taxi h186 29L\nFDB295 sky dubai 295 DEP GND taxi h104 28\nIGO248 ifly 248 DEP GND taxi h201 29L\nIGO265 ifly 265 DEP GND taxi h103 28\nIGO76 ifly 76 ARR GND taxi h053 29R\nKLM221 klm 221 ARR GND taxi h104 27\nQTR783 qatari 783 DEP GND hold_short h194 28 req:cross\nAIC527 air india 527 DEP TWR hold_short h014 28\nIGO205 ifly 205 DEP TWR hold_short h015 28 req:ready\nIGO384 ifly 384 ARR TWR landing 2100ft h269 27",
+  "line": "FDB295 Taxi RWY 28 via Z9A, hold short 11R",
+  "icao": "VIDP",
+  "truth": "sky dubai two nine five taxi to holding point runway two eight via zulu nine alpha hold short of runway one one right"
+ },
+ {
+  "key": "cov0475",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "united eight two four runway zero four taxi via charlie three charlie four hold short of runway zero five",
+  "ctx": "@GND 22 23\nANA296 all nippon 296 DEP GND taxi h158 23\nANA344 all nippon 344 DEP GND taxi h067 23\nBAW932 speedbird 932 DEP GND taxi h158 23\nCCA978 air china 978 ARR GND taxi h349 23\nDAL888 delta 888 DEP GND taxi h158 23\nHKE528 hong kong express 528 DEP GND taxi h158 23\nJAL504 japan air 504 ARR GND taxi h210 22\nUAL824 united 824 DEP GND taxi h141 23\nVOZ707 velocity 707 DEP GND startup h143 23\nANA222 all nippon 222 DEP TWR takeoff h230 23\nANA61 all nippon 61 DEP DEP climb 8200ft h329 22\nKLM231 klm 231 ARR APP approach 9000ft h067 22\nSCO498 scooter 498 ARR APP cruise 3000ft h134 22\nVIR52 virgin 52 ARR APP cruise 4000ft h030 22",
+  "line": "UAL824 Taxi RWY 04 via C3, C4, hold short 05",
+  "icao": "RJTT",
+  "truth": "united eight two four runway zero four taxi via charlie three charlie four hold short of runway zero five"
+ },
+ {
+  "key": "cov0479",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "all nippon three five nine taxi to holding point runway one six right via sierra sierra one hold short of runway three four left",
+  "ctx": "@GND 16R 16L\nANA359 all nippon 359 DEP GND startup h338 16R\nANA76 all nippon 76 ARR GND taxi h070 34L\nCPA736 cathay 736 DEP GND taxi h158 16R\nJAL495 japan air 495 DEP GND taxi h313 16R\nJAL591 japan air 591 DEP GND hold_short h223 16R\nAAL791 american 791 ARR APP cruise 3000ft h316 16L\nANA125 all nippon 125 ARR APP cruise 5000ft h039 16L\nANA139 all nippon 139 ARR APP cruise 8000ft h337 16L\nANA15 all nippon 15 ARR APP cruise 6000ft h290 16L\nANA244 all nippon 244 ARR APP cruise 4000ft h274 16L\nANA304 all nippon 304 ARR APP approach 10000ft h014 16L\nANA78 all nippon 78 ARR APP approach 11000ft h304 16L\nJAL384 japan air 384 ARR APP cruise 7000ft h292 16L\nUAL842 united 842 ARR APP approach 9000ft h338 16L",
+  "line": "ANA359 Taxi RWY 16R via S, S1, hold short 34L",
+  "icao": "RJTT",
+  "truth": "all nippon three five nine taxi to holding point runway one six right via sierra sierra one hold short of runway three four left"
+ },
+ {
+  "key": "cov0489",
+  "style": "stt",
+  "kind": "direct",
+  "heard": "united seven seven three proceed direct dxbw",
+  "ctx": "@APP 30R 30L\nFDB662 sky dubai 662 DEP DEP climb 7100ft h044 30R\nIGO889 ifly 889 ARR APP descent 7400ft h146 30L\nUAE191 emirates 191 ARR APP descent 4300ft h270 30L\nUAE56 emirates 56 ARR APP descent 3100ft h295 30L\nUAL773 united 773 ARR APP descent 5400ft h301 30L\nCPA525 cathay 525 DEP GND taxi h091 30R\nFDB578 sky dubai 578 DEP EXT departed 12700ft h276 30R\nKLM228 klm 228 DEP GND startup h208 30R\nUAE338 emirates 338 DEP GND startup h209 30R\nUAE362 emirates 362 ARR TWR approach 3000ft h299 30L req:with_you\nUAE388 emirates 388 DEP GND taxi h039 30R\nUAE391 emirates 391 DEP GND parked h209 30R\nUAE453 emirates 453 DEP TWR hold_short h031 30R req:ready\nVOZ698 velocity 698 DEP TWR climb 900ft h336 30R",
+  "line": "UAL773 Direct DXBSW",
+  "icao": "OMDB",
+  "truth": "united seven seven three proceed direct dxbsw"
+ },
+ {
+  "key": "cov0490",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "southwest eight sixty five taxi to holding point runway two four left via hotel two hotel three hold short of runway zero six left",
+  "ctx": "@GND 25R 25L 24L 24R\nDLH134 lufthansa 134 DEP GND taxi h274 24L\nDLH136 lufthansa 136 DEP GND taxi h071 25L\nQFA681 qantas 681 DEP GND hold_short h131 25L req:cross\nSWA526 southwest 526 ARR GND taxi h071 25R\nSWA545 southwest 545 DEP GND taxi h071 24L\nSWA553 southwest 553 DEP GND taxi h342 24L\nSWA865 southwest 865 DEP GND taxi h047 24L\nUAL132 united 132 DEP GND taxi h072 25L\nAAL434 american 434 ARR APP cruise 3000ft h294 24R\nAAL804 american 804 DEP EXT departed 12600ft h302 25L\nDAL181 delta 181 ARR APP cruise 4000ft h034 24R\nFDB300 sky dubai 300 ARR TWR rollout h251 25R\nSWA607 southwest 607 DEP TWR takeoff h355 24L\nUPS981 ups 981 ARR APP cruise 5000ft h182 24R",
+  "line": "SWA865 Taxi RWY 24L via H2, H3, hold short 06L",
+  "icao": "KLAX",
+  "truth": "southwest eight sixty five taxi to holding point runway two four left via hotel two hotel three hold short of runway zero six left"
+ },
+ {
+  "key": "cov0493",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "air france one seven nine taxi to holding point runway two nine left via echo two echo three hold short of runway one one left",
+  "ctx": "@GND 29L 27\nAFR179 air france 179 DEP GND taxi h194 29L\nAIC676 air india 676 DEP GND taxi h194 29L\nETD354 etihad 354 DEP GND parked h013 29L req:pushback\nIGO173 ifly 173 DEP GND taxi h193 29L\nSIA894 singapore 894 DEP GND parked h193 29L req:pushback\nANA623 all nippon 623 ARR APP cruise 5000ft h274 27\nIGO424 ifly 424 ARR APP descent 7700ft h012 27\nIGO436 ifly 436 ARR APP descent 4500ft h287 27\nIGO86 ifly 86 DEP EXT departed 13000ft h134 29L\nQFA675 qantas 675 DEP TWR takeoff h283 29L\nQTR824 qatari 824 DEP DEP climb 6700ft h001 29L\nRYR117 ryanair 117 ARR APP approach 3000ft h273 27\nUAE282 emirates 282 ARR APP cruise 6000ft h046 27\nUPS989 ups 989 ARR APP cruise 3000ft h339 27",
+  "line": "AFR179 Taxi RWY 29L via E2, E3, hold short 11L",
+  "icao": "VIDP",
+  "truth": "air france one seven nine taxi to holding point runway two nine left via echo two echo three hold short of runway one one left"
+ },
+ {
+  "key": "cov0501",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "qatari seven eight three taxi to holding point runway two eight via delta six delta seven echo two hold short of runway one zero",
+  "ctx": "@GND 29L 29R 28 27\nAIC527 air india 527 DEP GND taxi h014 28\nAIC685 air india 685 DEP GND startup h193 28\nDLH153 lufthansa 153 DEP GND taxi h189 29L\nFDB295 sky dubai 295 DEP GND taxi h104 28\nIGO14 ifly 14 DEP GND taxi h134 29L\nIGO205 ifly 205 DEP GND startup h099 28\nIGO248 ifly 248 DEP GND taxi h201 29L\nQTR783 qatari 783 DEP GND pushback h193 28\nBAW865 speedbird 865 ARR APP cruise 3000ft h081 27\nBAW880 speedbird 880 ARR APP approach 4000ft h287 29R\nIGO384 ifly 384 ARR APP cruise 6000ft h292 27\nIGO76 ifly 76 ARR APP descent 5000ft h101 29R\nKLM221 klm 221 ARR APP cruise 5000ft h098 27\nSIA891 singapore 891 DEP TWR hold_short h019 28 req:ready",
+  "line": "QTR783 Taxi RWY 28 via D6, D7, E2, hold short 10",
+  "icao": "VIDP",
+  "truth": "qatari seven eight three taxi to holding point runway two eight via delta six delta seven echo two hold short of runway one zero"
+ },
+ {
+  "key": "cov0502",
+  "style": "stt",
+  "kind": "direct",
+  "heard": "air china nine eight four proceed direct hndsw",
+  "ctx": "@APP 16L 16R\nCCA984 air china 984 DEP DEP climb 7400ft h328 16L\nIGO425 ifly 425 ARR APP cruise 5000ft h333 16R\nJAL586 japan air 586 ARR APP cruise 3000ft h159 16R\nJAL716 japan air 716 ARR APP cruise 6000ft h039 16R\nTRA185 transavia 185 ARR APP approach 9000ft h349 16R\nUAL834 united 834 ARR APP descent 4700ft h324 16R\nANA191 all nippon 191 ARR GND arrived h158 16R\nANA338 all nippon 338 DEP TWR takeoff h153 16L\nBAW925 speedbird 925 DEP TWR hold_short h056 16L\nJAL388 japan air 388 DEP TWR hold_short h006 16L req:ready\nJAL414 japan air 414 DEP EXT departed 12300ft h109 16L\nJAL463 japan air 463 DEP GND taxi h133 16L\nJAL518 japan air 518 ARR GND taxi h158 16R\nUAL825 united 825 DEP GND taxi h013 16L",
+  "line": "CCA984 Direct HNDSW",
+  "icao": "RJTT",
+  "truth": "air china nine eight four proceed direct hndsw"
+ },
+ {
+  "key": "cov0506",
+  "style": "stt",
+  "kind": "direct",
+  "heard": "american five eighty four proceed direct bosse",
+  "ctx": "@APP 27\nAAL584 american 584 ARR APP approach 10000ft h093 27\nAAL662 american 662 DEP DEP climb 2900ft h064 27\nAAL687 american 687 ARR APP cruise 4000ft h074 27\nDAL414 delta 414 ARR APP cruise 7000ft h105 27\nSKW852 skw852 ARR APP cruise 6000ft h110 27\nSKW859 skw859 ARR APP cruise 4000ft h194 27\nUAL716 united 716 ARR APP descent 8500ft h146 27\nAFR180 air france 180 ARR TWR approach 2900ft h268 27 req:with_you\nBAW911 speedbird 911 ARR GND taxi h214 27\nCPA508 cathay 508 DEP GND pushback h150 27\nJBU56 jetblue 56 ARR GND taxi h292 27\nJBU98 jetblue 98 DEP TWR hold_short h174 27\nUAL696 united 696 ARR GND taxi h137 27",
+  "line": "AAL584 Direct BOSSE",
+  "icao": "KBOS",
+  "truth": "american five eighty four proceed direct bosse"
+ },
+ {
+  "key": "cov0511",
+  "style": "stt",
+  "kind": "holdPosition",
+  "heard": "sierra kilo whiskey nine three four hold position traffic",
+  "ctx": "@TWR 27L 27R\nBAW362 speedbird 362 ARR TWR rollout h264 27R\nSKW934 skw934 DEP TWR hold_short h179 27L\nAFR687 air france 687 ARR APP cruise 7000ft h192 27R\nASA897 alaska 897 ARR APP cruise 4000ft h098 27R\nBAW115 speedbird 115 ARR APP approach 3000ft h261 27R\nBAW395 speedbird 395 ARR APP cruise 8000ft h248 27R\nBAW453 speedbird 453 DEP GND taxi h178 27L\nCPA511 cathay 511 DEP GND parked h269 27L\nDLH662 lufthansa 662 DEP DEP climb 1700ft h354 27L\nEIN578 shamrock 578 DEP EXT departed 10100ft h184 27L\nQTR920 qatari 920 DEP GND startup h203 27L req:taxi\nRYR109 ryanair 109 ARR APP approach 3900ft h267 27R\nUAL902 united 902 ARR APP cruise 6000ft h269 27R\nVIR35 virgin 35 ARR APP cruise 4000ft h264 27R",
+  "line": "SKW934 Hold position (traffic)",
+  "icao": "EGLL",
+  "truth": "sierra kilo whiskey nine three four hold position traffic"
+ },
+ {
+  "key": "cov0516",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "united three zero one taxi to holding point runway zero one right",
+  "ctx": "@GND 01R 01L\nAAL806 american 806 DEP GND taxi h154 01L\nANA852 all nippon 852 DEP GND taxi h230 01L\nUAL161 united 161 DEP GND taxi h195 01L\nUAL267 united 267 DEP GND taxi h194 01L\nUAL301 united 301 DEP GND taxi h194 01R\nUAL67 united 67 DEP GND startup h195 01L\nUPS996 ups 996 ARR GND taxi h213 01R\nAIC400 air india 400 ARR APP approach 3000ft h012 01R\nASA358 alaska 358 DEP TWR takeoff h015 01R\nCES562 china eastern 562 DEP TWR hold_short h105 01L\nCES576 china eastern 576 ARR APP cruise 4000ft h042 01R\nJAL648 japan air 648 DEP DEP climb 8300ft h131 01L\nRYR106 ryanair 106 ARR APP approach 9000ft h199 01R\nUAL95 united 95 ARR APP cruise 3000ft h198 01L",
+  "line": "UAL301 Taxi RWY 01R",
+  "icao": "KSFO",
+  "truth": "united three zero one taxi to holding point runway zero one right"
+ },
+ {
+  "key": "cov0518",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "american six sixty taxi to holding point runway two eight left via romeo sierra sierra one",
+  "ctx": "@GND 28L 28R\nAAL660 american 660 DEP GND pushback h277 28L\nASA465 alaska 465 DEP GND taxi h105 28L\nJST721 jetstar 721 DEP GND taxi h105 28L\nKLM220 klm 220 DEP GND taxi h105 28L\nUAL199 united 199 DEP GND pushback h284 28L\nASA470 alaska 470 DEP DEP climb 3100ft h302 28L\nDAL596 delta 596 ARR APP cruise 7000ft h088 28R\nSKW734 skw734 ARR APP cruise 3000ft h112 28R\nSWA529 southwest 529 ARR APP cruise 5000ft h100 28R\nSWA556 southwest 556 ARR APP cruise 8000ft h278 28R\nUAL152 united 152 ARR APP approach 10000ft h095 28R\nUAL286 united 286 ARR APP cruise 6000ft h089 28R\nUAL767 united 767 ARR APP cruise 7000ft h313 28R\nUAL9 united 9 ARR TWR rollout h285 28R",
+  "line": "AAL660 Taxi RWY 28L via R, S, S1",
+  "icao": "KSFO",
+  "truth": "american six sixty taxi to holding point runway two eight left via romeo sierra sierra one"
+ },
+ {
+  "key": "cov0525",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "speedbird five taxi to holding point runway two two right via bravo charlie charlie one",
+  "ctx": "@TWR 22L 22R\nAIC400 air india 400 ARR TWR landing 900ft h213 22L\nBAW5 speedbird 5 DEP TWR hold_short h122 22R req:ready\nAAL614 american 614 DEP GND pushback h043 22R\nAAL683 american 683 ARR APP cruise 7000ft h042 22L\nAIC399 air india 399 ARR APP cruise 4000ft h188 22L\nDAL358 delta 358 DEP DEP climb 7600ft h242 22L\nEIN60 shamrock 60 DEP GND taxi h191 22R\nJAL648 japan air 648 DEP GND taxi h225 22R\nJBU161 jetblue 161 DEP DEP climb 1400ft h153 22R\nJBU188 jetblue 188 DEP GND taxi h034 22R\nJBU562 jetblue 562 DEP GND parked h347 22R req:pushback\nJBU95 jetblue 95 ARR APP approach 3000ft h221 22R\nUPS996 ups 996 ARR GND taxi h310 22L",
+  "line": "BAW5 Taxi RWY 22R via B, C, C1",
+  "icao": "KBOS",
+  "truth": "speedbird five taxi to holding point runway two two right via bravo charlie charlie one"
+ },
+ {
+  "key": "cov0526",
+  "style": "stt",
+  "kind": "altitude",
+  "heard": "jetblue seventy six climb to flight level two zero zero expedite",
+  "ctx": "@APP 27\nBAW880 speedbird 880 ARR APP approach 10000ft h050 27\nJBU76 jetblue 76 ARR APP approach 11000ft h093 27\nSKW865 skw865 ARR APP approach 9000ft h124 27\nDAL527 delta 527 DEP GND parked h225 27\nDLH153 lufthansa 153 DEP GND parked h252 27\nFDB295 sky dubai 295 DEP GND parked h133 27\nJBU248 jetblue 248 DEP GND parked h165 27",
+  "line": "JBU76 Altitude 20000, expedite",
+  "icao": "KBOS",
+  "truth": "jetblue seventy six climb to flight level two zero zero expedite"
+ },
+ {
+  "key": "cov0529",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "united seven thirty three taxi to stand bravo one four via charlie charlie one delta hold short of runway one five right",
+  "ctx": "@GND 33L 32\nAAL570 american 570 ARR GND taxi h012 32\nAAL624 american 624 DEP GND taxi h124 33L\nAAL690 american 690 ARR GND taxi h135 32\nEIN79 shamrock 79 DEP GND pushback h354 33L\nUAL733 united 733 DEP GND taxi h211 33L\nUAL771 united 771 DEP GND taxi h208 33L\nAAL616 american 616 DEP DEP climb 1800ft h328 33L\nDAL456 delta 456 DEP EXT departed 11400ft h190 33L\nJAL650 japan air 650 ARR APP cruise 7000ft h319 32\nJBU103 jetblue 103 ARR APP cruise 3000ft h146 32\nJBU194 jetblue 194 ARR APP cruise 4000ft h272 32\nJBU878 jetblue 878 ARR APP cruise 5000ft h106 32\nSKW839 skw839 ARR APP cruise 6000ft h319 32\nSKW864 skw864 ARR APP approach 3000ft h322 32",
+  "line": "UAL733 Taxi stand B14 via C, C1, D, hold short 15R",
+  "icao": "KBOS",
+  "truth": "united seven thirty three taxi to stand bravo one four via charlie charlie one delta hold short of runway one five right"
+ },
+ {
+  "key": "cov0532",
+  "style": "stt",
+  "kind": "cancelTakeoff",
+  "heard": "united eight two four stop immediately united eight two four stop immediately",
+  "ctx": "@TWR 22 23\nUAL824 united 824 DEP TWR takeoff h179 23\nVIR52 virgin 52 ARR TWR landing 500ft h223 22\nANA111 all nippon 111 DEP GND pushback h338 23\nANA344 all nippon 344 DEP GND taxi h050 23\nANA85 all nippon 85 DEP GND taxi h103 23\nBAW932 speedbird 932 DEP DEP climb 3600ft h237 23\nCCA978 air china 978 ARR GND taxi h266 23\nDAL888 delta 888 DEP GND taxi h138 23\nDLH132 lufthansa 132 ARR APP descent 3900ft h250 22\nHKE528 hong kong express 528 DEP EXT departed 9100ft h140 23\nJAL527 japan air 527 DEP GND taxi h158 23\nKLM231 klm 231 ARR APP cruise 3000ft h212 22\nSCO498 scooter 498 ARR GND taxi h069 22\nVOZ707 velocity 707 DEP GND taxi h077 23",
+  "line": "UAL824 Cancel takeoff",
+  "icao": "RJTT",
+  "truth": "united eight two four stop immediately united eight two four stop immediately"
+ },
+ {
+  "key": "cov0539",
+  "style": "stt",
+  "kind": "expectRunway",
+  "heard": "american six ninety three expect ils approach runway two seven information charlie",
+  "ctx": "@APP 27\nAAL693 american 693 ARR APP descent 7300ft h093 27\nAIC414 air india 414 ARR APP descent 4300ft h243 27\nANZ747 new zealand 747 ARR APP cruise 5000ft h090 27\nDAL413 delta 413 ARR APP cruise 8000ft h261 27\nDAL500 delta 500 DEP DEP climb 2200ft h238 27 req:with_you\nJBU20 jetblue 20 ARR APP cruise 3000ft h273 27\nJBU238 jetblue 238 ARR APP cruise 6000ft h054 27\nSKW853 skw853 DEP DEP climb 7900ft h285 27\nAAL585 american 585 DEP GND taxi h153 27\nAFR971 air france 971 DEP GND pushback h286 27\nAFR978 air france 978 ARR GND taxi h284 27\nCCA589 air china 589 ARR TWR landing 2300ft h273 27 req:with_you\nJBU50 jetblue 50 ARR GND taxi h032 27\nJST713 jetstar 713 DEP GND hold_short h064 27",
+  "line": "AAL693 Expect ILS 27",
+  "icao": "KBOS",
+  "truth": "american six ninety three expect ils approach runway two seven information charlie"
+ },
+ {
+  "key": "cov0540",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "air france one sixty taxi to holding point runway two two left via papa",
+  "ctx": "@GND 22R 22L\nAAL607 american 607 DEP GND taxi h138 22L\nAAL625 american 625 DEP GND taxi h138 22L\nAFR160 air france 160 DEP GND hold_short h082 22L req:cross\nDAL92 delta 92 DEP GND taxi h133 22L\nEIN64 shamrock 64 DEP GND taxi h067 22L\nHKE550 hong kong express 550 DEP GND taxi h105 22L\nAAL526 american 526 ARR APP approach 3000ft h230 22R\nAAL553 american 553 DEP TWR takeoff h160 22L\nAAL804 american 804 DEP DEP climb 4400ft h332 22R\nDAL225 delta 225 ARR APP descent 8200ft h047 22R\nDAL3 delta 3 ARR APP cruise 4000ft h226 22R\nFDB300 sky dubai 300 ARR TWR landing 900ft h224 22R\nJBU434 jetblue 434 ARR APP cruise 3000ft h197 22L",
+  "line": "AFR160 Taxi RWY 22L via P",
+  "icao": "KJFK",
+  "truth": "air france one sixty taxi to holding point runway two two left via papa"
+ },
+ {
+  "key": "cov0541",
+  "style": "stt",
+  "kind": "ils",
+  "heard": "sierra kilo whiskey nine seventy three cleared ils runway two two right approach report established",
+  "ctx": "@APP 22L 22R\nAAL583 american 583 ARR APP cruise 5000ft h261 22R\nAAL613 american 613 ARR APP cruise 3000ft h197 22R\nFDB312 sky dubai 312 ARR APP cruise 6000ft h090 22R\nQTR947 qatari 947 ARR APP cruise 6000ft h314 22R\nSKW973 skw973 ARR APP cruise 4000ft h197 22R\nVIR769 virgin 769 ARR APP cruise 7000ft h008 22R\nANZ755 new zealand 755 DEP GND parked h304 22L req:pushback\nBAW720 speedbird 720 DEP GND taxi h134 22L\nDAL48 delta 48 DEP GND taxi h091 22L\nDLH142 lufthansa 142 DEP GND taxi h073 22L\nJAL631 japan air 631 DEP GND parked h029 22L req:pushback\nJBU247 jetblue 247 DEP GND taxi h134 22L\nUAE287 emirates 287 DEP TWR takeoff h154 22L req:ready\nUAL658 united 658 DEP GND taxi h223 22L",
+  "line": "SKW973 Cleared ILS 22R, report established",
+  "icao": "KJFK",
+  "truth": "sierra kilo whiskey nine seventy three cleared ils runway two two right approach report established"
+ },
+ {
+  "key": "cov0542",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "air china five eighty six runway two seven taxi via juliett one kilo",
+  "ctx": "@GND 27\nAAL691 american 691 DEP GND parked h138 27 req:startup\nAFR982 air france 982 DEP GND parked h259 27 req:pushback\nBAW870 speedbird 870 DEP GND parked h330 27 req:pushback\nCCA586 air china 586 DEP GND taxi h091 27\nDAL454 delta 454 DEP GND parked h226 27 req:pushback\nDAL465 delta 465 DEP GND taxi h111 27\nJBU9 jetblue 9 ARR GND hold_short h305 27\nKLM220 klm 220 DEP GND taxi h091 27\nDAL432 delta 432 ARR APP cruise 5000ft h192 27\nDAL470 delta 470 DEP EXT departed 10100ft h330 27\nDAL511 delta 511 ARR APP cruise 4000ft h107 27\nDAL529 delta 529 ARR APP cruise 6000ft h254 27\nJST721 jetstar 721 DEP TWR takeoff h192 27\nUAL734 united 734 ARR APP approach 3000ft h271 27",
+  "line": "CCA586 Taxi RWY 27 via J1, K",
+  "icao": "KBOS",
+  "truth": "air china five eighty six runway two seven taxi via juliett one kilo"
+ },
+ {
+  "key": "cov0543",
+  "style": "stt",
+  "kind": "cancelTakeoff",
+  "heard": "cathay one six one stop immediately cathay one six one stop immediately",
+  "ctx": "@TWR 25C 25R 25L\nCPA161 cathay 161 DEP TWR takeoff h255 25R\nIGO444 ifly 444 DEP TWR hold_short h019 25C\nJAL648 japan air 648 DEP TWR hold_short h163 25L\nAIC400 air india 400 ARR GND taxi h164 25L\nCPA68 cathay 68 ARR APP cruise 7000ft h023 25R\nCPA95 cathay 95 ARR APP cruise 3000ft h281 25R\nHKE539 hong kong express 539 DEP GND taxi h075 25C\nJBU562 jetblue 562 ARR APP cruise 4000ft h317 25L\nSIA780 singapore 780 ARR APP cruise 6000ft h276 25L\nUAE797 emirates 797 ARR APP cruise 5000ft h250 25R\nUAE818 emirates 818 DEP GND startup h075 25C\nUAL764 united 764 DEP DEP climb 6000ft h227 25C\nUPS996 ups 996 ARR GND taxi h028 25L",
+  "line": "CPA161 Cancel takeoff",
+  "icao": "VHHH",
+  "truth": "cathay one six one stop immediately cathay one six one stop immediately"
+ },
+ {
+  "key": "cov0551",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "jetblue three zero one taxi to holding point runway three one left hold short of runway two two right",
+  "ctx": "@GND 31L 31R\nDAL161 delta 161 DEP GND pushback h062 31R\nJAL648 japan air 648 DEP GND pushback h258 31R\nJBU236 jetblue 236 DEP GND pushback h312 31L\nJBU264 jetblue 264 DEP GND parked h183 31L req:pushback\nJBU301 jetblue 301 DEP GND startup h023 31L\nJBU358 jetblue 358 DEP GND startup h164 31L\nJBU562 jetblue 562 DEP GND pushback h340 31L\nAIC400 air india 400 ARR APP descent 9300ft h163 31L\nDAL95 delta 95 ARR APP descent 5900ft h137 31R\nUPS996 ups 996 ARR APP cruise 7000ft h119 31R",
+  "line": "JBU301 Taxi RWY 31L, hold short 22R",
+  "icao": "KJFK",
+  "truth": "jetblue three zero one taxi to holding point runway three one left hold short of runway two two right"
+ },
+ {
+  "key": "cov0555",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "united six fifty eight taxi to stand two via whiskey whiskey whiskey yankee hold short of runway two two right",
+  "ctx": "@GND 22L 22R\nBAW720 speedbird 720 DEP GND startup h093 22L\nDAL48 delta 48 DEP GND taxi h091 22L\nDLH142 lufthansa 142 DEP GND taxi h037 22L\nJBU247 jetblue 247 DEP GND startup h159 22L\nUAE287 emirates 287 DEP GND taxi h154 22L\nUAL658 united 658 DEP GND taxi h153 22L\nAAL583 american 583 ARR APP cruise 7000ft h016 22R\nAAL613 american 613 ARR APP cruise 3000ft h040 22R\nFDB312 sky dubai 312 ARR APP approach 9000ft h096 22R\nQTR947 qatari 947 ARR APP cruise 6000ft h220 22R\nSKW973 skw973 ARR APP cruise 7000ft h071 22R",
+  "line": "UAL658 Taxi stand 2#2 via W, WW, Y, hold short 22R",
+  "icao": "KJFK",
+  "truth": "united six fifty eight taxi to stand two two via whiskey whiskey whiskey yankee hold short of runway two two right"
+ },
+ {
+  "key": "cov0557",
+  "style": "stt",
+  "kind": "exitAt",
+  "heard": "air france two eight vacate via tango three",
+  "ctx": "@TWR 09R 08L 09L 08R\nAFR28 air france 28 ARR TWR rollout h083 09L\nBAW1 speedbird 1 DEP TWR takeoff h083 08R\nEZY569 easy 569 DEP TWR hold_short h146 08R\nAFR104 air france 104 DEP GND startup h264 08L\nAFR19 air france 19 ARR GND arrived h352 09R\nAFR266 air france 266 DEP GND parked h041 08R\nAFR89 air france 89 DEP GND hold_short h173 08R req:cross\nEIN55 shamrock 55 DEP GND taxi h173 08R\nETD342 etihad 342 DEP DEP climb 7300ft h350 08L\nEZY93 easy 93 ARR APP descent 4600ft h062 09L\nIGO445 ifly 445 ARR GND taxi h263 09L\nJBU872 jetblue 872 DEP GND taxi h353 08R\nSWA856 southwest 856 ARR APP cruise 3000ft h074 09R\nTRA637 transavia 637 DEP GND hold_short h173 08R",
+  "line": "AFR28 Exit T3",
+  "icao": "LFPG",
+  "truth": "air france two eight vacate via tango three"
+ },
+ {
+  "key": "cov0564",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "united two sixty seven taxi to holding point runway zero one left via four",
+  "ctx": "@GND 01R 01L\nAAL806 american 806 DEP GND startup h304 01L\nANA852 all nippon 852 DEP GND taxi h133 01L\nASA358 alaska 358 DEP GND taxi h119 01R\nCES562 china eastern 562 DEP GND taxi h100 01L\nUAL161 united 161 DEP GND taxi h123 01L\nUAL267 united 267 DEP GND taxi h153 01L\nUAL301 united 301 DEP GND taxi h177 01R\nUAL67 united 67 DEP GND pushback h106 01L\nAIC400 air india 400 ARR APP cruise 3000ft h198 01R\nCES576 china eastern 576 ARR APP cruise 5000ft h300 01R\nJAL648 japan air 648 DEP TWR climb 1100ft h051 01L\nRYR106 ryanair 106 ARR APP approach 9000ft h199 01R\nUAL95 united 95 ARR APP cruise 4000ft h334 01L\nUPS996 ups 996 ARR TWR landing 400ft h015 01R",
+  "line": "UAL267 Taxi RWY 01L via 4",
+  "icao": "KSFO",
+  "truth": "united two sixty seven taxi to holding point runway zero one left via four"
+ },
+ {
+  "key": "cov0565",
+  "style": "stt",
+  "kind": "direct",
+  "heard": "air france one nine proceed direct cdgse",
+  "ctx": "@APP 09R 08L 09L 08R\nAFR19 air france 19 ARR APP cruise 7000ft h261 09R\nAFR28 air france 28 ARR APP cruise 5000ft h052 09L\nIGO445 ifly 445 ARR APP cruise 3000ft h224 09L\nSWA856 southwest 856 ARR APP descent 7300ft h311 09R\nAFR285 air france 285 DEP GND taxi h268 09L\nBAW1 speedbird 1 DEP GND taxi h162 08R\nCCA581 air china 581 DEP GND taxi h263 08L\nEZY569 easy 569 DEP GND taxi h173 08R\nSIA452 singapore 452 DEP GND taxi h308 09R\nSKW921 skw921 DEP GND startup h353 08L\nTRA637 transavia 637 DEP GND startup h263 08R",
+  "line": "AFR19 Direct CDGSE",
+  "icao": "LFPG",
+  "truth": "air france one nine proceed direct cdgse"
+ },
+ {
+  "key": "cov0567",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "qantas six eighty one taxi to holding point runway two two right via charlie hold short of runway zero four left",
+  "ctx": "@GND 22R 22L\nAAL553 american 553 DEP GND taxi h133 22L\nAAL607 american 607 DEP GND taxi h219 22L\nAAL625 american 625 DEP GND pushback h013 22L\nAAL804 american 804 DEP GND taxi h072 22R\nAFR160 air france 160 DEP GND parked h296 22L\nDAL92 delta 92 DEP GND taxi h110 22L\nEIN64 shamrock 64 DEP GND taxi h193 22L\nHKE550 hong kong express 550 DEP GND pushback h345 22L\nQFA681 qantas 681 DEP GND taxi h044 22R\nAAL526 american 526 ARR APP cruise 3000ft h030 22R\nDAL3 delta 3 ARR APP cruise 6000ft h039 22R\nFDB300 sky dubai 300 ARR APP cruise 4000ft h251 22R\nJBU434 jetblue 434 ARR APP cruise 5000ft h107 22L",
+  "line": "QFA681 Taxi RWY 22R via C, hold short 04L",
+  "icao": "KJFK",
+  "truth": "qantas six eighty one taxi to holding point runway two two right via charlie hold short of runway zero four left"
+ },
+ {
+  "key": "cov0569",
+  "style": "stt",
+  "kind": "altitude",
+  "heard": "jetblue ninety five climb to flight level one nine zero",
+  "ctx": "@APP 22L 22R\nAAL683 american 683 ARR APP approach 10000ft h042 22L\nAIC399 air india 399 ARR APP descent 7400ft h092 22L\nAIC400 air india 400 ARR APP cruise 4000ft h026 22L\nJBU95 jetblue 95 ARR APP cruise 7000ft h004 22R\nUPS996 ups 996 ARR APP cruise 3000ft h086 22L\nAAL614 american 614 DEP GND pushback h043 22R\nBAW5 speedbird 5 DEP GND taxi h344 22R\nDAL358 delta 358 DEP GND taxi h041 22L\nJAL648 japan air 648 DEP GND taxi h225 22R\nJBU161 jetblue 161 DEP GND hold_short h040 22R req:cross\nJBU188 jetblue 188 DEP GND startup h315 22R\nJBU301 jetblue 301 DEP GND taxi h034 22L\nJBU562 jetblue 562 DEP GND parked h347 22R req:pushback",
+  "line": "JBU95 Altitude 19000",
+  "icao": "KBOS",
+  "truth": "jetblue ninety five climb to flight level one nine zero"
+ },
+ {
+  "key": "cov0579",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "american eight zero four taxi to holding point runway zero one left via bravo two hold short of runway one nine right",
+  "ctx": "@GND 28L 28R\nAAL804 american 804 DEP GND taxi h294 28L\nDAL605 delta 605 DEP GND parked h125 28L req:pushback\nDAL607 delta 607 DEP GND taxi h027 28L\nDAL631 delta 631 DEP GND parked h284 28L req:startup\nSWA553 southwest 553 DEP GND taxi h105 28L\nSWA865 southwest 865 DEP GND parked h087 28L req:startup\nUAL92 united 92 DEP GND pushback h248 28L\nAAL703 american 703 ARR APP cruise 7000ft h109 28R\nANA835 all nippon 835 ARR APP descent 9900ft h133 28R\nASA434 alaska 434 ARR APP cruise 3000ft h116 28R\nFDB300 sky dubai 300 ARR TWR landing 2300ft h283 28R\nFDX965 fedex 965 ARR APP cruise 7000ft h159 28R\nQFA681 qantas 681 DEP TWR takeoff h285 28L\nSWA526 southwest 526 ARR TWR landing 400ft h285 28R",
+  "line": "AAL804 Taxi RWY 01L via B2, hold short 19R",
+  "icao": "KSFO",
+  "truth": "american eight zero four taxi to holding point runway zero one left via bravo two hold short of runway one nine right"
+ },
+ {
+  "key": "cov0580",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "american six fourteen taxi to holding point runway two two right via juliett one kilo",
+  "ctx": "@GND 22L 22R\nAAL614 american 614 DEP GND pushback h043 22R\nAAL656 american 656 DEP GND taxi h036 22R\nAIC400 air india 400 ARR GND taxi h311 22L\nEIN60 shamrock 60 DEP GND taxi h139 22R\nJAL648 japan air 648 DEP GND taxi h226 22R\nJBU562 jetblue 562 DEP GND parked h347 22R req:pushback\nUAL701 united 701 DEP GND taxi h058 22R\nAAL683 american 683 ARR TWR landing 2000ft h213 22L\nAFR984 air france 984 ARR APP descent 5500ft h322 22L\nAIC399 air india 399 ARR APP cruise 3000ft h202 22L\nBAW9 speedbird 9 DEP TWR takeoff h117 22R\nEZY104 easy 104 ARR APP descent 6000ft h092 22L\nJBU188 jetblue 188 DEP EXT departed 11100ft h319 22R",
+  "line": "AAL614 Taxi RWY 22R via J1, K",
+  "icao": "KBOS",
+  "truth": "american six fourteen taxi to holding point runway two two right via juliett one kilo"
+ },
+ {
+  "key": "cov0584",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "sky dubai two nine five taxi to holding point runway three zero right via kilo one five kilo one six kilo one seven",
+  "ctx": "@GND 30L 30R\nAAL794 american 794 DEP GND parked h030 30L\nDLH153 lufthansa 153 DEP GND pushback h030 30L\nFDB295 sky dubai 295 DEP GND pushback h208 30R\nFDB527 sky dubai 527 DEP GND startup h210 30R\nUAE248 emirates 248 DEP GND startup h030 30L\nIGO865 ifly 865 ARR APP approach 9000ft h122 30L\nIGO880 ifly 880 ARR APP cruise 7000ft h052 30R\nUAE76 emirates 76 ARR APP approach 11000ft h107 30R",
+  "line": "FDB295 Taxi RWY 30R via K15, K16, K17",
+  "icao": "OMDB",
+  "truth": "sky dubai two nine five taxi to holding point runway three zero right via kilo one five kilo one six kilo one seven"
+ },
+ {
+  "key": "cov0587",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "delta four sixty five runway two seven taxi via echo two foxtrot",
+  "ctx": "@TWR 27\nDAL465 delta 465 DEP TWR hold_short h172 27\nDAL529 delta 529 ARR TWR landing 1900ft h271 27\nUAL734 united 734 ARR TWR rollout h271 27\nAAL691 american 691 DEP GND startup h138 27\nAFR982 air france 982 DEP GND pushback h259 27\nBAW870 speedbird 870 DEP GND startup h287 27\nCCA586 air china 586 DEP GND taxi h091 27\nDAL432 delta 432 ARR APP cruise 4000ft h234 27\nDAL454 delta 454 DEP GND taxi h189 27\nDAL511 delta 511 ARR APP approach 3000ft h266 27\nJBU9 jetblue 9 ARR GND arrived h322 27\nJST721 jetstar 721 DEP EXT departed 10600ft h191 27\nKLM220 klm 220 DEP GND taxi h091 27\nTHY378 turkish 378 DEP GND parked h230 27 req:startup",
+  "line": "DAL465 Taxi RWY 27 via E2, F",
+  "icao": "KBOS",
+  "truth": "delta four sixty five runway two seven taxi via echo two foxtrot"
+ },
+ {
+  "key": "cov0594",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "american six eighty one taxi to holding point runway three three left via bravo hold short of runway two two left",
+  "ctx": "@GND 33L 32\nAAL616 american 616 DEP GND parked h039 33L req:pushback\nAAL681 american 681 DEP GND taxi h123 33L\nCES577 china eastern 577 DEP GND taxi h132 33L\nDAL456 delta 456 DEP GND startup h315 33L\nEIN935 shamrock 935 DEP GND taxi h127 33L\nSWA793 southwest 793 DEP GND taxi h120 33L\nAAL570 american 570 ARR APP cruise 3000ft h127 32\nAAL690 american 690 ARR APP cruise 7000ft h145 32\nJBU103 jetblue 103 ARR APP cruise 7000ft h191 32\nJBU194 jetblue 194 ARR APP approach 10000ft h141 32\nJBU878 jetblue 878 ARR APP cruise 8000ft h297 32\nSKW864 skw864 ARR APP cruise 4000ft h093 32",
+  "line": "AAL681 Taxi RWY 33L via B, hold short 22L",
+  "icao": "KBOS",
+  "truth": "american six eighty one taxi to holding point runway three three left via bravo hold short of runway two two left"
+ },
+ {
+  "key": "cov0600",
+  "style": "stt",
+  "kind": "giveWay",
+  "heard": "easy five six nine give way to the shamrock five five five then continue",
+  "ctx": "@TWR 09R 08L 09L 08R\nEIN55 shamrock 55 DEP TWR hold_short h131 08R req:ready\nEZY569 easy 569 DEP TWR hold_short h146 08R\nAFR104 air france 104 DEP GND startup h264 08L\nAFR19 air france 19 ARR GND arrived h352 09R\nAFR266 air france 266 DEP GND pushback h118 08R\nAFR28 air france 28 ARR GND taxi h173 09L\nAFR89 air france 89 DEP GND hold_short h173 08R req:cross\nBAW1 speedbird 1 DEP DEP climb 5900ft h349 08R\nEZY93 easy 93 ARR APP cruise 4000ft h267 09L\nIGO445 ifly 445 ARR GND taxi h173 09L\nJBU872 jetblue 872 DEP GND taxi h083 08R\nSWA856 southwest 856 ARR APP cruise 3000ft h056 09R\nTRA637 transavia 637 DEP GND taxi h095 08R",
+  "line": "EZY569 Give way to EIN55",
+  "icao": "LFPG",
+  "truth": "easy five six nine give way to the shamrock five five then continue"
+ },
+ {
+  "key": "cov0605",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "cathay two two two runway two five left taxi via charlie two charlie three",
+  "ctx": "@GND 25C 25R 25L\nCPA222 cathay 222 DEP GND startup h074 25L\nCPA61 cathay 61 DEP GND startup h163 25C\nHKE527 hong kong express 527 DEP GND pushback h130 25C\nHKE528 hong kong express 528 DEP GND pushback h164 25L\nANA978 all nippon 978 ARR APP descent 9000ft h013 25R\nCPA50 cathay 50 ARR APP approach 11000ft h102 25R\nHKE504 hong kong express 504 ARR APP descent 7500ft h131 25R\nSCO498 scooter 498 ARR APP approach 9000ft h079 25R",
+  "line": "CPA222 Taxi RWY 25L via C2, C3",
+  "icao": "VHHH",
+  "truth": "cathay two two two runway two five left taxi via charlie two charlie three"
+ },
+ {
+  "key": "cov0608",
+  "style": "stt",
+  "kind": "hold",
+  "heard": "delta eight eight zero hold at hndso as published right turns one minute legs",
+  "ctx": "@APP 34R 34L\nAAL791 american 791 ARR APP cruise 5000ft h168 34R\nANA125 all nippon 125 ARR APP cruise 7000ft h164 34R\nANA139 all nippon 139 ARR APP approach 10000ft h221 34L\nANA15 all nippon 15 ARR APP cruise 9000ft h216 34L\nANA244 all nippon 244 ARR APP cruise 6000ft h164 34L\nANA76 all nippon 76 ARR APP cruise 4000ft h158 34L\nDAL880 delta 880 ARR APP cruise 3000ft h314 34L\nJAL384 japan air 384 ARR APP cruise 8000ft h183 34R\nANA248 all nippon 248 DEP GND taxi h084 34R\nANA47 all nippon 47 DEP GND taxi h150 34R\nDAL865 delta 865 ARR TWR landing 1000ft h339 34L req:confirm_cleared\nDLH153 lufthansa 153 DEP TWR hold_short h068 34R req:ready\nFDB295 sky dubai 295 DEP TWR takeoff h338 34L req:ready\nTHY384 turkish 384 DEP GND taxi h154 34R",
+  "line": "DAL880 Hold at HNDSO, right turns, 1 min legs",
+  "icao": "RJTT",
+  "truth": "delta eight eight zero hold at hndso as published right turns one minute legs"
+ },
+ {
+  "key": "cov0612",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "klm two twenty runway two five left taxi via sierra tango uniform",
+  "ctx": "@GND 25L 25R\nAAL465 american 465 DEP GND taxi h226 25L\nAAL470 american 470 DEP GND taxi h071 25L\nCCA593 air china 593 DEP GND parked h332 25L req:pushback\nJST721 jetstar 721 DEP GND taxi h072 25L\nKLM220 klm 220 DEP GND taxi h143 25L\nQFA872 qantas 872 DEP GND parked h270 25L req:pushback\nUAL109 united 109 DEP GND parked h176 25L req:pushback\nUAL63 united 63 DEP GND taxi h071 25L\nUAL767 united 767 DEP GND parked h071 25L req:pushback\nDAL286 delta 286 DEP DEP climb 4800ft h068 25L\nSKW734 skw734 ARR APP descent 3400ft h087 25R\nSWA529 southwest 529 ARR APP cruise 8000ft h071 25R\nSWA596 southwest 596 ARR APP cruise 7000ft h060 25R\nUAL9 united 9 ARR TWR landing 2400ft h253 25R req:with_you",
+  "line": "KLM220 Taxi RWY 25L via S, T, U",
+  "icao": "KLAX",
+  "truth": "klm two twenty runway two five left taxi via sierra tango uniform"
+ },
+ {
+  "key": "cov0616",
+  "style": "stt",
+  "kind": "ils",
+  "heard": "united one twenty seven cleared ils approach runway two five right report established",
+  "ctx": "@APP 25R 25L 24L 24R\nAAL368 american 368 ARR APP cruise 5000ft h284 24R\nJAL851 japan air 851 ARR APP cruise 7000ft h220 24L\nSKW749 skw749 DEP DEP climb 7900ft h304 25L\nSWR238 swiss 238 ARR APP cruise 4000ft h117 24L\nUAL127 united 127 ARR APP cruise 6000ft h258 24R\nUAL44 united 44 ARR APP cruise 3000ft h262 24L\nAAL378 american 378 ARR TWR landing 1100ft h250 24R\nAAL399 american 399 DEP GND hold_short h123 25L req:cross\nAAL400 american 400 DEP GND taxi h109 25R\nANA826 all nippon 826 DEP GND taxi h071 25R\nQFA895 qantas 895 DEP GND taxi h071 25L\nSKW785 skw785 DEP GND startup h162 25L\nSWA580 southwest 580 DEP TWR takeoff h161 25L\nUAL137 united 137 DEP GND taxi h072 25L",
+  "line": "UAL127 Cleared ILS 25R, report established",
+  "icao": "KLAX",
+  "truth": "united one twenty seven cleared ils approach runway two five right report established"
+ },
+ {
+  "key": "cov0625",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "speedbird one taxi to holding point runway one zero left via papa quebec quebec one",
+  "ctx": "@GND 19L 19R\nBAW1 speedbird 1 DEP GND pushback h296 19R\nCCA581 air china 581 DEP GND startup h104 19L\nSIA452 singapore 452 DEP GND startup h046 19L\nUAL227 united 227 DEP GND pushback h059 19L\nUAL285 united 285 DEP GND startup h012 19R\nIGO445 ifly 445 ARR APP descent 4300ft h158 19R\nSKW788 skw788 ARR APP approach 10000ft h073 19R req:with_you\nUAL19 united 19 ARR APP descent 5200ft h305 19L\nUAL28 united 28 ARR APP approach 11000ft h044 19R\nUAL315 united 315 ARR APP descent 8700ft h069 19R",
+  "line": "BAW1 Taxi RWY 10L via P, Q, Q1",
+  "icao": "KSFO",
+  "truth": "speedbird one taxi to holding point runway one zero left via papa quebec quebec one"
+ },
+ {
+  "key": "cov0627",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "japan air eight seventy taxi to holding point runway two five right via echo one nine foxtrot golf hold short of runway two five left",
+  "ctx": "@GND 25R 25L 24L 24R\nAAL434 american 434 ARR GND arrived h004 24R\nASA654 alaska 654 DEP GND hold_short h318 24L req:cross\nJAL870 japan air 870 DEP GND startup h268 25L\nUAL130 united 130 DEP GND taxi h071 25L\nAAL436 american 436 ARR APP cruise 3000ft h072 25R\nANZ757 new zealand 757 ARR APP approach 9000ft h069 24R\nDAL181 delta 181 ARR TWR rollout h251 24R\nDAL229 delta 229 DEP TWR takeoff h251 25L\nDAL266 delta 266 ARR APP cruise 6000ft h230 25R\nDLH134 lufthansa 134 DEP DEP climb 5800ft h117 24L\nJAL854 japan air 854 ARR APP cruise 4000ft h101 24R\nUAE995 emirates 995 ARR APP cruise 5000ft h119 24R\nUPS981 ups 981 ARR TWR landing 2300ft h251 24R req:with_you",
+  "line": "JAL870 Taxi RWY 25R via E19, F, G, hold short 25L",
+  "icao": "KLAX",
+  "truth": "japan air eight seventy taxi to holding point runway two five right via echo one nine foxtrot golf hold short of runway two five left"
+ },
+ {
+  "key": "cov0633",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "speedbird four four four taxi to holding point runway two seven right via november six november seven hold short of runway two seven left",
+  "ctx": "@GND 27R 27L\nBAW161 speedbird 161 DEP GND taxi h089 27L\nBAW301 speedbird 301 DEP GND taxi h051 27R\nBAW444 speedbird 444 DEP GND taxi h037 27R\nUPS996 ups 996 ARR GND taxi h089 27L\nAAL852 american 852 DEP DEP climb 4100ft h119 27R\nAIC399 air india 399 ARR APP descent 7000ft h096 27L\nBAW120 speedbird 120 ARR APP cruise 5000ft h092 27L\nBAW191 speedbird 191 DEP TWR hold_short h036 27R\nBAW358 speedbird 358 DEP EXT departed 10400ft h058 27R\nDLH135 lufthansa 135 ARR APP cruise 7000ft h075 27L\nJAL648 japan air 648 DEP TWR hold_short h179 27L\nJBU886 jetblue 886 ARR APP cruise 3000ft h243 27R\nSIA958 singapore 958 ARR APP cruise 4000ft h036 27L\nUAE779 emirates 779 ARR APP approach 12000ft h083 27L",
+  "line": "BAW444 Taxi RWY 27R via N6, N7, hold short 27L",
+  "icao": "EGLL",
+  "truth": "speedbird four four four taxi to holding point runway two seven right via november six november seven hold short of runway two seven left"
+ },
+ {
+  "key": "cov0636",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "jetstar seven two one taxi to holding point runway one two right via papa two alpha",
+  "ctx": "@GND 30R 30L\nCCA586 air china 586 DEP GND startup h285 30R\nFDB496 sky dubai 496 DEP GND parked h210 30R\nJST721 jetstar 721 DEP GND startup h029 30R\nKLM220 klm 220 DEP GND pushback h315 30R\nUAE465 emirates 465 DEP GND startup h299 30R\nUAE470 emirates 470 DEP GND startup h298 30R\nBAW734 speedbird 734 ARR APP descent 4300ft h121 30L\nFDB529 sky dubai 529 ARR APP descent 5300ft h114 30L\nFDB596 sky dubai 596 ARR APP approach 11000ft h090 30L\nUAE9 emirates 9 ARR APP descent 4800ft h173 30L",
+  "line": "JST721 Taxi RWY 12R via P2A",
+  "icao": "OMDB",
+  "truth": "jetstar seven two one taxi to holding point runway one two right via papa two alpha"
+ },
+ {
+  "key": "cov0646",
+  "style": "stt",
+  "kind": "hold",
+  "heard": "lufthansa nine four nine hold at idpne as published right turns one minute legs",
+  "ctx": "@APP 11R 11L 10 09\nAIC570 air india 570 ARR APP descent 3700ft h076 11L\nBAW864 speedbird 864 ARR APP descent 7500ft h323 11L\nDLH949 lufthansa 949 ARR APP approach 11000ft h255 11R\nUAL773 united 773 ARR APP descent 6600ft h177 11R\nAIC456 air india 456 DEP GND pushback h284 10\nAIC681 air india 681 DEP GND pushback h013 09\nQTR793 qatari 793 DEP GND startup h283 10\nSIA935 singapore 935 DEP GND pushback h283 09",
+  "line": "DLH949 Hold at IDPNE, right turns, 1 min legs",
+  "icao": "VIDP",
+  "truth": "lufthansa nine four nine hold at idpne as published right turns one minute legs"
+ },
+ {
+  "key": "cov0654",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "jetblue two sixty four taxi to holding point runway three one left via sierra bravo sierra charlie sierra delta",
+  "ctx": "@GND 31L 31R\nCES578 china eastern 578 DEP GND hold_short h144 31L req:cross\nCPA517 cathay 517 DEP GND taxi h133 31L\nJAL648 japan air 648 DEP GND taxi h339 31R\nJBU264 jetblue 264 DEP GND pushback h359 31L\nJBU293 jetblue 293 DEP GND taxi h219 31L\nSWA842 southwest 842 DEP GND taxi h133 31L\nAIC400 air india 400 ARR TWR approach 2800ft h310 31L req:with_you\nBAW695 speedbird 695 ARR APP cruise 6000ft h312 31R\nDAL95 delta 95 ARR APP cruise 3000ft h121 31R\nDLH135 lufthansa 135 ARR APP cruise 3000ft h303 31R\nJBU358 jetblue 358 DEP TWR hold_short h223 31L\nJBU444 jetblue 444 ARR APP cruise 5000ft h141 31R\nJBU562 jetblue 562 DEP TWR hold_short h140 31L\nUPS996 ups 996 ARR APP cruise 3000ft h198 31R",
+  "line": "JBU264 Taxi RWY 31L via SB, SC, SD",
+  "icao": "KJFK",
+  "truth": "jetblue two sixty four taxi to holding point runway three one left via sierra bravo sierra charlie sierra delta"
+ },
+ {
+  "key": "cov0655",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "etihad three five zero runway one two right taxi via kilo six kilo seven kilo eight",
+  "ctx": "@GND 30R 30L\nDLH981 lufthansa 981 DEP GND parked h208 30R req:startup\nETD350 etihad 350 DEP GND pushback h125 30R\nQTR763 qatari 763 DEP GND taxi h301 30R\nUAE463 emirates 463 DEP GND taxi h209 30R\nUAE56 emirates 56 ARR GND arrived h207 30L\nUAE63 emirates 63 DEP GND taxi h120 30R\nEZY84 easy 84 DEP DEP climb 2500ft h077 30R\nIGO889 ifly 889 ARR APP cruise 4000ft h116 30L\nKLM228 klm 228 DEP EXT departed 8900ft h124 30R\nUAE191 emirates 191 ARR APP cruise 3000ft h144 30L\nUAE281 emirates 281 ARR APP cruise 6000ft h144 30L\nUAE391 emirates 391 DEP TWR hold_short h031 30R\nUAL773 united 773 ARR APP cruise 5000ft h303 30L",
+  "line": "ETD350 Taxi RWY 12R via K6, K7, K8",
+  "icao": "OMDB",
+  "truth": "etihad three five zero runway one two right taxi via kilo six kilo seven kilo eight"
+ },
+ {
+  "key": "cov0664",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "scooter five two nine taxi to stand alpha one four via romeo five",
+  "ctx": "@GND 20L 21 20R 20C\nSCO529 scooter 529 ARR GND taxi h304 20C\nSIA72 singapore 72 DEP GND pushback h202 20R\nUAE734 emirates 734 ARR GND arrived h200 20C\nQFA654 qantas 654 ARR APP cruise 5000ft h113 20C\nSCO406 scooter 406 ARR APP approach 9000ft h015 20C\nSCO470 scooter 470 DEP TWR hold_short h174 21 req:ready\nSCO496 scooter 496 DEP TWR takeoff h203 20L\nSCO498 scooter 498 ARR APP cruise 7000ft h015 20C\nSCO568 scooter 568 ARR APP descent 3100ft h028 20C\nSIA31 singapore 31 ARR APP cruise 4000ft h229 20C\nSIA64 singapore 64 ARR APP approach 3000ft h198 20C\nTRA207 transavia 207 ARR APP cruise 6000ft h170 20C\nTRA210 transavia 210 DEP DEP climb 6800ft h032 21",
+  "line": "SCO529 Taxi stand A14 via R5",
+  "icao": "WSSS",
+  "truth": "scooter five two nine taxi to stand alpha one four via romeo five"
+ },
+ {
+  "key": "cov0665",
+  "style": "stt",
+  "kind": "radarContact",
+  "heard": "air france one seven nine singapore changi approach radar contact altimeter two nine nine two expect ils runway two zero right approach",
+  "ctx": "@APP 20L 21 20R 20C\nAFR179 air france 179 ARR APP approach 9000ft h180 20R\nCCA588 air china 588 DEP DEP climb 3100ft h082 20L\nQFA674 qantas 674 ARR APP cruise 7000ft h013 20C\nCCA581 air china 581 DEP EXT departed 10500ft h006 21\nETD347 etihad 347 DEP GND taxi h175 21\nHKE538 hong kong express 538 DEP TWR hold_short h047 21\nRYR126 ryanair 126 DEP GND taxi h027 20L\nSIA104 singapore 104 DEP GND taxi h203 20L\nSIA19 singapore 19 ARR GND taxi h023 20C\nSIA227 singapore 227 ARR GND taxi h023 20C\nSIA28 singapore 28 ARR TWR landing 500ft h202 20R\nSIA75 singapore 75 DEP TWR hold_short h105 21 req:ready\nSIA89 singapore 89 DEP GND taxi h022 21\nUAE702 emirates 702 DEP GND pushback h292 21",
+  "line": "AFR179 Radar contact, expect 20R",
+  "icao": "WSSS",
+  "truth": "air france one seven nine singapore changi approach radar contact altimeter two nine nine two expect ils runway two zero right approach"
+ },
+ {
+  "key": "cov0666",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "emirates two six seven taxi to holding point runway three zero right via papa eight papa nine hold short of runway three zero left",
+  "ctx": "@GND 30L 30R\nAIC400 air india 400 ARR GND taxi h119 30L\nASA918 alaska 918 DEP GND taxi h144 30L\nFDB543 sky dubai 543 DEP GND taxi h188 30L\nUAE267 emirates 267 DEP GND taxi h120 30L\nUPS996 ups 996 ARR GND arrived h210 30R\nAFR179 air france 179 ARR APP cruise 5000ft h049 30R\nAIC399 air india 399 ARR APP cruise 4000ft h309 30R\nBAW723 speedbird 723 ARR APP cruise 7000ft h238 30R\nCPA733 cathay 733 ARR APP cruise 7000ft h146 30R\nUAE282 emirates 282 ARR APP cruise 3000ft h295 30R\nUAE358 emirates 358 DEP DEP climb 4300ft h222 30L\nUAE71 emirates 71 DEP TWR takeoff h355 30L\nUAE95 emirates 95 ARR APP approach 3000ft h312 30R",
+  "line": "UAE267 Taxi RWY 30R via P8, P9, hold short 30L",
+  "icao": "OMDB",
+  "truth": "emirates two six seven taxi to holding point runway three zero right via papa eight papa nine hold short of runway three zero left"
+ },
+ {
+  "key": "cov0670",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "alaska four twenty six taxi to holding point runway one nine left",
+  "ctx": "@GND 19L 19R\nAAL690 american 690 DEP GND hold_short h074 19L req:cross\nASA426 alaska 426 DEP GND taxi h015 19L\nUAL28 united 28 ARR GND taxi h035 19R\nAAL702 american 702 ARR APP descent 7200ft h013 19R\nETD347 etihad 347 ARR APP cruise 4000ft h202 19R\nEZY103 easy 103 ARR APP cruise 5000ft h267 19R\nHKE537 hong kong express 537 ARR APP descent 8200ft h145 19R\nIGO439 ifly 439 ARR APP cruise 10000ft h069 19R\nSKW788 skw788 ARR APP cruise 3000ft h168 19R\nUAL141 united 141 ARR APP cruise 6000ft h333 19R\nUAL20 united 20 ARR APP cruise 7000ft h005 19R\nUAL315 united 315 ARR TWR landing 1000ft h193 19R\nUAL89 united 89 DEP EXT departed 9700ft h169 19L",
+  "line": "ASA426 Taxi RWY 19L",
+  "icao": "KSFO",
+  "truth": "alaska four twenty six taxi to holding point runway one nine left"
+ },
+ {
+  "key": "cov0687",
+  "style": "stt",
+  "kind": "exitAt",
+  "heard": "united forty four vacate via sierra",
+  "ctx": "@TWR 25R 25L 24L 24R\nAAL399 american 399 DEP TWR climb 900ft h280 25L\nAAL400 american 400 DEP TWR hold_short h120 25R\nUAL137 united 137 DEP TWR hold_short h161 25L\nUAL44 united 44 ARR TWR landing 2200ft h253 24L\nAAL368 american 368 ARR APP descent 4200ft h225 24R\nAAL378 american 378 ARR GND taxi h071 24R\nANA826 all nippon 826 DEP GND taxi h077 25R\nJAL851 japan air 851 ARR APP cruise 6000ft h275 24L\nQFA895 qantas 895 DEP GND hold_short h134 25L req:cross\nSKW785 skw785 DEP GND taxi h071 25L\nSWA493 southwest 493 DEP GND parked h251 25R req:pushback\nSWA580 southwest 580 DEP DEP climb 6700ft h216 25L\nSWR238 swiss 238 ARR APP descent 3300ft h073 24L\nUAL127 united 127 ARR APP descent 5400ft h310 24R",
+  "line": "UAL44 Exit S",
+  "icao": "KLAX",
+  "truth": "united forty four vacate via sierra"
+ },
+ {
+  "key": "cov0689",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "ifly two zero five taxi to holding point runway two eight via zulu zulu two",
+  "ctx": "@TWR 29L 29R 28 27\nAIC527 air india 527 DEP TWR hold_short h014 28\nIGO205 ifly 205 DEP TWR hold_short h015 28 req:ready\nIGO76 ifly 76 ARR TWR landing 2000ft h285 29R\nAIC685 air india 685 DEP GND taxi h179 28\nBAW865 speedbird 865 ARR GND taxi h104 27\nBAW880 speedbird 880 ARR GND taxi h072 29R\nDLH153 lufthansa 153 DEP GND taxi h130 29L\nDLH986 lufthansa 986 DEP GND taxi h191 29L\nFDB295 sky dubai 295 DEP GND taxi h104 28\nIGO14 ifly 14 DEP EXT departed 10000ft h228 29L\nIGO248 ifly 248 DEP GND taxi h201 29L\nIGO384 ifly 384 ARR APP cruise 4000ft h243 27\nKLM221 klm 221 ARR APP cruise 3000ft h087 27\nQTR783 qatari 783 DEP GND hold_short h194 28 req:cross",
+  "line": "IGO205 Taxi RWY 28 via Z, Z2",
+  "icao": "VIDP",
+  "truth": "ifly two zero five taxi to holding point runway two eight via zulu zulu two"
+ },
+ {
+  "key": "cov0690",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "lufthansa one thirty four taxi to stand five via echo one two echo one five hold short of runway zero six right",
+  "ctx": "@GND 25R 25L 24L 24R\nDLH134 lufthansa 134 DEP GND taxi h071 24L\nFDB300 sky dubai 300 ARR GND taxi h071 25R\nSWA526 southwest 526 ARR GND taxi h073 25R\nSWA545 southwest 545 DEP GND taxi h072 24L\nSWA553 southwest 553 DEP GND taxi h072 24L\nUAL132 united 132 DEP GND hold_short h116 25L\nAAL434 american 434 ARR TWR landing 1500ft h250 24R\nAAL436 american 436 ARR APP descent 8400ft h057 25R\nDAL181 delta 181 ARR APP approach 3000ft h256 24R\nDLH136 lufthansa 136 DEP TWR takeoff h241 25L\nQFA681 qantas 681 DEP DEP climb 5700ft h037 25L\nSWA607 southwest 607 DEP EXT departed 12000ft h122 24L\nSWA865 southwest 865 DEP TWR hold_short h025 24L\nUPS981 ups 981 ARR APP cruise 4000ft h225 24R",
+  "line": "DLH134 Taxi stand 5 via E12, E15, hold short 06R",
+  "icao": "KLAX",
+  "truth": "lufthansa one thirty four taxi to stand five via echo one two echo one five hold short of runway zero six right"
+ },
+ {
+  "key": "cov0691",
+  "style": "stt",
+  "kind": "altitude",
+  "heard": "emirates one nine one descend to three thousand",
+  "ctx": "@APP 30R 30L\nIGO889 ifly 889 ARR APP cruise 5000ft h269 30L\nUAE191 emirates 191 ARR APP cruise 4000ft h047 30L\nUAE281 emirates 281 ARR APP cruise 7000ft h146 30L\nUAE388 emirates 388 DEP DEP climb 4300ft h047 30R\nUAL773 united 773 ARR APP cruise 6000ft h069 30L\nCPA525 cathay 525 DEP EXT departed 11300ft h182 30R\nEZY84 easy 84 DEP GND taxi h032 30R\nKLM228 klm 228 DEP GND taxi h029 30R\nQTR763 qatari 763 DEP GND parked h209 30R req:startup\nUAE338 emirates 338 DEP TWR takeoff h027 30R\nUAE362 emirates 362 ARR GND taxi h299 30L\nUAE391 emirates 391 DEP GND taxi h119 30R\nUAE56 emirates 56 ARR TWR landing 1900ft h301 30L\nUAE63 emirates 63 DEP GND parked h029 30R req:pushback",
+  "line": "UAE191 Altitude 3000",
+  "icao": "OMDB",
+  "truth": "emirates one nine one descend to three thousand"
+ },
+ {
+  "key": "cov0694",
+  "style": "stt",
+  "kind": "hold",
+  "heard": "velocity seven zero seven hold at cdgea as published right turns one minute legs",
+  "ctx": "@APP 27L 26R 27R 26L\nAFR264 air france 264 DEP DEP climb 5900ft h006 27R\nAFR5 air france 5 ARR APP approach 9000ft h082 26L\nAFR95 air france 95 ARR APP cruise 3000ft h274 26R\nRYR915 ryanair 915 ARR APP cruise 4000ft h163 26R\nRYR935 ryanair 935 ARR APP cruise 6000ft h121 26L\nVOZ707 velocity 707 ARR APP descent 4500ft h262 26L\nAFR161 air france 161 DEP TWR takeoff h276 27R\nAFR394 air france 394 DEP GND taxi h356 27L\nAIC400 air india 400 ARR TWR rollout h263 26L\nCCA593 air china 593 DEP TWR hold_short h354 27L\nDAL832 delta 832 DEP GND taxi h083 27L\nKLM784 klm 784 DEP GND startup h263 27R\nUPS996 ups 996 ARR GND taxi h080 26L",
+  "line": "VOZ707 Hold at CDGNE, right turns, 1 min legs",
+  "icao": "LFPG",
+  "truth": "velocity seven zero seven hold at cdgne as published right turns one minute legs"
+ },
+ {
+  "key": "cov0700",
+  "style": "stt",
+  "kind": "pushback",
+  "heard": "easy eight four pushback approved face north expect runway one two right",
+  "ctx": "@GND 30R 30L\nCPA525 cathay 525 DEP GND taxi h031 30R\nEZY84 easy 84 DEP GND parked h029 30R req:pushback\nKLM228 klm 228 DEP GND startup h208 30R\nUAE338 emirates 338 DEP GND startup h209 30R\nUAE388 emirates 388 DEP GND taxi h120 30R\nUAE391 emirates 391 DEP GND pushback h210 30R\nIGO889 ifly 889 ARR APP cruise 7000ft h146 30L\nUAE191 emirates 191 ARR APP cruise 4000ft h084 30L\nUAE362 emirates 362 ARR TWR landing 1200ft h298 30L\nUAE453 emirates 453 DEP TWR takeoff h300 30R\nUAE56 emirates 56 ARR APP cruise 3000ft h325 30L\nUAL773 united 773 ARR APP cruise 5000ft h144 30L\nVOZ698 velocity 698 DEP DEP climb 7200ft h092 30R",
+  "line": "EZY84 Pushback approved, face N, expect 12R",
+  "icao": "OMDB",
+  "truth": "easy eight four pushback approved face north expect runway one two right"
+ },
+ {
+  "key": "cov0707",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "qatari eight two four taxi to holding point runway two nine left via echo two echo three echo four",
+  "ctx": "@GND 29L 27\nAFR179 air france 179 DEP GND parked h283 29L\nAIC676 air india 676 DEP GND pushback h278 29L\nIGO86 ifly 86 DEP GND taxi h194 29L\nQFA675 qantas 675 DEP GND hold_short h193 29L req:cross\nQTR824 qatari 824 DEP GND taxi h194 29L\nANA623 all nippon 623 ARR APP cruise 6000ft h241 27\nDLH975 lufthansa 975 DEP EXT departed 10900ft h226 29L\nEZY80 easy 80 DEP DEP climb 1400ft h316 29L\nIGO436 ifly 436 ARR APP cruise 5000ft h037 27\nRYR117 ryanair 117 ARR APP cruise 3000ft h229 27\nUAE282 emirates 282 ARR APP cruise 7000ft h162 27\nUPS975 ups 975 ARR TWR rollout h271 27\nUPS989 ups 989 ARR APP cruise 4000ft h300 27",
+  "line": "QTR824 Taxi RWY 29L via E2, E3, E4",
+  "icao": "VIDP",
+  "truth": "qatari eight two four taxi to holding point runway two nine left via echo two echo three echo four"
+ },
+ {
+  "key": "cov0710",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "cathay one eight two taxi to stand x ray four five six hold short of runway two five right",
+  "ctx": "@GND 07C 07L 07R\nCES564 china eastern 564 DEP GND taxi h267 07C\nCES734 china eastern 734 ARR GND taxi h152 07L\nCPA182 cathay 182 DEP GND taxi h344 07C\nFDX963 fedex 963 DEP GND taxi h254 07C\nHKE465 hong kong express 465 DEP GND taxi h254 07L\nHKE472 hong kong express 472 DEP GND parked h074 07C\nQFA676 qantas 676 DEP GND pushback h254 07C\nCPA134 cathay 134 DEP TWR hold_short h301 07C\nCPA64 cathay 64 ARR APP cruise 4000ft h127 07L\nCPA9 cathay 9 ARR APP approach 3000ft h074 07R\nHKE470 hong kong express 470 DEP DEP climb 5700ft h311 07C\nHKE529 hong kong express 529 ARR APP cruise 3000ft h212 07L\nTRA210 transavia 210 DEP TWR takeoff h074 07C\nUAE269 emirates 269 ARR APP cruise 5000ft h039 07L",
+  "line": "CPA182 Taxi stand X456, hold short 25R",
+  "icao": "VHHH",
+  "truth": "cathay one eight two taxi to stand x ray four five six hold short of runway two five right"
+ },
+ {
+  "key": "cov0711",
+  "style": "stt",
+  "kind": "taxi",
+  "heard": "american six eleven taxi to stand hotel seven two hold short of runway three one right",
+  "ctx": "@GND 31L 31R\nAAL611 american 611 DEP GND taxi h171 31L\nAFR865 air france 865 ARR GND taxi h043 31L\nAFR880 air france 880 ARR GND arrived h100 31R\nDAL76 delta 76 ARR GND taxi h259 31R\nDAL78 delta 78 DEP GND taxi h133 31L\nAAL632 american 632 DEP DEP climb 2700ft h093 31L\nAAL791 american 791 ARR APP cruise 3000ft h287 31L\nBAW15 speedbird 15 ARR APP cruise 5000ft h237 31R\nDAL108 delta 108 ARR APP cruise 6000ft h139 31R\nDAL112 delta 112 ARR APP cruise 8000ft h280 31R\nDAL47 delta 47 ARR APP cruise 7000ft h110 31R\nJBU354 jetblue 354 ARR APP cruise 4000ft h056 31R\nSWA845 southwest 845 ARR APP cruise 9000ft h003 31L\nUAL684 united 684 ARR APP approach 11000ft h136 31R",
+  "line": "AAL611 Taxi stand H7#2, hold short 31R",
+  "icao": "KJFK",
+  "truth": "american six eleven taxi to stand hotel seven two hold short of runway three one right"
+ },
+ {
+  "key": "cov0714",
+  "style": "stt",
+  "kind": "radarContact",
+  "heard": "sierra kilo whiskey seven thirty four los angeles intl approach radar contact altimeter three zero two one expect ils runway zero six left approach",
+  "ctx": "@APP 07L 07R 06R 06L\nSKW734 skw734 ARR APP descent 9900ft h124 06L\nSWA529 southwest 529 ARR APP approach 11000ft h079 06L\nUAL9 united 9 ARR APP approach 9000ft h253 06L req:with_you\nAAL465 american 465 DEP GND parked h027 06R\nAAL470 american 470 DEP GND parked h258 07R\nJST721 jetstar 721 DEP GND parked h208 07L\nKLM220 klm 220 DEP GND parked h342 06R",
+  "line": "SKW734 Radar contact, expect 06L",
+  "icao": "KLAX",
+  "truth": "sierra kilo whiskey seven thirty four los angeles intl approach radar contact altimeter three zero two one expect ils runway zero six left approach"
+ },
+ {
+  "key": "cov0715",
+  "style": "stt",
+  "kind": "radarContact",
+  "heard": "air china five nine seven heathrow approach radar contact altimeter two nine five zero expect ils runway two seven left approach",
+  "ctx": "@APP 27R 27L\nBAW323 speedbird 323 ARR APP descent 5600ft h272 27L\nBAW399 speedbird 399 DEP DEP climb 6800ft h349 27R\nCCA597 air china 597 ARR APP approach 10000ft h079 27L\nUAL875 united 875 ARR APP cruise 3000ft h261 27L\nBAW137 speedbird 137 DEP TWR takeoff h269 27R\nBAW204 speedbird 204 DEP GND taxi h089 27R\nBAW37 speedbird 37 DEP GND taxi h029 27R\nBAW378 speedbird 378 ARR GND taxi h359 27L\nBAW400 speedbird 400 DEP GND taxi h058 27R\nBAW403 speedbird 403 DEP GND taxi h089 27R\nBAW452 speedbird 452 ARR TWR landing 200ft h269 27L\nBAW66 speedbird 66 DEP GND taxi h089 27R\nDLH653 lufthansa 653 DEP GND hold_short h029 27R req:cross\nKLM749 klm 749 DEP GND taxi h050 27R",
+  "line": "CCA597 Radar contact, expect 27L",
+  "icao": "EGLL",
+  "truth": "air china five nine seven heathrow approach radar contact altimeter two nine five zero expect ils runway two seven left approach"
+ },
+ {
+  "key": "cov0716",
+  "style": "stt",
+  "kind": "hold",
+  "heard": "china eastern five six four hold at hkg as published right turns one minute legs",
+  "ctx": "@APP 07C 07L 07R\nCES564 china eastern 564 DEP DEP climb 1600ft h094 07C\nHKE559 hong kong express 559 ARR APP descent 5900ft h182 07R\nUAE269 emirates 269 ARR APP cruise 3000ft h229 07L\nCES571 china eastern 571 DEP GND startup h254 07C\nCES734 china eastern 734 ARR GND taxi h163 07L\nCPA182 cathay 182 DEP GND taxi h267 07C\nCPA64 cathay 64 ARR TWR rollout h074 07L\nCPA9 cathay 9 ARR GND taxi h254 07R\nETD346 etihad 346 DEP GND parked h302 07C\nFDX963 fedex 963 DEP TWR hold_short h305 07C\nHKE465 hong kong express 465 DEP EXT departed 8300ft h003 07L\nHKE472 hong kong express 472 DEP GND taxi h341 07C\nHKE529 hong kong express 529 ARR TWR landing 1700ft h072 07L\nQFA676 qantas 676 DEP GND taxi h255 07C",
+  "line": "CES564 Hold at HKGEA, right turns, 1 min legs",
+  "icao": "VHHH",
+  "truth": "china eastern five six four hold at hkgea as published right turns one minute legs"
+ }
+]
