@@ -13,9 +13,9 @@ import type { SimEngine } from './engine';
 import type { AircraftState, PilotRequest, RunwayState } from './types';
 import type { SingleAircraftCommand } from './commandAst';
 import { isAirborne } from './aircraft';
-import { cpa, verticalSpeedFpm } from './alerts';
+import { ALERT_CONST, cpa, verticalSpeedFpm } from './alerts';
 import { ledgerOf, type LedgerEntry, type PilotQuery } from './ledger';
-import { alongTrack, angleDelta, headingTo } from './projection';
+import { alongTrack, angleDelta, headingTo, NM_TO_M } from './projection';
 
 export const MIND_CONST = {
   /** A crew on final watches the runway from here (NM to the threshold). */
@@ -28,6 +28,8 @@ export const MIND_CONST = {
   finalNM: 2,
   /** Converging traffic: predicted to pass closer than this (NM and ft) within lookS, and not there yet. */
   cpaNM: 1.5, cpaFt: 600, lookS: 75, minS: 8,
+  /** What a crew can see on its traffic display: this close and within this much height now. */
+  seeNM: 6, seeFt: 2000,
   /** The same concern is not repeated within this (s). */
   repeatS: 180,
   /** A pilot's own call stays open this long without an answer (s). */
@@ -142,6 +144,14 @@ export class PilotMind {
         }
       }
     }
+    else if (part.kind === 'altitude' && isAirborne(a) && !(a.phase === 'landing' || a.ilsCaptured || a.gsCaptured || a.navMode === 'visual') && !a.emergency) {
+      // the floor the engine's own low-altitude warning uses: a descent below it away from the airfield is questioned
+      const dNM = Math.hypot(a.pos.x - e.centerXY.x, a.pos.y - e.centerXY.y) / NM_TO_M;
+      const floor = ALERT_CONST.msawDefaultFloorFt;
+      if (dNM > ALERT_CONST.msawNearNM && part.ft < floor && part.ft < a.altitude) q = { earlier: null, rule: 'below_safe_level', question: `${Math.round(dNM)} miles out, minimum safe altitude ${floor}, confirm ${Math.round(part.ft)} feet` };
+    } else if (part.kind === 'contact' && part.position === 'ground' && isAirborne(a)) {
+      q = { earlier: null, rule: 'wrong_frequency', question: `we're airborne, confirm contact ${e.unitName('ground')}` };
+    }
     if (q) this.stats.questions++;
     return q;
   }
@@ -230,15 +240,19 @@ export class PilotMind {
       const va = { pos: a.pos, heading: a.heading, speedKt: a.speed, altFt: a.altitude, vsFpm: verticalSpeedFpm(a) };
       const vb = { pos: b.pos, heading: b.heading, speedKt: b.speed, altFt: b.altitude, vsFpm: verticalSpeedFpm(b) };
       const c = cpa(va, vb, MIND_CONST.lookS);
-      if (!(c.distNM < MIND_CONST.cpaNM && c.vertFt < MIND_CONST.cpaFt && c.tS >= MIND_CONST.minS && c.nowNM > c.distNM + 0.5)) continue;
+      if (c.nowNM > MIND_CONST.seeNM || Math.abs(a.altitude - b.altitude) > MIND_CONST.seeFt) continue;
+      // each aircraft levels at its cleared altitude: do not extrapolate a climb or descent through it
+      const at = (x: AircraftState, vs: number) => { const p = x.altitude + vs * c.tS / 60; return vs > 0 ? Math.min(p, Math.max(x.targetAltitude, x.altitude)) : vs < 0 ? Math.max(p, Math.min(x.targetAltitude, x.altitude)) : p; };
+      const vert = Math.abs(at(a, va.vsFpm) - at(b, vb.vsFpm));
+      if (!(c.distNM < MIND_CONST.cpaNM && vert < MIND_CONST.cpaFt && c.tS >= MIND_CONST.minS && c.nowNM > c.distNM + 0.5)) continue;
       const relA = Math.abs(angleDelta(a.heading, headingTo(a.pos, b.pos))), relB = Math.abs(angleDelta(b.heading, headingTo(b.pos, a.pos)));
       const [me, other] = relA <= relB ? [a, b] : [b, a];
       if (!this.once(`cv:${Math.min(a.id, b.id)}:${Math.max(a.id, b.id)}`, e.time)) continue;
       const rel = angleDelta(me.heading, headingTo(me.pos, other.pos));
       const clock = ((Math.round(rel / 30) % 12) + 12) % 12 || 12;
       const dz = other.altitude - me.altitude;
-      const vert = Math.abs(dz) < 300 ? 'same level' : `${Math.round(Math.abs(dz) / 100) * 100} feet ${dz > 0 ? 'above' : 'below'}`;
-      const text = `${e.unitName(me.onFrequency)}, ${e.telephony(me.callsign)}, traffic ${clock} o'clock, ${Math.max(1, Math.round(c.nowNM))} miles, ${vert}, converging.`;
+      const level = Math.abs(dz) < 300 ? 'same level' : `${Math.round(Math.abs(dz) / 100) * 100} feet ${dz > 0 ? 'above' : 'below'}`;
+      const text = `${e.unitName(me.onFrequency)}, ${e.telephony(me.callsign)}, traffic ${clock} o'clock, ${Math.max(1, Math.round(c.nowNM))} miles, ${level}, converging.`;
       if (this.call(e, me, 'concern', other.callsign, text)) this.stats.trafficCalls++;
     }
   }

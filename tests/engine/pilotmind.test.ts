@@ -114,3 +114,33 @@ test('story: the party line: a go-around for wind ahead, and the next one on the
   assert.equal(text(e, 'DAL2 Wind check').ok, true);
   assert.equal(next.requests.length, 0);
 });
+
+test('story: a descent below the minimum safe altitude far from the field is questioned; on the approach it is not', () => {
+  const e = EGLL();
+  const a = spawnOnFinal(e, 'BAW327', '27L', 16, { altFt: 5000, onFrequency: 'approach' });
+  a.ilsArmed = false; a.ilsCaptured = false;
+  const q = text(e, 'BAW327 Altitude 1000');
+  assert.equal(q.code, 'queried');
+  assert.match(q.readback, /\d+ miles out, minimum safe altitude 1500, confirm 1000 feet\?$/);
+  assert.equal(text(e, 'BAW327 Altitude 3000').ok, true, 'a normal descent');
+});
+
+test('story: sent to the ground frequency while airborne: the pilot asks', () => {
+  const e = EGLL();
+  const a = spawnOnFinal(e, 'BAW327', '27L', 16, { altFt: 5000, onFrequency: 'approach' });
+  a.ilsArmed = false; a.ilsCaptured = false;
+  const q = text(e, 'BAW327 Contact ground');
+  assert.equal(q.code, 'queried');
+  assert.match(q.readback, /we're airborne, confirm contact .*Ground\?$/);
+});
+
+test('traffic far below that levels off at its cleared altitude is not reported', () => {
+  const e = EGLL();
+  const a = spawnOnFinal(e, 'BAW327', '27L', 20, { altFt: 7000, onFrequency: 'approach' });
+  a.ilsArmed = false; a.ilsCaptured = false; a.navMode = 'heading'; a.targetHeading = a.heading; a.targetAltitude = 5000; a.cmdAltitude = 5000;
+  const b = spawnOnFinal(e, 'DLH978', '27L', 20, { altFt: 4000, onFrequency: 'approach' });
+  b.ilsArmed = false; b.ilsCaptured = false; b.navMode = 'heading'; b.targetAltitude = 4000; b.cmdAltitude = 4000;
+  b.pos = advance(a.pos, a.heading, 7 * NM_TO_M); b.heading = (a.heading + 180) % 360; b.targetHeading = b.heading;
+  run(e, 70);
+  assert.equal(mindOf(e).stats.trafficCalls, 0, 'a thousand feet apart when they pass');
+});

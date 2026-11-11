@@ -42,7 +42,7 @@ export interface PilotQuery {
   ast: SingleAircraftCommand;
   /** The earlier instruction it contradicts (null when the question comes from what the pilot sees or hears, pilotmind.ts). */
   earlier: LedgerEntry | null;
-  rule: 'level_reversal' | 'heading_reversal' | 'runway_surprise' | 'runway_traffic' | 'traffic_on_final' | 'departure_rolling';
+  rule: 'level_reversal' | 'heading_reversal' | 'runway_surprise' | 'runway_traffic' | 'traffic_on_final' | 'departure_rolling' | 'below_safe_level' | 'wrong_frequency';
   /** The pilot's question, without the callsign: "previously cleared FL080, confirm now 6000". */
   question: string;
   at: number;
@@ -165,6 +165,7 @@ function sameInstruction(x: SingleAircraftCommand, y: SingleAircraftCommand): bo
   if (x.kind === 'altitude' && y.kind === 'altitude') return Math.round(x.ft) === Math.round(y.ft);
   if (x.kind === 'heading' && y.kind === 'heading') return angle(x.hdg, y.hdg) < 1.5;
   if (x.kind === 'taxi' && y.kind === 'taxi') return x.dest.kind === 'runway' && y.dest.kind === 'runway' && up(x.dest.runway) === up(y.dest.runway);
+  if (x.kind === 'contact' && y.kind === 'contact') return x.position === y.position;
   if ((x.kind === 'clearedLand' || x.kind === 'lineup' || x.kind === 'cross') && 'runway' in y) return up(x.runway) === up((y as { runway: string }).runway);
   return false;
 }
