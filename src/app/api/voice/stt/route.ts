@@ -15,7 +15,7 @@
 */
 import { handleStt, firstEngine, clientKey, sttState } from './handler';
 import type { SttEngineId } from './handler';
-import { transcribe, sttConfig, loadEngine, transcribeParakeet, loadParakeet, parakeetReady, PARAKEET_MODEL } from './engine';
+import { transcribe, sttConfig, loadEngine, transcribeParakeet, loadParakeet, parakeetReady, parakeetModelName } from './engine';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -68,6 +68,6 @@ export async function GET(req: Request): Promise<Response> {
       if (!process.env.OPENATC_STT_URL && !state.loaded.whisper) { await loadEngine(c); state.loaded.whisper = true; }
     })().catch(() => undefined);
   }
-  const model = first === 'parakeet' ? PARAKEET_MODEL : c.model;
+  const model = first === 'parakeet' ? parakeetModelName() : c.model;
   return new Response(JSON.stringify({ ok: true, model, first, loaded: state.loaded[first], busy: state.gate.busy }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 }

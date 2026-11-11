@@ -162,6 +162,8 @@ export async function transcribe(audio: Float32Array, opts: { names?: string[]; 
   (OPENATC_STT_PARAKEET_DIR overrides the directory.) Without them, requests for Parakeet are answered by Whisper.
 --------------------------------------------------------------------------------------------------------------------- */
 export const PARAKEET_MODEL = 'parakeet-ultra-int8';
+/** The name of the Parakeet model actually loaded (OPENATC_STT_PARAKEET_DIR may point at another one, e.g. parakeet-110m-atc-v1). */
+export const parakeetModelName = (): string => { const d = process.env.OPENATC_STT_PARAKEET_DIR; return d ? path.basename(d.replace(/\/+$/, '')) : PARAKEET_MODEL; };
 export const PARAKEET_FILES = ['encoder.int8.onnx', 'decoder.int8.onnx', 'joiner.int8.onnx', 'tokens.txt'];
 
 export interface ParakeetConfig { dir: string; threads: number }
@@ -247,5 +249,5 @@ export async function transcribeParakeet(audio: Float32Array, opts: { names?: st
   const s = hw ? e.rec.createStream(hw) : e.rec.createStream();
   s.acceptWaveform({ samples: audio, sampleRate: 16000 });
   const text = clean((await e.rec.decodeAsync(s)).text ?? '');
-  return { text, alternatives: text ? [text] : [], ms: Date.now() - t0, model: PARAKEET_MODEL, decodes: [text] };
+  return { text, alternatives: text ? [text] : [], ms: Date.now() - t0, model: parakeetModelName(), decodes: [text] };
 }
