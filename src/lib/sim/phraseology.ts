@@ -988,6 +988,7 @@ export function pilotRequestLine(req: PilotRequest, ctx: PhraseCtx): string {
     case 'runway_vacated': return sentence(`${cs}, runway ${spokenRwy} vacated`);
     case 'going_around': return sentence(`${cs}, going around${typeof req.param === 'string' && req.param ? `, ${req.param}` : ''}`);
   }
+    case 'concern': return sentence(`${cs}, traffic${typeof req.param === 'string' && req.param ? `, ${ctx.telephony(req.param)}` : ''}`);
 }
 
 function withYouLine(req: PilotRequest, a: AircraftState | null, cs: string, unit: string, ctx: PhraseCtx): string {

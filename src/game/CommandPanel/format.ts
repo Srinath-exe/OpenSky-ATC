@@ -76,6 +76,7 @@ export function requestShort(r: PilotRequest): string {
     case 'runway_vacated': return 'rwy vacated'
     case 'going_around': return 'going around'
     case 'clearance': return 'req clearance'
+    case 'concern': return 'traffic'
     default: return 'request'
   }
 }

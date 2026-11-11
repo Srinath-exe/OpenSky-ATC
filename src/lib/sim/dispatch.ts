@@ -40,6 +40,8 @@ import { IMMEDIATE_KINDS, describe, isAircraftCommand, isSystemCommand } from '.
 import type { PhraseCtx } from './phraseology';
 import { magneticHeading, readback as phraseReadback, transmission as phraseTransmission, unableLine } from './phraseology';
 import { ledgerOf } from './ledger';
+import { mindOf } from './pilotmind';
+import type { SimEngine } from './engine';
 import type { ActionCtx, FixInfo, NearbyAircraft, RunwayInfo, StandInfo, ValidationResult, VehicleInfo } from './commandTree';
 import { REASONS, actionsFor, validateAst } from './commandTree';
 import type { ParseAircraft, ParseCtx, ParseErrorCode, ParseResult } from './commands';
@@ -475,13 +477,15 @@ export function dispatch(engine: EngineCommandApi, ast: CommandAST, opts: Dispat
   const ledger = ledgerOf(engine);
   const ta = pctx.transitionAltFt ?? 6000;
   const mag = (trueDeg: number) => magneticHeading(trueDeg, pctx.magVar ?? 0);
+  const mind = mindOf(engine); const sim = engine as unknown as SimEngine;
+  if (opts.who !== 'ai') safe(() => mind.answer(sim, a), undefined);   // any instruction answers the call this pilot made
   if (opts.who !== 'ai' && opts.memory !== false) {
     if (ast.kind === 'roger') {
       const confirmed = safe(() => ledger.takeConfirmed(a.callsign, engine.time), null);
       if (confirmed) return dispatch(engine, confirmed, opts);
     }
     for (const part of parts) {
-      const q = safe(() => ledger.check(a, part, engine.time, ta, mag), null);
+      const q = safe(() => ledger.check(a, part, engine.time, ta, mag, () => mind.check(sim, a, part)), null);
       if (q) return finish({ ok: false, code: 'queried', transmission: tx(), readback: `${pctx.telephony(a.callsign)}, ${q.question}?`, reason: q.question, warnings, readbackAt: engine.time + readbackDelay(engine, a, ast.kind, undefined) });
     }
   }

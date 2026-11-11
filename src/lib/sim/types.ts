@@ -180,7 +180,9 @@ export type PilotRequestKind =
   | 'clearance' | 'pushback' | 'startup' | 'taxi' | 'cross' | 'ready' | 'with_you'
   | 'higher' | 'lower' | 'direct' | 'hold' | 'taxi_in' | 'say_again' | 'radio_check'
   | 'cancel_mayday' | 'return_to_stand' | 'wind_check' | 'confirm_cleared' | 'further'
-  | 'intersection' | 'runway_vacated' | 'going_around';
+  | 'intersection' | 'runway_vacated' | 'going_around'
+  /** Something the crew noticed and reports unasked (pilotmind.ts): converging traffic. Any reply answers it. */
+  | 'concern';
 
 export interface PilotRequest {
   id: number;

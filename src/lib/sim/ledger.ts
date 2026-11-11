@@ -40,9 +40,9 @@ export interface LedgerEntry {
 export interface PilotQuery {
   /** The instruction the pilot is asking about (not executed yet). */
   ast: SingleAircraftCommand;
-  /** The earlier instruction it contradicts. */
-  earlier: LedgerEntry;
-  rule: 'level_reversal' | 'heading_reversal' | 'runway_surprise';
+  /** The earlier instruction it contradicts (null when the question comes from what the pilot sees or hears, pilotmind.ts). */
+  earlier: LedgerEntry | null;
+  rule: 'level_reversal' | 'heading_reversal' | 'runway_surprise' | 'runway_traffic' | 'traffic_on_final' | 'departure_rolling';
   /** The pilot's question, without the callsign: "previously cleared FL080, confirm now 6000". */
   question: string;
   at: number;
@@ -107,7 +107,7 @@ export class ClearanceLedger {
    * Does this instruction contradict what the pilot was told? Returns the question to ask, or null to execute.
    * An instruction that answers the open question (the same instruction again) is never questioned twice.
    */
-  check(a: AircraftState, part: SingleAircraftCommand, time: number, transitionAltFt: number, magHdg: (trueDeg: number) => number): PilotQuery | null {
+  check(a: AircraftState, part: SingleAircraftCommand, time: number, transitionAltFt: number, magHdg: (trueDeg: number) => number, extra?: () => Omit<PilotQuery, 'at' | 'ast'> | null): PilotQuery | null {
     const l = this.of(a.callsign);
     if (l.open && time - l.open.at > LEDGER_CONST.queryOpenS) l.open = null;
     if (l.open && sameInstruction(l.open.ast, part)) { l.open = null; return null; }   // the controller confirmed by repeating it
@@ -134,6 +134,7 @@ export class ClearanceLedger {
         q = { earlier: e.entry, rule: 'runway_surprise', question: `we were told to expect runway ${up(e.runway)}, confirm runway ${up(part.dest.runway)}` };
       }
     }
+    if (!q && extra) q = extra();   // what the pilot sees and hears (pilotmind.ts): same question-and-confirm flow
     if (!q) return null;
     l.open = { ...q, ast: part, at: time };
     return l.open;
@@ -164,6 +165,7 @@ function sameInstruction(x: SingleAircraftCommand, y: SingleAircraftCommand): bo
   if (x.kind === 'altitude' && y.kind === 'altitude') return Math.round(x.ft) === Math.round(y.ft);
   if (x.kind === 'heading' && y.kind === 'heading') return angle(x.hdg, y.hdg) < 1.5;
   if (x.kind === 'taxi' && y.kind === 'taxi') return x.dest.kind === 'runway' && y.dest.kind === 'runway' && up(x.dest.runway) === up(y.dest.runway);
+  if ((x.kind === 'clearedLand' || x.kind === 'lineup' || x.kind === 'cross') && 'runway' in y) return up(x.runway) === up((y as { runway: string }).runway);
   return false;
 }
 

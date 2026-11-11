@@ -39,6 +39,7 @@ import { SILENT_CODES } from './dispatch';
 import { WeatherModel, defaultWeather, windComponents, applyWind } from './weather';
 import { VehicleFleet, defaultStations, VehicleStepCtx, VehicleStations } from './vehicles';
 import { AlertEngine, AlertStepCtx } from './alerts';
+import { mindOf } from './pilotmind';
 import {
   EMERGENCY_CATALOGUE, EmergencyEngineView, EmergencySetting, createEmergency, maybeDeclare, onDeclared, stepEmergency,
   handleLanded, completeChecklistItem, scoreOnResolved, ackReplyLine, SOULS_BY_CLASS,
@@ -1634,6 +1635,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
 
   // ── pilot delay / readbacks / transmissions ────────────────────────────────
   /** Pilot delay (s): 2-4 s air, 4-8 s ground, x pilotDelayFactor for incapacitation/hijack (03 §8 / §F4.16). */
+      case 'concern': return `${cs}, traffic${req.param ? `, ${req.param}` : ''}.`;
   pilotDelayS(a: AircraftState, kind: CommandAST['kind']): number {
     const f = a.emergency ? EMERGENCY_CATALOGUE[a.emergency.type].perf.pilotDelayFactor : 1;
     if (this.settings.pilotDelayOverride != null) return this.settings.pilotDelayOverride * f;
@@ -3749,6 +3751,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         a.delay.airborneS += 1;
         if (a.fuelMin != null) {
           a.fuelMin -= 1 / 60;
+    try { mindOf(this).tick(this); } catch { /* the pilots' look-out never stops the simulation */ }
           if (a.fuelMin <= 0) {
             this.emit('fuel_exhaustion', a, `${a.callsign} FUEL EXHAUSTION`);
             this.addScore('FUEL_EXHAUSTION', a.callsign);

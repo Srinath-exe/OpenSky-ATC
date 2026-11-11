@@ -246,7 +246,7 @@ const NO_READBACK = new Set<CommandKind>(['roger', 'holdAll', 'resumeAll', 'runw
 const REQUEST_PARAM: Record<PilotRequestKind, string | number | null> = {
   clearance: null, pushback: null, startup: null, taxi: null, cross: '27R', ready: '27L', with_you: 8, higher: 12000, lower: 3000,
   direct: 'BIG', hold: null, taxi_in: 'A7', say_again: null, radio_check: null, cancel_mayday: 'fire is out', return_to_stand: 'technical problem',
-  wind_check: null, confirm_cleared: 4, further: null, intersection: 'A3', runway_vacated: '27L', going_around: 'unstable approach',
+  wind_check: null, confirm_cleared: 4, further: null, intersection: 'A3', runway_vacated: '27L', going_around: 'unstable approach', concern: 'DLH978',
 };
 
 test('completeness: every CommandAST kind has a non-empty transmission and readback (both variants); sequence included', () => {
@@ -279,7 +279,7 @@ test('completeness: every PilotRequest kind has a non-empty spoken line (both va
     const ctx = variant === 'FAA' ? ctxFAA() : ctxICAO();
     const cs = variant === 'FAA' ? 'Speedbird one seventeen' : 'Speedbird one one seven';
     const kinds = Object.keys(REQUEST_PARAM) as PilotRequestKind[];
-    assert.equal(kinds.length, 22);
+    assert.equal(kinds.length, 23);
     for (const kind of kinds) {
       const line = pilotRequestLine({ id: 1, kind, callsign: 'BAW117', text: '', param: REQUEST_PARAM[kind], at: 0, recallAt: 0, recalls: 0, expiresAt: null, suggestedAction: null, answeredAt: null, answeredBy: null }, ctx);
       assert.ok(line.trim().length > 0 && line.endsWith('.'), `${variant} ${kind}: ${line}`);
