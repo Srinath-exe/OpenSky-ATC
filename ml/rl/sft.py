@@ -17,12 +17,13 @@ def main():
     ap.add_argument("--budget", type=float, default=1800); ap.add_argument("--est-steps", type=int, default=1000, help="cosine horizon (steps that fit the budget)")
     ap.add_argument("--eval-every", type=int, default=100); ap.add_argument("--eval-n", type=int, default=200)
     ap.add_argument("--threads", type=int, default=1); ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--start", default="", help="run directory to start from (default: the base model, common.START)")
     a = ap.parse_args()
     threads(a.threads); torch.manual_seed(a.seed); rng = random.Random(a.seed)
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
     json.dump(vars(a), open(out / "args.json", "w"), indent=1)
     tok = BPE.load(TOK)
-    model, cfg = load_model()
+    model, cfg = load_model(a.start) if a.start else load_model()
     pool = [encode_ex(tok, json.loads(l)) for l in open(a.pool)]
     S = eval_sets(tok, a.eval_n)
     decay = [p for n, p in model.named_parameters() if p.dim() >= 2]; no_decay = [p for n, p in model.named_parameters() if p.dim() < 2]
