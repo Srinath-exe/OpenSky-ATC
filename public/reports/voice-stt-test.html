@@ -156,7 +156,9 @@ let local = null, localReady = null, lseq = 0;
 const lwait = new Map();
 function loadLocal() {
   if (localReady) return localReady;
-  local = new Worker('/voice/stt-worker.js?model=base', { type: 'module' });
+  // ?ondevice=atc-<name>: a model this site hosts (/models/stt/<name>/), e.g. atc-moonshine-atc-dry; default the stock Moonshine base
+  const od = new URLSearchParams(location.search).get('ondevice');
+  local = new Worker(`/voice/stt-worker.js?model=${od && /^atc-[a-z0-9._-]+$/i.test(od) ? od : 'base'}`, { type: 'module' });
   const files = new Map();
   localReady = new Promise((resolve, reject) => {
     local.onmessage = (e) => {

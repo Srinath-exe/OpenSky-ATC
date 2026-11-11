@@ -41,6 +41,11 @@ def rewrite(manifest: str, root: str, w: Path, limit=None) -> str:
 
 
 def cmd_base(a):
+    if a.pretrained:   # any NeMo checkpoint as the start, e.g. nvidia/parakeet-tdt_ctc-110m (the on-device model)
+        import nemo.collections.asr as nemo_asr
+        w = Path(a.out); w.mkdir(parents=True, exist_ok=True)
+        m = nemo_asr.models.ASRModel.from_pretrained(a.pretrained, map_location="cpu")
+        m.save_to(str(w / "ultra.nemo")); print("saved", a.pretrained, "as", w / "ultra.nemo"); return
     w = Path(a.out); w.mkdir(parents=True, exist_ok=True)
     E = sherpa_scripts(w)
     import nemo.collections.asr as nemo_asr
@@ -116,7 +121,7 @@ def cmd_export(a):
             "pred_rnn_layers": m.decoder.pred_rnn_layers, "pred_hidden": m.decoder.pred_hidden, "subsampling_factor": 8,
             "model_type": "EncDecRNNTBPEModel", "version": "2", "model_author": "OpenATC",
             "url": "OpenATC ATC fine-tune of moondream/parakeet-ultra (tdt, nvidia/parakeet-tdt-0.6b-v3 architecture)",
-            "comment": "Only the transducer branch is exported", "feat_dim": 128}
+            "comment": "Only the transducer branch is exported", "feat_dim": int(m.cfg.preprocessor.features)}
     for part in ("encoder", "decoder", "joiner"):
         quantize_dynamic(model_input=f"./{part}.onnx", model_output=f"./{part}.int8.onnx",
                          weight_type=QuantType.QUInt8 if part == "encoder" else QuantType.QInt8)
@@ -153,7 +158,7 @@ def main():
     ap.add_argument("--val", nargs="+", default=[str(ROOT / f"ml/data/stt/manifests/{n}.jsonl") for n in ("test_synth", "test_cov", "test_uwb")])
     ap.add_argument("--tests", nargs="+", default=[str(ROOT / f"ml/data/stt/manifests/test_{n}.jsonl") for n in ("synth", "cov", "atco2", "uwb", "atcosim")])   # gold: on the VPS (private recordings stay there)
     ap.add_argument("--epochs", type=int, default=3); ap.add_argument("--batch", type=int, default=16); ap.add_argument("--accum", type=int, default=2)
-    ap.add_argument("--init", default=""); ap.add_argument("--workers", type=int, default=3); ap.add_argument("--maxdur", type=float, default=15.0); ap.add_argument("--base", default=""); ap.add_argument("--lr", type=float, default=5e-5); ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--init", default=""); ap.add_argument("--pretrained", default=""); ap.add_argument("--workers", type=int, default=3); ap.add_argument("--maxdur", type=float, default=15.0); ap.add_argument("--base", default=""); ap.add_argument("--lr", type=float, default=5e-5); ap.add_argument("--smoke", action="store_true")
     a = ap.parse_args(); {"base": cmd_base, "train": cmd_train, "export": cmd_export, "eval": cmd_eval}[a.cmd](a)
 
 

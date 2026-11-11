@@ -78,7 +78,7 @@ export function createLocalRecognizer(onStatus?: (s: LocalStatus) => void, model
   const status: LocalStatus = { state: 'idle', progress: 0, device: '', lastMs: null, message: '' };
   const emit = (p: Partial<LocalStatus>) => { Object.assign(status, p); onStatus?.({ ...status }); };
   const asked = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('stt-model') : null;
-  const pick = asked && ['base', 'tiny', 'whistle', 'whisper-tiny.en', 'whisper-base.en'].includes(asked) ? asked : model;
+  const pick = asked && (['base', 'tiny', 'whistle', 'whisper-tiny.en', 'whisper-base.en'].includes(asked) || /^atc-[a-z0-9._-]+$/i.test(asked)) ? asked : model;   // atc-<name>: a model this site hosts (/models/stt/<name>/)
   const worker = new Worker(`/voice/stt-worker.js?model=${pick}`, { type: 'module' });
   const files = new Map<string, { loaded: number; total: number }>();
   const pending = new Map<number, (text: string) => void>();

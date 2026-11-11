@@ -18,7 +18,9 @@ const Q = new URLSearchParams(self.location.search);
 const NAME = Q.get('model') || 'base';
 const WHISTLE = NAME === 'whistle';
 const WHISPER = NAME.startsWith('whisper');
-const MODEL = WHISPER ? `onnx-community/${NAME}` : `onnx-community/moonshine-${NAME === 'tiny' ? 'tiny' : 'base'}-ONNX`;
+// model=atc-<name>: a model this site hosts at /models/stt/<name>/ (the onnx-community layout; ml/stt/train_moonshine.py export)
+const OURS = NAME.startsWith('atc-') ? NAME.slice(4).replace(/[^a-z0-9._-]/gi, '') : '';
+const MODEL = OURS || (WHISPER ? `onnx-community/${NAME}` : `onnx-community/moonshine-${NAME === 'tiny' ? 'tiny' : 'base'}-ONNX`);
 const WASM_DTYPE = Q.get('dtype') || 'q8';
 const SECOND = Q.get('alts') === '1';   // Whistle: also decode without keywords (doubles the time; names-only keywords + this second guess scored below one decode with the ATC words)
 let T = null;        // transformers.js, imported only for the engines that use it
@@ -28,7 +30,12 @@ let device = 'wasm';
 const progress = (file, loaded, total) => postMessage({ type: 'progress', file, loaded, total });
 
 async function tjs() {
-  if (!T) { T = await import(TJS_URL); T.env.allowLocalModels = false; }
+  if (!T) {
+    T = await import(TJS_URL);
+    // our models are fetched like hub models, from this site: /models/stt/<name>/<file> (the local-model path skips the processor files)
+    if (OURS) { T.env.allowLocalModels = false; T.env.remoteHost = new URL('/models/stt/', self.location.origin).href; T.env.remotePathTemplate = '{model}/'; }
+    else T.env.allowLocalModels = false;
+  }
   return T;
 }
 

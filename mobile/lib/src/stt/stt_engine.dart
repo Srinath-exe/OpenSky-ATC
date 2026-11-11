@@ -77,6 +77,7 @@ abstract class SttEngine {
     return switch (spec.kind) {
       ModelKind.transducer => _TransducerEngine(spec, dir, options),
       ModelKind.moonshine => _MoonshineEngine(spec, dir, options),
+      ModelKind.nemoTransducer => _MoonshineEngine(spec, dir, options, nemo: true),
     };
   }
 }
@@ -190,17 +191,31 @@ class _TransducerEngine implements SttEngine {
 }
 
 class _MoonshineEngine implements SttEngine {
-  _MoonshineEngine(this.spec, String dir, this.o) {
+  /// Offline (whole utterance on release) recognisers: Moonshine, or with [nemo] a NeMo transducer such as Parakeet
+  /// TDT 110M fine-tuned on ATC speech (ml/stt/train_parakeet.py; encoder/decoder/joiner/tokens, greedy search).
+  _MoonshineEngine(this.spec, String dir, this.o, {bool nemo = false}) {
     _rec = so.OfflineRecognizer(so.OfflineRecognizerConfig(
-      model: so.OfflineModelConfig(
-        moonshine: so.OfflineMoonshineModelConfig(
-          encoder: _path(spec, dir, 'encoder'),
-          mergedDecoder: _path(spec, dir, 'merged_decoder'),
-        ),
-        tokens: _path(spec, dir, 'tokens'),
-        numThreads: o.threads,
-        debug: false,
-      ),
+      model: nemo
+          ? so.OfflineModelConfig(
+              transducer: so.OfflineTransducerModelConfig(
+                encoder: _path(spec, dir, 'encoder'),
+                decoder: _path(spec, dir, 'decoder'),
+                joiner: _path(spec, dir, 'joiner'),
+              ),
+              tokens: _path(spec, dir, 'tokens'),
+              modelType: 'nemo_transducer',
+              numThreads: o.threads,
+              debug: false,
+            )
+          : so.OfflineModelConfig(
+              moonshine: so.OfflineMoonshineModelConfig(
+                encoder: _path(spec, dir, 'encoder'),
+                mergedDecoder: _path(spec, dir, 'merged_decoder'),
+              ),
+              tokens: _path(spec, dir, 'tokens'),
+              numThreads: o.threads,
+              debug: false,
+            ),
     ));
   }
 

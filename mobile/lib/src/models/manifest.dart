@@ -39,7 +39,7 @@ class ModelFile {
 /// The kinds of recogniser the app knows how to run.
 ///  - `transducer`: a streaming zipformer transducer (partials while you talk, hotwords / contextual biasing)
 ///  - `moonshine`: an offline Moonshine model (transcribes on release, no hotwords)
-enum ModelKind { transducer, moonshine }
+enum ModelKind { transducer, moonshine, nemoTransducer }
 
 class ModelSpec {
   const ModelSpec({
@@ -105,6 +105,7 @@ class ModelSpec {
     final need = switch (kind) {
       ModelKind.transducer => const ['encoder', 'decoder', 'joiner', 'tokens'],
       ModelKind.moonshine => const ['encoder', 'merged_decoder', 'tokens'],
+      ModelKind.nemoTransducer => const ['encoder', 'decoder', 'joiner', 'tokens'],
     };
     for (final r in need) {
       if (spec.file(r) == null) throw FormatException('${spec.id}: missing $r file');
