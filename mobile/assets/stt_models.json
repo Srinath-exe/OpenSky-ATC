@@ -172,6 +172,47 @@
      "size": 9953
     }
    ]
+  },
+  {
+   "id": "parakeet-110m-atc-v1",
+   "name": "Parakeet TDT 110M, fine-tuned for ATC",
+   "version": "2026-11-11",
+   "kind": "nemoTransducer",
+   "license": "CC-BY-NC-SA-4.0 (training data includes UWB-ATCC and ATCOSIM)",
+   "source": "ml/stt/train_parakeet.py",
+   "sampleRate": 16000,
+   "hotwords": false,
+   "notes": "offline NeMo transducer, greedy; fine-tuned on 133 h of ATC speech (ml/gpu/remote/stt_edge.sh); owner recordings 0.6 % WER, coverage test 0.8 %; files hosted at openatc.aeon-labs.site/models/stt/parakeet-110m-atc-v1",
+   "files": [
+    {
+     "role": "encoder",
+     "name": "encoder.int8.onnx",
+     "url": "https://openatc.aeon-labs.site/models/stt/parakeet-110m-atc-v1/encoder.int8.onnx",
+     "sha256": "8bb2341a4b42383f1d0ca9cb3f736da5cff6be35b71f1a2c37e365ea9a8329ab",
+     "size": 131112998
+    },
+    {
+     "role": "decoder",
+     "name": "decoder.int8.onnx",
+     "url": "https://openatc.aeon-labs.site/models/stt/parakeet-110m-atc-v1/decoder.int8.onnx",
+     "sha256": "7b2efacf70318c51e0024a6a229a63d5b901ee6c8643794d158109122d10ae9e",
+     "size": 3955863
+    },
+    {
+     "role": "joiner",
+     "name": "joiner.int8.onnx",
+     "url": "https://openatc.aeon-labs.site/models/stt/parakeet-110m-atc-v1/joiner.int8.onnx",
+     "sha256": "fce43322868e78bbebb1db0ebbe6617e0dbdc907bcba4af357edf0a625ee12d6",
+     "size": 1411400
+    },
+    {
+     "role": "tokens",
+     "name": "tokens.txt",
+     "url": "https://openatc.aeon-labs.site/models/stt/parakeet-110m-atc-v1/tokens.txt",
+     "sha256": "450e56bd2f036fe5b6aa821865838cc5aa9d8b0106134ce9a9ba0664abe6cd10",
+     "size": 9953
+    }
+   ]
   }
  ]
 }
