@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex">
+<title>Speech Model Fine-Tune</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root { --bg:#0e0f11; --surface:#141416; --raise:#1c1c1e; --line:rgba(255,255,255,.09); --ink-1:#f4f4f5; --ink-2:#c4c5c8; --ink-3:#a0a1a6; --ink-4:#7f8086;
+  --accent:#f5933f; --good:#57cd50; --orig:#3987e5; --r1:#d95926; --r2:#199e70;
+  --font:"DM Sans","Helvetica Neue",Arial,sans-serif; --mono:"DM Mono",ui-monospace,Menlo,monospace; color-scheme:dark; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; } }
+:root[data-theme="light"] { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; }
+* { box-sizing:border-box; } html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--bg); color:var(--ink-2); font-family:var(--font); font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  padding:40px max(16px, env(safe-area-inset-right,0px)) 72px max(16px, env(safe-area-inset-left,0px)); }
+.wrap { max-width:920px; margin:0 auto; display:grid; gap:28px; }
+a { color:var(--accent); } h1 { font-size:28px; line-height:1.2; margin:0 0 6px; color:var(--ink-1); letter-spacing:-.01em; }
+h2 { font-size:18px; margin:0 0 4px; color:var(--ink-1); } p { margin:0 0 10px; } .cap { color:var(--ink-3); font-size:13.5px; }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+.tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; }
+.tile .k { font-size:12.5px; color:var(--ink-3); } .tile .v { font-size:28px; font-weight:700; color:var(--ink-1); font-variant-numeric:tabular-nums; line-height:1.25; }
+.tile .v small { font-size:15px; font-weight:500; color:var(--ink-3); } .tile .d { font-size:12.5px; color:var(--ink-3); }
+.legend { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink-2); margin:10px 0 14px; }
+.legend span { display:inline-flex; align-items:center; gap:7px; } .sw { width:12px; height:12px; border-radius:3px; display:inline-block; }
+.orig { background:var(--orig); } .r1 { background:var(--r1); } .r2 { background:var(--r2); }
+.chart { display:grid; gap:16px; } .grp { display:grid; grid-template-columns:minmax(150px,230px) 1fr; gap:14px; align-items:center; }
+.lab b { display:block; color:var(--ink-1); font-weight:600; font-size:14px; } .lab span { display:block; color:var(--ink-3); font-size:12.5px; line-height:1.35; }
+.bars { display:grid; gap:2px; border-left:1px solid var(--line); padding:2px 0; min-width:0; }
+.row { display:flex; align-items:center; gap:8px; height:16px; padding-right:58px; position:relative; }
+.bar { display:block; height:12px; border-radius:0 4px 4px 0; flex:none; max-width:100%; }
+.val { font-family:var(--mono); font-size:12px; color:var(--ink-1); white-space:nowrap; } .na { font-size:12px; color:var(--ink-4); padding-left:6px; }
+.row:hover .bar { filter:brightness(1.15); }
+table { width:100%; border-collapse:collapse; font-size:14px; } th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--ink-3); font-weight:500; font-size:12.5px; } td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; } td b { color:var(--ink-1); }
+.scroll { overflow-x:auto; } code { font-family:var(--mono); font-size:12.5px; background:var(--raise); padding:1px 5px; border-radius:5px; }
+ul { margin:0; padding-left:20px; } li { margin-bottom:6px; }
+@media (max-width:620px) { .grp { grid-template-columns:1fr; gap:6px; } h1 { font-size:23px; } }
+</style></head><body><div class="wrap">
+<header><p class="cap"><a href="/reports/">Reports</a> · 11 November 2026</p>
+<h1>The game's speech-to-text, fine-tuned on air traffic control speech</h1>
+<p>Two training rounds on the model the game already ran (Parakeet Ultra, 627 M parameters, same size and speed). On the owner's voice the word error fell from 15.4 % to 1.7 %, and no command is sent wrong any more. Round 2 is live.</p></header>
+
+<section class="tiles">
+<div class="tile"><div class="k">Word error, your recordings</div><div class="v">1.7 % <small>from 15.4 %</small></div><div class="d">16 recordings, in the game's engine</div></div>
+<div class="tile"><div class="k">Commands sent wrong</div><div class="v">0 <small>from 1 of 16</small></div><div class="d">15 sent right, 1 held for a check</div></div>
+<div class="tile"><div class="k">Unseen lines, all positions</div><div class="v">1.65 % <small>from 9.0 %</small></div><div class="d">805 lines, 846 airlines</div></div>
+<div class="tile"><div class="k">GPU cost, both rounds</div><div class="v">$5.85</div><div class="d">$1.70 + $4.15, about 4.5 h of training</div></div>
+</section>
+
+<section class="card"><h2>In the game's own engine</h2>
+<p class="cap">Word error rate, lower is better. All three models exported to the same int8 format and run by the code the live server uses (sherpa-onnx). Numbers are compared digit by digit, so "nineteen" and "19" count as the same.</p>
+<div class="legend"><span><i class="sw orig"></i>Original (Parakeet Ultra)</span><span><i class="sw r1"></i>Round 1 · 9 Nov · 30.7 h</span><span><i class="sw r2"></i>Round 2 · 11 Nov · 132.8 h</span></div><div class="chart">
+<div class="grp"><div class="lab"><b>Your 16 recordings</b><span>the owner&#x27;s real voice, callsigns as hints</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 15.4%"><i class="bar orig" style="width:25.67%"></i><span class="val">15.4%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 2.4%"><i class="bar r1" style="width:4.00%"></i><span class="val">2.4%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 1.7%"><i class="bar r2" style="width:2.83%"></i><span class="val">1.7%</span></div>
+</div></div>
+<div class="grp"><div class="lab"><b>Coverage test</b><span>805 unseen lines: 846 airlines, 189 phrase patterns, every position</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 9.0%"><i class="bar orig" style="width:15.00%"></i><span class="val">9%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 5.0%"><i class="bar r1" style="width:8.33%"></i><span class="val">5%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 1.65%"><i class="bar r2" style="width:2.75%"></i><span class="val">1.65%</span></div>
+</div></div>
+<div class="grp"><div class="lab"><b>ATCO2</b><span>1 h of real tower and approach radio, the standard benchmark</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 57.2%"><i class="bar orig" style="width:95.33%"></i><span class="val">57.2%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 26.2%"><i class="bar r1" style="width:43.67%"></i><span class="val">26.2%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 23.4%"><i class="bar r2" style="width:39.00%"></i><span class="val">23.4%</span></div>
+</div></div>
+</div></section>
+
+<section class="card"><h2>Round 2 by controller position</h2>
+<p class="cap">The coverage test split by who says the line. No position is weak any more, so one model serves all of them. Same engine and scoring as above.</p>
+<div class="legend"><span><i class="sw orig"></i>Original (Parakeet Ultra)</span><span><i class="sw r1"></i>Round 1 · 9 Nov · 30.7 h</span><span><i class="sw r2"></i>Round 2 · 11 Nov · 132.8 h</span></div><div class="chart">
+<div class="grp"><div class="lab"><b>Delivery</b><span>clearances, squawks, start-up</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 9.3%"><i class="bar orig" style="width:77.50%"></i><span class="val">9.3%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 4.7%"><i class="bar r1" style="width:39.17%"></i><span class="val">4.7%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 1.0%"><i class="bar r2" style="width:8.33%"></i><span class="val">1%</span></div>
+</div></div>
+<div class="grp"><div class="lab"><b>Ground</b><span>taxi routes, stands, pushback</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 6.8%"><i class="bar orig" style="width:56.67%"></i><span class="val">6.8%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 2.7%"><i class="bar r1" style="width:22.50%"></i><span class="val">2.7%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 1.4%"><i class="bar r2" style="width:11.67%"></i><span class="val">1.4%</span></div>
+</div></div>
+<div class="grp"><div class="lab"><b>Tower</b><span>line-up, takeoff, landing, go-around</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 8.5%"><i class="bar orig" style="width:70.83%"></i><span class="val">8.5%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 4.6%"><i class="bar r1" style="width:38.33%"></i><span class="val">4.6%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 1.6%"><i class="bar r2" style="width:13.33%"></i><span class="val">1.6%</span></div>
+</div></div>
+<div class="grp"><div class="lab"><b>Approach</b><span>headings, levels, speeds, approaches</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 10.5%"><i class="bar orig" style="width:87.50%"></i><span class="val">10.5%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 6.2%"><i class="bar r1" style="width:51.67%"></i><span class="val">6.2%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 1.9%"><i class="bar r2" style="width:15.83%"></i><span class="val">1.9%</span></div>
+</div></div>
+<div class="grp"><div class="lab"><b>Centre</b><span>flight levels, directs, handoffs</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 11.1%"><i class="bar orig" style="width:92.50%"></i><span class="val">11.1%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 8.5%"><i class="bar r1" style="width:70.83%"></i><span class="val">8.5%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 1.9%"><i class="bar r2" style="width:15.83%"></i><span class="val">1.9%</span></div>
+</div></div>
+</div></section>
+
+<section class="card"><h2>What the coverage data fixed</h2>
+<p class="cap">The same 805 lines split by where the line came from. Round 1 was trained on 12,000 lines sampled at random and 37 airlines; round 2 gave every phrase pattern and every airline a quota.</p>
+<div class="legend"><span><i class="sw orig"></i>Original (Parakeet Ultra)</span><span><i class="sw r1"></i>Round 1 · 9 Nov · 30.7 h</span><span><i class="sw r2"></i>Round 2 · 11 Nov · 132.8 h</span></div><div class="chart">
+<div class="grp"><div class="lab"><b>The game&#x27;s own phrasings</b><span>every phrase shape the game can word</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 6.0%"><i class="bar orig" style="width:50.00%"></i><span class="val">6%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 1.0%"><i class="bar r1" style="width:8.33%"></i><span class="val">1%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 0.8%"><i class="bar r2" style="width:6.67%"></i><span class="val">0.8%</span></div>
+</div></div>
+<div class="grp"><div class="lab"><b>Airlines never trained on before</b><span>846 real callsigns swapped in</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 10.5%"><i class="bar orig" style="width:87.50%"></i><span class="val">10.5%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 6.9%"><i class="bar r1" style="width:57.50%"></i><span class="val">6.9%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 2.7%"><i class="bar r2" style="width:22.50%"></i><span class="val">2.7%</span></div>
+</div></div>
+<div class="grp"><div class="lab"><b>Phraseology beyond the game</b><span>traffic, squawks, visual approaches, wake turbulence…</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 10.5%"><i class="bar orig" style="width:87.50%"></i><span class="val">10.5%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 7.3%"><i class="bar r1" style="width:60.83%"></i><span class="val">7.3%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 1.9%"><i class="bar r2" style="width:15.83%"></i><span class="val">1.9%</span></div>
+</div></div>
+<div class="grp"><div class="lab"><b>Spelled registrations</b><span>Oscar Kilo Foxtrot Alfa Oscar</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 8.8%"><i class="bar orig" style="width:73.33%"></i><span class="val">8.8%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 2.8%"><i class="bar r1" style="width:23.33%"></i><span class="val">2.8%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 1.1%"><i class="bar r2" style="width:9.17%"></i><span class="val">1.1%</span></div>
+</div></div>
+</div></section>
+
+<section class="card"><h2>Full test sets, on the GPU</h2>
+<p class="cap">The same models before int8 export, on every held-out set. The original writes digits and punctuation and was never trained on this transcript style, so part of its real-radio score is style, not mishearing.</p>
+<div class="legend"><span><i class="sw orig"></i>Original (Parakeet Ultra)</span><span><i class="sw r1"></i>Round 1 · 9 Nov · 30.7 h</span><span><i class="sw r2"></i>Round 2 · 11 Nov · 132.8 h</span></div><div class="chart">
+<div class="grp"><div class="lab"><b>Synthetic controllers</b><span>held-out synthetic lines</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 7.1%"><i class="bar orig" style="width:9.47%"></i><span class="val">7.1%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 0.8%"><i class="bar r1" style="width:1.07%"></i><span class="val">0.8%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 0.2%"><i class="bar r2" style="width:0.60%"></i><span class="val">0.2%</span></div>
+</div></div>
+<div class="grp"><div class="lab"><b>ATCOSIM</b><span>2 h, real non-native controllers, headset audio</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 24.7%"><i class="bar orig" style="width:32.93%"></i><span class="val">24.7%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 2.9%"><i class="bar r1" style="width:3.87%"></i><span class="val">2.9%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 1.8%"><i class="bar r2" style="width:2.40%"></i><span class="val">1.8%</span></div>
+</div></div>
+<div class="grp"><div class="lab"><b>UWB-ATCC</b><span>2.4 h, real radio, controllers and pilots, 8 kHz</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 73.6%"><i class="bar orig" style="width:98.13%"></i><span class="val">73.6%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 20.6%"><i class="bar r1" style="width:27.47%"></i><span class="val">20.6%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 17.3%"><i class="bar r2" style="width:23.07%"></i><span class="val">17.3%</span></div>
+</div></div>
+<div class="grp"><div class="lab"><b>ATCO2</b><span>1 h, real radio</span></div><div class="bars">
+<div class="row" title="Original (Parakeet Ultra): 50.7%"><i class="bar orig" style="width:67.60%"></i><span class="val">50.7%</span></div>
+<div class="row" title="Round 1 · 9 Nov · 30.7 h: 21.1%"><i class="bar r1" style="width:28.13%"></i><span class="val">21.1%</span></div>
+<div class="row" title="Round 2 · 11 Nov · 132.8 h: 19.2%"><i class="bar r2" style="width:25.60%"></i><span class="val">19.2%</span></div>
+</div></div>
+</div></section>
+
+<section class="card"><h2>Commands from the owner's recordings</h2>
+<div class="scroll"><table><thead><tr><th></th><th class="n">Original</th><th class="n">Round 1</th><th class="n">Round 2</th></tr></thead><tbody>
+<tr><td>Sent right</td><td class="n">15 / 16</td><td class="n">15 / 16</td><td class="n"><b>15 / 16</b></td></tr>
+<tr><td>Sent wrong</td><td class="n">1</td><td class="n">0</td><td class="n"><b>0</b></td></tr>
+<tr><td>Read by the fast rules, no command model needed</td><td class="n">13</td><td class="n">15</td><td class="n"><b>15</b></td></tr>
+<tr><td>Held for the player to check</td><td class="n">0</td><td class="n">1</td><td class="n">1</td></tr>
+</tbody></table></div>
+<p class="cap" style="margin-top:10px">The one held line is "Speedbird 932, roger": the speech is right, the game's cleanup flags the callsign as matched by sound. A bug in the game, not in the model.</p></section>
+
+<section class="card"><h2>What it was trained on</h2>
+<div class="scroll"><table><thead><tr><th></th><th>Round 1</th><th>Round 2</th></tr></thead><tbody>
+<tr><td>Synthetic controller speech</td><td>11.8 h · 12,000 lines sampled at random · 37 airlines</td><td><b>95 h</b> · 39,000 lines chosen by coverage · 846 airlines · 3,262 phrase shapes · 189 extra phrase patterns</td></tr>
+<tr><td>Voices</td><td>about 150, four engines</td><td>145 voices, 51 % female; American, British, Indian, Spanish, Brazilian, Italian, French, German, Mexican</td></tr>
+<tr><td>Sound</td><td>one condition per clip</td><td>two per clip: clean, cockpit radio, laptop microphone, telephone band</td></tr>
+<tr><td>Real radio (UWB-ATCC, ATCOSIM)</td><td>18.9 h</td><td>18.9 h, counted twice</td></tr>
+<tr><td>Start point</td><td>Parakeet Ultra</td><td>round 1</td></tr>
+<tr><td>Training</td><td>3 passes · A10G · 47 min · $1.70</td><td>2 passes · L4 · 3 h · $4.15</td></tr>
+</tbody></table></div></section>
+
+<section class="card"><h2>How to read this</h2><ul>
+<li><b>16 recordings is a small sample.</b> 1.7 % against 2.4 % is one word. The coverage test (805 lines) is the firmer number, and it is synthetic speech.</li>
+<li><b>Real radio is still hard:</b> 17 to 23 %. That audio is noisy, includes pilots and has Czech and Swiss place names. The game hears a controller on a headset, which is closer to ATCOSIM (1.8 %).</li>
+<li><b>Speed is unchanged:</b> the model is the same size. About 0.5 to 0.9 s per transmission on the server.</li>
+<li><b>Licence:</b> both rounds include recordings licensed for non-commercial use only (UWB-ATCC, ATCOSIM). A commercial launch needs a version trained on the synthetic speech alone.</li>
+<li><b>Missing accents:</b> East Asian, Middle Eastern, Australian and African English. No voice engine here speaks them well; recordings from real players are the fix.</li>
+</ul></section>
+
+<section class="card"><h2>Reproduce</h2>
+<p class="cap">Lines: <code>ml/stt/data/coverage_lines.py</code>, <code>coverage_extra.py</code> · voices: <code>synth_all2.sh</code>, <code>ml/gpu/remote/stt_kokoro.sh</code> · lists: <code>build_manifests.py</code> · training: <code>ml/stt/train_parakeet.py</code>, <code>ml/gpu/remote/stt_finetune2.sh</code> · this benchmark: <code>ml/stt/data/check.cjs</code> on <code>ml/stt/bench_keep</code>. Commits <code>4319d05</code> and <code>6a0fde1</code>.</p></section>
+</div></body></html>
