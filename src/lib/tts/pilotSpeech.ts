@@ -15,6 +15,7 @@
 //  sounds the same.
 // ============================================================
 import { telephony, spokenDigits, spokenFrequency, spokenRunway } from '../sim/phraseology';
+import { personaOf } from '../sim/persona';
 import type { PhraseVariant } from '../sim/phraseology';
 
 /** Paradee-8M v1.2 voices, in the model's order (config.json "voices"). */
@@ -48,7 +49,8 @@ export function voiceFor(callsign: string): PilotVoice {
   const british = BRITISH.has(prefix) ? true : AMERICAN.has(prefix) ? false : ((h >>> 1) & 1) === 1;
   const female = (h & 1) === 1;
   const voice: PilotVoiceId = british ? (female ? 'bf_isabella' : 'bm_fable') : (female ? 'af_heart' : 'am_puck');
-  const speed = Math.round((1.0 + ((h >>> 8) % 1000) / 1000 * 0.14) * 1000) / 1000;
+  // the crew's character (sim/persona.ts) sets the pace too: a student or a crew new to the airport talks slower
+  const speed = Math.round((1.0 + ((h >>> 8) % 1000) / 1000 * 0.14) * personaOf(callsign).rate * 1000) / 1000;
   const detune = ((h >>> 18) % 141) - 70;
   return { voice, speed, detune };
 }

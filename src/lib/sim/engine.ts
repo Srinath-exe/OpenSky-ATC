@@ -40,6 +40,7 @@ import { WeatherModel, defaultWeather, windComponents, applyWind } from './weath
 import { VehicleFleet, defaultStations, VehicleStepCtx, VehicleStations } from './vehicles';
 import { AlertEngine, AlertStepCtx } from './alerts';
 import { mindOf } from './pilotmind';
+import { personaOf, stressOf, delayFactor, errorFactor, personaLine } from './persona';
 import {
   EMERGENCY_CATALOGUE, EmergencyEngineView, EmergencySetting, createEmergency, maybeDeclare, onDeclared, stepEmergency,
   handleLanded, completeChecklistItem, scoreOnResolved, ackReplyLine, SOULS_BY_CLASS,
@@ -135,6 +136,8 @@ export interface EngineSettings {
   strictFrequencies: boolean;
   arcadeIntercept: boolean;
   reducedFinalSep: boolean;
+  /** Crews have characters (persona.ts): reply speed, error rate, hesitation and "say again" differ per callsign. Off = every crew is the same. */
+  personas?: boolean;
   region: 'ICAO' | 'FAA';
   /** Test hook: fixed pilot delay in s (null = realistic 2-4 s air / 4-8 s ground). */
   pilotDelayOverride: number | null;
@@ -1599,6 +1602,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       case 'cancel_mayday': return `${cs}, cancel MAYDAY, cancel MAYDAY.`;
       case 'return_to_stand': return `${cs}, request return to stand, technical problem.`;
       case 'say_again': return `${cs}, say again.`;
+    if (this.settings.personas && text == null) { const crew = personaOf(a.callsign); if (crew.hesitant) req.text = personaLine(req.text, crew, stressOf(a), rng()); }
       case 'radio_check': return `${unit}, ${cs}, radio check.`;
       case 'further': return `${cs}, over ${req.param ?? ''}, request further.`;
       case 'intersection': return `${cs}, request intersection departure ${req.param ?? ''}.`;
@@ -1641,7 +1645,8 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     if (this.settings.pilotDelayOverride != null) return this.settings.pilotDelayOverride * f;
     const groundKind = !isAirborne(a) && !['heading', 'altitude', 'speed', 'direct', 'hold', 'ils', 'loc', 'visual', 'goAround', 'clearedLand'].includes(kind);
     void kind;
-    return (groundKind ? rf(4, 8) : rf(2, 4)) * f;
+    const crew = this.settings.personas ? delayFactor(personaOf(a.callsign), stressOf(a)) : 1;
+    return (groundKind ? rf(4, 8) : rf(2, 4)) * f * crew;
   }
   unitName(position: Position): string {
     const name = this.airportName;
@@ -1681,7 +1686,8 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     const at = result.readbackAt ?? this.time + (this.settings.pilotDelayOverride ?? rf(2, 4));
     let text = result.readback || this.fallbackReadback(ast, a, status, result.reason);
     let mismatch: ScheduledReadback['mismatch'] = null;
-    if (status === 'ok' && this.settings.pilotErrorRate > 0 && chance(this.settings.pilotErrorRate)) {
+    const crew = this.settings.personas ? personaOf(a.callsign) : null;
+    if (status === 'ok' && this.settings.pilotErrorRate > 0 && chance(this.settings.pilotErrorRate * (crew ? errorFactor(crew, stressOf(a)) : 1))) {
       const m = this.wrongReadback(ast, text, a); if (m) { mismatch = m.mismatch; text = m.text; }
     }
     a.readback = { ...a.readback, status: 'pending', dueAt: at, text: '', mismatch: null, refused: result.refused ?? [] };
@@ -1715,6 +1721,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     return { text: spoken, mismatch };
   }
   private processReadbacks() {
+    if (crew?.hesitant) text = personaLine(text, crew, stressOf(a), rng());
     if (!this.readbacks.length) return;
     const due = this.readbacks.filter(r => r.at <= this.time);
     if (!due.length) return;

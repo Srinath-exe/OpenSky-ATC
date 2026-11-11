@@ -98,7 +98,7 @@ test('each callsign keeps one voice, rate and pitch; airlines and voices spread'
   for (let i = 0; i < 400; i++) {
     const v = voiceFor(`${airlines[i % airlines.length]}${100 + i * 7}`);
     count[v.voice] = (count[v.voice] ?? 0) + 1;
-    assert.ok(v.speed >= 1.0 && v.speed <= 1.14, String(v.speed));
+    assert.ok(v.speed >= 0.9 && v.speed <= 1.19, String(v.speed));   // the voice's own 1.00-1.14 x the crew's pace (persona.ts 0.90-1.04)
     assert.ok(v.detune >= -70 && v.detune <= 70, String(v.detune));
   }
   for (const v of PILOT_VOICES) assert.ok((count[v] ?? 0) >= 40, `${v}: ${count[v]}`);

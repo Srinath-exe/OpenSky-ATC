@@ -42,6 +42,8 @@ import { magneticHeading, readback as phraseReadback, transmission as phraseTran
 import { ledgerOf } from './ledger';
 import { mindOf } from './pilotmind';
 import type { SimEngine } from './engine';
+import { personaOf, stressOf, overloadChance } from './persona';
+import { rng } from './rng';
 import type { ActionCtx, FixInfo, NearbyAircraft, RunwayInfo, StandInfo, ValidationResult, VehicleInfo } from './commandTree';
 import { REASONS, actionsFor, validateAst } from './commandTree';
 import type { ParseAircraft, ParseCtx, ParseErrorCode, ParseResult } from './commands';
@@ -478,6 +480,15 @@ export function dispatch(engine: EngineCommandApi, ast: CommandAST, opts: Dispat
   const ta = pctx.transitionAltFt ?? 6000;
   const mag = (trueDeg: number) => magneticHeading(trueDeg, pctx.magVar ?? 0);
   const mind = mindOf(engine); const sim = engine as unknown as SimEngine;
+  // too much at once for this crew (persona.ts): three or more instructions in one breath can come back as "say again"
+  if (opts.who !== 'ai' && parts.length >= 3 && sim.settings?.personas) {
+    const said = OVERLOADED.get(engine) ?? new Map<string, number>(); OVERLOADED.set(engine, said);
+    const last = said.get(a.callsign);
+    if ((last == null || engine.time - last > 90) && rng() < overloadChance(personaOf(a.callsign), stressOf(a), parts.length)) {
+      said.set(a.callsign, engine.time);
+      return finish({ ok: false, code: 'queried', transmission: tx(), readback: `${pctx.telephony(a.callsign)}, say again, slowly?`, reason: 'say again, slowly', warnings, readbackAt: engine.time + readbackDelay(engine, a, ast.kind, undefined) });
+    }
+  }
   if (opts.who !== 'ai') safe(() => mind.answer(sim, a), undefined);   // any instruction answers the call this pilot made
   if (opts.who !== 'ai' && opts.memory !== false) {
     if (ast.kind === 'roger') {
@@ -548,6 +559,9 @@ export function dispatch(engine: EngineCommandApi, ast: CommandAST, opts: Dispat
 }
 
 /** Readback lands after the pilot delay but never after the command executes. */
+/** When each crew last asked for a slower repeat (one per 90 s: the repeat is taken in). */
+const OVERLOADED = new WeakMap<object, Map<string, number>>();
+
 function readbackDelay(engine: EngineCommandApi, a: AircraftState, kind: CommandKind, applyAt: number | undefined): number {
   const d = safe(() => engine.pilotDelayS(a, kind), 3);
   return applyAt != null ? Math.max(0, Math.min(d, applyAt - engine.time)) : d;

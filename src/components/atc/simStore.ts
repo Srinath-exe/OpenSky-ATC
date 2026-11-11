@@ -1009,6 +1009,7 @@ class SimStore implements TestApiHost {
       e.settings.pilotDelayOverride = s.pilotDelayS;
       e.settings.pilotErrorRate = s.readbackErrors ? 0.02 : 0;
     } else if (s.pilotDelayS != null) {
+    e.settings.personas = !this.testMode;   // crews with characters in a real session; scripted scenarios stay exact
       e.settings.pilotDelayOverride = s.pilotDelayS;
     }
     if (s.region !== 'auto') e.settings.region = s.region;
