@@ -44,7 +44,7 @@ All five are fixed in the parser (`src/lib/sim/commands.ts`) with regression tes
 | **held-out set (62 commands)** | **69 %** | 6 % | 6.5 % | 18 % |
 
 - All 17 non-command lines ("how's the ride at your level", "are you ready to push") were refused in both sets; nothing was sent.
-- Of the wrong sends that remain, most are harmless (the same command with a different free-text remark). The real ones: a model output that kept only half of a two-part instruction, and "expect two seven left ILS" read as an expectation plus an approach clearance.
+- Of the wrong sends that remain, most are harmless (the same command with a different free-text remark). The real ones: a model output that kept only half of a two-part instruction, and "expect two seven left ILS" read as an expectation plus an approach clearance (fixed afterwards because it is a safety bug; the held-out figures above are as first measured).
 - Several commands in one transmission work when said in standard order (11 of 11). A twelfth, deliberately confusing line should have been refused and was sent as half an instruction.
 
 ## What the numbers mean

@@ -544,4 +544,5 @@ test('parse: "go", "stand", "abort" and "expedite" are only the commands they so
   assert.equal(scope('DLH2 expedite your descent'), 'descent');
   assert.equal(scope('DLH2 expedite down'), 'descent');
   assert.equal(scope('DLH2 expedite climb'), 'climb');
+  assert.equal(kind('DLH2 expect 27L ILS'), 'expectRunway', 'not an expectation plus an approach clearance');
 });

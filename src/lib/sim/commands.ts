@@ -911,6 +911,9 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       if (ap) approach = ap === 'VISUAL' ? 'VISUAL' : ap === 'RNAV' ? 'RNAV' : ap === 'ILS' ? 'ILS' : 'LOC';
       p.accept('APPROACH');
       const rwy = p.runway();
+      // "expect two seven left ILS": the approach type after the runway belongs to the expectation, it is not a new clearance
+      const after = p.accept('ILS', 'VISUAL', 'LOC', 'LOCALIZER', 'LOCALISER', 'RNAV');
+      if (after) { approach = after === 'VISUAL' ? 'VISUAL' : after === 'RNAV' ? 'RNAV' : after === 'ILS' ? 'ILS' : 'LOC'; p.accept('APPROACH'); }
       p.skip(','); if (p.accept('INFORMATION')) p.next();
       return done(mk('expectRunway', { runway: rwy, approach }));
     }
