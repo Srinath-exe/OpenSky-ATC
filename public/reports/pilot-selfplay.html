@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex">
+<title>Pilot self-play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root { --bg:#0e0f11; --surface:#141416; --raise:#1c1c1e; --line:rgba(255,255,255,.09); --ink-1:#f4f4f5; --ink-2:#c4c5c8; --ink-3:#a0a1a6; --ink-4:#7f8086;
+  --accent:#f5933f; --good:#57cd50; --orig:#3987e5; --r1:#d95926; --r2:#199e70;
+  --font:"DM Sans","Helvetica Neue",Arial,sans-serif; --mono:"DM Mono",ui-monospace,Menlo,monospace; color-scheme:dark; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; } }
+:root[data-theme="light"] { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; }
+* { box-sizing:border-box; } html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--bg); color:var(--ink-2); font-family:var(--font); font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  padding:40px max(16px, env(safe-area-inset-right,0px)) 72px max(16px, env(safe-area-inset-left,0px)); }
+.wrap { max-width:920px; margin:0 auto; display:grid; gap:28px; }
+a { color:var(--accent); } h1 { font-size:28px; line-height:1.2; margin:0 0 6px; color:var(--ink-1); letter-spacing:-.01em; }
+h2 { font-size:18px; margin:0 0 4px; color:var(--ink-1); } p { margin:0 0 10px; } .cap { color:var(--ink-3); font-size:13.5px; }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+.tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; }
+.tile .k { font-size:12.5px; color:var(--ink-3); } .tile .v { font-size:28px; font-weight:700; color:var(--ink-1); font-variant-numeric:tabular-nums; line-height:1.25; }
+.tile .v small { font-size:15px; font-weight:500; color:var(--ink-3); } .tile .d { font-size:12.5px; color:var(--ink-3); }
+.legend { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink-2); margin:10px 0 14px; }
+.legend span { display:inline-flex; align-items:center; gap:7px; } .sw { width:12px; height:12px; border-radius:3px; display:inline-block; }
+.orig { background:var(--orig); } .r1 { background:var(--r1); } .r2 { background:var(--r2); }
+.chart { display:grid; gap:16px; } .grp { display:grid; grid-template-columns:minmax(150px,230px) 1fr; gap:14px; align-items:center; }
+.lab b { display:block; color:var(--ink-1); font-weight:600; font-size:14px; } .lab span { display:block; color:var(--ink-3); font-size:12.5px; line-height:1.35; }
+.bars { display:grid; gap:2px; border-left:1px solid var(--line); padding:2px 0; min-width:0; }
+.row { display:flex; align-items:center; gap:8px; height:16px; padding-right:58px; position:relative; }
+.bar { display:block; height:12px; border-radius:0 4px 4px 0; flex:none; max-width:100%; }
+.val { font-family:var(--mono); font-size:12px; color:var(--ink-1); white-space:nowrap; } .na { font-size:12px; color:var(--ink-4); padding-left:6px; }
+.row:hover .bar { filter:brightness(1.15); }
+table { width:100%; border-collapse:collapse; font-size:14px; } th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--ink-3); font-weight:500; font-size:12.5px; } td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; } td b { color:var(--ink-1); }
+.scroll { overflow-x:auto; } code { font-family:var(--mono); font-size:12.5px; background:var(--raise); padding:1px 5px; border-radius:5px; }
+ul { margin:0; padding-left:20px; } li { margin-bottom:6px; }
+@media (max-width:620px) { .grp { grid-template-columns:1fr; gap:6px; } h1 { font-size:23px; } }
+</style>
+<style>ol,ul{margin:0 0 10px;padding-left:22px} li{margin-bottom:6px} section.card p:last-child{margin-bottom:0}
+pre.code{font-family:var(--mono);font-size:12px;line-height:1.35;background:var(--raise);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto;color:var(--ink-1)}</style>
+</head><body><div class="wrap">
+<header><p class="cap"><a href="/reports/">Reports</a> · results · source <code>/root/atc/docs/spec/14-PILOT-SELFPLAY.md</code></p>
+<h1>Pilots against a careless controller: the self-play scoreboard</h1><p>Status: results, 11 November 2026. EGLL runways 27R,27L; EGLL runway 27L: 9 sessions of 45 simulated minutes, each played twice: once with only the game&#x27;s AI controllers, once with an adversary adding mistakes. CPU only, 20 minutes. Run it again with <code>bash ml/selfplay/run.sh</code>.</p>
+</section>
+</header>
+<section class="card">
+<h2>What was built today</h2>
+<p>Four ideas from the pilot-brain pitch are in the game now. None of them uses a trained model yet: they are rules read from the simulator&#x27;s state, so they are exact and testable, and they produce the labelled data the learned pilot will train on.</p>
+<div class="scroll"><table><thead><tr><th>idea</th><th>what the pilots do now</th><th>where</th></tr></thead><tbody><tr><td>Looking ahead</td><td>A crew cleared to land works out whether the runway will be clear when they get there. If not, they ask, at the clearance or on short final, before it becomes a go-around. A descent below the minimum safe altitude away from the field is questioned.</td><td><code>src/lib/sim/pilotmind.ts</code></td></tr><tr><td>Party line</td><td>Pilots hear the other clearances on their frequency and quote them: &quot;we heard Speedbird 1 cleared to line up, confirm cleared to land?&quot; A go-around for wind makes the next aircraft on that approach ask for a wind check. A line-up or a crossing in front of traffic on short final is questioned. Converging traffic is reported by the aircraft that has it ahead.</td><td><code>src/lib/sim/pilotmind.ts</code></td></tr><tr><td>Personalities</td><td>Every callsign has a crew for the whole flight: long-haul captain, line crew, new first officer, crew new to the airport, student pilot. It sets how fast they answer, how often they read back wrong, how many instructions they take in at once before &quot;say again, slowly&quot;, hesitation in the wording and the pace of the voice. Stress (an emergency, go-arounds, low fuel, waiting) sharpens a captain and slows the others.</td><td><code>src/lib/sim/persona.ts</code></td></tr><tr><td>Self-play with an adversary</td><td>The AI controllers run the airport; an adversary makes a controller&#x27;s mistakes on the same frequencies. Each mistake is a labelled example, and the run scores the pilots.</td><td><code>ml/selfplay/</code></td></tr></tbody></table></div>
+</section>
+<section class="card">
+<h2>The scoreboard</h2>
+<p>The adversary made <b>628</b> mistakes of 12 kinds; the pilots caught <b>627</b> (99.8 %). &quot;Caught&quot; means the pilot questioned or refused the instruction and nothing was executed.</p>
+<p>Read the number with care: the adversary&#x27;s mistakes and the pilots&#x27; rules were written by the same hand, so this measures that the rules work inside a busy, running airport and do not misfire. It does not measure mistakes nobody has thought of yet; those come from new mistake kinds and, later, from real players.</p>
+<div class="scroll"><table><thead><tr><th>the controller&#x27;s mistake</th><th>made</th><th>caught</th><th>rate</th><th>caught by</th></tr></thead><tbody><tr><td>level reversed</td><td>96</td><td>96</td><td>100 %</td><td>memory (ledger)</td></tr><tr><td>heading reversed</td><td>86</td><td>86</td><td>100 %</td><td>memory (ledger)</td></tr><tr><td>line up, traffic on short final</td><td>6</td><td>6</td><td>100 %</td><td>look-ahead + party line</td></tr><tr><td>cross, traffic on short final</td><td>0</td><td>0</td><td>–</td><td>look-ahead + party line</td></tr><tr><td>cross, departure rolling</td><td>0</td><td>0</td><td>–</td><td>look-ahead + party line</td></tr><tr><td>cleared to land, runway occupied</td><td>0</td><td>0</td><td>–</td><td>look-ahead + party line</td></tr><tr><td>cleared to land, wrong runway</td><td>23</td><td>23</td><td>100 %</td><td>aircraft state</td></tr><tr><td>takeoff, traffic on short final</td><td>11</td><td>11</td><td>100 %</td><td>aircraft state</td></tr><tr><td>instruction for the wrong aircraft</td><td>146</td><td>146</td><td>100 %</td><td>aircraft state</td></tr><tr><td>descent below a safe level</td><td>88</td><td>88</td><td>100 %</td><td>look-ahead (added after run 1)</td></tr><tr><td>speed below what the aircraft can fly</td><td>66</td><td>65</td><td>98.5 %</td><td>aircraft state</td></tr><tr><td>sent to the ground frequency in the air</td><td>106</td><td>106</td><td>100 %</td><td>look-ahead (added after run 1)</td></tr></tbody></table></div>
+<p>Not seen in this run (the situation did not come up while the adversary was looking): cross, traffic on short final; cross, departure rolling; cleared to land, runway occupied. They are covered by scripted story tests.</p>
+</section>
+<section class="card">
+<h2>Do the pilots talk too much?</h2>
+<p>With only the AI controllers working (6.8 hours, 134 movements, 7106 radio lines), every call the pilots made on their own initiative is a possible false alarm:</p>
+<div class="scroll"><table><thead><tr><th>call</th><th>count</th><th>per hour</th></tr></thead><tbody><tr><td>&quot;confirm cleared to land?&quot; (runway not clear on arrival)</td><td>0</td><td>0.0</td></tr><tr><td>converging traffic</td><td>0</td><td>0.0</td></tr><tr><td>wind check after a go-around ahead</td><td>0</td><td>0.0</td></tr></tbody></table></div>
+<p>Go-arounds: 4 with the good controller, 1 with the adversary (125 movements).</p>
+</section>
+<section class="card">
+<h2>Examples from the run</h2>
+<p><b>level reversed</b> (visitor crew; the pilot knew: climb, 8400 ft, runway 27R | told: level FL110)</p>
+<pre class="code">controller: AAL791 Altitude 6000
+pilot:      American seven niner one, previously cleared to climb FL110, confirm now 6000?</pre>
+<p><b>heading reversed</b> (line crew; the pilot knew: cruise, 7000 ft, runway 27R | told: heading 196)</p>
+<pre class="code">controller: BAW401 Fly heading 016
+pilot:      Speedbird four zero one, previously heading 196, confirm now heading 016?</pre>
+<p><b>line up, traffic on short final</b> (line crew; the pilot knew: hold_short, holding short 27L, runway 27L)</p>
+<pre class="code">controller: JBU892 Line up 27L
+pilot:      JetBlue eight niner two, traffic on 2 mile final, confirm line up runway 27L?</pre>
+<p><b>cleared to land, wrong runway</b> (rookie crew; the pilot knew: approach, 3000 ft, runway 27R, 10.8 NM final)</p>
+<pre class="code">controller: BAW127 Cleared to land 27L
+pilot:      Speedbird one two seven, we&#x27;re established on 27R, confirm runway 27L?</pre>
+<p><b>takeoff, traffic on short final</b> (line crew; the pilot knew: hold_short, holding short 27L, runway 27L)</p>
+<pre class="code">controller: UAE769 Cleared for takeoff 27L
+pilot:      Arrival BAW403 2.0 NM final</pre>
+<p><b>instruction for the wrong aircraft</b> (rookie crew; the pilot knew: pushback, runway 27L)</p>
+<pre class="code">controller: CPA510 Fly heading 180
+pilot:      On the ground</pre>
+<p><b>descent below a safe level</b> (visitor crew; the pilot knew: descent, 6900 ft, runway 27R, 12.0 NM final)</p>
+<pre class="code">controller: BAW403 Altitude 1000
+pilot:      Speedbird four zero tree, 13 miles out, minimum safe altitude 1500, confirm 1000 feet?</pre>
+<p><b>speed below what the aircraft can fly</b> (rookie crew; the pilot knew: approach, 10000 ft, runway 27R, 14.1 NM final)</p>
+<pre class="code">controller: BAW127 Speed 100
+pilot:      Unable one zero zero knots, Speed 100 outside envelope 125-250 kt, Speedbird one two seven.</pre>
+<p><b>sent to the ground frequency in the air</b> (rookie crew; the pilot knew: cruise, 7000 ft, runway 27R, 6.9 NM final)</p>
+<pre class="code">controller: BAW127 Contact ground
+pilot:      Speedbird one two seven, we&#x27;re airborne, confirm contact Heathrow Ground?</pre>
+</section>
+<section class="card">
+<h2>What the pilots still miss</h2>
+<p>Each miss is a rule to write or an example for the learned model:</p>
+<p><b>speed below what the aircraft can fly</b> (the pilot knew: descent, 8800 ft, runway 27R)</p>
+<pre class="code">controller: IGO445 Speed 100
+pilot:      Speed one zero zero knots, IFly four four fife.</pre>
+<p>The speed case is not a pilot error: the simulator refuses any speed below the aircraft type&#x27;s minimum, so this type can fly 100 knots (IndiGo also flies ATR 72 turboprops). The adversary&#x27;s rule was too coarse.</p>
+</section>
+<section class="card">
+<h2>What this is for</h2>
+<ul><li><b>A quality bar.</b> The scoreboard runs on every change to the pilots, next to the story tests (20 today).</li><li><b>Training data.</b> <code>ml/data/selfplay/episodes.jsonl</code> holds every dialogue with the state the pilot knew. The learned pilot model (spec 13, phases 3 to 5) trains on millions of these; the adversary is what puts the rare, dangerous cases in.</li><li><b>Finding gaps.</b> New mistake kinds are a few lines each in <code>ml/selfplay/arena.ts</code>.</li></ul>
+</section>
+<section class="card">
+<h2>Next</h2>
+<ol><li>More mistake kinds: wrong callsign of a similar-sounding aircraft, forgotten aircraft, conflicting taxi routes, conditional clearances.</li><li>The adversary learns: it searches for the mistakes the pilots miss, instead of drawing them at random.</li><li>The same arena scores System 1 v2 (spec 12): the adversary speaks in free wording and through the speech models.</li><li>The learned pilot (wording and timing) trains on the episodes, with these rules as its safety net.</li></ol>
+</section>
+</div></body></html>

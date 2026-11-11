@@ -26,6 +26,8 @@ const MINUTES = Number(arg('minutes', '40'));
 const SEEDS = Number(arg('seeds', '6'));
 const OUT = arg('out', 'ml/data/selfplay');
 const ENDS: Record<string, string[]> = { EGLL: ['27R', '27L'], KSFO: ['28L', '28R'], KJFK: ['31L', '31R'] };
+/** --ends 27L: one runway for landings and departures (mixed mode), where the runway mistakes can happen. */
+const ENDS_ARG = arg('ends', '');
 
 function mulberry(seed: number) { let t = seed >>> 0; return () => { t += 0x6d2b79f5; let r = Math.imul(t ^ (t >>> 15), 1 | t); r ^= r + Math.imul(r ^ (r >>> 7), 61 | r); return ((r ^ (r >>> 14)) >>> 0) / 4294967296; }; }
 
@@ -34,7 +36,7 @@ interface Shot { kind: string; t: number; callsign: string; crew: string; said: 
 interface Step { cs: string; at: number; until: number; kind: string; line: (a: AircraftState) => string | null; expectCatch: boolean; then?: (a: AircraftState, e: SimEngine) => void }
 
 /** A mistake the adversary can make now: the line to say, or two steps (a normal instruction, then its contradiction). */
-interface Attack { kind: string; find: (e: SimEngine, rnd: () => number) => { a: AircraftState; setup?: string; line: (a: AircraftState) => string | null; delay?: number } | null }
+interface Attack { kind: string; /** a situation that lasts seconds: looked for every second, not on the adversary's timer */ rare?: boolean; find: (e: SimEngine, rnd: () => number) => { a: AircraftState; setup?: string; line: (a: AircraftState) => string | null; delay?: number } | null }
 
 const pick = <T,>(xs: T[], rnd: () => number): T | null => xs.length ? xs[Math.floor(rnd() * xs.length)] : null;
 const k = (ft: number) => Math.round(ft / 1000) * 1000;
@@ -45,12 +47,12 @@ const holding = (e: SimEngine) => e.aircraft.filter((a) => a.phase === 'hold_sho
 const ATTACKS: Attack[] = [
   { kind: 'level reversed', find: (e, r) => { const a = pick(vectored(e), r); return a && { a, setup: `${a.callsign} Altitude ${k(a.altitude + 3000)}`, delay: 14, line: (x) => `${x.callsign} Altitude ${Math.max(2000, k(x.altitude - 2500))}` }; } },
   { kind: 'heading reversed', find: (e, r) => { const a = pick(vectored(e), r); if (!a) return null; const h = magneticHeading(a.heading + 20, e.magVar); return { a, setup: `${a.callsign} Fly heading ${String(h).padStart(3, '0')}`, delay: 14, line: () => `${a.callsign} Fly heading ${String(((h + 179) % 360) + 1).padStart(3, '0')}` }; } },
-  { kind: 'line up, traffic on short final', find: (e, r) => { const a = pick(holding(e).filter((x) => x.plan.kind === 'departure' && !!e.arrivalOnFinal(x.holdShortRunway!, 2) && !e.runwayOccupant(x.holdShortRunway!, x.id)), r); return a && { a, line: (x) => `${x.callsign} Line up ${x.holdShortRunway}` }; } },
-  { kind: 'cross, traffic on short final', find: (e, r) => { const a = pick(holding(e).filter((x) => !(x.plan.kind === 'departure' && rwOf(x) && e.runwayState(rwOf(x)!)?.ref === e.runwayState(x.holdShortRunway!)?.ref) && !!e.arrivalOnFinal(x.holdShortRunway!, 2)), r); return a && { a, line: (x) => `${x.callsign} Cross ${x.holdShortRunway}` }; } },
-  { kind: 'cross, departure rolling', find: (e, r) => { const a = pick(holding(e).filter((x) => !(x.plan.kind === 'departure' && rwOf(x) && e.runwayState(rwOf(x)!)?.ref === e.runwayState(x.holdShortRunway!)?.ref) && !!e.rollingDeparture(x.holdShortRunway!) && !e.arrivalOnFinal(x.holdShortRunway!, 2)), r); return a && { a, line: (x) => `${x.callsign} Cross ${x.holdShortRunway}` }; } },
-  { kind: 'cleared to land, runway occupied', find: (e, r) => { const a = pick(e.aircraft.filter((x) => { if (!isAirborne(x) || x.landingCleared || !x.ilsCaptured) return false; const rw = rwOf(x); const rs = rw ? e.runwayState(rw) : undefined; const d = rw ? e.distToThresholdNM(x, rw) : null; return !!rs && d != null && d < 3.4 && d > 2.1 && rs.occupiedBy.some((o) => o.id !== x.id && ['lineup', 'stopped', 'vehicle', 'crossing', 'backtrack', 'inspection'].includes(o.kind)); }), r); return a && { a, line: (x) => `${x.callsign} Cleared to land ${rwOf(x)}` }; } },
+  { kind: 'line up, traffic on short final', rare: true, find: (e, r) => { const a = pick(holding(e).filter((x) => x.plan.kind === 'departure' && !!e.arrivalOnFinal(x.holdShortRunway!, 2) && !e.runwayOccupant(x.holdShortRunway!, x.id)), r); return a && { a, line: (x) => `${x.callsign} Line up ${x.holdShortRunway}` }; } },
+  { kind: 'cross, traffic on short final', rare: true, find: (e, r) => { const a = pick(holding(e).filter((x) => !(x.plan.kind === 'departure' && rwOf(x) && e.runwayState(rwOf(x)!)?.ref === e.runwayState(x.holdShortRunway!)?.ref) && !!e.arrivalOnFinal(x.holdShortRunway!, 2)), r); return a && { a, line: (x) => `${x.callsign} Cross ${x.holdShortRunway}` }; } },
+  { kind: 'cross, departure rolling', rare: true, find: (e, r) => { const a = pick(holding(e).filter((x) => !(x.plan.kind === 'departure' && rwOf(x) && e.runwayState(rwOf(x)!)?.ref === e.runwayState(x.holdShortRunway!)?.ref) && !!e.rollingDeparture(x.holdShortRunway!) && !e.arrivalOnFinal(x.holdShortRunway!, 2)), r); return a && { a, line: (x) => `${x.callsign} Cross ${x.holdShortRunway}` }; } },
+  { kind: 'cleared to land, runway occupied', rare: true, find: (e, r) => { const a = pick(e.aircraft.filter((x) => { if (!isAirborne(x) || x.landingCleared || !x.ilsCaptured) return false; const rw = rwOf(x); const rs = rw ? e.runwayState(rw) : undefined; const d = rw ? e.distToThresholdNM(x, rw) : null; return !!rs && d != null && d < 3.4 && d > 2.1 && rs.occupiedBy.some((o) => o.id !== x.id && ['lineup', 'stopped', 'vehicle', 'crossing', 'backtrack', 'inspection'].includes(o.kind)); }), r); return a && { a, line: (x) => `${x.callsign} Cleared to land ${rwOf(x)}` }; } },
   { kind: 'cleared to land, wrong runway', find: (e, r) => { const a = pick(e.aircraft.filter((x) => isAirborne(x) && x.ilsCaptured && !x.landingCleared && !!rwOf(x)), r); if (!a) return null; const mine = e.runwayState(rwOf(a)!); const other = e.runways.find((y) => mine && y.ref !== mine.ref && y.name.slice(0, 2) === mine.name.slice(0, 2)); return other ? { a, line: () => `${a.callsign} Cleared to land ${other.name}` } : null; } },
-  { kind: 'takeoff, traffic on short final', find: (e, r) => { const a = pick(e.aircraft.filter((x) => (x.phase === 'lineup' || x.phase === 'hold_short') && x.plan.kind === 'departure' && !!rwOf(x) && !!e.arrivalOnFinal(rwOf(x)!, 2)), r); return a && { a, line: (x) => `${x.callsign} Cleared for takeoff ${rwOf(x)}` }; } },
+  { kind: 'takeoff, traffic on short final', rare: true, find: (e, r) => { const a = pick(e.aircraft.filter((x) => (x.phase === 'lineup' || x.phase === 'hold_short') && x.plan.kind === 'departure' && !!rwOf(x) && !!e.arrivalOnFinal(rwOf(x)!, 2)), r); return a && { a, line: (x) => `${x.callsign} Cleared for takeoff ${rwOf(x)}` }; } },
   { kind: 'instruction for the wrong aircraft', find: (e, r) => { const a = pick(e.aircraft.filter((x) => x.phase !== 'parked' && x.phase !== 'arrived'), r); if (!a) return null; const rw = e.runways[0]?.name ?? ''; const lines = isAirborne(a) ? [`${a.callsign} Pushback approved`, `${a.callsign} Line up ${rw}`, `${a.callsign} Cross ${rw}`] : [`${a.callsign} Altitude 5000`, `${a.callsign} Cleared to land ${rw}`, `${a.callsign} Fly heading 180`]; const line = pick(lines, r)!; return { a, line: () => line }; } },
   { kind: 'descent below a safe level', find: (e, r) => { const a = pick(vectored(e).filter((x) => Math.hypot(x.pos.x - e.centerXY.x, x.pos.y - e.centerXY.y) > 12 * 1852), r); return a && { a, line: (x) => `${x.callsign} Altitude 1000` }; } },
   { kind: 'speed below what the aircraft can fly', find: (e, r) => { const a = pick(vectored(e).filter((x) => x.speed > 200), r); return a && { a, line: (x) => `${x.callsign} Speed 100` }; } },
@@ -68,7 +70,7 @@ function snapshot(e: SimEngine, a: AircraftState): string {
 interface EpisodeResult { seed: number; adversary: boolean; minutes: number; shots: Shot[]; calls: Record<string, number>; mind: Record<string, number>; movements: number; goArounds: number; incidents: Record<string, number>; lines: number; dialogue: Array<{ t: number; who: string; cs: string; text: string }> }
 
 function episode(seed: number, adversary: boolean): EpisodeResult {
-  const e = makeEngine(ICAO, { seed, ends: ENDS[ICAO] ?? null, pilotDelay: null, emergencies: 'off', pilotErrorRate: 0.02 });
+  const e = makeEngine(ICAO, { seed, ends: ENDS_ARG ? ENDS_ARG.split(',') : ENDS[ICAO] ?? null, pilotDelay: null, emergencies: 'off', pilotErrorRate: 0.02 });
   e.settings.autoMode = true; e.settings.autoTower = true; e.settings.autoGround = true; e.settings.autoApproach = true;
   e.settings.personas = true;
   const rnd = mulberry(seed * 9973 + 17);
@@ -105,9 +107,9 @@ function episode(seed: number, adversary: boolean): EpisodeResult {
       const line = s.line(a); if (!line) continue;
       const shot = say(s.kind, a, line); if (shot && shot.verdict !== 'void') shots.push(shot);
     }
-    if (e.time < nextAttack) continue;
-    nextAttack = e.time + 20 + rnd() * 30;
-    const order = ATTACKS.map((x) => ({ x, r: rnd() })).sort((p, q) => p.r - q.r).map((p) => p.x);
+    const timed = e.time >= nextAttack;
+    if (timed) nextAttack = e.time + 20 + rnd() * 30;
+    const order = ATTACKS.filter((x) => x.rare || timed).map((x) => ({ x, r: (x.rare ? 0 : 1) + rnd() })).sort((p, q) => p.r - q.r).map((p) => p.x);
     for (const atk of order) {
       const hit = atk.find(e, rnd); if (!hit) continue;
       if ((busy.get(hit.a.callsign) ?? -1e9) > e.time - 150) continue;
@@ -140,7 +142,7 @@ const sum = (xs: EpisodeResult[], f: (r: EpisodeResult) => number) => xs.reduce(
 const hours = (xs: EpisodeResult[]) => sum(xs, (r) => r.minutes) / 60;
 const callKinds = [...new Set(results.flatMap((r) => Object.keys(r.calls)))].sort();
 const summary = {
-  airport: ICAO, seeds: SEEDS, minutesPerEpisode: MINUTES, wallSeconds: Math.round((Date.now() - t0) / 1000),
+  airport: ICAO, ends: ENDS_ARG || (ENDS[ICAO] ?? []).join(','), seeds: SEEDS, minutesPerEpisode: MINUTES, wallSeconds: Math.round((Date.now() - t0) / 1000),
   mistakes: Object.entries(byKind).map(([kind, b]) => ({ kind, injected: b.n, caught: b.caught, rate: b.n ? b.caught / b.n : null, examples: b.examples, misses: b.misses })),
   total: { injected: sum(adv, (r) => r.shots.length), caught: sum(adv, (r) => r.shots.filter((s) => s.verdict === 'caught').length) },
   goodController: { hours: hours(base), movements: sum(base, (r) => r.movements), goArounds: sum(base, (r) => r.goArounds), lines: sum(base, (r) => r.lines), mind: Object.fromEntries(Object.keys(base[0]?.mind ?? {}).map((m) => [m, sum(base, (r) => r.mind[m])])), calls: Object.fromEntries(callKinds.map((c) => [c, sum(base, (r) => r.calls[c] ?? 0)])) },
