@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex">
+<title>Pilot Brain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root { --bg:#0e0f11; --surface:#141416; --raise:#1c1c1e; --line:rgba(255,255,255,.09); --ink-1:#f4f4f5; --ink-2:#c4c5c8; --ink-3:#a0a1a6; --ink-4:#7f8086;
+  --accent:#f5933f; --good:#57cd50; --orig:#3987e5; --r1:#d95926; --r2:#199e70;
+  --font:"DM Sans","Helvetica Neue",Arial,sans-serif; --mono:"DM Mono",ui-monospace,Menlo,monospace; color-scheme:dark; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; } }
+:root[data-theme="light"] { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; }
+* { box-sizing:border-box; } html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--bg); color:var(--ink-2); font-family:var(--font); font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  padding:40px max(16px, env(safe-area-inset-right,0px)) 72px max(16px, env(safe-area-inset-left,0px)); }
+.wrap { max-width:920px; margin:0 auto; display:grid; gap:28px; }
+a { color:var(--accent); } h1 { font-size:28px; line-height:1.2; margin:0 0 6px; color:var(--ink-1); letter-spacing:-.01em; }
+h2 { font-size:18px; margin:0 0 4px; color:var(--ink-1); } p { margin:0 0 10px; } .cap { color:var(--ink-3); font-size:13.5px; }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+.tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; }
+.tile .k { font-size:12.5px; color:var(--ink-3); } .tile .v { font-size:28px; font-weight:700; color:var(--ink-1); font-variant-numeric:tabular-nums; line-height:1.25; }
+.tile .v small { font-size:15px; font-weight:500; color:var(--ink-3); } .tile .d { font-size:12.5px; color:var(--ink-3); }
+.legend { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink-2); margin:10px 0 14px; }
+.legend span { display:inline-flex; align-items:center; gap:7px; } .sw { width:12px; height:12px; border-radius:3px; display:inline-block; }
+.orig { background:var(--orig); } .r1 { background:var(--r1); } .r2 { background:var(--r2); }
+.chart { display:grid; gap:16px; } .grp { display:grid; grid-template-columns:minmax(150px,230px) 1fr; gap:14px; align-items:center; }
+.lab b { display:block; color:var(--ink-1); font-weight:600; font-size:14px; } .lab span { display:block; color:var(--ink-3); font-size:12.5px; line-height:1.35; }
+.bars { display:grid; gap:2px; border-left:1px solid var(--line); padding:2px 0; min-width:0; }
+.row { display:flex; align-items:center; gap:8px; height:16px; padding-right:58px; position:relative; }
+.bar { display:block; height:12px; border-radius:0 4px 4px 0; flex:none; max-width:100%; }
+.val { font-family:var(--mono); font-size:12px; color:var(--ink-1); white-space:nowrap; } .na { font-size:12px; color:var(--ink-4); padding-left:6px; }
+.row:hover .bar { filter:brightness(1.15); }
+table { width:100%; border-collapse:collapse; font-size:14px; } th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--ink-3); font-weight:500; font-size:12.5px; } td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; } td b { color:var(--ink-1); }
+.scroll { overflow-x:auto; } code { font-family:var(--mono); font-size:12.5px; background:var(--raise); padding:1px 5px; border-radius:5px; }
+ul { margin:0; padding-left:20px; } li { margin-bottom:6px; }
+@media (max-width:620px) { .grp { grid-template-columns:1fr; gap:6px; } h1 { font-size:23px; } }
+</style>
+<style>ol,ul{margin:0 0 10px;padding-left:22px} li{margin-bottom:6px} section.card p:last-child{margin-bottom:0}
+pre.code{font-family:var(--mono);font-size:12px;line-height:1.35;background:var(--raise);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto;color:var(--ink-1)}</style>
+</head><body><div class="wrap">
+<header><p class="cap"><a href="/reports/">Reports</a> · plan · 11 November 2026 · source <code>docs/spec/13-PILOT-BRAIN.md</code></p>
+<h1>The pilot brain: pilots that think, remember and speak up</h1><p>Status: plan, 11 November 2026. The umbrella for the voice work: spec 12 (System 1 v2) becomes its &quot;understanding&quot; part. Owner decisions are listed at the end.</p>
+</section>
+</header>
+<section class="card">
+<h2>1. What the owner wants</h2>
+<p>Pilots that behave like real pilots, not a command parser:</p>
+<ul><li><b>Whole-flight memory.</b> Every aircraft lives one story, stand to runway or runway to stand, and remembers everything the controller told it on the way.</li><li><b>Consistency.</b> When a new instruction contradicts an earlier one, the pilot asks: &quot;previously you cleared us to flight level 80, confirm now 6,000 feet?&quot;</li><li><b>Initiative.</b> Pilots call the controller themselves when the situation calls for it: traffic converging, a runway that is still occupied, waiting too long at a hold, an instruction they cannot follow, a problem on board.</li><li><b>Understanding of the whole airport.</b> What is landing, what is taking off, who is taxiing where, and how the pieces fit together.</li><li><b>Natural speech.</b> Correct phraseology, but varied and human, never robotic.</li><li><b>Flawless sync.</b> Everything said matches the game exactly; nothing is invented.</li></ul>
+</section>
+<section class="card">
+<h2>2. What the game already has</h2>
+<p>The simulator (<code>src/lib/sim</code>, about 7,400 lines) already models most of the world:</p>
+<div class="scroll"><table><thead><tr><th>piece</th><th>where</th><th>what</th></tr></thead><tbody><tr><td>flight phases</td><td><code>stage.ts</code>, <code>engine.ts</code></td><td>stand, start-up, pushback, taxi, hold short, line-up, takeoff, climb, approach, landing, vacate, taxi in</td></tr><tr><td>pilot-initiated calls</td><td><code>PilotRequest</code>, 22 kinds</td><td>clearance, pushback, start-up, taxi, cross, ready, with you, higher, lower, direct, hold, taxi in, say again, radio check, cancel mayday, return to stand, wind check, confirm cleared, further, intersection, runway vacated, going around; requests expire when unanswered</td></tr><tr><td>readbacks</td><td><code>phraseology.ts readback()</code></td><td>full readbacks, deliberate wrong readbacks (<code>wrongReadback</code>) that the player must catch, &quot;unable&quot; with reasons</td></tr><tr><td>alerts</td><td><code>alerts.ts</code></td><td>short-term conflict (60 s look-ahead), minimum safe altitude, runway incursion, wake on final, ground conflict, delays, unanswered requests</td></tr><tr><td>emergencies</td><td><code>emergencies.ts</code></td><td>emergency types, souls and fuel queries</td></tr><tr><td>AI controllers</td><td>auto mode</td><td>full-auto play, used to generate data</td></tr></tbody></table></div>
+<p>What is missing is <b>judgement and language</b>: a record of what each pilot was told, pilots reacting to the situation and not only to a timer, questions when instructions conflict, and speech that is not a fixed template.</p>
+</section>
+<section class="card">
+<h2>3. Principles (how it stays flawless)</h2>
+<ol><li><b>The simulator is the single source of truth.</b> No model owns state. Models propose; the simulator decides.</li><li><b>Every spoken fact comes from state.</b> Numbers, callsigns, runways and fixes are copied from the game, never generated freely; every pilot line is re-parsed by the game and must match what the pilot is actually doing.</li><li><b>Safety-critical triggers are deterministic.</b> Converging traffic, an occupied runway, a contradiction: detected by code that can be tested, so they never depend on a model&#x27;s mood. Models decide <i>how</i> and <i>when</i> to say it.</li><li><b>Everything is tested as stories.</b> Each behaviour is a scripted scenario with an expected outcome, run on every change (§7).</li></ol>
+</section>
+<section class="card">
+<h2>4. Architecture</h2>
+<pre class="code">            ┌──────────── the simulator (truth) ────────────┐
+ controller │  aircraft, runways, traffic, phases, alerts   │
+ speech ──► │  + NEW clearance ledger per aircraft          │
+            └───────┬───────────────────────────┬───────────┘
+                    │ state + ledger            │ state changes
+     ┌──────────────▼─────────────┐   ┌─────────▼──────────────────┐
+     │ understanding (System 1 v2) │   │ situation monitor           │
+     │ speech → command(s), with   │   │ detects concerns: conflicts,│
+     │ the ledger and the dialogue │   │ contradictions, waiting,    │
+     │ as context (spec 12)        │   │ impossible instructions     │
+     └──────────────┬─────────────┘   └─────────┬──────────────────┘
+                    └──────────┐   ┌────────────┘
+                         ┌─────▼───▼─────┐
+                         │ pilot policy   │  what to say, when, in what order
+                         └───────┬───────┘
+                         ┌───────▼───────┐
+                         │ pilot voice    │  intent → words (phraseology, persona)
+                         └───────┬───────┘
+                                 ▼
+                 text-to-speech (per-pilot neural voice) ──► radio
+          unusual conversation ──► language model (System 2), grounded in the same state</pre>
+<p><b>4.1 Clearance ledger (new, deterministic).</b> Per aircraft: every instruction with time, the readback, and its status (issued, read back, executing, completed, superseded, cancelled), plus the clearance limit (where it must stop and wait). It answers &quot;what was this aircraft told, and is it still valid?&quot; The pilot&#x27;s memory is this ledger, so it can never disagree with the game.</p>
+<p><b>4.2 Contradiction rules (deterministic).</b> A new instruction is checked against the ledger and the state. Examples: a new level without &quot;correction&quot; while another level is being flown; cleared to cross a runway the aircraft was told to hold short of, without cancelling the hold; a heading while flying direct to a fix; cleared for takeoff while not lined up; cleared to land with traffic still on the runway. The pilot then asks for confirmation, quoting the earlier instruction, and does not act until it is resolved.</p>
+<p><b>4.3 Situation monitor (deterministic, then learned scoring).</b> Turns state changes into pilot concerns, building on <code>alerts.ts</code>: traffic converging (a TCAS-like call: &quot;traffic, we have it in sight&quot; or &quot;TCAS climb&quot;); runway occupied on short final; taxi conflict ahead (&quot;stopping, aircraft crossing ahead&quot;); waiting at a clearance limit too long; an instruction the aircraft physically cannot follow (&quot;unable, we need 2,000 metres&quot;); a missed frequency change; low fuel, weather, technical problems. Each concern has an urgency.</p>
+<p><b>4.4 Pilot policy (learned).</b> Given this aircraft&#x27;s state, its ledger, the concerns and the recent dialogue on the frequency: whether to speak, what to say (readback, confirm, query, request, report, unable, alert, or stay quiet), and when. Radio etiquette is part of the job: one speaker at a time, urgent calls first, no chatter, a reminder only after a sensible wait.</p>
+<p><b>4.5 Pilot voice (learned, with exact phraseology).</b> Intent → transmission. Safety-critical parts (readbacks of levels, headings, runways, frequencies) follow exact phraseology from templates; the wording around them varies with a persona per aircraft (airline, experience, verbosity; the neural voice per callsign already exists). A small generative model adds the variety; every line is re-parsed by the game (§3.2).</p>
+<p><b>4.6 Understanding with context (System 1 v2, spec 12).</b> The controller&#x27;s speech is read with the aircraft&#x27;s ledger and the last transmissions in the input, so references work: &quot;correction&quot;, &quot;disregard&quot;, &quot;as before&quot;, &quot;continue as cleared&quot;, conditional clearances (&quot;behind the landing A320, line up and wait&quot;), several commands in one call.</p>
+<p><b>4.7 Open conversation (System 2).</b> Questions and unusual requests in both directions go to a language model that sees the same state and ledger; whatever it proposes as a command is checked by the game&#x27;s parser; what it says is grounded in state (§3.2).</p>
+</section>
+<section class="card">
+<h2>5. Stories</h2>
+<p>Each flight follows a story with expected calls and possible deviations.</p>
+<ul><li><b>Departure:</b> clearance delivery → start-up → pushback → taxi (holds, crossings, give way) → holding point → line-up → takeoff → departure handoff. Deviations: delays, start-up failure, a stand blocked, a runway change, a rejected takeoff.</li><li><b>Arrival:</b> first call → descents and vectors → approach clearance → tower → landing → vacate → taxi in → on stand. Deviations: holding, a runway change, a go-around, a missed approach, an emergency.</li></ul>
+<p>The story is the frame the pilot policy works in: the pilot knows what comes next (&quot;ready for departure&quot; only when at the holding point) and what is overdue (&quot;still waiting for pushback&quot;).</p>
+</section>
+<section class="card">
+<h2>6. How the models learn</h2>
+<p><b>6.1 Episode generator.</b> The headless simulator with its AI controllers already plays whole sessions. It is extended to record <b>episodes</b>: full multi-turn dialogues (controller ↔ pilots) with the state at every transmission, across every airport, position and traffic level. Scripted perturbations put in what a perfect controller would never do, so the pilots learn to react: contradictory instructions, a landing clearance onto an occupied runway, forgotten aircraft, wrong frequencies, conflicts. Target: millions of transmissions, a few hours of CPU per million.</p>
+<p><b>6.2 Labels.</b> The deterministic layers (ledger, contradiction rules, monitor) label what a correct pilot must notice; the phraseology layer labels the exact readback; a strong language model (teacher) rewrites wordings for variety, and every rewrite must re-parse to the same meaning.</p>
+<p><b>6.3 Models.</b></p>
+<ul><li><i>Understanding:</i> System 1 v2 (spec 12) with ledger and dialogue context in its input.</li><li><i>Pilot policy and voice:</i> one small sequence model (10–50 M parameters) that runs in the browser and on the phone: input = compact state of this aircraft and its neighbours + ledger + concerns + recent dialogue; output = intent and the transmission, with numbers and names filled from state (slot copying, never free generation).</li><li>Training: supervised on the episodes, then <b>reinforcement learning inside the simulator</b>: rewards for safety (a concern that needed a call was called), correctness (the readback matches), restraint (no needless chatter, good timing), consistency (never contradicting the ledger); a language-model judge scores naturalness on samples.</li></ul>
+</section>
+<section class="card">
+<h2>7. Story tests (the quality bar)</h2>
+<p>A fixed suite of scripted scenarios, each with an expected outcome, checked automatically on every change. Examples:</p>
+<ol><li>Climb to flight level 80, then &quot;descend 6,000 feet&quot; without &quot;correction&quot;: the pilot asks which.</li><li>Cleared to land while an aircraft is still on the runway: the pilot queries, or goes around if not answered.</li><li>Two aircraft converging on a taxiway: one stops and reports.</li><li>Holding short for more than three minutes with no word: the pilot reminds the controller.</li><li>A wrong readback, the controller corrects it: the pilot reads back the correction and executes it.</li><li>&quot;Disregard&quot; after an instruction: the pilot keeps the previous clearance.</li><li>A full departure story with a perfect controller: exactly the expected calls, no extras.</li><li>A full arrival with a go-around: the go-around call, the missed approach, the re-sequence.</li></ol>
+<p>Scores: scenario pass rate; contradictions with the ledger (<b>must be zero</b>); false alarms per hour (chatter); calls missed when needed; latency per call.</p>
+</section>
+<section class="card">
+<h2>8. Phases</h2>
+<div class="scroll"><table><thead><tr><th>phase</th><th>work</th><th>models</th><th>what the owner sees</th></tr></thead><tbody><tr><td>1. Memory and judgement</td><td>clearance ledger, contradiction rules, situation monitor v1, new pilot calls (confirm, traffic, stopping, waiting, unable with reasons), story tests</td><td>none</td><td>pilots that remember, question conflicting instructions and speak up; the game feels alive</td></tr><tr><td>2. Understanding with context</td><td>System 1 v2 (spec 12) with the ledger and dialogue in its input</td><td>System 1 v2</td><td>own words, references, several commands at once</td></tr><tr><td>3. Episodes</td><td>the episode generator, perturbations, labels</td><td>–</td><td>millions of training dialogues</td></tr><tr><td>4. Pilot voice</td><td>the small model for wording and persona, on device</td><td>pilot model</td><td>varied, human pilots; same safety</td></tr><tr><td>5. Pilot policy</td><td>learned timing and choice, RL in the simulator</td><td>pilot model</td><td>pilots with judgement, not rules</td></tr><tr><td>6. Open conversation</td><td>System 2 for questions and unusual requests, grounded</td><td>language model</td><td>talk to pilots about anything</td></tr><tr><td>7. Flywheel</td><td>opt-in logging of real play, weekly retraining</td><td>all</td><td>it keeps getting better</td></tr></tbody></table></div>
+<p>Phase 1 needs no training and makes the biggest visible difference, so it comes first.</p>
+</section>
+<section class="card">
+<h2>9. Cost</h2>
+<p>Phase 1 is engineering only. Phases 2–5: GPU about 15–25 hours in total, about $10–25 on spot instances; the paraphrase and wording teacher about $20–60 with a commercial language model API. Phase 6 runs per call, on a cloud API or our own GPU server.</p>
+</section>
+<section class="card">
+<h2>10. Risks</h2>
+<ul><li>A pilot that talks too much is worse than one that talks too little: chatter is a tracked metric with a ceiling.</li><li>Learned wording can drift from phraseology: safety-critical parts stay templated and every line is re-parsed.</li><li>Episodes from AI controllers can be too clean: perturbations and, later, real players&#x27; sessions fix that.</li><li>A pilot model on the phone has a latency and size budget: 10–50 M parameters, measured like the speech models.</li></ul>
+</section>
+<section class="card">
+<h2>11. Decisions for the owner</h2>
+<ol><li>Start with phase 1 (no training): ledger, contradiction questions, situation calls, story tests.</li><li>The teacher for wording and paraphrases: a commercial language model API or our own models.</li><li>The GPU budget for phases 2–5: about $10–25 on spot.</li><li>Opt-in logging of real play for the flywheel.</li><li>Open conversation (phase 6): cloud API per call, or our own model on a GPU server.</li></ol>
+</section>
+</div></body></html>
