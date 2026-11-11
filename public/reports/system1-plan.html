@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex">
+<title>System 1 Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root { --bg:#0e0f11; --surface:#141416; --raise:#1c1c1e; --line:rgba(255,255,255,.09); --ink-1:#f4f4f5; --ink-2:#c4c5c8; --ink-3:#a0a1a6; --ink-4:#7f8086;
+  --accent:#f5933f; --good:#57cd50; --orig:#3987e5; --r1:#d95926; --r2:#199e70;
+  --font:"DM Sans","Helvetica Neue",Arial,sans-serif; --mono:"DM Mono",ui-monospace,Menlo,monospace; color-scheme:dark; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; } }
+:root[data-theme="light"] { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; }
+* { box-sizing:border-box; } html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--bg); color:var(--ink-2); font-family:var(--font); font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  padding:40px max(16px, env(safe-area-inset-right,0px)) 72px max(16px, env(safe-area-inset-left,0px)); }
+.wrap { max-width:920px; margin:0 auto; display:grid; gap:28px; }
+a { color:var(--accent); } h1 { font-size:28px; line-height:1.2; margin:0 0 6px; color:var(--ink-1); letter-spacing:-.01em; }
+h2 { font-size:18px; margin:0 0 4px; color:var(--ink-1); } p { margin:0 0 10px; } .cap { color:var(--ink-3); font-size:13.5px; }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+.tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; }
+.tile .k { font-size:12.5px; color:var(--ink-3); } .tile .v { font-size:28px; font-weight:700; color:var(--ink-1); font-variant-numeric:tabular-nums; line-height:1.25; }
+.tile .v small { font-size:15px; font-weight:500; color:var(--ink-3); } .tile .d { font-size:12.5px; color:var(--ink-3); }
+.legend { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink-2); margin:10px 0 14px; }
+.legend span { display:inline-flex; align-items:center; gap:7px; } .sw { width:12px; height:12px; border-radius:3px; display:inline-block; }
+.orig { background:var(--orig); } .r1 { background:var(--r1); } .r2 { background:var(--r2); }
+.chart { display:grid; gap:16px; } .grp { display:grid; grid-template-columns:minmax(150px,230px) 1fr; gap:14px; align-items:center; }
+.lab b { display:block; color:var(--ink-1); font-weight:600; font-size:14px; } .lab span { display:block; color:var(--ink-3); font-size:12.5px; line-height:1.35; }
+.bars { display:grid; gap:2px; border-left:1px solid var(--line); padding:2px 0; min-width:0; }
+.row { display:flex; align-items:center; gap:8px; height:16px; padding-right:58px; position:relative; }
+.bar { display:block; height:12px; border-radius:0 4px 4px 0; flex:none; max-width:100%; }
+.val { font-family:var(--mono); font-size:12px; color:var(--ink-1); white-space:nowrap; } .na { font-size:12px; color:var(--ink-4); padding-left:6px; }
+.row:hover .bar { filter:brightness(1.15); }
+table { width:100%; border-collapse:collapse; font-size:14px; } th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--ink-3); font-weight:500; font-size:12.5px; } td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; } td b { color:var(--ink-1); }
+.scroll { overflow-x:auto; } code { font-family:var(--mono); font-size:12.5px; background:var(--raise); padding:1px 5px; border-radius:5px; }
+ul { margin:0; padding-left:20px; } li { margin-bottom:6px; }
+@media (max-width:620px) { .grp { grid-template-columns:1fr; gap:6px; } h1 { font-size:23px; } }
+</style>
+<style>ol,ul{margin:0 0 10px;padding-left:22px} li{margin-bottom:6px} section.card p:last-child{margin-bottom:0}</style>
+</head><body><div class="wrap">
+<header><p class="cap"><a href="/reports/">Reports</a> · plan · 11 November 2026 · source <code>docs/spec/12-SYSTEM1-V2.md</code></p>
+<h1>System 1, version 2: the plan to make the command model the best it can be</h1><p>Status: plan, 11 November 2026. Owner decisions are listed at the end. Builds on spec 11 (voice model), <code>ml/s1</code>, <code>ml/rl</code> (GRPO), <code>ml/verify</code> (gate), <code>ml/s1/CALLSIGN_SCORING.md</code> and the speech-to-text work of 9–11 November (<code>public/reports/voice-stt-finetune.html</code>).</p>
+</section>
+</header>
+<section class="card">
+<h2>1. Where we are</h2>
+<p>The voice chain after speech-to-text:</p>
+<div class="scroll"><table><thead><tr><th>step</th><th>what</th><th>size</th><th>speed</th><th>job</th></tr></thead><tbody><tr><td>text cleanup</td><td><code>asr-repair.ts</code> rules</td><td>–</td><td>&lt; 1 ms</td><td>fixes recogniser slips</td></tr><tr><td>rules (L0)</td><td>the game&#x27;s grammar</td><td>–</td><td>~10 ms</td><td>reads the standard phrasing; 15 of the owner&#x27;s 16 recordings</td></tr><tr><td><b>System 1 (L1)</b></td><td>our transformer (<code>2m-grpo-v1</code>), constrained decoding + callsign likelihood search</td><td>2 M parameters</td><td>0.1–0.3 s in the browser</td><td>what the rules cannot read</td></tr><tr><td>verifier</td><td>481-weight MLP + veto rules</td><td>–</td><td>0.2 ms</td><td>send / let the player check / say again</td></tr></tbody></table></div>
+<p>System 1 today, exact command (n = 1,000 each): game phrasing 97.9 %, unseen airport (Sydney) 94.0 %, old-recogniser transcripts 87.1 %; callsign ≥ 99.4 %.</p>
+<p>What is wrong with it now:</p>
+<ol><li><b>It learned the wrong noise.</b> Its inputs imitate Google&#x27;s and Whisper&#x27;s slips (&quot;climb one ate thousand&quot;). The fine-tuned speech models write clean lower-case spoken words and make different, rarer mistakes. Nobody has measured System 1 on them.</li><li><b>It only knows the game&#x27;s phrasing.</b> The job left for it is everything the rules miss, and that is the player&#x27;s own words: &quot;hand him off to tower&quot;, &quot;give him direct Biggin&quot;, &quot;keep him coming down to five thousand&quot;. Its training data has little of that.</li><li><b>It is rigid.</b> About 33 command kinds; anything else becomes &quot;say again&quot;. It cannot say &quot;I don&#x27;t know, ask the big model&quot;, cannot give two commands at once, cannot handle a correction mid-sentence.</li><li><b>The verifier was fitted to the old model.</b></li></ol>
+</section>
+<section class="card">
+<h2>2. The goal</h2>
+<p>System 1 v2 is the fast path for everything a controller says to an aircraft that the game can act on, in any reasonable wording, from any of the three speech models, at any airport, and it knows when to hand off:</p>
+<ul><li>output: one or more command lines, or <code>SAY AGAIN</code> (not on frequency, unintelligible), or <b><code>ASK</code></b> (understood as speech but not a command it can map: a question, a request, chit-chat) which goes to the conversation layer (§7);</li><li>never sends a wrong command when it could have abstained;</li><li>small enough for the phone&#x27;s web view and the browser.</li></ul>
+<p>Targets (fixed eval suite, §6):</p>
+<div class="scroll"><table><thead><tr><th>metric</th><th>today</th><th>v2 target</th></tr></thead><tbody><tr><td>exact, game phrasing (val)</td><td>97.9 %</td><td>≥ 98.5 %</td></tr><tr><td>exact, unseen airports</td><td>94.0 %</td><td>≥ 97 %</td></tr><tr><td>exact, new speech models&#x27; transcripts</td><td>not measured</td><td>≥ 97 %</td></tr><tr><td>exact, own-words paraphrases (unseen styles)</td><td>not measured (low)</td><td>≥ 90 %</td></tr><tr><td>multi-command transmissions, all commands right</td><td>0 % (not supported)</td><td>≥ 90 %</td></tr><tr><td>non-commands correctly sent to <code>ASK</code> / <code>SAY AGAIN</code></td><td>not measured</td><td>≥ 95 %</td></tr><tr><td><b>sent wrong</b> (all sets)</td><td>0–1.9 %</td><td><b>≤ 0.5 %</b></td></tr><tr><td>latency p95, phone web view</td><td>~0.3 s</td><td>≤ 0.2 s</td></tr></tbody></table></div>
+</section>
+<section class="card">
+<h2>3. The data engine (the biggest lever)</h2>
+<p>Every training row is <code>(game state, transcript) → command line(s) | SAY AGAIN | ASK</code>, and every label is checked by the game&#x27;s own parser. Six sources, each with a quota so no kind of command or wording is rare:</p>
+<p><b>3.1 Real speech-model transcripts.</b> The 133 hours of training audio are already spoken lines with known text. Run all three fine-tuned speech models (server Parakeet, phone Parakeet 110M, browser Moonshine) over them, plus the untuned ones for robustness. The label is the game parser&#x27;s reading of the *clean* text; the input is what the recogniser wrote. About 64,000 clips × 3–5 recognisers ≈ 250,000 real-noise rows. GPU, about 1 hour.</p>
+<p><b>3.2 A noise model learned from those transcripts.</b> Align recogniser output with the truth and count the edits per word (substitutions such as &quot;Cathay → city&quot;, dropped &quot;one&quot;, split numbers). Sample from those edit statistics to add realistic noise to the millions of text-only rows from the exporter. This replaces the hand-written noise of round 1.</p>
+<p><b>3.3 Paraphrases, own words.</b> For every command kind, generate many wordings a controller might use: casual, terse, out of order, with fillers (&quot;uh&quot;), corrections (&quot;heading two seven zero, correction, two eight zero&quot;), partial callsigns, other countries&#x27; styles (FAA, ICAO, UK), plain-language (&quot;bring him down to five thousand&quot;). Generator: a strong LLM (teacher), prompted per kind with the game&#x27;s command definition and 20 hand-written seeds. Every paraphrase is round-trip checked: a second pass of the teacher plus the game parser must agree on the command; disagreements are dropped. Target 200,000 paraphrases, with 10 % of the styles held out for testing.</p>
+<p><b>3.4 Multi-command transmissions.</b> &quot;Speedbird 327, descend flight level 80, reduce speed 250, turn left heading 270&quot;: composed from compatible commands, labelled as several lines. 30,000 rows.</p>
+<p><b>3.5 Negatives.</b> Callsign not on frequency → <code>SAY AGAIN</code>; questions, requests, chit-chat, half-sentences, other frequencies&#x27; traffic → <code>ASK</code> or <code>SAY AGAIN</code>. 40,000 rows. These teach it to abstain instead of guessing.</p>
+<p><b>3.6 Real players (the flywheel, once live).</b> With opt-in, every voice transmission logs the transcript, the game state and what was finally sent (including the player&#x27;s edits when the command was held for a check). Weekly, the rows where the chain failed or the player corrected it go into training and the eval set. This is the only source of truly new wordings.</p>
+<p>Coverage is enforced, not hoped for: a table of command kind × airport × position × wording style × recogniser, with a minimum count per cell, and unseen airports (Sydney plus one more) kept out of training entirely.</p>
+</section>
+<section class="card">
+<h2>4. The model</h2>
+<ul><li><b>Size sweep</b> with the latency budget as the hard limit: 2 M (today), 11 M, 26 M, and a 50 M probe. The earlier sweep showed accuracy rising with size; the phone now runs a 110 M speech model, so a 10–30 M System 1 is affordable. Pick the smallest that meets the targets at ≤ 0.2 s p95 in the phone web view.</li><li><b>Tokenizer</b>: refit <code>ml/tokenizer/atc.json</code> on the new transcript style (lower-case spoken words, digit words), keeping digits and callsign pieces as atomic tokens.</li><li><b>Inputs</b>: game state (as now) + transcript + the recogniser&#x27;s 2–3 alternative transcripts when it gives them, marked as such, so the model can vote across them.</li><li><b>Outputs</b>: one or more command lines, <code>SAY AGAIN</code> or <code>ASK</code>; decoding stays constrained by the callsign trie and the command grammar (nothing unparseable can come out), with callsign likelihood search.</li></ul>
+</section>
+<section class="card">
+<h2>5. Training recipe</h2>
+<div class="scroll"><table><thead><tr><th>stage</th><th>what</th><th>why</th><th>compute</th></tr></thead><tbody><tr><td>A. pre-train</td><td>next-token training on millions of exporter rows with learned noise (§3.2), clean → noisy curriculum</td><td>the language of ATC and the game state format</td><td>GPU 1–2 h (26 M)</td></tr><tr><td>B. supervised fine-tune</td><td>real transcripts (§3.1), paraphrases (§3.3), multi-command (§3.4), negatives (§3.5), mixed by quota</td><td>the actual job</td><td>GPU &lt; 1 h</td></tr><tr><td>C. distillation</td><td>a teacher (fine-tuned Kev-0.8B, 100/100 on the bake-off) labels hard and ambiguous rows with soft targets; the student learns its full distribution, not only the top answer</td><td>the teacher&#x27;s judgement on the long tail</td><td>GPU 1 h (teacher inference)</td></tr><tr><td>D. GRPO</td><td>reinforcement learning with the game engine as the reward, as in <code>ml/rl</code> (which beat plain fine-tuning on real transcripts, p = 0.013), with an <b>asymmetric</b> reward: right +1, abstain 0, wrong −2</td><td>teaches it that a wrong command is worse than asking</td><td>CPU/GPU 1 h</td></tr><tr><td>E. calibration</td><td>temperature fit, verifier refit (<code>ml/verify/refit.sh</code>), abstention thresholds per command kind</td><td>the confidence it reports means what it says</td><td>CPU minutes</td></tr><tr><td>F. ship</td><td>int8, the TS engine <code>s1.ts</code> + worker, parity tests (node vs browser), rollback model kept</td><td>same as today&#x27;s pipeline</td><td>CPU</td></tr></tbody></table></div>
+<p>Every stage is compared with the stage before on the fixed suite; a stage that does not pay is dropped.</p>
+</section>
+<section class="card">
+<h2>6. Evaluation suite (fixed, versioned, run on every candidate)</h2>
+<ol><li>val (game phrasing), n = 1,000; 2. unseen airports, n = 1,000 each; 3. each speech model&#x27;s transcripts of held-out</li></ol>
+<p>audio, n = 1,000 each; 4. the owner&#x27;s recordings through each speech model; 5. held-out paraphrase styles, n = 2,000;</p>
+<ol><li>multi-command, n = 500; 7. negatives, n = 1,000; 8. latency in node, headless Chromium and the phone engine.</li></ol>
+<p>Reported per set: exact, sent wrong, abstained (right and wrong abstentions), callsign, p50/p95 latency; paired comparisons with McNemar tests, as <code>ml/rl</code> does. A candidate ships only if <b>sent wrong does not rise on any set</b>.</p>
+</section>
+<section class="card">
+<h2>7. The conversation layer (System 2), and how System 1 hands over</h2>
+<p>System 1 v2 says <code>ASK</code> when the speech is clear but is not a command it can map. That transcript, with the game state, goes to a language model, which may answer with a command line (checked by the game&#x27;s parser before it is sent), several commands, or a reply the pilot speaks (&quot;unable visual, we&#x27;ll take the ILS&quot;, &quot;say again your request?&quot;). Standard commands stay on the fast path; only unusual transmissions pay the 1–2 s. Every <code>ASK</code> is logged and becomes System 1 training data (§3.6), so the fast path keeps growing. The game also needs a few facts for pilots to answer sensibly (fuel, intentions, &quot;unable&quot; reasons). Specified separately in spec 07.</p>
+</section>
+<section class="card">
+<h2>8. Phases</h2>
+<div class="scroll"><table><thead><tr><th>phase</th><th>work</th><th>GPU</th><th>result</th></tr></thead><tbody><tr><td>1. Measure</td><td>today&#x27;s System 1 on the three new speech models&#x27; transcripts and on the owner&#x27;s free wording</td><td>1 h (transcribe held-out audio)</td><td>the real baseline</td></tr><tr><td>2. Data engine</td><td>§3.1–3.5: transcripts, noise model, paraphrases, multi-command, negatives, coverage table</td><td>1 h</td><td>~1 M labelled rows</td></tr><tr><td>3. Train</td><td>§5 A–E for 2 M, 11 M, 26 M</td><td>3–4 h</td><td>three candidates</td></tr><tr><td>4. Choose and ship</td><td>eval suite, latency on phone and browser, verifier refit, deploy, rollback kept</td><td>–</td><td>System 1 v2 live</td></tr><tr><td>5. Conversation layer</td><td><code>ASK</code> → language model → command or pilot reply</td><td>–</td><td>the game stops being rigid</td></tr><tr><td>6. Flywheel</td><td>opt-in logging, weekly retrain</td><td>~$2 a week</td><td>keeps improving</td></tr></tbody></table></div>
+</section>
+<section class="card">
+<h2>9. Cost</h2>
+<p>GPU about 6–8 hours in total, about $3–10 on spot instances or $8–15 on demand. The paraphrase teacher is the open choice: a commercial LLM API costs about $10–40 for 200,000 checked paraphrases; our own Kev-0.8B costs GPU time instead (about 1–2 hours) and gives less varied wording.</p>
+</section>
+<section class="card">
+<h2>10. Risks</h2>
+<ul><li>Synthetic wordings can still miss how real controllers talk: the flywheel (§3.6) and the owner&#x27;s own-words recordings are the check.</li><li>A bigger model may not fit the phone&#x27;s latency budget: the 2 M model stays as the fallback.</li><li>A teacher can hallucinate commands: every label is checked by the game&#x27;s parser and a second pass.</li><li><code>ASK</code> can be over-used, making the game slower: its rate is a tracked metric with a ceiling.</li><li>Licences: Kev-0.8B&#x27;s licence must allow distillation into a model we ship; check before stage C.</li></ul>
+</section>
+<section class="card">
+<h2>11. Decisions for the owner</h2>
+<ol><li>The paraphrase teacher: commercial LLM API (best variety, ~$10–40) or our own Kev-0.8B (GPU time).</li><li>GPU budget for phases 1–3: about $10–15.</li><li>Opt-in logging of players&#x27; voice transmissions (needed for the flywheel; needs a consent line and a privacy note).</li><li>The conversation layer&#x27;s model: cloud API per call, or our own model on a GPU server.</li></ol>
+</section>
+</div></body></html>
