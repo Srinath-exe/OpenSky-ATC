@@ -46,12 +46,13 @@ async function chain(rowsFile: string, modelDir: string) {
   const meta = JSON.parse(fs.readFileSync(path.join(modelDir, 'model.json'), 'utf8'));
   const bin = fs.readFileSync(path.join(modelDir, 'model.bin'));
   const m = new S1Model(meta, bin.buffer.slice(bin.byteOffset, bin.byteOffset + bin.byteLength) as ArrayBuffer);
+  const modelUrl = '/models/' + path.resolve(modelDir).split(`${path.sep}public${path.sep}models${path.sep}`)[1]?.split(path.sep).join('/');
   let cached = '';
   const l1: L1Like = {
     async complete(said, callsigns, ctx) {
       if (ctx && ctx !== cached) { m.prefill(ctx); cached = ctx; }
       const { tokens: _t, ...r } = m.complete(said, callsigns);   // everything the worker posts (incl. verifier signals, when the engine has them)
-      return r;
+      return { ...r, model: modelUrl };   // the gate is chosen per model URL, as in the game (l1.ts)
     },
   };
   const out = [];

@@ -5,7 +5,8 @@
 */
 import type { Signals } from './s1';
 
-export const S1_MODEL_URL = '/models/s1/2m-grpo-v1';   // GRPO-tuned (ml/rl, +4 pts on recogniser transcripts); 2m-swap-v1 kept for rollback. Versioned: /models/* is cached for a year
+export const S1_MODEL_URL = '/models/s1/2m-free-v1';   // free wording (ml/data/plain.py, docs/spec/16-COMMAND-MODEL-FREE.md); 2m-grpo-v1 kept for rollback.
+// previous model 2m-grpo-v1: GRPO-tuned (ml/rl, +4 pts on recogniser transcripts); 2m-swap-v1 kept for rollback. Versioned: /models/* is cached for a year
 
 /** `signals` (per-token evidence for the verifier) is null from a worker built before it existed; `model` names the
  *  weights that answered, so the verifier uses the gate fitted for them. */
@@ -51,6 +52,9 @@ export class L1Client {
     ready.catch(() => { if (this.ready === ready) this.reset('voice model could not load'); });
     return ready;
   }
+
+  /** Stop the worker (the model files stay in the browser's cache). */
+  dispose(): void { this.reset('disposed'); }
 
   /** Game state while the player talks. Fire and forget; errors surface on complete(). */
   prefill(ctx: string): void { void this.load().then(() => this.call({ type: 'prefill', ctx })).catch(() => undefined); }
