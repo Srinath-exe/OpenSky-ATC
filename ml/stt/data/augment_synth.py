@@ -16,12 +16,23 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "ml/tts"))
 from synth import radio
 
-S = ROOT / "ml/data/stt/synth"
+import os
+S = ROOT / "ml/data/stt" / os.environ.get("STT_SYNTH", "synth")
+VARIANT = os.environ.get("STT_VARIANT", "")   # "b": a second, different condition per clip, in aug_b/
 CONDS = [("clean", 25), ("radio", 35), ("laptop", 25), ("phone", 15)]
 
 
 def cond_for(i):
-    h = int(hashlib.md5(i.encode()).hexdigest(), 16) % 100
+    h = int(hashlib.md5((i + VARIANT).encode()).hexdigest(), 16) % 100
+    if VARIANT:   # never the same condition as the first copy
+        first = int(hashlib.md5(i.encode()).hexdigest(), 16) % 100; acc = 0; cf = None
+        for c, p in CONDS:
+            acc += p
+            if first < acc: cf = c; break
+        rest = [(c, p) for c, p in CONDS if c != cf]; h = h * sum(p for _, p in rest) // 100
+        for c, p in rest:
+            if h < p: return c
+            h -= p
     for c, p in CONDS:
         if h < p: return c
         h -= p
@@ -56,10 +67,10 @@ def main():
     rows = [json.loads(l) for l in open(S / "lines.jsonl")]
     done = skipped = 0
     for r in rows:
-        src = S / "audio" / r["engine"] / f"{r['id']}.wav"; dst = S / "aug" / r["engine"] / f"{r['id']}.wav"
+        src = S / "audio" / r["engine"] / f"{r['id']}.wav"; dst = S / ("aug_" + VARIANT if VARIANT else "aug") / r["engine"] / f"{r['id']}.wav"
         if not src.exists() or dst.exists(): skipped += 1; continue
         x, sr = sf.read(str(src), dtype="float32")
-        rng = np.random.default_rng(int(hashlib.md5(r["id"].encode()).hexdigest()[:8], 16))
+        rng = np.random.default_rng(int(hashlib.md5((r["id"] + VARIANT).encode()).hexdigest()[:8], 16))
         dst.parent.mkdir(parents=True, exist_ok=True)
         sf.write(str(dst), apply(x, cond_for(r["id"]), rng), 16000, subtype="PCM_16"); done += 1
     print(f"augmented {done}, skipped {skipped} (missing or done)")

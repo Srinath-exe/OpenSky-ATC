@@ -12,7 +12,8 @@ import numpy as np
 import soundfile as sf
 
 ROOT = Path(__file__).resolve().parents[3]
-D = ROOT / "ml/data/stt/synth"
+import os
+D = ROOT / "ml/data/stt" / os.environ.get("STT_SYNTH", "synth")   # STT_SYNTH=synth2: round 2 (coverage_lines.py)
 
 
 def resample(x, sr):
@@ -31,10 +32,11 @@ def engine(name, threads):
     if name == "kokoro":
         import torch; torch.set_num_threads(threads)
         from kokoro import KPipeline, KModel
-        m = KModel(repo_id="hexgrad/Kokoro-82M").eval()
+        dev = "cuda" if torch.cuda.is_available() else "cpu"
+        m = KModel(repo_id="hexgrad/Kokoro-82M").to(dev).eval()
         pipes = {l: KPipeline(lang_code=l, repo_id="hexgrad/Kokoro-82M", model=m) for l in "ab"}
         def say(t, v, speed):
-            parts = [r.audio.numpy() for r in pipes["b" if v[0] == "b" else "a"](t, voice=v, speed=speed) if r.audio is not None]
+            parts = [r.audio.cpu().numpy() for r in pipes["b" if v[0] == "b" else "a"](t, voice=v, speed=speed) if r.audio is not None]
             return (np.concatenate(parts) if parts else np.zeros(0)), 24000
         return say
     if name == "paradee":

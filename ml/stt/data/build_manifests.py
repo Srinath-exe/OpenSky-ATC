@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from textnorm import norm
 from wer import wer_num
 
-S, P, M = ROOT / "ml/data/stt/synth", ROOT / "ml/data/stt/public", ROOT / "ml/data/stt/manifests"
+P, M = ROOT / "ml/data/stt/public", ROOT / "ml/data/stt/manifests"
 LIC = {"kokoro": "Apache-2.0 (Kokoro-82M)", "paradee": "Apache-2.0 (Paradee-8M)", "phonon": "Apache-2.0 (Phonon-31M)", "supertonic": "OpenRAIL-M (Supertonic 3)"}
 
 
@@ -34,25 +34,35 @@ def jl(p):
 
 def main():
     M.mkdir(parents=True, exist_ok=True)
-    check = {r["id"]: r for r in jl(S / "check_parakeet.jsonl")}
-    synth, test_synth, suspect, missing = [], [], 0, 0
-    for r in jl(S / "lines.jsonl"):
-        clean = S / "audio" / r["engine"] / f"{r['id']}.wav"; wav = S / "aug" / r["engine"] / f"{r['id']}.wav"   # augment_synth.py
-        if not wav.exists(): missing += 1; continue
-        c = check.get(r["id"]); w = wer_num(r["text"], c["heard"]) if c and c.get("heard") is not None else None
-        row = {"audio_filepath": str(wav), "duration": round(sf.info(str(wav)).duration, 3), "text": r["text"], "source": f"synth-{r['engine']}",
-               "voice": r["voice"], "licence": LIC[r["engine"]], "use": "train", "line": r["line"], "kind": r["kind"], "icao": r["icao"],
-               "ctx": r["ctx"], "said": r["say"], "clean_filepath": str(clean), "parakeet_wer_clean": None if w is None else round(w, 3)}
-        if held_out(r["id"]): test_synth.append({**row, "use": "test"}); continue
-        if w is not None and w >= 0.6: suspect += 1; row["tts_suspect"] = True; continue
-        synth.append(row)
+    synth, test_synth, test_cov, suspect, missing = [], [], [], 0, 0
+    # round 1 (synth: make_lines.py, one condition) and round 2 (synth2: coverage_lines.py, two conditions per clip)
+    for rnd_dir, variants in (("synth", ("aug",)), ("synth2", ("aug", "aug_b"))):
+        S = ROOT / "ml/data/stt" / rnd_dir
+        check = {r["id"]: r for r in jl(S / "check_parakeet.jsonl")}
+        for r in jl(S / "lines.jsonl"):
+            clean = S / "audio" / r["engine"] / f"{r['id']}.wav"
+            c = check.get(r["id"]); w = wer_num(r["text"], c["heard"]) if c and c.get("heard") is not None else None
+            first = True
+            for v in variants:
+                wav = S / v / r["engine"] / f"{r['id']}.wav"   # augment_synth.py
+                if not wav.exists(): missing += first; first = False; continue
+                row = {"audio_filepath": str(wav), "duration": round(sf.info(str(wav)).duration, 3), "text": norm(r["text"]), "source": f"synth-{r['engine']}",
+                       "voice": r["voice"], "licence": LIC[r["engine"]], "use": "train", "line": r.get("line"), "kind": r.get("kind"), "icao": r.get("icao"),
+                       "ctx": r.get("ctx"), "said": r["say"], "pos": r.get("pos"), "src": r.get("src", "pool1"), "tag": r.get("tag"),
+                       "clean_filepath": str(clean), "parakeet_wer_clean": None if w is None else round(w, 3)}
+                if held_out(r["id"]):
+                    if first: (test_cov if rnd_dir == "synth2" else test_synth).append({**row, "use": "test"})
+                    first = False; continue
+                first = False
+                if w is not None and w >= 0.6: suspect += 1; continue
+                synth.append(row)
     nc = []
     for name in ("uwb_atcc", "atcosim"):
         for r in jl(P / f"{name}_train.jsonl"):
-            nc.append({"audio_filepath": str(ROOT / r["wav"]), "duration": r["duration"], "text": r["text"], "source": name, "role": r["role"], "licence": r["licence"], "use": r["use"]})
+            nc.append({"audio_filepath": str(ROOT / r["wav"]), "duration": r["duration"], "text": norm(r["text"]), "source": name, "role": r["role"], "licence": r["licence"], "use": r["use"]})
     tests = {}
     for name, key in (("atco2_1h", "atco2"), ("uwb_atcc", "uwb"), ("atcosim", "atcosim")):
-        tests[key] = [{"audio_filepath": str(ROOT / r["wav"]), "duration": r["duration"], "text": r["text"], "source": name, "role": r["role"], "licence": r["licence"], "use": "test"} for r in jl(P / f"{name}_test.jsonl")]
+        tests[key] = [{"audio_filepath": str(ROOT / r["wav"]), "duration": r["duration"], "text": norm(r["text"]), "source": name, "role": r["role"], "licence": r["licence"], "use": "test"} for r in jl(P / f"{name}_test.jsonl")]
     prompts = {p["id"]: p for p in json.load(open(ROOT / "public/voice/gold-prompts.json"))["prompts"]}
     gold = []
     for j in sorted((ROOT / "ml/data/gold").glob("*.json")):
@@ -60,7 +70,7 @@ def main():
         if not wav.exists(): continue
         gold.append({"audio_filepath": str(wav), "duration": round(sf.info(str(wav)).duration, 3), "text": norm(p["said"]) if p.get("show") == "read" and p.get("said") else None,
                      "source": "gold-owner", "line": p.get("line"), "ctx": p.get("ctx"), "icao": p.get("icao"), "licence": "owner's recordings (private)", "use": "test"})
-    out = {"train_synth": synth, "train_nc": nc, "train_all": synth + nc, "test_synth": test_synth, "test_gold": gold,
+    out = {"train_synth": synth, "train_nc": nc, "train_all": synth + nc + nc, "test_synth": test_synth, "test_cov": test_cov, "test_gold": gold,   # real speech twice: it is a fifth of the hours
            **{f"test_{k}": v for k, v in tests.items()}}
     summary = {}
     for k, rows in out.items():

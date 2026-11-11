@@ -3,7 +3,9 @@ lower case, words only, numbers as spoken words ("two seven left", "eight sixty 
 (tree -> three, fife -> five, niner -> nine, fower -> four), digits written in a corpus spelled digit by digit."""
 import re
 
-ICAO = {"tree": "three", "fife": "five", "niner": "nine", "fower": "four", "tousand": "thousand", "hundert": "hundred"}
+ICAO = {"tree": "three", "fife": "five", "niner": "nine", "fower": "four", "tousand": "thousand", "hundert": "hundred",
+        # one spelling per word across corpora (UWB / ATCO2 write alfa, juliet, centre)
+        "alfa": "alpha", "juliet": "juliett", "whisky": "whiskey", "centre": "center", "x-ray": "xray"}
 DIG = "zero one two three four five six seven eight nine".split()
 
 

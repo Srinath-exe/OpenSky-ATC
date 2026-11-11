@@ -62,7 +62,7 @@ def cmd_train(a):
     import nemo.collections.asr as nemo_asr
     from lightning.pytorch.callbacks import ModelCheckpoint
     w = Path(a.out); w.mkdir(parents=True, exist_ok=True)
-    m = nemo_asr.models.ASRModel.restore_from(str(w / "ultra.nemo"), map_location="cpu")
+    m = nemo_asr.models.ASRModel.restore_from(a.init or str(w / "ultra.nemo"), map_location="cpu")   # --init: continue from an earlier fine-tune
     lim = 64 if a.smoke else None
     train = rewrite(a.train, a.root, w, lim)
     val = str(w / "m_val.jsonl")   # one validation list, so NeMo logs a single "val_wer" for the checkpoint callback
@@ -74,7 +74,7 @@ def cmd_train(a):
             for k in list(ds.keys()):
                 if k.startswith(("tarred", "is_tarred", "use_lhotse", "batch_duration", "bucket", "shar", "lhotse", "use_bucketing", "num_buckets", "quadratic", "max_tps", "shuffle_buffer")): ds.pop(k)
             ds.manifest_filepath = man; ds.shuffle = shuffle; ds.batch_size = a.batch if key == "train_ds" else 16
-            ds.max_duration = 15.0; ds.min_duration = 0.3; ds.num_workers = 0 if a.smoke else 6; ds.pin_memory = not a.smoke
+            ds.max_duration = a.maxdur; ds.min_duration = 0.3; ds.num_workers = 0 if a.smoke else a.workers; ds.pin_memory = False
             ds.is_tarred = False; ds.use_lhotse = False
         m.cfg.optim.lr = a.lr
         m.cfg.optim.sched = {"name": "CosineAnnealing", "warmup_steps": 2 if a.smoke else 400, "min_lr": a.lr / 20}
@@ -131,7 +131,7 @@ def cmd_eval(a):
     import nemo.collections.asr as nemo_asr
     from wer import wer_num, norm
     w = Path(a.out); res = {}
-    for tag, path in (("base", w / "ultra.nemo"), ("tuned", Path(a.nemo))):
+    for tag, path in (("base", Path(a.base) if a.base else w / "ultra.nemo"), ("tuned", Path(a.nemo))):
         if not path.exists(): continue
         m = nemo_asr.models.ASRModel.restore_from(str(path)).eval()
         for t in a.tests:
@@ -150,10 +150,10 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument("cmd", choices=["base", "train", "export", "eval"])
     ap.add_argument("--out", required=True); ap.add_argument("--nemo"); ap.add_argument("--root", default="")
     ap.add_argument("--train", default=str(ROOT / "ml/data/stt/manifests/train_all.jsonl"))
-    ap.add_argument("--val", nargs="+", default=[str(ROOT / f"ml/data/stt/manifests/{n}.jsonl") for n in ("test_synth", "test_uwb")])
-    ap.add_argument("--tests", nargs="+", default=[str(ROOT / f"ml/data/stt/manifests/test_{n}.jsonl") for n in ("synth", "atco2", "uwb", "atcosim")])   # gold: on the VPS (private recordings stay there)
+    ap.add_argument("--val", nargs="+", default=[str(ROOT / f"ml/data/stt/manifests/{n}.jsonl") for n in ("test_synth", "test_cov", "test_uwb")])
+    ap.add_argument("--tests", nargs="+", default=[str(ROOT / f"ml/data/stt/manifests/test_{n}.jsonl") for n in ("synth", "cov", "atco2", "uwb", "atcosim")])   # gold: on the VPS (private recordings stay there)
     ap.add_argument("--epochs", type=int, default=3); ap.add_argument("--batch", type=int, default=16); ap.add_argument("--accum", type=int, default=2)
-    ap.add_argument("--lr", type=float, default=5e-5); ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--init", default=""); ap.add_argument("--workers", type=int, default=3); ap.add_argument("--maxdur", type=float, default=15.0); ap.add_argument("--base", default=""); ap.add_argument("--lr", type=float, default=5e-5); ap.add_argument("--smoke", action="store_true")
     a = ap.parse_args(); {"base": cmd_base, "train": cmd_train, "export": cmd_export, "eval": cmd_eval}[a.cmd](a)
 
 
