@@ -133,7 +133,7 @@ const CASES: Array<[string, Expect, Partial<typeof ctx>?]> = [
   ['RYR4 expedite', { kind: 'expedite', on: true, scope: 'vacating' }],
   ['AFR1170 expedite taxi', { kind: 'expedite', scope: 'taxi' }],
   ['DLH2 expedite descent', { kind: 'expedite', scope: 'descent' }],
-  ['DLH2 EXP', { kind: 'expedite', scope: 'climb' }],
+  ['DLH2 EXP', { kind: 'expedite', scope: 'descent' }],   // no direction said: DLH2 is an arrival, so it is coming down
   // ── contact / handoff ─────────────────────────────────────────────────────
   ['RYR4 when vacated contact ground', { kind: 'contact', position: 'ground', when: 'when_vacated' }],
   ['RYR4 contact ground when vacated', { kind: 'contact', position: 'ground', when: 'when_vacated' }],
@@ -527,4 +527,21 @@ test('verbsFor: stage-filtered verb list', () => {
   const authoritative = verbsFor({ callsign: 'X', stage: 'arr_inbound', enabledActions: ['action-heading'] });
   assert.ok(authoritative.includes('TURN LEFT HEADING'));
   assert.ok(!authoritative.includes('CLEARED ILS'));
+});
+
+// Found by the free-wording test set (ml/s1/freeword): ordinary words that the rules read as a different, dangerous command.
+test('parse: "go", "stand", "abort" and "expedite" are only the commands they sound like when the phrase says so', () => {
+  const kind = (text: string) => { const r = parseCommand(text, ctx); return r.ok && r.ast ? (r.ast.kind === 'sequence' ? r.ast.parts.map((p) => p.kind).join('+') : r.ast.kind) : 'none'; };
+  assert.equal(kind('DLH2 go around'), 'goAround');
+  assert.equal(kind('DLH2 go around, I say again, go around'), 'goAround');
+  for (const t of ['DLH2 go up to FL80', 'DLH2 go to tower', 'DLH2 go direct OCK', 'DLH2 go ahead and cross 27L']) assert.ok(!kind(t).includes('goAround'), `${t} -> ${kind(t)}`);
+  assert.equal(kind('DLH2 stand by'), 'standby');
+  assert.equal(kind('DLH2 standby'), 'standby');
+  assert.notEqual(kind('DLH2 stand 201 via A'), 'standby');
+  assert.equal(kind('DLH2 abort the landing go around'), 'goAround');
+  assert.equal(kind('EZY99 abort takeoff'), 'cancelTakeoff');
+  const scope = (text: string) => { const r = parseCommand(text, ctx); return r.ok && r.ast && r.ast.kind === 'expedite' ? r.ast.scope : null; };
+  assert.equal(scope('DLH2 expedite your descent'), 'descent');
+  assert.equal(scope('DLH2 expedite down'), 'descent');
+  assert.equal(scope('DLH2 expedite climb'), 'climb');
 });

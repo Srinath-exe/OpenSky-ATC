@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "active": "zipformer-en-2023-06-26-int8",
+ "active": "parakeet-110m-atc-v1",
  "models": [
   {
    "id": "zipformer-en-2023-06-26-int8",

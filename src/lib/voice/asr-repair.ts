@@ -119,9 +119,62 @@ const WORD_FIX: Record<string, string> = {
   wireless: 'ils', iris: 'ils', ranveer: 'runway', lakh: 'left', project: 'roger', approve: 'approved', decimals: 'decimal', notes: 'knots',
 };
 /** Multi-word mishearings and synonyms, on the normalised text: "hand off to tower" = contact tower. */
+// Plain language -> the standard phrase (spec 12 §3.3): what a controller says when not reading the book. Each
+// entry only rewrites wording around the values; numbers, callsigns, runways and fixes pass through untouched.
+// Measured on ml/s1/freeword (own-words test set); every entry must keep tests/commands and the gold recordings green.
+const FAC = '(tower|ground|approach|departure|delivery|control|center|director|radar)';
+const NATO = '(?:alpha|alfa|bravo|charlie|delta|echo|foxtrot|golf|hotel|india|juliett?|kilo|lima|mike|november|oscar|papa|quebec|romeo|sierra|tango|uniform|victor|whiskey|xray|x-ray|yankee|zulu)';
+const PLAIN_WORDS: [RegExp, string][] = [
+  [/\b(?:uh+|um+|er+|please|thanks|thank you|good day|bye(?: bye)?)\b/g, ''],
+  // acknowledgements, wait, refusals
+  [/\b(?:copy that|copied|okay understood|understood|roger that)\b/g, 'roger'],
+  [/\b(?:hang on(?: a (?:moment|second|sec|minute))?|give me a (?:second|moment|minute|sec)|one moment|i ?ll call you back)\b/g, 'standby'],
+  [/\b(?:cant do that(?: right now)?|cannot do that(?: right now)?|unable at the moment|negative(?= (?:due |unable|traffic)))\b/g, 'unable'],
+  [/\bunable unable\b/g, 'unable'],
+  [/\bdue (?:to )?traffic\b/g, 'traffic'],
+  // levels and speeds
+  [/\b(?:come down to|descend down to|go down to|drop down to)\b/g, 'descend'],
+  [/\b(?:go up to|climb up to|climb on up to)\b/g, 'climb'],
+  [/\b(?:slow(?: it)?(?: down)?(?: to)?|bring (?:the |your )?speed back to|reduce to)\b/g, 'reduce speed'],
+  [/\b(?:speed up to|pick up (?:the |your )?speed to|increase to)\b/g, 'increase speed'],
+  [/\b(?:descend faster|expedite (?:your |the )?descent|expedite down)\b/g, 'expedite descent'],
+  [/\b(?:climb faster|expedite (?:your |the )?climb|expedite up)\b/g, 'expedite climb'],
+  [/\bexpedite descent expedite\b/g, 'expedite descent'],
+  // headings and routes
+  [/\b(?:turn (?:on ?to|to)(?: a)? heading(?: of)?|come on ?to heading|make your heading|steer heading|fly a heading of|turn heading)\b/g, 'fly heading'],
+  [/\b(?:route|go|proceed|fly) direct(?: to)?\b/g, 'direct'],
+  [/\bdirect to\b/g, 'direct'],
+  [/\benter the hold at\b/g, 'hold at'],
+  [/\b(right|left) hand turns\b/g, '$1 turns'],
+  // frequency changes
+  [new RegExp(`\\b(?:switch to|over to|go to|call|talk to)(?: the)? ${FAC}\\b`, 'g'), 'contact $1'],
+  [new RegExp(`\\bcontact the ${FAC}(?: now)?\\b`, 'g'), 'contact $1'],
+  // ground
+  [/\b(?:you can |you may )?(?:keep|carry on|continue) taxi(?:ing)?\b/g, 'continue taxi'],
+  [/\b(?:stop where you are|hold your position)\b/g, 'hold position'],
+  [/\btaxi out to\b/g, 'taxi to'],
+  [new RegExp(`(?<!to )(?<!taxi )\\bstand (?=${NATO}\\b)`, 'g'), 'taxi to stand '],
+  [new RegExp(`\\busing (?=${NATO}\\b)`, 'g'), 'via '],
+  [new RegExp(`\\b(${NATO}(?: \\w+)?) and (?=${NATO}\\b)`, 'g'), '$1 '],
+  [new RegExp(`\\btake (${NATO}(?: \\w+)?) to vacate\\b`, 'g'), 'vacate via $1'],
+  [/\b(?:you can|you may|go ahead and) (cross|push ?back|start(?: up)?|taxi|line up)\b/g, '$1'],
+  [/\bpush ?back(?= expect\b)/g, 'pushback approved'],
+  [/\byou ?(?:re|are) good to start\b/g, 'start up approved'],
+  [/\btell me when you ?(?:re|are) (?:clear|across|vacated)\b/g, 'report vacated'],
+  // approach and runway
+  [/\byou ?(?:re|are) (?:cleared|clear)\b/g, 'cleared'],
+  [/\bclear(?:ed)? to go\b/g, ''],
+  [/\bcleared takeoff\b/g, 'cleared for takeoff'],
+  [/\bcleared for the ils\b/g, 'cleared ils'],
+  [/\b(?:call me|report when) established\b/g, 'report established'],
+  [/\b(?:plan on|you can expect|expect an?)(?: the)?\b/g, 'expect'],
+  [/\b(?:i have you on radar|radar identified|identified)\b/g, 'radar contact'],
+  [/\b(?:the )?wind is\b/g, 'wind'],
+];
 const PHRASE_FIX: [RegExp, string][] = [
   [/\b(?:hand ?offs?|hand of|hand over|handover)(?: to)?\b/g, 'contact'],
   [/\bshut up\b/g, 'start up'],
+  ...PLAIN_WORDS,
 ];
 const FACILITY = ['tower', 'ground', 'approach', 'departure', 'center', 'control', 'director', 'radar'];
 
@@ -218,7 +271,7 @@ export function repairTranscript(raw: string, aircraft: AsrAircraft[]): Repair {
   const notes: string[] = [];
   let toks = normaliseTokens(raw);
   let joined = toks.join(' ');
-  for (const [re, to] of PHRASE_FIX) joined = joined.replace(re, (m) => { notes.push(`${m}->${to}`); return to; });
+  for (const [re, to] of PHRASE_FIX) joined = joined.replace(re, (m, ...g) => { const out = to.replace(/\$(\d)/g, (_, n: string) => (typeof g[Number(n) - 1] === 'string' ? g[Number(n) - 1] : '')); if (out.trim() !== m.trim()) notes.push(`${m}->${out}`); return out; }).replace(/\s+/g, ' ').trim();
   // a fix or beacon spelled with the phonetic alphabet after "direct" / "hold at": "direct bravo india golf" = direct big
   joined = joined.replace(/\b(direct|hold at|holding at|via)((?: (?:alpha|alfa|bravo|charlie|delta|echo|foxtrot|golf|hotel|india|juliet|juliett|kilo|lima|mike|november|oscar|papa|quebec|romeo|sierra|tango|uniform|victor|whiskey|whisky|xray|yankee|zulu)){3,5})\b/g,
     (m, head: string, run: string) => { if (head === 'via') return m; const id = run.trim().split(' ').map((x) => x[0]).join(''); notes.push(`${run.trim()}->${id}`); return `${head} ${id}`; });

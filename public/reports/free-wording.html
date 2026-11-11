@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex">
+<title>Free wording</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root { --bg:#0e0f11; --surface:#141416; --raise:#1c1c1e; --line:rgba(255,255,255,.09); --ink-1:#f4f4f5; --ink-2:#c4c5c8; --ink-3:#a0a1a6; --ink-4:#7f8086;
+  --accent:#f5933f; --good:#57cd50; --orig:#3987e5; --r1:#d95926; --r2:#199e70;
+  --font:"DM Sans","Helvetica Neue",Arial,sans-serif; --mono:"DM Mono",ui-monospace,Menlo,monospace; color-scheme:dark; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; } }
+:root[data-theme="light"] { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; }
+* { box-sizing:border-box; } html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--bg); color:var(--ink-2); font-family:var(--font); font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  padding:40px max(16px, env(safe-area-inset-right,0px)) 72px max(16px, env(safe-area-inset-left,0px)); }
+.wrap { max-width:920px; margin:0 auto; display:grid; gap:28px; }
+a { color:var(--accent); } h1 { font-size:28px; line-height:1.2; margin:0 0 6px; color:var(--ink-1); letter-spacing:-.01em; }
+h2 { font-size:18px; margin:0 0 4px; color:var(--ink-1); } p { margin:0 0 10px; } .cap { color:var(--ink-3); font-size:13.5px; }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+.tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; }
+.tile .k { font-size:12.5px; color:var(--ink-3); } .tile .v { font-size:28px; font-weight:700; color:var(--ink-1); font-variant-numeric:tabular-nums; line-height:1.25; }
+.tile .v small { font-size:15px; font-weight:500; color:var(--ink-3); } .tile .d { font-size:12.5px; color:var(--ink-3); }
+.legend { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink-2); margin:10px 0 14px; }
+.legend span { display:inline-flex; align-items:center; gap:7px; } .sw { width:12px; height:12px; border-radius:3px; display:inline-block; }
+.orig { background:var(--orig); } .r1 { background:var(--r1); } .r2 { background:var(--r2); }
+.chart { display:grid; gap:16px; } .grp { display:grid; grid-template-columns:minmax(150px,230px) 1fr; gap:14px; align-items:center; }
+.lab b { display:block; color:var(--ink-1); font-weight:600; font-size:14px; } .lab span { display:block; color:var(--ink-3); font-size:12.5px; line-height:1.35; }
+.bars { display:grid; gap:2px; border-left:1px solid var(--line); padding:2px 0; min-width:0; }
+.row { display:flex; align-items:center; gap:8px; height:16px; padding-right:58px; position:relative; }
+.bar { display:block; height:12px; border-radius:0 4px 4px 0; flex:none; max-width:100%; }
+.val { font-family:var(--mono); font-size:12px; color:var(--ink-1); white-space:nowrap; } .na { font-size:12px; color:var(--ink-4); padding-left:6px; }
+.row:hover .bar { filter:brightness(1.15); }
+table { width:100%; border-collapse:collapse; font-size:14px; } th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--ink-3); font-weight:500; font-size:12.5px; } td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; } td b { color:var(--ink-1); }
+.scroll { overflow-x:auto; } code { font-family:var(--mono); font-size:12.5px; background:var(--raise); padding:1px 5px; border-radius:5px; }
+ul { margin:0; padding-left:20px; } li { margin-bottom:6px; }
+@media (max-width:620px) { .grp { grid-template-columns:1fr; gap:6px; } h1 { font-size:23px; } }
+</style>
+<style>ol,ul{margin:0 0 10px;padding-left:22px} li{margin-bottom:6px} section.card p:last-child{margin-bottom:0}
+pre.code{font-family:var(--mono);font-size:12px;line-height:1.35;background:var(--raise);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto;color:var(--ink-1)}</style>
+</head><body><div class="wrap">
+<header><p class="cap"><a href="/reports/">Reports</a> · results · source <code>docs/spec/15-FREE-WORDING.md</code></p>
+<h1>Free wording: how well the game understands a controller who does not read the book</h1><p>Status: results, 11 November 2026. Test sets and scorer in <code>ml/s1/freeword</code>. No GPU and no cost: everything here ran on the game server.</p>
+</section>
+</header>
+<section class="card">
+<h2>Why this was measured</h2>
+<p>Every earlier number came from standard phraseology. The owner&#x27;s 16 recordings are read from a prompt, so the rules handle 15 of them and the command model has almost nothing to do. Nobody had measured what happens when a controller says &quot;come down to seven thousand&quot; or &quot;go to tower&quot;. That is the job the command model exists for.</p>
+</section>
+<section class="card">
+<h2>The test</h2>
+<p>270 transmissions written as the speech models write them, each in a real game situation (the 100 gold prompts&#x27; airports and traffic), with the command it must produce:</p>
+<div class="scroll"><table><thead><tr><th>set</th><th>lines</th><th>what it is</th></tr></thead><tbody><tr><td>first set</td><td>203</td><td>own words, clipped or reordered, other phraseology standards, several commands at once, and 12 lines that are not commands</td></tr><tr><td>held-out set</td><td>67</td><td>written after the fixes below, with wordings not looked at while fixing; this is the number to trust</td></tr></tbody></table></div>
+<p>Each line goes through the game&#x27;s own chain: text clean-up, rules, the command model, the confidence gate.</p>
+</section>
+<section class="card">
+<h2>What it found first: dangerous misreadings in the rules</h2>
+<p>Before any fix, 76 % of the first set was sent right and <b>8 % was sent wrong</b>. Most wrong ones came from the rules, not the model:</p>
+<div class="scroll"><table><thead><tr><th>the controller said</th><th>the game sent</th></tr></thead><tbody><tr><td>&quot;go up to flight level eight zero&quot;</td><td>Go around</td></tr><tr><td>&quot;go to tower on one one eight decimal five&quot;</td><td>Go around</td></tr><tr><td>&quot;expedite your descent&quot;</td><td>Expedite climb</td></tr><tr><td>&quot;abort the landing, go around&quot;</td><td>Cancel takeoff</td></tr><tr><td>&quot;stand romeo fifteen via foxtrot two&quot;</td><td>Standby</td></tr></tbody></table></div>
+<p>All five are fixed in the parser (<code>src/lib/sim/commands.ts</code>) with regression tests: &quot;go&quot; is a go-around only with &quot;around&quot;; &quot;stand&quot; is &quot;standby&quot; only with &quot;by&quot;; &quot;abort the landing&quot; is a go-around; &quot;expedite&quot; understands &quot;your descent&quot; and &quot;down&quot;, and with no direction follows the flight (an arrival is descending).</p>
+</section>
+<section class="card">
+<h2>A plain-language layer</h2>
+<p><code>asr-repair.ts</code> now rewrites about 40 everyday phrasings into the standard phrase before the rules see them (&quot;come down to&quot; = descend, &quot;slow to&quot; = reduce speed, &quot;switch to tower&quot; = contact tower, &quot;copy that&quot; = roger, &quot;hang on&quot; = standby, &quot;you can cross&quot; = cross). Values are never touched.</p>
+</section>
+<section class="card">
+<h2>Results</h2>
+<div class="scroll"><table><thead><tr><th></th><th>sent right</th><th>held for the player, right command</th><th>sent wrong</th><th>not understood</th></tr></thead><tbody><tr><td>first set, before (191 commands)</td><td>76 %</td><td>2 %</td><td>8.4 %</td><td>13 %</td></tr><tr><td>first set, after</td><td><b>94 %</b></td><td>1 %</td><td>2.6 %</td><td>2 %</td></tr><tr><td><b>held-out set (62 commands)</b></td><td><b>69 %</b></td><td>6 %</td><td>6.5 %</td><td>18 %</td></tr></tbody></table></div>
+<ul><li>All 17 non-command lines (&quot;how&#x27;s the ride at your level&quot;, &quot;are you ready to push&quot;) were refused in both sets; nothing was sent.</li><li>Of the wrong sends that remain, most are harmless (the same command with a different free-text remark). The real ones: a model output that kept only half of a two-part instruction, and &quot;expect two seven left ILS&quot; read as an expectation plus an approach clearance.</li><li>Several commands in one transmission work when said in standard order (11 of 11). A twelfth, deliberately confusing line should have been refused and was sent as half an instruction.</li></ul>
+</section>
+<section class="card">
+<h2>What the numbers mean</h2>
+<p>The gap between 94 % and 69 % is the lesson. A hand-written phrase table fixes what its author thought of and little else: the held-out set uses wordings like &quot;give me one nine zero knots&quot;, &quot;take up heading zero six five&quot;, &quot;it&#x27;ll be the ILS two seven left&quot;, and the table has none of them. This is the measured case for training the command model on free wording (spec 12): a model learns the pattern, a table only the examples.</p>
+<p>Today&#x27;s command model was trained on the game&#x27;s own phrasing. On the held-out commands it reads 66 % right by itself (the rules alone, without the plain-language layer, 39 %), and when it is wrong it is confidently wrong (&quot;got it&quot; becomes &quot;Direct BOSSO&quot;), which is why the gate holds most of its answers for the player to check.</p>
+</section>
+<section class="card">
+<h2>Also done today</h2>
+<ul><li>The game server now runs the small fine-tuned speech model (Parakeet 110M): the owner&#x27;s recordings 0.6 % word error (large model 1.7 %), about 0.25 s per transmission on the server (large model 0.5 to 0.9 s). Through the full chain the recordings give the same result as before: 15 of 16 sent right, none wrong. Going back is one file (<code>/etc/systemd/system/openatc.service.d/stt-model.conf</code>).</li><li>The phone app&#x27;s default is the same fine-tuned model (131 MB download, no live text while speaking, far more accurate). APK: <code>/downloads/openatc-stt-atc.apk</code>.</li><li>The fine-tuned browser model (Moonshine) is not shipped: 27.7 % word error on the owner&#x27;s real voice.</li></ul>
+</section>
+<section class="card">
+<h2>What is left for launch on the voice side</h2>
+<ol><li><b>Train the command model on free wording</b> (spec 12, reduced): about 150 hand-written paraphrase templates per command kind expanded with real callsigns and numbers, real speech-model transcripts, non-commands and multi-command lines; the held-out set above is the exam. Needs a GPU for about 3 to 4 hours, roughly 3 to 5 US dollars. <b>Not started: it costs money and waits for the owner&#x27;s yes.</b></li><li>The same small speech model in the browser (one model for web and phone). Engineering only.</li><li>&quot;Speedbird nine three two, roger&quot; heard as &quot;nine nine three two&quot;: the one recording still missed.</li><li>Merge the <code>voice-ai</code> branch into <code>main</code>.</li></ol>
+</section>
+</div></body></html>

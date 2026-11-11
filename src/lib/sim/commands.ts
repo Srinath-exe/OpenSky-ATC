@@ -771,7 +771,9 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       p.fail('unknown_verb', 'Cancel what?', ['TAKEOFF', 'APPROACH CLEARANCE', 'LINE UP']);
     }
     // eslint-disable-next-line no-fallthrough
-    case 'ABORT': case 'REJECT': { p.next(); p.accept('TAKEOFF', 'TAKE OFF'); p.skip(','); return done(mk('cancelTakeoff', { reason: restAll(p) })); }
+    case 'ABORT': case 'REJECT': { p.next();
+      if (p.accept('THE LANDING', 'LANDING', 'THE APPROACH', 'APPROACH')) { p.skip(','); p.accept('GO AROUND'); p.skip(','); return done(mk('goAround', { reason: restTextUntilVerb(p) })); }
+      p.accept('TAKEOFF', 'TAKE OFF'); p.skip(','); return done(mk('cancelTakeoff', { reason: restAll(p) })); }
     case 'VACATE': {
       p.next();
       if (p.accept('IF ABLE', 'IF POSSIBLE', 'WHEN ABLE')) { p.skip(','); let via: string | null = null; if (p.accept('VIA', 'AT')) via = p.taxiway(); return done(mk('stopOnRunway', { mode: 'vacate_if_able', via })); }
@@ -789,8 +791,9 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
     case 'PLAN': { p.next(); p.accept('TO'); p.accept('VACATE', 'EXIT'); return done(parseExitBody(p, mk, null)); }
     case 'EXPEDITE': case 'EXPD': case 'EXP': {
       p.next();
-      const scope = p.accept('TAXI', 'CROSSING', 'VACATING', 'CLIMB', 'DESCENT', 'DESCEND', 'THE CROSSING', 'YOUR TAXI');
-      let sc: 'taxi' | 'crossing' | 'vacating' | 'climb' | 'descent' = scope ? (scope.replace('THE ', '').replace('YOUR ', '').replace('DESCEND', 'DESCENT').toLowerCase() as never) : (air === false ? 'taxi' : 'climb');
+      const scope = p.accept('TAXI', 'CROSSING', 'VACATING', 'CLIMB', 'DESCENT', 'DESCEND', 'THE CROSSING', 'YOUR TAXI', 'YOUR DESCENT', 'YOUR CLIMB', 'THE DESCENT', 'THE CLIMB', 'DOWN', 'UP');
+      const going = self?.plan?.kind === 'arrival' ? 'descent' : 'climb';   // no direction said: an arrival is coming down
+      let sc: 'taxi' | 'crossing' | 'vacating' | 'climb' | 'descent' = scope ? (scope.replace('THE ', '').replace('YOUR ', '').replace('DESCEND', 'DESCENT').replace('DOWN', 'DESCENT').replace('UP', 'CLIMB').toLowerCase() as never) : (air === false ? 'taxi' : going);
       if (!scope && stage === 'hold_short_cross') sc = 'crossing'; else if (!scope && stage === 'rollout') sc = 'vacating';
       restText(p);
       return done(mk('expedite', { on: true, scope: sc }));
@@ -798,6 +801,7 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
     case 'LAND': { p.next(); return done(parseLandBody(p, mk, p.runway(false, plannedRunway))); }
     case 'CTL': { p.next(); const rwy = p.runway(false, plannedRunway); const ast = mk('clearedLand', { runway: rwy }); for (;;) { if (p.accept('EXIT')) { const e = p.next(); ast.exit = e === 'L' || e === 'R' ? { kind: 'next', dir: e } : { kind: 'taxiway', taxiway: e }; continue; } if (p.accept('LAHSO')) { ast.lahso = p.runway(); continue; } break; } return done(ast); }
     case 'GO': case 'GA': case 'GOAROUND': case 'MISSED': {
+      if (t === 'GO' && p.peek(1) && p.peek(1) !== 'AROUND' && p.peek(1) !== ',') break;   // "go up to", "go to tower", "go direct": not a go-around
       p.next(); p.accept('AROUND'); p.accept('APPROACH'); p.skip(',');
       p.accept('I SAY AGAIN GO AROUND', 'I SAY AGAIN', 'GO AROUND'); p.skip(',');
       return done(mk('goAround', { reason: restTextUntilVerb(p) }));
@@ -967,7 +971,9 @@ function parsePart(p: Parser, cs: string, self: ParseAircraft | null): { part: P
       return done(mk('correction', { field, value }));
     }
     case 'DISREGARD': { p.next(); restText(p); return done(mk('disregard', {})); }
-    case 'STANDBY': case 'STAND': { p.next(); p.accept('BY'); restText(p); return done(mk('standby', {})); }
+    case 'STANDBY': case 'STAND': {
+      if (t === 'STAND' && p.peek(1) !== 'BY' && p.peek(1) !== '') break;   // "stand romeo 15 via ...": a parking stand, not "stand by"
+      p.next(); p.accept('BY'); restText(p); return done(mk('standby', {})); }
     case 'UNABLE': {
       p.next(); p.skip(',');
       let reason: UnableReason = 'traffic';
