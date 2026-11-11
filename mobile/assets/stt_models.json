@@ -131,6 +131,47 @@
      "size": 11896
     }
    ]
+  },
+  {
+   "id": "parakeet-110m-atc-dry",
+   "name": "Parakeet TDT 110M (dry run, not fine-tuned yet)",
+   "version": "dry",
+   "kind": "nemoTransducer",
+   "license": "CC-BY-4.0",
+   "source": "ml/stt/train_parakeet.py",
+   "sampleRate": 16000,
+   "hotwords": false,
+   "notes": "offline NeMo transducer, greedy; files hosted at openatc.aeon-labs.site/models/stt/parakeet-110m-atc-dry",
+   "files": [
+    {
+     "role": "encoder",
+     "name": "encoder.int8.onnx",
+     "url": "https://openatc.aeon-labs.site/models/stt/parakeet-110m-atc-dry/encoder.int8.onnx",
+     "sha256": "fad0b790961b681e1adbaf40aaaaa49965c3b0eb908207896bd9f026bfcab129",
+     "size": 131112997
+    },
+    {
+     "role": "decoder",
+     "name": "decoder.int8.onnx",
+     "url": "https://openatc.aeon-labs.site/models/stt/parakeet-110m-atc-dry/decoder.int8.onnx",
+     "sha256": "2c513b251f68dbb4fa13f62953fd4991975006915c800176ca43bd08854c5070",
+     "size": 3955863
+    },
+    {
+     "role": "joiner",
+     "name": "joiner.int8.onnx",
+     "url": "https://openatc.aeon-labs.site/models/stt/parakeet-110m-atc-dry/joiner.int8.onnx",
+     "sha256": "35a99ed36c5f9c796010c36ce7fdaef3bc1e4455e83c5be86d292808ecee479d",
+     "size": 1411400
+    },
+    {
+     "role": "tokens",
+     "name": "tokens.txt",
+     "url": "https://openatc.aeon-labs.site/models/stt/parakeet-110m-atc-dry/tokens.txt",
+     "sha256": "450e56bd2f036fe5b6aa821865838cc5aa9d8b0106134ce9a9ba0664abe6cd10",
+     "size": 9953
+    }
+   ]
   }
  ]
 }
