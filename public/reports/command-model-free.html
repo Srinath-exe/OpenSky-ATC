@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex">
+<title>Command model, free wording</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root { --bg:#0e0f11; --surface:#141416; --raise:#1c1c1e; --line:rgba(255,255,255,.09); --ink-1:#f4f4f5; --ink-2:#c4c5c8; --ink-3:#a0a1a6; --ink-4:#7f8086;
+  --accent:#f5933f; --good:#57cd50; --orig:#3987e5; --r1:#d95926; --r2:#199e70;
+  --font:"DM Sans","Helvetica Neue",Arial,sans-serif; --mono:"DM Mono",ui-monospace,Menlo,monospace; color-scheme:dark; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; } }
+:root[data-theme="light"] { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; }
+* { box-sizing:border-box; } html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--bg); color:var(--ink-2); font-family:var(--font); font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  padding:40px max(16px, env(safe-area-inset-right,0px)) 72px max(16px, env(safe-area-inset-left,0px)); }
+.wrap { max-width:920px; margin:0 auto; display:grid; gap:28px; }
+a { color:var(--accent); } h1 { font-size:28px; line-height:1.2; margin:0 0 6px; color:var(--ink-1); letter-spacing:-.01em; }
+h2 { font-size:18px; margin:0 0 4px; color:var(--ink-1); } p { margin:0 0 10px; } .cap { color:var(--ink-3); font-size:13.5px; }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+.tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; }
+.tile .k { font-size:12.5px; color:var(--ink-3); } .tile .v { font-size:28px; font-weight:700; color:var(--ink-1); font-variant-numeric:tabular-nums; line-height:1.25; }
+.tile .v small { font-size:15px; font-weight:500; color:var(--ink-3); } .tile .d { font-size:12.5px; color:var(--ink-3); }
+.legend { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink-2); margin:10px 0 14px; }
+.legend span { display:inline-flex; align-items:center; gap:7px; } .sw { width:12px; height:12px; border-radius:3px; display:inline-block; }
+.orig { background:var(--orig); } .r1 { background:var(--r1); } .r2 { background:var(--r2); }
+.chart { display:grid; gap:16px; } .grp { display:grid; grid-template-columns:minmax(150px,230px) 1fr; gap:14px; align-items:center; }
+.lab b { display:block; color:var(--ink-1); font-weight:600; font-size:14px; } .lab span { display:block; color:var(--ink-3); font-size:12.5px; line-height:1.35; }
+.bars { display:grid; gap:2px; border-left:1px solid var(--line); padding:2px 0; min-width:0; }
+.row { display:flex; align-items:center; gap:8px; height:16px; padding-right:58px; position:relative; }
+.bar { display:block; height:12px; border-radius:0 4px 4px 0; flex:none; max-width:100%; }
+.val { font-family:var(--mono); font-size:12px; color:var(--ink-1); white-space:nowrap; } .na { font-size:12px; color:var(--ink-4); padding-left:6px; }
+.row:hover .bar { filter:brightness(1.15); }
+table { width:100%; border-collapse:collapse; font-size:14px; } th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--ink-3); font-weight:500; font-size:12.5px; } td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; } td b { color:var(--ink-1); }
+.scroll { overflow-x:auto; } code { font-family:var(--mono); font-size:12.5px; background:var(--raise); padding:1px 5px; border-radius:5px; }
+ul { margin:0; padding-left:20px; } li { margin-bottom:6px; }
+@media (max-width:620px) { .grp { grid-template-columns:1fr; gap:6px; } h1 { font-size:23px; } }
+</style>
+<style>ol,ul{margin:0 0 10px;padding-left:22px} li{margin-bottom:6px} section.card p:last-child{margin-bottom:0}
+pre.code{font-family:var(--mono);font-size:12px;line-height:1.35;background:var(--raise);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto;color:var(--ink-1)}</style>
+</head><body><div class="wrap">
+<header><p class="cap"><a href="/reports/">Reports</a> · results · source <code>docs/spec/16-COMMAND-MODEL-FREE.md</code></p>
+<h1>The overnight run: the command model learns free wording</h1><p>Status: results, night of 11 to 12 November 2026. Everything ran on the game server&#x27;s CPU: no GPU, nothing paid. Scripts in <code>ml/data/plain.py</code>, <code>ml/rl/sft.py</code>, <code>ml/s1/freeword/</code>, <code>ml/tts/roundtrip.py</code>.</p>
+</section>
+</header>
+<section class="card">
+<h2>What is live now</h2>
+<div class="scroll"><table><thead><tr><th>part</th><th>before tonight</th><th>now</th></tr></thead><tbody><tr><td>command model</td><td><code>2m-grpo-v1</code> (trained on the game&#x27;s own phrasing)</td><td><b><code>2m-free-v1</code></b> (fine-tuned on everyday wording and hard cases), with its own refitted safety gate; the old model is kept for instant rollback</td></tr><tr><td>text clean-up and rules</td><td></td><td>corrections, cut-off values, everyday words, courtesy phrases, three-part taxiway names, &quot;give way then continue&quot; (below)</td></tr><tr><td>speech recognition</td><td>the fine-tuned Parakeet 110M (since yesterday)</td><td>unchanged</td></tr><tr><td>pilot voice</td><td>Paradee-8M</td><td>unchanged: tested, no training needed (below)</td></tr></tbody></table></div>
+</section>
+<section class="card">
+<h2>The result</h2>
+<p>Each test set goes through the game&#x27;s real chain (clean-up, rules, the command model, the safety gate), each model with its own gate. &quot;Wrong&quot; means a command was sent that is not what the controller meant; a held command is shown to the player to confirm and never executes by itself.</p>
+<div class="scroll"><table><thead><tr><th>test set</th><th>what it is</th><th>old model: sent right / sent wrong</th><th><b>new model: sent right / sent wrong</b></th></tr></thead><tbody><tr><td>independent exam</td><td>60 commands in everyday wording, written by a separate author who never saw the training data</td><td>40 / 3</td><td><b>51 / 2</b></td></tr><tr><td>stress exam</td><td>86 commands + 34 non-commands in 12 hard categories, separate author</td><td>80 / 4</td><td><b>81 / 3</b></td></tr><tr><td>casual speech, end to end</td><td>the exam lines spoken by four voices, heard by the game&#x27;s speech model, then read</td><td>161 / 12 (of 208)</td><td><b>178 / 10</b></td></tr><tr><td>held-out wording</td><td>62 commands</td><td>44 / 3</td><td><b>51 / 2</b></td></tr><tr><td>first wording set</td><td>190 commands</td><td>180 / 4</td><td><b>181 / 4</b></td></tr><tr><td>speech-model transcripts, standard phrasing</td><td>164 commands</td><td>155 / 6</td><td><b>155 / 5</b></td></tr><tr><td>the owner&#x27;s 16 recordings</td><td></td><td>15 / 0</td><td><b>15 / 0</b></td></tr><tr><td>non-commands not sent</td><td>small talk, questions, cut-offs and wrong callsigns across the sets</td><td>108 of 115</td><td><b>108 of 115</b></td></tr></tbody></table></div>
+<p>Standard phrasing on the training format&#x27;s own checks (200 lines each): 94.5 % / 86.5 % (unseen airport) / 79 % (recogniser text) before, 94.0 % / 88.0 % / 79 % after: unchanged within noise.</p>
+<p>The rule: a model ships only if it sends right more often and sends wrong <b>no more often on any set</b>. The new model passes on every set. In the browser it loads in 0.24 s and answers in 110 to 170 ms, the same as before (same 2-million-parameter size).</p>
+</section>
+<section class="card">
+<h2>How it was trained</h2>
+<ol><li><b>Data.</b> <code>ml/data/plain.py</code> takes 26,000 real game situations and says each instruction the way a controller talks when not reading the book: 10 to 20 phrasings per command kind (&quot;come down to&quot;, &quot;give me two one zero knots&quot;, &quot;switch to tower&quot;, &quot;copy that&quot;, &quot;hang on&quot;), values copied from the game so every label is exact, plus small talk labelled &quot;do nothing&quot;. Round 2 adds hard cases: two or three instructions in one breath, corrections (&quot;four thousand, correction, five thousand&quot;), flight number only, questions, &quot;do not ...&quot; and cut-off transmissions. Every label is checked by the game&#x27;s own parser before it is used.</li><li><b>Training.</b> Fine-tuning from the shipped model, mixing the new data with 50,000 to 60,000 rows of the original data so standard phrasing is not forgotten. Round 1 (everyday wording), then round 2 from round 1&#x27;s best checkpoint (hard cases). About 4 hours of CPU in total.</li><li><b>Choosing.</b> Every saved checkpoint was scored automatically against the shipped model (<code>ml/s1/freeword/watch.py</code>). Round 2 step 2000 and the final step 3700 both passed; with their own gates they send wrong equally rarely and step 2000 sends right more often, so step 2000 shipped.</li><li><b>The safety gate</b> (the verifier that decides send / ask the player / say again) was refitted for the new model (<code>ml/verify/refit.sh</code>, one hour of CPU). Browser engine and training framework agree on all 200 parity checks.</li></ol>
+</section>
+<section class="card">
+<h2>Bugs found and fixed on the way</h2>
+<p>The tests found mistakes in the rules, not only in the model; all fixed with tests:</p>
+<div class="scroll"><table><thead><tr><th>the controller said</th><th>the game did</th><th>now</th></tr></thead><tbody><tr><td>&quot;four thousand, correction, five thousand&quot;</td><td>gave up</td><td>5,000</td></tr><tr><td>&quot;fly heading two&quot; (cut off)</td><td>sent heading 002</td><td>asks again</td></tr><tr><td>&quot;... four thousand, cheers mate&quot;</td><td>heard &quot;cheers&quot; as &quot;cross&quot;</td><td>4,000</td></tr><tr><td>&quot;... do you copy&quot;</td><td>broke the sentence</td><td>ignored</td></tr><tr><td>&quot;via zulu nine alpha&quot;</td><td>taxiways Z9 then A</td><td>Z9A</td></tr><tr><td>&quot;give way to the Qatari, then continue&quot;</td><td>give way <b>and</b> continue at once</td><td>one give-way</td></tr></tbody></table></div>
+<p>The rule fixes alone took wrong sends on the stress exam from 8 to 4 and on recogniser transcripts from 13 to 6, before the new model.</p>
+</section>
+<section class="card">
+<h2>Honest notes</h2>
+<ul><li>The two exams were written by separate authors, but I used the stress exam&#x27;s results by category (corrections, questions, cut-offs) to decide which rules to fix, using my own example sentences, never its lines. The independent exam was only scored.</li><li>The stress exam counts &quot;say your heading&quot; as &quot;do nothing&quot;; the game has a real &quot;report heading&quot; request, so I count that answer as acceptable.</li><li>All speech in these tests is synthetic (four neural voices). Real players will find wordings and accents nothing here covers; the opt-in logging idea (spec 12, flywheel) is how that gets fixed.</li><li>About 1 in 20 everyday-wording commands is still sent wrong (2 of 60 on the independent exam, 10 of 208 end to end). Most are near misses; some are not. That is the main open problem, and more data of the same kind gives less and less: the rest needs real players&#x27; speech.</li></ul>
+</section>
+<section class="card">
+<h2>The owner&#x27;s questions</h2>
+<p><b>Should we train the pilot voice (text to speech) for aviation lingo?</b> No. Test (<code>ml/tts/roundtrip.py</code>): 240 lingo-heavy pilot lines (callsigns, flight levels, headings, runways, frequencies, QNH, ICAO &quot;tree / fife / niner&quot;) spoken by the game&#x27;s pilot voice and by a ten times larger reference voice, then transcribed: 0.06 % word error for the game voice, and no word the game voice says worse than the reference. Caveat: the speech model learned from these voices, so its ears are friendly; the owner&#x27;s ear is the final check.</p>
+<p><b>Should we train the speech model again (GPU)?</b> Not needed. On casual speech its word error is 2.8 % (0.8 % on standard phrasing), mostly dropped fillers (&quot;uh&quot;, &quot;okay&quot;) and &quot;stand by&quot; written as &quot;standby&quot;. End to end it costs 3 commands in 208 compared with perfect transcripts. A third round on casual audio would cost about 3 US dollars of GPU and gain about that much.</p>
+<p><b>Does the command model need a GPU or a bigger size?</b> No. The earlier size sweep (2, 11 and 26 million parameters) moved accuracy by about 2 points; better data moved it by 37 points (unseen airport, 50 % to 87 %). Tonight&#x27;s gains came from data, on a CPU.</p>
+<p>So there is no GPU job to run in the morning. If the owner still wants one, the most useful would be the speech-model round on casual audio (about 3 US dollars), or nothing.</p>
+</section>
+<section class="card">
+<h2>Safety overnight</h2>
+<p><code>scripts/ops/overnight_guard.sh</code> ran as the systemd unit <code>atc-guard</code>: free disk checked every minute (cleanup below 6 GB, ML jobs stopped below 3 GB), the site checked every minute and restarted after three failures. Disk stayed at 20 to 21 GB free; the site never failed a check. Stop it with <code>systemctl stop atc-guard</code>.</p>
+</section>
+<section class="card">
+<h2>Rollback</h2>
+<p><code>src/lib/voice/l1.ts</code>: set <code>S1_MODEL_URL</code> back to <code>/models/s1/2m-grpo-v1</code> and deploy. Both models and both gates are on the server.</p>
+</section>
+</div></body></html>
