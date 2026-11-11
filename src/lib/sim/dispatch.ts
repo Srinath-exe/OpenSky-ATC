@@ -38,7 +38,8 @@ import type {
 } from './commandAst';
 import { IMMEDIATE_KINDS, describe, isAircraftCommand, isSystemCommand } from './commandAst';
 import type { PhraseCtx } from './phraseology';
-import { readback as phraseReadback, transmission as phraseTransmission, unableLine } from './phraseology';
+import { magneticHeading, readback as phraseReadback, transmission as phraseTransmission, unableLine } from './phraseology';
+import { ledgerOf } from './ledger';
 import type { ActionCtx, FixInfo, NearbyAircraft, RunwayInfo, StandInfo, ValidationResult, VehicleInfo } from './commandTree';
 import { REASONS, actionsFor, validateAst } from './commandTree';
 import type { ParseAircraft, ParseCtx, ParseErrorCode, ParseResult } from './commands';
@@ -135,6 +136,8 @@ export interface DispatchOptions {
   ctx?: ActionCtx | null;
   /** false = skip the UX §G3 validation layer entirely (engine guards still apply). */
   validate?: boolean;
+  /** false = the pilot does not question instructions that contradict earlier ones (ledger.ts); they are still recorded. */
+  memory?: boolean;
   /** Conditions the parser could not attach to the AST (ParseResult.detachedConditions). */
   conditions?: DetachedCondition[];
 }
@@ -467,6 +470,22 @@ export function dispatch(engine: EngineCommandApi, ast: CommandAST, opts: Dispat
   let unableCode: ResultCode | null = null;
   let unableReason: string | undefined;
 
+  // 5b. the pilot's memory (ledger.ts, spec 13): an instruction that contradicts a recent one is questioned, not
+  // executed ("previously cleared FL080, confirm now 6000?"); the same instruction again, or "roger", confirms it
+  const ledger = ledgerOf(engine);
+  const ta = pctx.transitionAltFt ?? 6000;
+  const mag = (trueDeg: number) => magneticHeading(trueDeg, pctx.magVar ?? 0);
+  if (opts.who !== 'ai' && opts.memory !== false) {
+    if (ast.kind === 'roger') {
+      const confirmed = safe(() => ledger.takeConfirmed(a.callsign, engine.time), null);
+      if (confirmed) return dispatch(engine, confirmed, opts);
+    }
+    for (const part of parts) {
+      const q = safe(() => ledger.check(a, part, engine.time, ta, mag), null);
+      if (q) return finish({ ok: false, code: 'queried', transmission: tx(), readback: `${pctx.telephony(a.callsign)}, ${q.question}?`, reason: q.question, warnings, readbackAt: engine.time + readbackDelay(engine, a, ast.kind, undefined) });
+    }
+  }
+
   const rollback = () => {
     for (let i = queued.length - 1; i >= 0; i--) {
       const r = safe(() => engine.cmdDisregard(a), { ok: false, code: 'nothing_pending' } as EngineOutcome);
@@ -510,6 +529,8 @@ export function dispatch(engine: EngineCommandApi, ast: CommandAST, opts: Dispat
       reason: unableReason, refused: refused.map(describe), warnings, readbackAt,
     });
   }
+  // what was accepted enters the pilot's memory
+  for (const part of applied) safe(() => { if (part.kind === 'disregard') ledger.cancelLast(a.callsign); else ledger.record(a.callsign, part, engine.time, ta, mag); }, undefined);
   const code: ResultCode = refused.length ? 'partial' : conditional ? 'ok_conditional' : applyAt != null ? 'ok_queued' : 'ok';
   return finish({
     ok: true, code, transmission: tx(),
