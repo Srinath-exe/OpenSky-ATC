@@ -24,3 +24,13 @@
 .pDot { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--text-1); box-shadow: 0 0 0 4px var(--orange-tint-30); }
 .pDot1 { left: 46%; top: 44%; } .pDot2 { left: 58%; top: 30%; }
 .actions { display: flex; justify-content: flex-end; gap: var(--s-2); flex-wrap: wrap; }
+
+/* phones */
+.phone { align-items: flex-end; padding: 16px 16px max(16px, env(safe-area-inset-bottom)); background: radial-gradient(120% 70% at 50% 0%, rgba(59, 234, 122, 0.08), transparent 60%), #040508; }
+.phoneCard { width: 100%; display: flex; flex-direction: column; gap: 14px; padding: 8px 4px 4px; }
+.phoneKicker { margin: 0; font: 600 11px/1 var(--font-mono, ui-monospace, monospace); letter-spacing: 0.2em; color: #3bea7a; }
+.phoneTitle { margin: 0; font: 700 34px/1.02 var(--font); letter-spacing: -0.03em; color: var(--text-1); }
+.phoneText { margin: 0; font: var(--fw-regular) 16px/1.5 var(--font); color: var(--text-2); }
+.phoneActions { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.phoneActions > button { width: 100%; justify-content: center; }
+.phoneAnyway { margin-top: 4px; padding: 10px; border: 0; background: none; color: var(--text-3); font: var(--fw-regular) 14px/1 var(--font); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

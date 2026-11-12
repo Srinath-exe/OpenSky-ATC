@@ -19,7 +19,7 @@ import { describe } from '@/lib/sim/commandAst'
 import { createBrowserRecognizer, createLocalRecognizer, browserSpeechAvailable, localSpeechAvailable, DEFAULT_VOICE_ENGINE, createNativeRecognizer, nativeSpeechAvailable, defaultAccent } from '@/lib/voice/recognizer'
 import type { Recognizer, VoiceEngine } from '@/lib/voice/recognizer'
 import { createServerRecognizer, serverSpeechAvailable, withServerSecondOpinion, better } from '@/lib/voice/asr-server'
-import { diagKey, saveAttempt } from '@/lib/voice/asr-diag'
+import { diagKey, noteAttempt, saveAttempt } from '@/lib/voice/asr-diag'
 import { understandHeard, biasNames } from '@/lib/voice/asr-nbest'
 import { L1Client } from '@/lib/voice/l1'
 import { voiceContext, positionOf } from '@/lib/voice/context'
@@ -386,7 +386,10 @@ export function CommLog() {
             return better(first, more.result)
           })
           .then((u) => {
-            // the owner's live-attempt log (asr-diag.ts): only with the gold-set key in this browser
+            // what was heard, kept in the page for "Report a problem"; the owner's live-attempt log (asr-diag.ts)
+            // only with the gold-set key in this browser
+            const kindNow = rec.kind === 'local' ? 'local' : rec.kind === 'native' ? 'native' : rec.kind === 'server' ? 'server' : 'browser'
+            noteAttempt({ page: 'game', engine: engineRef.current, transcripts: { [kindNow]: alts, ...(serverAlts.length ? { server: serverAlts } : {}) }, heard: u?.heard, line: u?.line, ok: u?.ok, sayAgain: u?.sayAgain, error: u?.error ?? null, confidence: u?.confidence ?? null })
             if (diagKey()) {
               const kind = rec.kind === 'local' ? 'local' : rec.kind === 'native' ? 'native' : rec.kind === 'server' ? 'server' : 'browser'
               void rec.lastAudio?.().then((a) => saveAttempt(a, {

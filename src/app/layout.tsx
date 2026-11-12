@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { DM_Sans } from 'next/font/google'
 import './globals.css'
+import { ReportHost } from '@/game/Report/Report'
 
 /* A18: DM Sans variable (wght 100-1000 covers the 300/400/500 tokens) with the opsz axis; the metric fallback
    ("DM Sans Fallback") is declared in globals.css. next/font requires weight 'variable' when axes are requested. */
@@ -42,7 +43,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={dmSans.variable}>
-      <body>{children}</body>
+      <body>{children}<ReportHost /></body>
     </html>
   )
 }

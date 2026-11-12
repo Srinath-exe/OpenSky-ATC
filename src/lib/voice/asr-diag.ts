@@ -32,6 +32,16 @@ export interface AttemptMeta {
   readback?: string; timings?: Record<string, number>;
 }
 
+const recent: Array<Record<string, unknown>> = [];
+/** The last few speech attempts (text only) for problem reports. */
+export function recentAttempts(): Array<Record<string, unknown>> { return recent.slice(); }
+
+/** Remember an attempt (text only, kept in this page) for a problem report. */
+export function noteAttempt(meta: AttemptMeta): void {
+  recent.push({ t: new Date().toISOString().slice(11, 19), engine: meta.engine, page: meta.page, heard: meta.heard, line: meta.line, ok: meta.ok, sayAgain: meta.sayAgain, error: meta.error, confidence: meta.confidence, expected: meta.expected, transcripts: meta.transcripts, timings: meta.timings });
+  if (recent.length > 8) recent.shift();
+}
+
 export function saveAttempt(audio: Float32Array | null, meta: AttemptMeta): void {
   const key = diagKey();
   if (!key || !audio || audio.length < 16000 * 0.2 || audio.length > 16000 * 30) return;

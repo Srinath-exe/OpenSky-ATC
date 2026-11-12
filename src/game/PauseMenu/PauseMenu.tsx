@@ -6,6 +6,7 @@ import styles from './PauseMenu.module.css'
 import { Modal, ListRow, Icon, Button, Kbd } from '@/design'
 import { sim, useSim, formatSimClock } from '../hooks/useSimSelector'
 import { useShell } from '../shellContext'
+import { openReport } from '../Report/Report'
 
 type Confirm = 'restart' | 'quit' | null
 
@@ -68,6 +69,7 @@ export function PauseMenu() {
           <ListRow icon={<Icon name="plane-takeoff" size={18} />} title="Runway configuration" subtitle="Active runways, roles and weight classes" onClick={() => openFromMenu('runwayConfig')} testId="pause-runways" />
           <ListRow icon={<Icon name="settings-2" size={18} />} title="Settings" subtitle="Sound, realism, display" onClick={() => openFromMenu('settings')} testId="pause-settings" />
           <ListRow icon={<Icon name="gauge" size={18} />} title="Session stats" subtitle="Score breakdown, movements, incidents" onClick={() => openFromMenu('stats')} testId="pause-tracks" />
+          <ListRow icon={<Icon name="circle-alert" size={18} />} title="Report a problem" subtitle="Tell us what went wrong; the last radio calls go with it" onClick={() => { close(); openReport() }} testId="pause-report" />
           <ListRow icon={<Icon name="house" size={18} />} title="Quit to home" subtitle="Ends the shift" onClick={() => setConfirm('quit')} testId="pause-quit" />
         </div>
       )}

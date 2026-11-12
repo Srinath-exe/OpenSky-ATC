@@ -16,6 +16,7 @@ import { Briefing, Complete, Prologue } from './Cinema'
 import { Radio101 } from './Radio101'
 import { spokenCall, callKey } from './spoken'
 import { setVoiceEngine, useVoicePrefs } from '@/lib/models/manager'
+import { openReport } from '../Report/Report'
 
 const INTRO_KEY = 'atc.tutor.intro.v1'
 
@@ -66,6 +67,7 @@ export function Rail({ onIntro }: { onIntro: () => void }) {
         <button className={s.footLink} onClick={onIntro}>▶ Watch the intro</button>
         <button className={s.footLink} onClick={() => coach.freePlay()} data-testid="tutor-free">Free play</button>
         <Link className={s.footLink} href={`/play?icao=KSFO&position=${st.tab}`}>Real shift →</Link>
+        <button className={s.footLink} onClick={openReport} data-testid="tutor-report">Report a problem</button>
       </div>
     </aside>
   )

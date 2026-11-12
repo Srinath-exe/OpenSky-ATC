@@ -77,6 +77,7 @@
 .paren { color: var(--text-3); font-weight: var(--fw-regular); }
 .subtitle { font: var(--fw-body-s) var(--fs-body-s) / var(--lh-body-s) var(--font); color: var(--text-3); font-variant-numeric: tabular-nums; }
 .headerRight { display: flex; align-items: center; gap: var(--s-2); flex-shrink: 0; }
+@media (max-width: 600px) { .header { flex-wrap: wrap; } .headerRight { flex-shrink: 1; max-width: 100%; } }
 .affordance {
   width: 24px; height: 24px; margin: -3px -3px -3px 0; display: inline-flex; align-items: center; justify-content: center;
   color: var(--text-1); border-radius: var(--r-pill); cursor: pointer;

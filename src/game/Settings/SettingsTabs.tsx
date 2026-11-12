@@ -25,6 +25,7 @@ import { setLook, useLook } from '@/components/atc/WorldMap/cinematic'
 import { setPilotVoice, setVoiceEngine, useVoicePrefs } from '@/lib/models/manager'
 import { ModelsPanel } from './ModelsPanel'
 import s from './SettingsTabs.module.css'
+import { openReport } from '../Report/Report'
 
 export type TabId = 'gameplay' | 'voice' | 'audio' | 'graphics' | 'models' | 'data' | 'about'
 const TABS: { id: TabId; label: string; hint: string; icon: IconName }[] = [
@@ -327,6 +328,9 @@ function About() {
     <>
       <Group title="SKYCONTROL">
         <ListRow flush title="Ground, tower and approach simulation" subtitle="Real airports, real phraseology, your voice" meta={<span data-testid="set-version">v{version}</span>} />
+      </Group>
+      <Group title="Something wrong?">
+        <ListRow flush icon={<Icon name="circle-alert" size={18} />} title="Report a problem" subtitle="Tell us what went wrong; the last radio calls and what the speech engine heard go with it" onClick={openReport} testId="set-report" />
       </Group>
       <Group title="Credits" span>
         <div className={s.credits}>

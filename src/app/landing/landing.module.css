@@ -338,6 +338,8 @@
   .seg { width: 30px; }
   .seg span { display: none; }
   .hudLeft { display: none; }
+  .cue { bottom: 44px; }
+  .cue i { display: none; }
   .tagBox { font-size: 10px; }
   .hudNums b { font-size: 24px; }
   .body { font-size: 15px; }

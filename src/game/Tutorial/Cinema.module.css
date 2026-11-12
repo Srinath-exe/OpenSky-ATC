@@ -148,6 +148,18 @@
 @keyframes grain { 0% { transform: translate(0, 0); } 20% { transform: translate(-6%, 4%); } 40% { transform: translate(5%, -6%); } 60% { transform: translate(-3%, 7%); } 80% { transform: translate(6%, 2%); } 100% { transform: translate(0, 0); } }
 @keyframes rec { 50% { opacity: 0.25; } }
 @media (max-width: 860px) { .seatRow { grid-template-columns: 1fr; } .seat { aspect-ratio: 16 / 7; } .objectives { display: none; } }
+@media (max-width: 600px) {
+  .seats { justify-content: flex-start; gap: 18px; padding: 84px 16px 88px; overflow-y: auto; }
+  .seatsLine { font-size: 22px; text-align: center; }
+  .seatRow { gap: 12px; }
+  .seat { aspect-ratio: auto; max-height: none; min-height: 0; border-radius: 16px; }
+  .seat:hover { transform: none; }
+  .seatNum { top: 14px; left: 16px; font-size: 11px; }
+  .seatBody { position: relative; left: auto; right: auto; bottom: auto; padding: 38px 16px 44px; gap: 6px; }
+  .seatName { font-size: 30px; }
+  .seatLine { font-size: 14px; }
+  .seatGo { left: 16px; bottom: 14px; opacity: 1; transform: none; }
+}
 @media (prefers-reduced-motion: reduce) { .gate *, .pro *, .brief *, .done * { animation-duration: 1ms !important; transition-duration: 1ms !important; } }
 
 /* video clips: a slow push-in; scenes cross-fade */

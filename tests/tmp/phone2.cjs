@@ -1,0 +1,20 @@
+const { chromium, devices } = require('playwright');
+const OUT = process.env.OUT, BASE = process.env.BASE || 'https://openatc.aeon-labs.site';
+(async () => {
+  const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  const ctx = await b.newContext({ ...devices['iPhone 13'], deviceScaleFactor: 1 });
+  const p = await ctx.newPage(); p.on('pageerror', (e) => console.log('ERR', e.message.slice(0, 160)));
+  await p.goto(BASE + '/start', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(4000);
+  await p.screenshot({ path: `${OUT}/ph2-start.png`, fullPage: true });
+  await p.goto(BASE + '/learn', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(5000);
+  await p.getByText(/take the frequency/i).first().click().catch((e) => console.log('no gate', e.message.slice(0, 60)));
+  await p.waitForTimeout(3000); await p.screenshot({ path: `${OUT}/ph2-intro.png` });
+  await p.getByText(/skip intro/i).first().click().catch(() => console.log('no skip'));
+  await p.waitForTimeout(5000); await p.screenshot({ path: `${OUT}/ph2-rail.png` });
+  const btn = p.getByRole('button', { name: /begin|start|play|your turn|continue/i }).first();
+  console.log('btn', await btn.textContent().catch(() => null));
+  await btn.click().catch(() => console.log('no begin'));
+  await p.waitForTimeout(8000); await p.screenshot({ path: `${OUT}/ph2-brief.png` });
+  console.log(await p.evaluate(() => [...document.querySelectorAll('button')].filter(b=>b.offsetParent).map(b => b.textContent.trim().slice(0, 30)).join(' | ')));
+  await b.close();
+})();
