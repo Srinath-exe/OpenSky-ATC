@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex">
+<title>OpenATC at close</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root { --bg:#0e0f11; --surface:#141416; --raise:#1c1c1e; --line:rgba(255,255,255,.09); --ink-1:#f4f4f5; --ink-2:#c4c5c8; --ink-3:#a0a1a6; --ink-4:#7f8086;
+  --accent:#f5933f; --good:#57cd50; --orig:#3987e5; --r1:#d95926; --r2:#199e70;
+  --font:"DM Sans","Helvetica Neue",Arial,sans-serif; --mono:"DM Mono",ui-monospace,Menlo,monospace; color-scheme:dark; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; } }
+:root[data-theme="light"] { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; }
+* { box-sizing:border-box; } html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--bg); color:var(--ink-2); font-family:var(--font); font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  padding:40px max(16px, env(safe-area-inset-right,0px)) 72px max(16px, env(safe-area-inset-left,0px)); }
+.wrap { max-width:920px; margin:0 auto; display:grid; gap:28px; }
+a { color:var(--accent); } h1 { font-size:28px; line-height:1.2; margin:0 0 6px; color:var(--ink-1); letter-spacing:-.01em; }
+h2 { font-size:18px; margin:0 0 4px; color:var(--ink-1); } p { margin:0 0 10px; } .cap { color:var(--ink-3); font-size:13.5px; }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+.tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; }
+.tile .k { font-size:12.5px; color:var(--ink-3); } .tile .v { font-size:28px; font-weight:700; color:var(--ink-1); font-variant-numeric:tabular-nums; line-height:1.25; }
+.tile .v small { font-size:15px; font-weight:500; color:var(--ink-3); } .tile .d { font-size:12.5px; color:var(--ink-3); }
+.legend { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink-2); margin:10px 0 14px; }
+.legend span { display:inline-flex; align-items:center; gap:7px; } .sw { width:12px; height:12px; border-radius:3px; display:inline-block; }
+.orig { background:var(--orig); } .r1 { background:var(--r1); } .r2 { background:var(--r2); }
+.chart { display:grid; gap:16px; } .grp { display:grid; grid-template-columns:minmax(150px,230px) 1fr; gap:14px; align-items:center; }
+.lab b { display:block; color:var(--ink-1); font-weight:600; font-size:14px; } .lab span { display:block; color:var(--ink-3); font-size:12.5px; line-height:1.35; }
+.bars { display:grid; gap:2px; border-left:1px solid var(--line); padding:2px 0; min-width:0; }
+.row { display:flex; align-items:center; gap:8px; height:16px; padding-right:58px; position:relative; }
+.bar { display:block; height:12px; border-radius:0 4px 4px 0; flex:none; max-width:100%; }
+.val { font-family:var(--mono); font-size:12px; color:var(--ink-1); white-space:nowrap; } .na { font-size:12px; color:var(--ink-4); padding-left:6px; }
+.row:hover .bar { filter:brightness(1.15); }
+table { width:100%; border-collapse:collapse; font-size:14px; } th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--ink-3); font-weight:500; font-size:12.5px; } td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; } td b { color:var(--ink-1); }
+.scroll { overflow-x:auto; } code { font-family:var(--mono); font-size:12.5px; background:var(--raise); padding:1px 5px; border-radius:5px; }
+ul { margin:0; padding-left:20px; } li { margin-bottom:6px; }
+@media (max-width:620px) { .grp { grid-template-columns:1fr; gap:6px; } h1 { font-size:23px; } }
+</style>
+<style>ol,ul{margin:0 0 10px;padding-left:22px} li{margin-bottom:6px} section.card p:last-child{margin-bottom:0}
+pre.code{font-family:var(--mono);font-size:12px;line-height:1.35;background:var(--raise);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto;color:var(--ink-1)}</style>
+</head><body><div class="wrap">
+<header><p class="cap"><a href="/reports/">Reports</a> · overview · source <code>README.md</code></p>
+<h1>OpenATC at close: every model and where it stands</h1>
+<p>State on 12 November 2026, when the project was closed. Every piece that understands or speaks is a small model built for this game, running on the server CPU, in the browser or on the phone: no large language model and no GPU at run time.</p></header>
+<div class="tiles">
+<div class="tile"><div class="k">Owner's recordings, mic to command</div><div class="v">15<small>/16</small></div><div class="d">right; 1 missed, 0 sent wrong</div></div>
+<div class="tile"><div class="k">Speech to text, owner's voice</div><div class="v">0.6<small> % WER</small></div><div class="d">2.8 % on casual speech</div></div>
+<div class="tile"><div class="k">Independent exam, everyday wording</div><div class="v">51<small>/60</small></div><div class="d">right; 2 sent wrong</div></div>
+<div class="tile"><div class="k">GPU spend, whole project</div><div class="v">$8</div><div class="d">four short sessions</div></div>
+</div>
+<section class="card">
+<h2>The chain</h2>
+<p>Microphone → speech to text → clean-up rules → the game's command parser → (if the rules fail) the command model → safety gate, which sends, asks the player to confirm, or asks "say again" → game engine → deterministic readback → pilot voice. The model only writes a typed command line; it never touches game state.</p>
+</section>
+<section class="card">
+<h2>Models live on the site</h2>
+<div class="scroll"><table><thead><tr><th>model</th><th>job</th><th>runs</th><th>benchmark</th></tr></thead><tbody>
+<tr><td><b>Parakeet TDT 110M</b>, fine-tuned on ATC speech</td><td>speech to text</td><td>server CPU (~0.2 s), phone app; 131 MB int8</td><td>owner's voice 0.6 % WER, standard phrasing 0.8 %, casual speech 2.8 % (mostly dropped fillers)</td></tr>
+<tr><td><b>S1 <code>2m-free-v1</code></b>, 2M-parameter transformer</td><td>text to command</td><td>browser, 0.1–0.2 s</td><td>independent exam 51/60 right, 2 wrong; voiced end to end 178/208 right, 10 wrong; standard phrasing 94 %</td></tr>
+<tr><td><b>Safety gate</b> (verifier), one per command model</td><td>send / confirm / say again</td><td>browser, &lt; 1 ms</td><td>non-commands not sent 108/115</td></tr>
+<tr><td><b>Paradee-8M v1.2</b> + ATC lexicon</td><td>pilot voice</td><td>browser</td><td>0.06 % word error read back on 240 lingo-heavy lines; no word worse than a voice 10× larger</td></tr>
+</tbody></table></div>
+<p class="cap">Fallbacks: Whisper base.en on the server, the browser's Web Speech. Rollbacks on disk: command models <code>2m-grpo-v1</code> and <code>2m-swap-v1</code>, the large Parakeet.</p>
+</section>
+<section class="card">
+<h2>Run and not shipped</h2>
+<div class="scroll"><table><thead><tr><th>experiment</th><th>result</th><th>why not shipped</th></tr></thead><tbody>
+<tr><td>Kev-0.8B fine-tuned as the command model</td><td>100/100</td><td>40× larger; needs a GPU or a cloud server</td></tr>
+<tr><td>LFM2.5-230M fine-tuned</td><td>97 / 93</td><td>same: the cloud path</td></tr>
+<tr><td>vLLM serving test</td><td>363 requests/s at 64 users</td><td>proof the cloud path scales; not needed</td></tr>
+<tr><td>GRPO, the game as reward</td><td>live until 12 Nov</td><td>superseded by free-wording training</td></tr>
+<tr><td>Masked diffusion LM</td><td>span repair +4 to +7 points</td><td>research piece</td></tr>
+<tr><td>Moonshine fine-tuned for the browser</td><td>0.3 % synthetic, 27.7 % owner's voice</td><td>did not transfer to real speech</td></tr>
+<tr><td>Large Parakeet, two rounds</td><td>1.7 % WER</td><td>the 110M beat it</td></tr>
+<tr><td>Command model size sweep, 2M / 11M / 26M</td><td>within 2 points</td><td>better data moved accuracy 37 points; size did not</td></tr>
+</tbody></table></div>
+</section>
+<section class="card">
+<h2>Known gaps</h2>
+<ul>
+<li>About 1 in 20 commands in casual wording is still sent wrong. More synthetic data gives less and less; the rest needs real players' speech (opt-in logging, spec 12).</li>
+<li>The speech models were fine-tuned partly on UWB-ATCC and ATCOSIM, which have non-commercial licences. Fine for a showcase; a commercial release needs a retrain on the synthetic audio only (about $3 of GPU).</li>
+<li>One of the owner's recordings is still missed ("Speedbird nine nine three two roger").</li>
+<li>No on-device Parakeet in the browser yet; the browser uses the server.</li>
+<li>SFO's real runway plan (depart 01L/01R) loses separation with AI on approach, so the default is 28L/28R.</li>
+</ul>
+</section>
+</div></body></html>
