@@ -67,7 +67,7 @@ export const TRAFFIC_PROFILES: Record<string, TrafficProfile> = {
   LFPG: { carriers: { AFR: 10, EZY: 3, TRA: 2, DLH: 1, KLM: 1, UAE: 1, DAL: 1, RYR: 1, QTR: 1 }, occupancy: { gate: 0.55, stand: 0.35, remote: 0.2 }, busy: 1.0 },
   KJFK: { carriers: { DAL: 6, JBU: 6, AAL: 5, UAL: 1, BAW: 2, VIR: 1, DLH: 1, AFR: 1, UAE: 1, QTR: 1, SKW: 1 }, occupancy: { gate: 0.55, stand: 0.35, remote: 0.2 }, busy: 1.0 },
   KLAX: { carriers: { UAL: 5, DAL: 5, AAL: 5, SWA: 4, ASA: 2, JBU: 1, SKW: 3, ANA: 1, JAL: 1, QFA: 1, CPA: 1, BAW: 1, UAE: 1 }, occupancy: { gate: 0.55, stand: 0.35, remote: 0.2 }, busy: 1.1 },
-  KSFO: { carriers: { UAL: 10, ASA: 4, SWA: 2, DAL: 2, AAL: 2, SKW: 3, ANA: 1, JAL: 1, CPA: 1, SIA: 1, BAW: 1 }, occupancy: { gate: 0.55, stand: 0.35, remote: 0.2 }, busy: 0.85 },
+  KSFO: { carriers: { UAL: 10, ASA: 4, SWA: 2, DAL: 2, AAL: 2, SKW: 3, ANA: 1, JAL: 1, CPA: 1, SIA: 1, BAW: 1 }, occupancy: { gate: 0.7, stand: 0.4, remote: 0.25 }, busy: 0.85 },
   KBOS: { carriers: { JBU: 8, DAL: 5, AAL: 3, UAL: 2, SWA: 1, SKW: 1, BAW: 1, EIN: 1, AFR: 1 }, occupancy: { gate: 0.5, stand: 0.3, remote: 0.15 }, busy: 0.75 },
   VIDP: { carriers: { IGO: 8, AIC: 5, UAE: 1, QTR: 1, BAW: 1, SIA: 1, DLH: 1 }, occupancy: { gate: 0.5, stand: 0.35, remote: 0.25 }, busy: 0.9 },
   OMDB: { carriers: { UAE: 10, FDB: 5, BAW: 1, QTR: 1, AIC: 1, IGO: 1, THY: 1, DLH: 1 }, occupancy: { gate: 0.6, stand: 0.4, remote: 0.3 }, busy: 1.0 },

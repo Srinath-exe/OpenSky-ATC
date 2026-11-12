@@ -28,6 +28,7 @@ import { CommLog } from '../CommLog/CommLog'
 import { StatsPanel } from '../StatsPanel/StatsPanel'
 import { HelpOverlay } from '../HelpOverlay/HelpOverlay'
 import { OnboardingTips } from '../HelpOverlay/OnboardingTips'
+import { LookPicker } from '../LookPicker/LookPicker'
 import { PauseMenu } from '../PauseMenu/PauseMenu'
 import { SettingsModal } from '../SettingsModal/SettingsModal'
 import { HoldingScreen } from '../HoldingScreen/HoldingScreen'
@@ -52,9 +53,13 @@ export interface GameShellProps {
   loading?: boolean
   loadError?: string | null
   onRetry?: () => void
+  /** Drawn over the map inside the shell (the tutorial's coach and story); replaces the first-run tips. */
+  overlay?: React.ReactNode
+  /** Training: only the map, the aircraft, the overlay and the command line. */
+  minimal?: boolean
 }
 
-export function GameShell({ loading = false, loadError = null, onRetry }: GameShellProps) {
+export function GameShell({ loading = false, loadError = null, onRetry, overlay, minimal = false }: GameShellProps) {
   const overlays = useOverlayState()
   const { open, isOpen, show, hide, toggle, closeTop } = overlays
   const [panels, setPanels] = usePersistedState<PanelPrefs>(LS.panels, DEFAULT_PANELS)
@@ -169,7 +174,8 @@ export function GameShell({ loading = false, loadError = null, onRetry }: GameSh
         data-paused={paused}
         data-bay-collapsed={panels.bay}
         data-log-collapsed={panels.log}
-        data-has-panel={selectedId != null}
+        data-has-panel={selectedId != null && !minimal}
+        data-minimal={minimal || undefined}
       >
         <NavBar />
 
@@ -205,7 +211,7 @@ export function GameShell({ loading = false, loadError = null, onRetry }: GameSh
           {open.stats ? <StatsPanel /> : null}
 
           <ToastHost />
-          <OnboardingTips />
+          {overlay ?? <><LookPicker /><OnboardingTips /></>}
 
           {loading || (!hasEngine && !loadError) ? (
             <div className={styles.loadWrap} data-testid="load-overlay">

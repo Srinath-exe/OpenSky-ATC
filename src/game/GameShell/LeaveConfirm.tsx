@@ -16,7 +16,7 @@ export function LeaveConfirm() {
   const leave = () => {
     shell.hide('leaveConfirm')
     sim.stop()
-    router.push('/')
+    router.push('/start')
   }
   return (
     <Modal

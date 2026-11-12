@@ -296,6 +296,9 @@ class SimStore implements TestApiHost {
   version = 0;
   paused = false;
   rate: 1 | 2 | 4 = 1;
+  /** Extra speed on top of the rate (the tutorial fast-forwards slow, uneventful stretches like a pushback). */
+  boost = 1;
+  private ffAcc = 0;
   position: Position = 'tower';
   selectedId: number | null = null;
   hoveredId: number | null = null;
@@ -337,6 +340,8 @@ class SimStore implements TestApiHost {
   sessionStartedAt = 0;
   private lastHighScoreWriteAt = -Infinity;
   private listeners = new Set<() => void>();
+  /** Raw engine events of every step, for observers that need all of them (the tutorial coach). */
+  readonly eventTaps = new Set<(events: SimEvent[]) => void>();
   private batchDepth = 0;
   private dirty = false;
   private projectors: Partial<Record<ProjectorKind, Projector>> = {};
@@ -595,7 +600,7 @@ class SimStore implements TestApiHost {
       const dt = Math.min((now - this.last) / 1000, 0.1); this.last = now;
       this.pruneToasts();
       if (this.paused || !this.engine) return;
-      this.step(dt * this.rate);
+      this.step(dt * this.rate * this.boost);
       if (++this.emitTick % EMIT_EVERY === 0) this.emit();
     };
     this.raf = requestAnimationFrame(tick);
@@ -614,7 +619,12 @@ class SimStore implements TestApiHost {
   step(dtSim: number): SimEvent[] {
     const e = this.engine; if (!e) return [];
     this.lastStepDt = dtSim;
-    const events = e.update(dtSim);
+    // engine.update keeps at most 0.25 s a call (a stalled tab must not leap); a fast-forward (rate x boost) asks for
+    // more than that on every frame below ~50 fps, and the excess was lost: run whole fixed steps for it instead
+    let events: SimEvent[];
+    if (dtSim > 0.24) { this.ffAcc += dtSim; const n = Math.min(240, Math.floor(this.ffAcc / FIXED)); this.ffAcc -= n * FIXED; events = n > 0 ? e.step(n) : e.update(0); }
+    else events = e.update(dtSim);
+    for (const tap of this.eventTaps) { try { tap(events); } catch (err) { console.error(err); } }
     this.batch(() => {
       this.routeEvents(events);
       if (this.autoSpawn) this.autoSpawnTick(e);
@@ -1004,12 +1014,12 @@ class SimStore implements TestApiHost {
     e.settings.autoHandoff = s.autoHandoff;
     e.settings.arrivalFlow = !this.testMode;   // the centre meters arrivals in a real session; test scenarios spawn what they ask for
     e.settings.strictFrequencies = s.strictFrequencies;
+    e.settings.personas = !this.testMode;   // crews with characters in a real session; scripted scenarios stay exact
     if (!this.testMode) {
       e.settings.emergencyRate = s.emergencyRate;
       e.settings.pilotDelayOverride = s.pilotDelayS;
       e.settings.pilotErrorRate = s.readbackErrors ? 0.02 : 0;
     } else if (s.pilotDelayS != null) {
-    e.settings.personas = !this.testMode;   // crews with characters in a real session; scripted scenarios stay exact
       e.settings.pilotDelayOverride = s.pilotDelayS;
     }
     if (s.region !== 'auto') e.settings.region = s.region;

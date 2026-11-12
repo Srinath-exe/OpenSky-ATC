@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex">
+<title>SFO Art Styles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+:root { --bg:#0e0f11; --surface:#141416; --raise:#1c1c1e; --line:rgba(255,255,255,.09); --ink-1:#f4f4f5; --ink-2:#c4c5c8; --ink-3:#a0a1a6; --ink-4:#7f8086;
+  --accent:#f5933f; --good:#57cd50; --orig:#3987e5; --r1:#d95926; --r2:#199e70;
+  --font:"DM Sans","Helvetica Neue",Arial,sans-serif; --mono:"DM Mono",ui-monospace,Menlo,monospace; color-scheme:dark; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; } }
+:root[data-theme="light"] { --bg:#f6f5f2; --surface:#fbfaf8; --raise:#efeeea; --line:rgba(20,20,24,.10); --ink-1:#141416; --ink-2:#3c3d42; --ink-3:#56575d; --ink-4:#6c6d73;
+  --accent:#b85a12; --good:#23862b; --orig:#2a78d6; --r1:#eb6834; --r2:#1baf7a; color-scheme:light; }
+* { box-sizing:border-box; } html { -webkit-text-size-adjust:100%; }
+body { margin:0; background:var(--bg); color:var(--ink-2); font-family:var(--font); font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  padding:40px max(16px, env(safe-area-inset-right,0px)) 72px max(16px, env(safe-area-inset-left,0px)); }
+.wrap { max-width:920px; margin:0 auto; display:grid; gap:28px; }
+a { color:var(--accent); } h1 { font-size:28px; line-height:1.2; margin:0 0 6px; color:var(--ink-1); letter-spacing:-.01em; }
+h2 { font-size:18px; margin:0 0 4px; color:var(--ink-1); } p { margin:0 0 10px; } .cap { color:var(--ink-3); font-size:13.5px; }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+.tile { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; }
+.tile .k { font-size:12.5px; color:var(--ink-3); } .tile .v { font-size:28px; font-weight:700; color:var(--ink-1); font-variant-numeric:tabular-nums; line-height:1.25; }
+.tile .v small { font-size:15px; font-weight:500; color:var(--ink-3); } .tile .d { font-size:12.5px; color:var(--ink-3); }
+.legend { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--ink-2); margin:10px 0 14px; }
+.legend span { display:inline-flex; align-items:center; gap:7px; } .sw { width:12px; height:12px; border-radius:3px; display:inline-block; }
+.orig { background:var(--orig); } .r1 { background:var(--r1); } .r2 { background:var(--r2); }
+.chart { display:grid; gap:16px; } .grp { display:grid; grid-template-columns:minmax(150px,230px) 1fr; gap:14px; align-items:center; }
+.lab b { display:block; color:var(--ink-1); font-weight:600; font-size:14px; } .lab span { display:block; color:var(--ink-3); font-size:12.5px; line-height:1.35; }
+.bars { display:grid; gap:2px; border-left:1px solid var(--line); padding:2px 0; min-width:0; }
+.row { display:flex; align-items:center; gap:8px; height:16px; padding-right:58px; position:relative; }
+.bar { display:block; height:12px; border-radius:0 4px 4px 0; flex:none; max-width:100%; }
+.val { font-family:var(--mono); font-size:12px; color:var(--ink-1); white-space:nowrap; } .na { font-size:12px; color:var(--ink-4); padding-left:6px; }
+.row:hover .bar { filter:brightness(1.15); }
+table { width:100%; border-collapse:collapse; font-size:14px; } th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--ink-3); font-weight:500; font-size:12.5px; } td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; } td b { color:var(--ink-1); }
+.scroll { overflow-x:auto; } code { font-family:var(--mono); font-size:12.5px; background:var(--raise); padding:1px 5px; border-radius:5px; }
+ul { margin:0; padding-left:20px; } li { margin-bottom:6px; }
+@media (max-width:620px) { .grp { grid-template-columns:1fr; gap:6px; } h1 { font-size:23px; } }
+
+.wrap { max-width: 1280px; margin: 0 auto; }
+h1 { color: var(--ink-1); font-size: 30px; letter-spacing: -0.02em; margin: 0 0 6px; }
+.lede { max-width: 760px; color: var(--ink-3); margin: 0 0 30px; }
+section { margin: 0 0 40px; }
+.hd { display: flex; align-items: baseline; gap: 12px; }
+.num { font-family: var(--mono); color: var(--accent); font-size: 13px; }
+h2 { color: var(--ink-1); font-size: 21px; margin: 0; }
+.cap { color: var(--ink-3); margin: 4px 0 12px; max-width: 760px; }
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+figure { margin: 0; }
+figure img { display: block; width: 100%; aspect-ratio: 2 / 1; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); background: var(--raise); }
+figcaption { font-family: var(--mono); font-size: 12px; color: var(--ink-4); margin-top: 6px; }
+@media (max-width: 760px) { .trio { grid-template-columns: 1fr; } }
+</style></head>
+<body><div class="wrap">
+<h1>SFO in six art styles</h1>
+<p class="lede">The same view of the game's own 3D SFO (taxiway W, runways 28L/28R, the terminal behind), re-drawn in six styles at day, dusk and night. Each style is a single screen pass over the real render, so any of them could be built into the game for real. Click an image for full size.</p>
+<section><div class="hd"><span class="num">00</span><h2>The game today</h2></div><p class="cap">What the 3D map looks like now, for comparison.</p><div class="trio"><figure><a href="/reports/styles/s0-day.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s0-day.jpg" alt="The game today, day"></a><figcaption>Day</figcaption></figure><figure><a href="/reports/styles/s0-dusk.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s0-dusk.jpg" alt="The game today, dusk"></a><figcaption>Dusk</figcaption></figure><figure><a href="/reports/styles/s0-night.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s0-night.jpg" alt="The game today, night"></a><figcaption>Night</figcaption></figure></div></section><section><div class="hd"><span class="num">01</span><h2>Anime cel</h2></div><p class="cap">Saturated flat colour in four tones, ink outlines on every edge, a painted sky. Closest to a hand-drawn anime background.</p><div class="trio"><figure><a href="/reports/styles/s1-day.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s1-day.jpg" alt="Anime cel, day"></a><figcaption>Day</figcaption></figure><figure><a href="/reports/styles/s1-dusk.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s1-dusk.jpg" alt="Anime cel, dusk"></a><figcaption>Dusk</figcaption></figure><figure><a href="/reports/styles/s1-night.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s1-night.jpg" alt="Anime cel, night"></a><figcaption>Night</figcaption></figure></div></section><section><div class="hd"><span class="num">02</span><h2>Blueprint</h2></div><p class="cap">White linework on drafting blue with a grid; at night the lights are drawn in amber. Reads like an engineering drawing of the field.</p><div class="trio"><figure><a href="/reports/styles/s2-day.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s2-day.jpg" alt="Blueprint, day"></a><figcaption>Day</figcaption></figure><figure><a href="/reports/styles/s2-dusk.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s2-dusk.jpg" alt="Blueprint, dusk"></a><figcaption>Dusk</figcaption></figure><figure><a href="/reports/styles/s2-night.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s2-night.jpg" alt="Blueprint, night"></a><figcaption>Night</figcaption></figure></div></section><section><div class="hd"><span class="num">03</span><h2>16-bit pixel art</h2></div><p class="cap">Chunky 4 px pixels, a small palette with ordered dithering, dark outlines, a banded sky. A retro game look.</p><div class="trio"><figure><a href="/reports/styles/s3-day.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s3-day.jpg" alt="16-bit pixel art, day"></a><figcaption>Day</figcaption></figure><figure><a href="/reports/styles/s3-dusk.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s3-dusk.jpg" alt="16-bit pixel art, dusk"></a><figcaption>Dusk</figcaption></figure><figure><a href="/reports/styles/s3-night.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s3-night.jpg" alt="16-bit pixel art, night"></a><figcaption>Night</figcaption></figure></div></section><section><div class="hd"><span class="num">04</span><h2>Watercolour</h2></div><p class="cap">Brush-smoothed shapes, pigment pooling at the edges, paper grain and a soft vignette.</p><div class="trio"><figure><a href="/reports/styles/s4-day.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s4-day.jpg" alt="Watercolour, day"></a><figcaption>Day</figcaption></figure><figure><a href="/reports/styles/s4-dusk.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s4-dusk.jpg" alt="Watercolour, dusk"></a><figcaption>Dusk</figcaption></figure><figure><a href="/reports/styles/s4-night.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s4-night.jpg" alt="Watercolour, night"></a><figcaption>Night</figcaption></figure></div></section><section><div class="hd"><span class="num">05</span><h2>Neon synthwave</h2></div><p class="cap">A dark world drawn in glowing edges, magenta near you to cyan far away, with scanlines.</p><div class="trio"><figure><a href="/reports/styles/s5-day.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s5-day.jpg" alt="Neon synthwave, day"></a><figcaption>Day</figcaption></figure><figure><a href="/reports/styles/s5-dusk.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s5-dusk.jpg" alt="Neon synthwave, dusk"></a><figcaption>Dusk</figcaption></figure><figure><a href="/reports/styles/s5-night.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s5-night.jpg" alt="Neon synthwave, night"></a><figcaption>Night</figcaption></figure></div></section><section><div class="hd"><span class="num">06</span><h2>Cinematic</h2></div><p class="cap">The realistic direction: bloom on the lights, a teal and orange film grade, contrast, vignette and grain.</p><div class="trio"><figure><a href="/reports/styles/s6-day.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s6-day.jpg" alt="Cinematic, day"></a><figcaption>Day</figcaption></figure><figure><a href="/reports/styles/s6-dusk.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s6-dusk.jpg" alt="Cinematic, dusk"></a><figcaption>Dusk</figcaption></figure><figure><a href="/reports/styles/s6-night.jpg" target="_blank" rel="noopener"><img loading="lazy" src="/reports/styles/s6-night.jpg" alt="Cinematic, night"></a><figcaption>Night</figcaption></figure></div></section>
+</div></body></html>

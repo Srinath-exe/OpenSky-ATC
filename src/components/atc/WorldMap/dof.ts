@@ -34,11 +34,12 @@ const COMPOSITE = {
     tDiffuse: { value: null as THREE.Texture | null }, tBlur: { value: null as THREE.Texture | null }, tDepth: { value: null as THREE.Texture | null },
     uInvProj: { value: new THREE.Matrix4() }, uCamWorld: { value: new THREE.Matrix4() },
     uField: { value: new THREE.Vector3(0, 0, 3000) },   // field centre x, z and radius (m)
-    uRamp: { value: 1400 },                               // metres past the field radius to reach the full blur
+    uRamp: { value: 2600 },                               // metres past the field radius to reach the full blur
+    uAmount: { value: 1 },                                // 0..1: the tier's strength, faded out as the camera pulls back
   },
   vertexShader: VERT,
   fragmentShader: `
-    uniform sampler2D tDiffuse, tBlur, tDepth; uniform mat4 uInvProj, uCamWorld; uniform vec3 uField; uniform float uRamp; varying vec2 vUv;
+    uniform sampler2D tDiffuse, tBlur, tDepth; uniform mat4 uInvProj, uCamWorld; uniform vec3 uField; uniform float uRamp, uAmount; varying vec2 vUv;
     void main(){
       float depth = texture2D(tDepth, vUv).x;
       vec4 clip = vec4(vUv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
@@ -46,11 +47,14 @@ const COMPOSITE = {
       vec3 world = (uCamWorld * vec4(view.xyz, 1.0)).xyz;
       float f = clamp((distance(world.xz, uField.xy) - uField.z) / uRamp, 0.0, 1.0);
       f = f * f * (3.0 - 2.0 * f);
-      gl_FragColor = mix(texture2D(tDiffuse, vUv), texture2D(tBlur, vUv), f);
+      // a soft background, not a smear: at most 45 % of the blurred image, so far lights stay points
+      gl_FragColor = mix(texture2D(tDiffuse, vUv), texture2D(tBlur, vUv), f * 0.45 * uAmount);
     }`,
 };
 
 export class TiltShiftPass extends Pass {
+  /** Where the main pass's depth is when a pass before this one swapped the buffers (the other one has no depth). */
+  depthFrom: (() => THREE.Texture | null) | null = null;
   private rtHalf: THREE.WebGLRenderTarget;
   private rtA: THREE.WebGLRenderTarget;
   private rtB: THREE.WebGLRenderTarget;
@@ -76,7 +80,7 @@ export class TiltShiftPass extends Pass {
     this.rtA.setSize(Math.max(1, width >> 2), Math.max(1, height >> 2)); this.rtB.setSize(Math.max(1, width >> 2), Math.max(1, height >> 2));
   }
   render(renderer: THREE.WebGLRenderer, writeBuffer: THREE.WebGLRenderTarget, readBuffer: THREE.WebGLRenderTarget): void {
-    const depth = readBuffer.depthTexture;
+    const depth = this.depthFrom?.() ?? readBuffer.depthTexture;
     const oldAutoClear = renderer.autoClear; renderer.autoClear = false;
     if (!depth) {   // no depth to decide from: pass the picture through
       this.quad.material = this.copy; this.copy.uniforms.tDiffuse.value = readBuffer.texture;

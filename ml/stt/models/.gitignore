@@ -1,0 +1,7 @@
+*
+!.gitignore
+!server.json
+!SERVER.md
+!srv_*.py
+!srv_*.cjs
+!srv_*.sh

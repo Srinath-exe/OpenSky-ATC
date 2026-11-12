@@ -1,253 +1,28 @@
 'use client'
-/* In-game settings (UX 04 §10 "settings-btn", G12 `settings-modal`): the settings that matter mid-shift, applied live through the
-   store; everything else (history, high score, about) lives on the /settings route, linked from the footer. */
+/* In-game settings (UX 04 §10 "settings-btn", G12 `settings-modal`): the tabbed settings (../Settings/SettingsTabs.tsx)
+   that matter mid-shift, applied live through the store; your data and the credits live on the /settings page. */
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import styles from './SettingsModal.module.css'
-import { Modal, ListRow, Toggle, Select, Pill, Button, Icon, Input, Segmented } from '@/design'
-import { sim, useSim, sectorAi, sectorPatch } from '@/components/atc/simStore'
-import { probeEndpoint } from '@/lib/llm/client'
-import type { LlmConfig } from '@/lib/llm/client'
-import type { PlayerPosition } from '@/lib/sim/types'
-import type { MenuOption } from '@/design'
-import { useSettings, updateSettings } from '@/app/_lib/persist'
-import type { Settings } from '@/components/atc/simStore'
+import { Modal, Button, Icon } from '@/design'
 import { useShell } from '../shellContext'
-import { usePersistedState } from '../hooks/usePersistedState'
-import { LS, EV_VOICE_ENGINE } from '../persist'
-import { nativeSpeechAvailable, DEFAULT_VOICE_ENGINE, VOICE_ACCENTS, defaultAccent } from '@/lib/voice/recognizer'
-import type { VoiceEngine } from '@/lib/voice/recognizer'
-
-/** Speech-to-text engines; ml/stt/RESULTS2.md has the measurements behind the default. */
-const voiceEngineOptions = (): MenuOption<VoiceEngine>[] => [
-  ...(nativeSpeechAvailable() ? [{ value: 'native' as const, label: 'Phone', description: 'Phone: the OpenATC app transcribes on this phone, audio never leaves it' }] : []),
-  { value: 'server', label: 'Server (Parakeet + Whisper, tuned for ATC)', description: 'Server: your transmission goes to this game\'s server (not to Google) while you talk, is transcribed with the callsigns on frequency, and is not stored. The most accurate; text ready ~0.3 s after you let go' },
-  { value: 'browser', label: 'Browser (Google)', description: 'Browser: the built-in recogniser (Chrome sends audio to Google). Often mishears aviation words; when it is not understood, this game\'s server listens again (audio not stored)' },
-  { value: 'local', label: 'On-device (Moonshine)', description: 'On-device: a 63 MB model downloads once, audio never leaves this device' },
-]
-/** Pilot voices (sound.ts pilotVoicePref); ml/tts/RESULTS.md has the measurements. */
-const PILOT_VOICE_OPTIONS: MenuOption<'neural' | 'browser'>[] = [
-  { value: 'neural', label: 'Neural (on this device, ~12 MB)', description: 'Neural: four pilot voices made on this device (Paradee-8M), one per aircraft, over a radio. About 12 MB downloads once, on the first pilot line' },
-  { value: 'browser', label: 'Browser', description: 'Browser: the built-in speech voice (the same for every pilot)' },
-]
-import { EV_REPLAY_TIPS } from '../HelpOverlay/OnboardingTips'
-import { PRESETS, setGraphicsPref, useDetected, useGraphicsPref } from '@/components/atc/WorldMap/quality'
-import type { GraphicsPref } from '@/components/atc/WorldMap/quality'
-
-type PilotDelayKey = 'auto' | '1' | '2' | '3' | '4' | '6' | '8'
-const PILOT_DELAY_OPTIONS: MenuOption<PilotDelayKey>[] = [
-  { value: 'auto', label: 'Realistic', description: '2–4 s air, 4–8 s ground' },
-  { value: '1', label: '1 s' }, { value: '2', label: '2 s' }, { value: '3', label: '3 s' }, { value: '4', label: '4 s' }, { value: '6', label: '6 s' }, { value: '8', label: '8 s' },
-]
-const EMERGENCY_OPTIONS: MenuOption<Settings['emergencyRate']>[] = [
-  { value: 'off', label: 'Off' }, { value: 'rare', label: 'Rare' }, { value: 'normal', label: 'Normal' }, { value: 'training', label: 'Training', description: 'Frequent' },
-]
-const REGION_OPTIONS: MenuOption<Settings['region']>[] = [
-  { value: 'auto', label: 'Auto', description: 'FAA at K-airports' }, { value: 'ICAO', label: 'ICAO' }, { value: 'FAA', label: 'FAA' },
-]
-
-function delayKey(v: number | null): PilotDelayKey {
-  if (v == null) return 'auto'
-  const k = String(Math.round(v)) as PilotDelayKey
-  return PILOT_DELAY_OPTIONS.some((o) => o.value === k) ? k : 'auto'
-}
-
-function Mirror({ state, children }: { state: 'on' | 'off'; children: React.ReactNode }) {
-  return <span data-state={state}>{children}</span>
-}
+import { SettingsTabs } from '../Settings/SettingsTabs'
 
 export function SettingsModal() {
   const shell = useShell()
   const router = useRouter()
   const open = !!shell.open.settings
-  const settings = useSettings()
-  const [hotkeyBadges, setHotkeyBadges] = usePersistedState<boolean>(LS.hotkeyBadges, true)
-  const [voiceEngine, setVoiceEngineState] = usePersistedState<VoiceEngine>(LS.voiceEngine, nativeSpeechAvailable() ? 'native' : DEFAULT_VOICE_ENGINE)
-  const setVoiceEngine = (v: VoiceEngine) => { setVoiceEngineState(v); window.setTimeout(() => window.dispatchEvent(new Event(EV_VOICE_ENGINE)), 0) }
-  const [voiceAccent, setVoiceAccentState] = usePersistedState<string>(LS.voiceAccent, defaultAccent())
-  const setVoiceAccent = (v: string) => { setVoiceAccentState(v); window.setTimeout(() => window.dispatchEvent(new Event(EV_VOICE_ENGINE)), 0) }
-  const [pilotVoice, setPilotVoice] = usePersistedState<'neural' | 'browser'>(LS.pilotVoice, 'neural')
-  const set = (patch: Partial<Settings>) => updateSettings(patch)
   const close = React.useCallback(() => shell.hide('settings'), [shell])
-  React.useEffect(() => { document.documentElement.setAttribute('data-hotkey-badges', hotkeyBadges ? 'on' : 'off') }, [hotkeyBadges])
-
   return (
-    <Modal
-      open={open}
-      onClose={close}
-      title="Settings"
-      showClose
-      testId="settings-modal"
+    <Modal open={open} onClose={close} title="Settings" showClose wide="xl" testId="settings-modal"
       footer={
         <div className={styles.foot}>
           <span className={styles.footHint}>Changes apply at once and are kept on this device.</span>
           <Button variant="secondary" size="sm" iconRight={<Icon name="external-link" size={14} />} onClick={() => { close(); router.push('/settings') }} testId="set-open-full">All settings</Button>
           <Button variant="primary" size="sm" onClick={close} testId="set-close">Done</Button>
         </div>
-      }
-    >
-      <div className={styles.body}>
-        <div className={styles.section}>
-          <span className={styles.sectionTitle}>Audio</span>
-          <div className={styles.rows}>
-            <ListRow flush title="Sound" subtitle="Radio clicks, alert chimes, UI cues" trailing={<Mirror state={settings.sound ? 'on' : 'off'}><Toggle checked={settings.sound} onChange={(v) => set({ sound: v })} testId="set-sound" /></Mirror>} />
-            <ListRow flush title="Pilot voice" subtitle="Synthesised readbacks and requests" trailing={<Mirror state={settings.tts ? 'on' : 'off'}><Toggle checked={settings.tts} onChange={(v) => set({ tts: v })} testId="set-tts" /></Mirror>} />
-            {settings.tts && <ListRow flush title="Pilot voices" subtitle={PILOT_VOICE_OPTIONS.find((o) => o.value === pilotVoice)?.description ?? ''} trailing={<Select size="m" ariaLabel="Pilot voices" options={PILOT_VOICE_OPTIONS} value={pilotVoice} onChange={(v) => setPilotVoice(v)} className={styles.select} testId="set-pilot-voices" />} />}
-            <ListRow
-              flush
-              title="Volume"
-              meta={<span data-testid="set-volume-value" data-value={Math.round(settings.volume * 100)}>{Math.round(settings.volume * 100)} %</span>}
-              trailing={<input type="range" min={0} max={100} step={5} value={Math.round(settings.volume * 100)} disabled={!settings.sound} aria-label="Master volume" className={styles.range} onChange={(e) => set({ volume: Number(e.target.value) / 100 })} data-testid="set-volume-master" />}
-            />
-          </div>
-        </div>
-
-        <div className={styles.section}>
-          <span className={styles.sectionTitle}>Realism</span>
-          <div className={styles.rows}>
-            <ListRow flush title="Pilot response delay" subtitle="Also the undo window" trailing={<Select size="m" ariaLabel="Pilot response delay" options={PILOT_DELAY_OPTIONS} value={delayKey(settings.pilotDelayS)} onChange={(v) => set({ pilotDelayS: v === 'auto' ? null : Number(v) })} className={styles.select} tabular testId="set-pilot-delay" />} />
-            <ListRow flush title="Strict frequencies" subtitle="Aircraft only answer the position that owns them" trailing={<Mirror state={settings.strictFrequencies ? 'on' : 'off'}><Toggle checked={settings.strictFrequencies} onChange={(v) => set({ strictFrequencies: v })} testId="set-strict-frequencies" /></Mirror>} />
-            <ListRow flush title="Readback errors" subtitle="About 2 % of readbacks come back wrong" trailing={<Mirror state={settings.readbackErrors ? 'on' : 'off'}><Toggle checked={settings.readbackErrors} onChange={(v) => set({ readbackErrors: v })} testId="set-readback-errors" /></Mirror>} />
-            <ListRow flush title="Automatic handoffs" subtitle="Frequency changes at 1,000 ft and 10 NM established" trailing={<Mirror state={settings.autoHandoff ? 'on' : 'off'}><Toggle checked={settings.autoHandoff} onChange={(v) => set({ autoHandoff: v })} testId="set-auto-handoff" /></Mirror>} />
-            <ListRow flush title="Emergencies" trailing={<Select size="m" ariaLabel="Emergency rate" options={EMERGENCY_OPTIONS} value={settings.emergencyRate} onChange={(v) => set({ emergencyRate: v })} className={styles.select} testId="set-emergency-rate" />} />
-            <ListRow flush title="Phraseology" trailing={<Select size="m" ariaLabel="Phraseology" options={REGION_OPTIONS} value={settings.region} onChange={(v) => set({ region: v })} className={styles.select} testId="set-phraseology" />} />
-          </div>
-        </div>
-
-        <div className={styles.section}>
-          <span className={styles.sectionTitle}>Who controls</span>
-          <div className={styles.rows}>
-            <ListRow flush title="Tower" subtitle="Ground and runway: start-up, pushback, taxi, take-off and landing clearances" trailing={<Segmented small ariaLabel="Tower controller" items={[{ id: 'you', label: 'You' }, { id: 'ai', label: 'AI' }]} value={sectorAi(settings, 'airfield') ? 'ai' : 'you'} onChange={(v) => set(sectorPatch('airfield', v === 'ai'))} testId="set-sector-airfield-modal" />} />
-            <ListRow flush title="Approach" subtitle="Radar: arrivals sequenced onto the ILS, departures climbed out" trailing={<Segmented small ariaLabel="Approach controller" items={[{ id: 'you', label: 'You' }, { id: 'ai', label: 'AI' }]} value={sectorAi(settings, 'approach') ? 'ai' : 'you'} onChange={(v) => set(sectorPatch('approach', v === 'ai'))} testId="set-sector-approach-modal" />} />
-          </div>
-        </div>
-
-        <GraphicsSection />
-
-        <LlmSection />
-
-        <div className={styles.section}>
-          <span className={styles.sectionTitle}>Input</span>
-          <div className={styles.rows}>
-            <ListRow flush title="Instant vectors" subtitle="Drag-to-heading transmits without a confirm step" trailing={<Mirror state={settings.instantVectors ? 'on' : 'off'}><Toggle checked={settings.instantVectors} onChange={(v) => set({ instantVectors: v })} testId="set-instant-vectors" /></Mirror>} />
-            <ListRow flush title="Typed commands transmit on Enter" subtitle="Off shows the parsed command for review first" trailing={<Mirror state={settings.typedInstant ? 'on' : 'off'}><Toggle checked={settings.typedInstant} onChange={(v) => set({ typedInstant: v })} testId="set-typed-instant" /></Mirror>} />
-            <ListRow flush title="Voice recognition" subtitle={voiceEngineOptions().find((o) => o.value === voiceEngine)?.description ?? ''} trailing={<Select size="m" ariaLabel="Voice recognition" options={voiceEngineOptions()} value={voiceEngine} onChange={(v) => setVoiceEngine(v)} className={styles.select} testId="set-voice-engine" />} />
-            {(voiceEngine === 'browser') && <ListRow flush title="Voice accent" subtitle="The browser recogniser has a model per accent: pick yours (it matters more than anything else)" trailing={<Select size="m" ariaLabel="Voice accent" options={VOICE_ACCENTS} value={voiceAccent} onChange={(v) => setVoiceAccent(v)} className={styles.select} testId="set-voice-accent" />} />}
-            <ListRow flush title="Hotkey badges" subtitle="Show the key letter on every action button" trailing={<Mirror state={hotkeyBadges ? 'on' : 'off'}><Toggle checked={hotkeyBadges} onChange={setHotkeyBadges} testId="set-hotkey-badges" /></Mirror>} />
-          </div>
-        </div>
-
-        <div className={styles.section}>
-          <span className={styles.sectionTitle}>Display</span>
-          <div className={styles.rows}>
-            <ListRow flush title="Ground map" subtitle="Satellite imagery or the vector chart" trailing={
-              <span className={styles.pillGroup} role="group" aria-label="Ground theme">
-                <Pill size="s" tone="outline" interactive selected={settings.groundTheme === 'satellite'} aria-pressed={settings.groundTheme === 'satellite'} onClick={() => set({ groundTheme: 'satellite' })} testId="set-theme-satellite">Satellite</Pill>
-                <Pill size="s" tone="outline" interactive selected={settings.groundTheme === 'chart'} aria-pressed={settings.groundTheme === 'chart'} onClick={() => set({ groundTheme: 'chart' })} testId="set-theme-chart">Chart</Pill>
-              </span>
-            } />
-            <ListRow flush title="Range rings" subtitle="5 NM rings on the approach scope" trailing={<Mirror state={settings.showRings ? 'on' : 'off'}><Toggle checked={settings.showRings} onChange={(v) => set({ showRings: v })} testId="set-show-rings" /></Mirror>} />
-            <ListRow flush title="Replay onboarding" subtitle="Show the first-run tips again" trailing={<Button variant="ghost" size="sm" onClick={() => { close(); window.dispatchEvent(new Event(EV_REPLAY_TIPS)) }} testId="set-reset-tips">Replay</Button>} />
-          </div>
-        </div>
-      </div>
+      }>
+      <SettingsTabs variant="panel" onLeave={close} />
     </Modal>
-  )
-}
-
-const INTERVAL_OPTIONS: MenuOption<'4' | '8' | '15' | '30'>[] = [
-  { value: '4', label: '4 s' }, { value: '8', label: '8 s' }, { value: '15', label: '15 s' }, { value: '30', label: '30 s' },
-]
-function fmtAgo(ms: number | null): string { if (ms == null) return '' ; const s = Math.round((Date.now() - ms) / 1000); return s < 60 ? `${s} s ago` : `${Math.round(s / 60)} min ago` }
-
-/** Edge LLM: an OpenAI-compatible model working / advising positions (docs/spec/07-LLM-IO.md). Config lives in its own persisted blob. */
-/** 3D map quality (WorldMap/quality.ts): Auto picks a tier from the device; a pinned tier applies live, no reload. */
-function GraphicsSection() {
-  const pref = useGraphicsPref()
-  const detected = useDetected()
-  const tier = pref === 'auto' ? detected?.tier ?? null : pref
-  const p = tier ? PRESETS[tier] : null
-  const what = p ? `${p.bokeh ? 'Depth of field' : 'No depth of field'} · ${p.fxaa ? 'FXAA' : 'no AA'} · up to ${p.dprMax}× render scale · models within ${(p.modelDist / 1000).toFixed(1)} km${p.fpsCap ? ` · ${p.fpsCap} fps` : ''}` : 'Detected once the map is up'
-  const label = (k: GraphicsPref) => k === 'auto' ? `Auto${detected ? ` (${detected.tier})` : ''}` : k[0].toUpperCase() + k.slice(1)
-  return (
-    <div className={styles.section} data-testid="graphics-section">
-      <span className={styles.sectionTitle}>Graphics</span>
-      <div className={styles.rows}>
-        <ListRow flush title="3D map quality" subtitle={what} trailing={
-          <span className={styles.pillGroup} role="group" aria-label="3D map quality">
-            {(['auto', 'high', 'medium', 'low'] as const).map((k) => (
-              <Pill key={k} size="s" tone="outline" interactive selected={pref === k} aria-pressed={pref === k} onClick={() => setGraphicsPref(k)} testId={`gfx-${k}`}>{label(k)}</Pill>
-            ))}
-          </span>
-        } />
-        {detected ? <ListRow flush title="Device" subtitle={`${detected.device.gpu || 'GPU unknown'} · ${detected.device.cores} cores${detected.device.memoryGB ? ` · ${detected.device.memoryGB} GB` : ''}${detected.device.coarse ? ' · touch' : ''}`} meta={<span data-testid="gfx-detected" data-tier={detected.tier}>{detected.tier}</span>} /> : null}
-        <ListRow flush title="Render scale adapts to the frame rate" subtitle="Slower devices draw fewer pixels instead of dropping frames; the picture sharpens again when there is headroom" />
-      </div>
-    </div>
-  )
-}
-
-function LlmSection() {
-  const llm = useSim((s) => s.llm)
-  const status = useSim((s) => ({ ...s.llmStatus() }))
-  const logSize = useSim((s) => s.llmAgent.log.length)
-  const setLlm = (patch: Partial<LlmConfig>) => sim.updateLlm(patch)
-  const [probe, setProbe] = React.useState<{ ok: boolean; text: string } | null>(null)
-  const [busy, setBusy] = React.useState(false)
-  const togglePos = (p: PlayerPosition, on: boolean) => setLlm({ positions: on ? Array.from(new Set([...llm.positions, p])) : llm.positions.filter((x) => x !== p) })
-  const test = async () => {
-    setBusy(true); setProbe(null)
-    const r = await probeEndpoint(llm)
-    setProbe(r.ok ? { ok: true, text: `Connected in ${r.ms} ms${r.models.length ? ` · models: ${r.models.slice(0, 6).join(', ')}${r.models.length > 6 ? '…' : ''}` : ''}` } : { ok: false, text: r.error ?? 'failed' })
-    setBusy(false)
-  }
-  const exportLog = () => {
-    const blob = new Blob([sim.llmAgent.exportJsonl()], { type: 'application/jsonl' })
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `skycontrol-io-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.jsonl`
-    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000)
-  }
-  const statusText = status.lastError ? `Error: ${status.lastError}` : status.calls ? `${status.calls} call${status.calls === 1 ? '' : 's'} · last ${status.lastMs ?? '–'} ms ${fmtAgo(status.lastAt)}${status.model ? ` · ${status.model}` : ''}` : llm.mode === 'off' ? 'Off' : 'Waiting for the first call…'
-  return (
-    <div className={styles.section} data-testid="llm-section">
-      <span className={styles.sectionTitle}>Edge LLM</span>
-      <div className={styles.rows}>
-        <ListRow flush title="Mode" subtitle="Advise = suggestions in the comm log · Control = works the positions" trailing={
-          <span className={styles.pillGroup} role="group" aria-label="LLM mode">
-            {(['off', 'advise', 'control'] as const).map((m) => (
-              <Pill key={m} size="s" tone="outline" interactive selected={llm.mode === m} aria-pressed={llm.mode === m} onClick={() => setLlm({ mode: m })} testId={`llm-mode-${m}`}>{m === 'off' ? 'Off' : m === 'advise' ? 'Advise' : 'Control'}</Pill>
-            ))}
-          </span>
-        } />
-        <ListRow flush title="Positions" subtitle="Positions the model works" trailing={
-          <span className={styles.pillGroup} role="group" aria-label="LLM positions">
-            {(['ground', 'tower', 'approach'] as const).map((p) => (
-              <Pill key={p} size="s" tone="outline" interactive selected={llm.positions.includes(p)} aria-pressed={llm.positions.includes(p)} onClick={() => togglePos(p, !llm.positions.includes(p))} testId={`llm-pos-${p}`}>{p.toUpperCase()}</Pill>
-            ))}
-          </span>
-        } />
-        <ListRow flush title="Endpoint" subtitle="OpenAI-compatible base URL (…/v1); empty = server default" trailing={
-          <Input size="m" placeholder="http://127.0.0.1:11434/v1" value={llm.endpoint} onChange={(e) => setLlm({ endpoint: e.target.value })} testId="llm-endpoint" />
-        } />
-        <ListRow flush title="Model" subtitle="Model name at the endpoint" trailing={
-          <Input size="m" placeholder="llama3.2 / qwen2.5:3b" value={llm.model} onChange={(e) => setLlm({ model: e.target.value })} testId="llm-model" />
-        } />
-        <ListRow flush title="API key" subtitle="Optional bearer token" trailing={
-          <Input size="m" type="password" placeholder="sk-…" value={llm.apiKey} onChange={(e) => setLlm({ apiKey: e.target.value })} testId="llm-key" autoComplete="off" />
-        } />
-        <ListRow flush title="Cadence" subtitle="Seconds between calls per position" trailing={
-          <Select<'4' | '8' | '15' | '30'> value={String(llm.intervalS) as '4' | '8' | '15' | '30'} options={INTERVAL_OPTIONS} onChange={(v) => setLlm({ intervalS: Number(v) })} className={styles.select} testId="llm-interval" ariaLabel="LLM cadence" />
-        } />
-        <ListRow flush title="Call the endpoint from the browser" subtitle="Off = via this server (no CORS, key stays server-side)" trailing={<Mirror state={llm.direct ? 'on' : 'off'}><Toggle checked={llm.direct} onChange={(v) => setLlm({ direct: v })} testId="llm-direct" /></Mirror>} />
-        <ListRow flush title="Record I/O for training" subtitle={`Observation → command pairs from you and the model · ${logSize} record${logSize === 1 ? '' : 's'}`} trailing={
-          <span className={styles.pillGroup}>
-            <Mirror state={llm.record ? 'on' : 'off'}><Toggle checked={llm.record} onChange={(v) => setLlm({ record: v })} testId="llm-record" /></Mirror>
-            <Button variant="ghost" size="sm" disabled={!logSize} onClick={exportLog} testId="llm-export">Export JSONL</Button>
-            <Button variant="ghost" size="sm" disabled={!logSize} onClick={() => sim.llmAgent.clearLog()} testId="llm-clear">Clear</Button>
-          </span>
-        } />
-        <ListRow flush title="Status" subtitle={statusText} trailing={<Button variant="secondary" size="sm" disabled={busy} onClick={test} testId="llm-test">{busy ? 'Testing…' : 'Test connection'}</Button>} testId="llm-status" />
-        {probe ? <div className={styles.footHint} data-testid="llm-probe" data-ok={probe.ok ? 'true' : 'false'}>{probe.text}</div> : null}
-      </div>
-    </div>
   )
 }

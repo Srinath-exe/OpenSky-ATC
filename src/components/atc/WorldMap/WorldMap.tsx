@@ -8,7 +8,6 @@
 import * as React from 'react';
 import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
@@ -23,16 +22,21 @@ import { isAirborne } from '@/lib/sim/aircraft';
 import { getPerformance } from '@/lib/sim/aircraftDB';
 import { loadWorld, type World } from './world';
 import { NOSE_WHEEL, genericLights, instantiate, lightsOf, loadAircraftModel, setGear, setModelNight, tint, type LightSpec } from './models';
-import { PALETTE, applyFades, buildAirport, buildBuildings, buildRoads, buildTerrain, setSurfaceNight, toV3, type BuildingsHandle, type Fade, type NightHandle } from './terrain';
-import { buildGse, buildJetBridges, buildLabels, buildStands, closeUpFade, closeUpLabel, type LabelHandle } from './apron';
-import { applySky, buildClouds, buildRain, buildSky, lightingFor, sunPosition, weatherLook, type TimeMode } from './sky';
+import { buildAirport } from './airfield';
+import { PALETTE, applyFades, buildBuildings, buildRoads, buildTerrain, setSurfaceNight, toV3, type BuildingsHandle, type Fade, type NightHandle } from './terrain';
+import { buildFloods, buildGse, buildJetBridges, buildLabels, buildStands, closeUpFade, closeUpLabel, type LabelHandle } from './apron';
+import { applySky, buildSky, lightingFor, sunPosition, weatherLook, type TimeMode, type WeatherLook } from './sky';
+import { ScenePass, WeatherPass } from './atmosphere';
+import { CINE, getLook, onLook, setLook, type Look } from './cinematic';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { AdaptiveResolution, PRESETS, detectTier, getGraphicsPref, presetFor, publishDetected, subscribeGraphics, type QualityPreset } from './quality';
 import { IconButton, Segmented, Icon, Tooltip } from '@/design';
 import { requestOpenAction } from '@/game/CommandPanel/bus';
 import { stageLabel } from '@/lib/sim/stage';
+import { TutorLayer, TUTOR_EVENT, markListening } from './tutor';
+import { StylePass } from './styles';
 
 const FT = 0.3048;
-const CLOUD_TINT = new THREE.Color('#d8dbe0');
 const UP = new THREE.Vector3(0, 1, 0);
 const GRADE = {
   uniforms: { tDiffuse: { value: null }, uVignette: { value: 0.55 }, uSat: { value: 0.96 }, uLift: { value: 0.0 } },
@@ -135,7 +139,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const detected = detectTier(renderer.getContext()); publishDetected(detected);
     let preset: QualityPreset = lite ? { ...PRESETS.low, terrainSegments: 192, fpsCap: 0 } : presetFor(getGraphicsPref(), detected.tier);
     const adaptive = new AdaptiveResolution(Math.min(window.devicePixelRatio || 1, preset.dprMax), Math.min(window.devicePixelRatio || 1, preset.dprMin));
-    const retarget = () => { const cap = preset.fpsCap ? 1000 / preset.fpsCap : 0; adaptive.targetMs = cap ? cap * 1.2 : 22; adaptive.upMs = cap ? cap + 1.5 : 17.5; };
+    const retarget = () => { const cap = preset.fpsCap ? 1000 / preset.fpsCap : 0; adaptive.targetMs = cap ? cap * 1.2 : preset.slowMs; adaptive.upMs = cap ? cap + 1.5 : preset.upMs; };
     retarget();
     const applyDpr = () => { renderer.setPixelRatio(adaptive.dpr); composer.setPixelRatio(adaptive.dpr); const r = renderer.getSize(new THREE.Vector2()); fxaa.uniforms.resolution.value.set(1 / (r.x * adaptive.dpr), 1 / (r.y * adaptive.dpr)); };
     const stats = { frames: 0, renderMs: 0, jsMs: 0, at: performance.now(), fps: 0, ms: 0, js: 0 };
@@ -148,19 +152,34 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const hemiLight = new THREE.HemisphereLight(0xbfc7d1, 0x1a1c1a, 0.9); scene.add(hemiLight);
     const sun = new THREE.DirectionalLight(0xfff1dc, 1.2); sun.position.set(-5000, 6000, 5000); scene.add(sun);
 
-    // the render target carries a depth texture so the depth-of-field pass can read the main pass's depth
+    // the scene draws into its own target with a depth texture (ScenePass); the weather, style and depth-of-field passes read it
     const size0 = renderer.getSize(new THREE.Vector2());
-    const rt = new THREE.WebGLRenderTarget(Math.max(1, size0.x), Math.max(1, size0.y), { type: THREE.HalfFloatType, depthTexture: new THREE.DepthTexture(Math.max(1, size0.x), Math.max(1, size0.y), THREE.UnsignedIntType) });
+    const rt = new THREE.WebGLRenderTarget(Math.max(1, size0.x), Math.max(1, size0.y), { type: THREE.HalfFloatType, depthBuffer: false });
     const composer = new EffectComposer(renderer, rt);
-    composer.addPass(new RenderPass(scene, camera));
+    const scenePass = new ScenePass(scene, camera, Math.max(1, size0.x), Math.max(1, size0.y)); composer.addPass(scenePass);
     // Depth of field as a background effect only (dof.ts): the airfield is always sharp, the blur ramps in beyond it
     // (far terrain, the bay, the horizon) by WORLD position, so the airport is sharp and everything around it soft from
     // any camera angle, including the city on the near side of the field - a tilt-shift look independent of the zoom.
-    const bokeh = new TiltShiftPass(camera);
+    // art-style experiment (styles.ts): off unless window.__worldStyle(n) asks; reads the render pass's depth, so it goes first
+    const depthFrom = () => scenePass.rt.depthTexture;
+    // weather over the frame (atmosphere.ts): the cloud deck, its shadows, rain, snow, lightning - before the bloom and
+    // the depth of field, so both treat the clouds like the rest of the scene
+    const oct = preset.tier === 'low' ? 3 : preset.tier === 'medium' ? 4 : 5;
+    const weather = new WeatherPass(camera, scenePass, oct); composer.addPass(weather);
+    // the cinematic look (cinematic.ts): bloom on the HDR frame here, the filmic finish after the anti-aliasing
+    const bloom = new UnrealBloomPass(new THREE.Vector2(Math.max(1, size0.x), Math.max(1, size0.y)), 0.5, 0.45, 0.86); composer.addPass(bloom);
+    const stylePass = new StylePass(camera); stylePass.enabled = false; stylePass.depthFrom = depthFrom; composer.addPass(stylePass);
+    (window as unknown as { __worldStyle?: (n: number, time?: number) => void }).__worldStyle = (n, time = 0) => { stylePass.style = n; stylePass.enabled = n > 0; stylePass.setTime(time); };
+    const bokeh = new TiltShiftPass(camera); bokeh.depthFrom = depthFrom;
     const fieldCentre = new THREE.Vector3(0, 0, 0);
     bokeh.enabled = preset.bokeh; composer.addPass(bokeh);
     const fxaa = new ShaderPass(FXAAShader); fxaa.enabled = preset.fxaa; composer.addPass(fxaa);
+    const cine = new ShaderPass(CINE); composer.addPass(cine);
     const grade = new ShaderPass(GRADE); composer.addPass(grade);
+    const urlLook = /[?&]look=(cinematic|standard)/.exec(window.location.search)?.[1] as Look | undefined;
+    const applyLook = () => { const cinematic = (urlLook ?? getLook()) === 'cinematic'; bloom.enabled = cinematic; cine.enabled = cinematic; grade.enabled = !cinematic; };
+    applyLook(); const unsubLook = onLook(applyLook);
+    (window as unknown as { __worldLook?: (l: Look) => void }).__worldLook = (l) => setLook(l);
     composer.addPass(new OutputPass());
     applyDpr();
 
@@ -172,9 +191,12 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     const matSel = new THREE.MeshLambertMaterial({ color: PALETTE.orange, emissive: 0x3a2008 });
     const matGhost = new THREE.MeshLambertMaterial({ color: 0x9a9c9a, emissive: 0x151515 });
     const traffic = new THREE.Group(); scene.add(traffic);
-    const sky = buildSky(); scene.add(sky.mesh);
-    const clouds = buildClouds(60000); clouds.mesh.visible = false; scene.add(clouds.mesh);
-    let rain = buildRain(preset.rain); scene.add(rain.points);
+    const sky = buildSky(oct); scene.add(sky.mesh);
+    // the weather as drawn: eased toward the sim's (a front rolls in over a minute, it does not switch in a frame)
+    const wxS = { cover: -1, base: 1500, vis: 10000, rain: 0, snow: 0, wet: 0 };
+    let wxOverride: Partial<WeatherLook> | null = null;
+    (window as unknown as { __worldWx?: (o: Partial<WeatherLook> | null) => void }).__worldWx = (o) => { wxOverride = o; wxS.cover = -1; };
+    let wxClock = 0; const windOff = new THREE.Vector2(); let flashAt = 0, nextFlash = 0; const lookDir = new THREE.Vector3();
     const nightHandles: NightHandle[] = [];
     let buildingMat: THREE.MeshLambertMaterial | null = null;
     let buildings: BuildingsHandle | null = null;
@@ -236,11 +258,13 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       const base = ap.userData.base as number;
       scene.add(buildStands(w, e.air, base, fades));
       const jb = buildJetBridges(w, e.air, base); if (jb) { scene.add(jb); nightMats.push((jb as THREE.Mesh).material as THREE.MeshLambertMaterial); }
+      scene.add(buildFloods(w, e.air, base, nightHandles));
       const gse = buildGse(w, e.air, base); if (gse) { scene.add(gse); nightMats.push((gse as THREE.Mesh).material as THREE.MeshLambertMaterial); }
       fieldR = Math.min(6000, Math.max(1500, Math.max(...field.map(p => Math.hypot(p.x, p.y))) + 300));
       mapLabels = buildLabels(w, e.air, base); scene.add(mapLabels.group);
       cam.target.set(0, w.heightAt(0, 0), 0); fieldCentre.set(0, w.heightAt(0, 0), 0);
       setStatus('ready');
+      if (!disposed) { tutorReady = true; markListening(true); }   // the tutorial's camera may move from here on
     }).catch((err) => { console.error(err); setStatus('error'); });
 
     // ── live quality changes (Settings → Graphics): passes, render scale, model distance, rain, terrain density ──
@@ -261,7 +285,6 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
         scene.remove(roads); roads.traverse((o) => { const m = o as THREE.LineSegments; if (m.geometry) m.geometry.dispose(); if (m.material) { const idx = fades.findIndex(f => f.mat === m.material); if (idx >= 0) fades.splice(idx, 1); (m.material as THREE.Material).dispose(); } });
         roads = buildRoads(world, fades, { step: next.roadStep, minor: next.minorRoads }); scene.add(roads);
       }
-      if (next.rain !== prev.rain) { scene.remove(rain.points); rain.points.geometry.dispose(); rain = buildRain(next.rain); scene.add(rain.points); }
       el.parentElement?.setAttribute('data-quality', next.tier);
     };
     const unsubGraphics = lite ? () => {} : subscribeGraphics(() => { const next = presetFor(getGraphicsPref(), detected.tier); if (next.tier !== preset.tier) applyPreset(next); });
@@ -408,6 +431,18 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
     el.addEventListener('wheel', onWheel, { passive: false }); el.addEventListener('contextmenu', (ev) => ev.preventDefault());
     window.addEventListener('keydown', onKey);
     let follow = false;
+    let tutorReady = false;
+    // the tutorial's layer: lit routes, markers, and eased camera flights (up to straight down, the "map" view)
+    const tutor = new TutorLayer(labels.current ?? el, (x, y) => world?.heightAt(x, y) ?? 0, () => renderer.getPixelRatio()); scene.add(tutor.group);
+    type Pose = { x: number; z: number; dist: number; yaw: number; pitch: number };
+    let fly: { t0: number; ms: number; from: Pose; to: Pose; follow?: number } | null = null;
+    tutor.onCamera = (c) => {
+      const t = toV3(c.at.x, c.at.y, 0); let yaw = c.yaw ?? cam.yaw; while (yaw - cam.yaw > Math.PI) yaw -= 2 * Math.PI; while (yaw - cam.yaw < -Math.PI) yaw += 2 * Math.PI;
+      fly = { t0: performance.now(), ms: c.ms ?? 1600, from: { x: cam.target.x, z: cam.target.z, dist: cam.dist, yaw: cam.yaw, pitch: cam.pitch }, to: { x: t.x, z: t.z, dist: c.dist, yaw, pitch: Math.min(1.53, Math.max(0.3, c.pitch ?? cam.pitch)) }, follow: c.follow };
+      camGoal = null; zoomAnchor = null; follow = false; setFollowRef.current(false);
+    };
+    const onTutor = (ev: Event) => tutor.cue((ev as CustomEvent).detail, performance.now());
+    window.addEventListener(TUTOR_EVENT, onTutor);
     ctl.current = {
       zoom: (f) => { cam.distGoal = Math.min(38000, Math.max(90, cam.distGoal * f)); zoomAnchor = null; },
       reset: () => { cam.target.set(0, world?.heightAt(0, 0) ?? 0, 0); cam.dist = cam.distGoal = 5200; cam.yaw = -0.35; cam.pitch = 0.95; camGoal = null; zoomAnchor = null; follow = false; setFollowRef.current(false); },
@@ -435,7 +470,7 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       // frame-rate cap (low tier) and a 10 fps idle rate while the sim is paused and the camera rests: the picture
       // cannot change, so the GPU (and the battery) rest too
       const camKey = `${cam.target.x.toFixed(1)},${cam.target.z.toFixed(1)},${cam.dist.toFixed(1)},${cam.yaw.toFixed(3)},${cam.pitch.toFixed(3)},${sim.selectedId},${sim.hoveredId},${sim.version}`;
-      const resting = sim.paused && camKey === lastCamKey && !camGoal && Math.abs(cam.distGoal - cam.dist) < 0.5;
+      const resting = sim.paused && camKey === lastCamKey && !camGoal && !fly && !tutor.active && Math.abs(cam.distGoal - cam.dist) < 0.5;
       const minGap = resting ? 100 : preset.fpsCap ? 1000 / preset.fpsCap - 2 : 0;
       if (minGap && now - lastRender < minGap) { clock.getDelta(); return; }
       lastCamKey = camKey;
@@ -654,39 +689,69 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       const fogNear = cam.dist * 2.4, fogFar = cam.dist * 7.5;   // haze well beyond the airfield (the horizon colour); weather pulls it in below
       (scene.fog as THREE.Fog).near = fogNear; (scene.fog as THREE.Fog).far = fogFar;
       // ── sun, sky, weather ──
-      const wx = weatherLook((() => { try { return eng.wx(); } catch { return null; } })());
+      const wxLive = weatherLook((() => { try { return eng.wx(); } catch { return null; } })());
+      const wxT: WeatherLook = wxOverride ? { ...wxLive, ...wxOverride } : wxLive;
+      const rainT = wxT.precip === 'rain' || wxT.precip === 'freezing' ? 1 : wxT.precip === 'drizzle' ? 0.45 : 0, snowT = wxT.precip === 'snow' ? 1 : 0;
+      const ek = wxS.cover < 0 ? 1 : 1 - Math.exp(-dt / 6);   // first frame (or a forced weather): straight there
+      wxS.cover += (wxT.cloudCover - wxS.cover) * ek; wxS.base += (wxT.cloudBaseM - wxS.base) * ek; wxS.vis += (wxT.visM - wxS.vis) * ek;
+      wxS.rain += (rainT - wxS.rain) * ek; wxS.snow += (snowT - wxS.snow) * ek; wxS.wet += (wxT.wet - wxS.wet) * ek;
+      const cover = wxS.cover;
       const epoch = (sim.sessionStartedAt || Date.now()) + eng.time * 1000;
       const sp = sunPosition(epoch, airCenter.lat, airCenter.lng);
       const mode = timeRef.current;
       const elev = mode === 'day' ? 38 : mode === 'dusk' ? 1.5 : mode === 'night' ? -20 : sp.elevation;
       const L = lightingFor(elev, mode === 'auto' ? sp.azimuth : mode === 'dusk' ? 265 : 150);
-      const cloudDim = 1 - wx.cloudCover * 0.45;
+      const twilight = Math.exp(-Math.pow((elev - 1) / 7, 2)), nightW = 1 - THREE.MathUtils.smoothstep(elev, -12, -2);
+      // the clouds drift with the wind aloft (stronger than at the surface); everything holds still while paused
+      const windTo = (wxT.windDir + 180) * Math.PI / 180, windMs = Math.max(4, wxT.windKt * 0.514 * 1.8);
+      const wvx = Math.sin(windTo) * windMs, wvz = -Math.cos(windTo) * windMs;
+      if (!sim.paused) { wxClock += dt; windOff.x -= wvx * dt; windOff.y -= wvz * dt; }
+      // lightning in a storm: a double flicker every few seconds
+      let flash = 0;
+      if (wxT.storm && wxS.rain > 0.3 && !sim.paused) {
+        if (now > nextFlash) { flashAt = now; nextFlash = now + 3500 + Math.random() * 9000; }
+        const ft = now - flashAt; flash = ft < 420 ? (Math.exp(-ft / 60) + (ft > 140 ? 0.7 * Math.exp(-(ft - 140) / 90) : 0)) * 0.9 : 0;
+      }
+      const cloudDim = 1 - cover * 0.2;   // the rest of the overcast's dimming is the cloud shadow (atmosphere.ts)
       sun.color.copy(L.sunColor); sun.intensity = L.sunIntensity * cloudDim; sun.position.copy(L.sunDir).multiplyScalar(8000);
-      hemiLight.color.copy(L.hemiSky); hemiLight.groundColor.copy(L.hemiGround); hemiLight.intensity = L.hemiIntensity;
-      const horizon = applySky(sky.uniforms, L, wx.cloudCover); sky.mesh.position.copy(camera.position); sky.mesh.scale.setScalar(camera.far * 0.9);
-      // fog = the sky's horizon colour, so the far terrain and the world's edge melt into the sky instead of going black
-      scene.background = null; (scene.fog as THREE.Fog).color.copy(L.fog).lerp(horizon, 0.9);
-      (sky.uniforms.uFog.value as THREE.Color).copy((scene.fog as THREE.Fog).color);
-      const fogFar2 = Math.min(fogFar, wx.visM * 3.2 + cam.dist * 0.5);   // poor visibility pulls the fog in
+      hemiLight.color.copy(L.hemiSky); hemiLight.groundColor.copy(L.hemiGround); hemiLight.intensity = L.hemiIntensity * (1 + flash * 0.8);
+      lookDir.subVectors(cam.target, camera.position);
+      const horizon = applySky(sky.uniforms, { L, cover, vis: wxS.vis, night: nightW, twilight, time: wxClock, flash, wind: windOff, cirrus: 0.2 + 0.55 * (1 - cover) }, lookDir);
+      sky.mesh.position.copy(camera.position); sky.mesh.scale.setScalar(camera.far * 0.9);
+      // fog = the sky's horizon colour in the direction of view, so the far terrain melts into exactly the sky behind it
+      scene.background = null; (scene.fog as THREE.Fog).color.copy(horizon);
+      (sky.uniforms.uFog.value as THREE.Color).copy(horizon);
+      const fogFar2 = Math.min(fogFar, wxS.vis * 3.2 + cam.dist * 0.5);   // poor visibility pulls the fog in
       (scene.fog as THREE.Fog).near = Math.min(fogNear, fogFar2 * 0.4); (scene.fog as THREE.Fog).far = fogFar2;
-      // the deck is only drawn while the camera is under it (from above it would veil the whole map); overcast still dims the sun
-      const deckY = (world?.heightAt(0, 0) ?? 0) + wx.cloudBaseM;
-      const under = 1 - THREE.MathUtils.smoothstep(camera.position.y, deckY - 400, deckY - 50);
-      clouds.mesh.visible = wx.cloudCover > 0.05 && under > 0.01; clouds.mesh.position.set(cam.target.x, deckY, cam.target.z);
-      clouds.uniforms.uTime.value += dt; clouds.uniforms.uCover.value = wx.cloudCover * under; clouds.uniforms.uDay.value = L.day; (clouds.uniforms.uTint.value as THREE.Color).copy(L.hemiSky).lerp(CLOUD_TINT, 0.5);
-      rain.update(clock.elapsedTime, cam.target, Math.min(2500, cam.dist * 0.6), wx.precip === 'none' ? 0 : wx.precip === 'drizzle' ? 0.5 : 1);
+      const sunUp = THREE.MathUtils.smoothstep(elev, -4, 6);
+      const wu = weather.mat.uniforms;
+      (wu.uSunDir.value as THREE.Vector3).copy(L.sunDir); (wu.uSunCol.value as THREE.Color).copy(L.sunColor).multiplyScalar(L.sunIntensity * 0.8 * (1 - cover * 0.45));
+      (wu.uAmb.value as THREE.Color).copy(L.hemiSky).multiplyScalar(L.hemiIntensity * 0.62); (wu.uHaze.value as THREE.Color).copy(horizon); (wu.uWind.value as THREE.Vector2).copy(windOff);
+      wu.uTime.value = wxClock;
+      const right = { x: Math.cos(cam.yaw), z: -Math.sin(cam.yaw) };
+      weather.set({ deck: (world?.heightAt(0, 0) ?? 0) + wxS.base, cover, shadow: 0.34 * L.day, veil: 0.6, rain: wxS.rain, snow: wxS.snow, flash, hazeFar: Math.max(9000, wxS.vis * 2.5), day: L.day, sun: 0.15 + 0.85 * sunUp,
+        slant: THREE.MathUtils.clamp(-(wvx * right.x + wvz * right.z) / 30, -0.45, 0.45) });
+      cine.uniforms.uTime.value = clock.elapsedTime; cine.uniforms.uNight.value = nightW;
       const nightAmt = 1 - L.day; nightAmtRef = nightAmt;
       for (const nh of nightHandles) nh.setNight(nightAmt);
       setModelNight(nightAmt); setSurfaceNight(nightAmt); lightMaterial.uniforms.uOpacity.value = 0.5 + 0.5 * nightAmt; lightMaterial.uniforms.uPixelRatio.value = renderer.getPixelRatio();
       if (buildingMat) { buildingMat.emissive.setRGB(0.028 * nightAmt, 0.028 * nightAmt, 0.032 * nightAmt); (buildingMat.userData.uNight as THREE.IUniform | undefined)!.value = nightAmt; }
       for (const nm of nightMats) nm.emissive.setRGB(0.16 * nightAmt, 0.14 * nightAmt, 0.11 * nightAmt);
-      buildings?.setSun(L.sunDir, L.day, wx.cloudCover);
+      buildings?.setSun(L.sunDir, L.day, cover);
       if (terrainUniforms) {
         terrainUniforms.uTime.value += dt; terrainUniforms.uCam.value.copy(camera.position);
         terrainUniforms.uFogNear.value = (scene.fog as THREE.Fog).near; terrainUniforms.uFogFar.value = (scene.fog as THREE.Fog).far; (terrainUniforms.uFog.value as THREE.Color).copy((scene.fog as THREE.Fog).color);
         (terrainUniforms.uLight.value as THREE.Vector3).copy(L.sunDir); (terrainUniforms.uSunColor.value as THREE.Color).copy(L.sunColor);
-        terrainUniforms.uSunI.value = L.sunIntensity * cloudDim; terrainUniforms.uHemiI.value = L.hemiIntensity; terrainUniforms.uDay.value = L.day; terrainUniforms.uWet.value = wx.wet;
+        terrainUniforms.uSunI.value = L.sunIntensity * cloudDim; terrainUniforms.uHemiI.value = L.hemiIntensity; terrainUniforms.uDay.value = L.day; terrainUniforms.uWet.value = wxS.wet;
       }
+      if (fly) {   // the tutorial's camera flight: eased in and out, the distance on a log scale so a big zoom feels even
+        const k = Math.min(1, (now - fly.t0) / fly.ms); const q = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+        const A = fly.from, B = fly.to;
+        cam.target.x = A.x + (B.x - A.x) * q; cam.target.z = A.z + (B.z - A.z) * q; cam.target.y = world?.heightAt(cam.target.x, -cam.target.z) ?? cam.target.y;
+        cam.dist = cam.distGoal = Math.exp(Math.log(A.dist) + (Math.log(B.dist) - Math.log(A.dist)) * q); cam.yaw = A.yaw + (B.yaw - A.yaw) * q; cam.pitch = A.pitch + (B.pitch - A.pitch) * q;
+        if (k >= 1) { if (fly.follow != null) { sim.select(fly.follow); follow = true; setFollowRef.current(true); } fly = null; }
+      }
+      tutor.update(now, camera, rect.width, rect.height, cam.dist);
       if (camGoal) { cam.target.lerp(camGoal, Math.min(1, dt * 5)); if (cam.target.distanceTo(camGoal) < 2) camGoal = null; }
       if (Math.abs(cam.distGoal - cam.dist) > 0.5) {
         cam.dist += (cam.distGoal - cam.dist) * Math.min(1, dt * 10);
@@ -697,6 +762,11 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       applyCamera(); camera.updateMatrixWorld(); applyFades(fades, cam.dist);
       if (mapLabels) { mapLabels.update(camera, cam.dist, rect.height); if (!labelsRef.current) mapLabels.group.visible = false; }
       bokeh.uniforms.uField.value.set(fieldCentre.x, fieldCentre.z, fieldR);   // full blur 1.4 km past the field (uRamp)
+      // a close-up look: the blur fades out as the camera pulls back, so wide views are sharp edge to edge
+      bokeh.uniforms.uAmount.value = preset.dof * (1 - THREE.MathUtils.smoothstep(cam.dist, 2200, 7000));
+      bokeh.enabled = preset.bokeh && bokeh.uniforms.uAmount.value > 0.01 && !stylePass.enabled;
+      // FXAA only softens on a high-density screen (the pixels are already finer than the eye resolves)
+      fxaa.enabled = preset.fxaa && !(preset.tier === 'ultra' && adaptive.dpr >= 1.75);
       // render scale from the measured frame time (not while resting: those frames are throttled on purpose). Applied
       // BEFORE drawing: a pixel-ratio change resizes (and so clears) the canvas, and a resize after the draw shows the
       // browser an empty canvas for a frame - the map blinked whenever the camera moved and the scale stepped.
@@ -709,13 +779,14 @@ export function WorldMap({ standalone = false }: { standalone?: boolean }) {
       if (t2 - stats.at > 1000) { const secs = (t2 - stats.at) / 1000; stats.fps = stats.frames / secs; stats.js = stats.jsMs / stats.frames; stats.ms = stats.renderMs / stats.frames; stats.frames = 0; stats.jsMs = 0; stats.renderMs = 0; stats.at = t2; if (statsEl.current) statsEl.current.textContent = `${stats.fps.toFixed(0)} fps · js ${stats.js.toFixed(1)} ms · draw ${stats.ms.toFixed(1)} ms · ${renderer.info.render.calls} calls · ${(renderer.info.render.triangles / 1000).toFixed(0)}k tris · ${adaptive.dpr.toFixed(2)}x · ${preset.tier}`; }
     };
     (window as unknown as { __worldSet?: (o: { bokeh?: boolean; fxaa?: boolean; dpr?: number }) => void }).__worldSet = (o) => { if (o.bokeh != null) bokeh.enabled = o.bokeh; if (o.fxaa != null) fxaa.enabled = o.fxaa; if (o.dpr != null) { adaptive.setRange(o.dpr, o.dpr); applyDpr(); } };
+    (window as unknown as { __worldScene?: THREE.Scene }).__worldScene = scene;   // headless debugging: toggle layers
     (window as unknown as { __worldStats?: () => unknown }).__worldStats = () => ({ tier: preset.tier, detected: detected.tier, gpu: detected.device.gpu, dpr: adaptive.dpr, fps: stats.fps, jsMs: stats.js, drawMs: stats.ms, calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, aircraft: markers.size, models: [...markers.values()].filter(m => m.model?.visible).length, parked: parkedMarkers.size, parkedModels: [...parkedMarkers.values()].filter(m => m.model?.visible).length, modelMeshes: [...markers.values()].filter(m => m.model?.visible).map(m => { let n = 0; m.model!.traverse(o => { if ((o as THREE.Mesh).isMesh) n++; }); return `${m.model!.userData.type ?? '?'}:${n}`; }), bokeh: bokeh.enabled, fxaa: fxaa.enabled });
     applyCamera(); frame();
 
     return () => {
-      disposed = true; cancelAnimationFrame(raf); ro.disconnect(); unregister();
+      disposed = true; cancelAnimationFrame(raf); ro.disconnect(); unregister(); unsubLook();
       el.removeEventListener('pointerdown', onDown); el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerup', onUp); el.removeEventListener('pointercancel', onCancel); el.removeEventListener('wheel', onWheel);
-      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keydown', onKey); window.removeEventListener(TUTOR_EVENT, onTutor); if (tutorReady) markListening(false); tutor.dispose();
       for (const m of markers.values()) m.label.remove();
       for (const m of vehicles.values()) m.label.remove();
       ctl.current = null; unsubGraphics();

@@ -176,3 +176,15 @@
 }
 
 /* 3D / 2D world toggle (airports with a baked world) — bottom-left of the map, above the comm log */
+
+/* training (minimal): only the map, the aircraft, the coach and the command line */
+.shell[data-minimal="true"] { --bay-w: 0px; --right-inset: var(--float-gap); grid-template-rows: minmax(0, 1fr) auto; }
+.shell[data-minimal="true"] > nav,
+.shell[data-minimal="true"] .bay,
+.shell[data-minimal="true"] .panel,
+.shell[data-minimal="true"] .vehicles,
+.shell[data-minimal="true"] .paused,
+.shell[data-minimal="true"] :global([data-testid="runway-bars"]),
+.shell[data-minimal="true"] :global([data-testid="alert-stack"]),
+.shell[data-minimal="true"] :global([data-testid="world-toolbar"]),
+.shell[data-minimal="true"] :global([data-testid="world-wind"]) { display: none !important; }

@@ -57,6 +57,7 @@ export const AIRLINE_TELEPHONY: Record<string, string> = {
   AIC: 'Air India', IGO: 'IFly', SWA: 'Southwest', JBU: 'JetBlue', ASA: 'Alaska', FDX: 'FedEx', UPS: 'UPS',
   VOZ: 'Velocity', JST: 'Jetstar', ANZ: 'New Zealand', FDB: 'Sky Dubai', ETD: 'Etihad', THY: 'Turkish', TRA: 'Transavia',
   SCO: 'Scooter', CES: 'China Eastern', CCA: 'Air China', HKE: 'Hong Kong Express',
+  SKW: 'SkyWest', SJX: 'Starlux', EVA: 'Eva', KAL: 'Korean Air', AAR: 'Asiana', ACA: 'Air Canada', WJA: 'WestJet', HAL: 'Hawaiian', NKS: 'Spirit', FFT: 'Frontier',
 };
 
 const PHONETIC: Record<string, string> = {
@@ -987,8 +988,8 @@ export function pilotRequestLine(req: PilotRequest, ctx: PhraseCtx): string {
     case 'intersection': return sentence(`${cs}, request intersection departure${typeof req.param === 'string' && req.param ? ` from ${spokenTaxiway(req.param)}` : ''}`);
     case 'runway_vacated': return sentence(`${cs}, runway ${spokenRwy} vacated`);
     case 'going_around': return sentence(`${cs}, going around${typeof req.param === 'string' && req.param ? `, ${req.param}` : ''}`);
-  }
     case 'concern': return sentence(`${cs}, traffic${typeof req.param === 'string' && req.param ? `, ${ctx.telephony(req.param)}` : ''}`);
+  }
 }
 
 function withYouLine(req: PilotRequest, a: AircraftState | null, cs: string, unit: string, ctx: PhraseCtx): string {

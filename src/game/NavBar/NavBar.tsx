@@ -154,7 +154,7 @@ function RateControl() {
     <div className={styles.rateGroup} role="group" aria-label="Sim rate">
       <Tooltip content={paused ? 'Resume' : 'Pause'} kbd={['Space']} placement="bottom">
         <IconButton
-          size={36}
+          size={32}
           variant="ghost"
           label={paused ? 'Resume' : 'Pause'}
           icon={paused ? <IconPlay size={16} /> : <IconPause size={16} />}
@@ -193,6 +193,7 @@ function RateControl() {
           <Icon name="zap" size={16} />
         </button>
       </Tooltip>
+      <span className={styles.rateSep} aria-hidden="true" />
       <AutopilotButton />
     </div>
   )
@@ -205,7 +206,7 @@ function AutopilotButton() {
   const toggle = () => sim.updateSettings({ ...sectorPatch('airfield', !all), ...sectorPatch('approach', !all) })
   return (
     <Tooltip content={all ? 'Autopilot on — the AI is working every position. Click to take over.' : 'Autopilot — let the AI work every position (watch mode)'} placement="bottom">
-      <IconButton size={36} variant="ghost" label={all ? 'Autopilot on' : 'Autopilot'} icon={<Icon name="sparkles" size={16} />} active={all} accentIcon={all} aria-pressed={all} onClick={toggle} testId="nav-autopilot" data-state={all ? 'on' : 'off'} />
+      <IconButton size={32} variant="ghost" label={all ? 'Autopilot on' : 'Autopilot'} icon={<Icon name="sparkles" size={16} />} active={all} accentIcon={all} aria-pressed={all} onClick={toggle} testId="nav-autopilot" data-state={all ? 'on' : 'off'} />
     </Tooltip>
   )
 }
@@ -277,7 +278,7 @@ export function NavBar() {
   return (
     <nav className={styles.nav} data-escalated={escalated} aria-label="Top bar">
       <div className={styles.left}>
-        <Link href="/" prefetch={false} className={styles.brand} data-testid="brand-home" onClick={(e) => { if (sim.engine) { e.preventDefault(); shell.show('leaveConfirm') } }} title="Home">
+        <Link href="/start" prefetch={false} className={styles.brand} data-testid="brand-home" onClick={(e) => { if (sim.engine) { e.preventDefault(); shell.show('leaveConfirm') } }} title="Home">
           <span className={styles.brandMark}><LogoMark size={28} /></span>
           <span className={styles.brandText}>
             <span className={styles.brandWord}>Skycontrol</span>

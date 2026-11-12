@@ -43,7 +43,7 @@ export function PauseMenu() {
   const close = React.useCallback(() => shell.hide('pause'), [shell])
   const openFromMenu = (o: 'runwayConfig' | 'settings' | 'stats') => { detour.current = true; close(); shell.show(o) }
   const restart = () => { pausedByMenu.current = false; close(); void sim.restart() }
-  const quit = () => { pausedByMenu.current = false; close(); sim.stop(); router.push('/') }
+  const quit = () => { pausedByMenu.current = false; close(); sim.stop(); router.push('/start') }
 
   return (
     <Modal open={open} onClose={close} title="Paused" testId="pause-menu" cancelLabel="">

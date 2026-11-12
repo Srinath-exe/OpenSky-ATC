@@ -10,7 +10,7 @@
 //  Master plan §2.2 / 06-CONTRACTS §7 are the binding contracts.
 // ============================================================
 import {
-  LocalProjection, XY, dist, headingTo, advance, chaikin, angleDelta,
+  LocalProjection, XY, dist, headingTo, advance, chaikin, smoothPath, filletCorners, angleDelta,
   dedupeBacktracks, arcLengths, resample, distToSegment, projectOntoPath, alongTrack, crossTrack, sampleAlong,
   segmentIntersection, NM_TO_M, FT_TO_M, KTS_TO_MPS,
 } from './projection';
@@ -66,6 +66,9 @@ export const FORCED_GA = { noClearanceNM: 2.0, noClearanceFt: 300, occupiedNM: 1
 const CONFIRM_CLEARED_NM = 4;
 /** Sharpest turn a taxi route may make at one node (deg): an airliner cannot reverse on a taxiway (route planning). */
 const TAXI_MAX_TURN_DEG = 120;
+/** Centreline turn radius at a corner of a taxi route: on a taxiway (the arc must stay on the pavement) and where a
+ *  stand's lead-in meets its lane on the apron (taxi-in and pushback). A leg too short for it gets what fits. */
+const TAXI_TURN_RADIUS_M = 20, APRON_TURN_RADIUS_M = 30;
 /** Arrival descents (AI approach): nobody in the band within this distance now or at the 2-minute closest point. */
 const DESCENT_CLEAR_NM = 4;
 /** AI ground: held this long (s) behind a stationary aircraft before a deadlock is broken by a re-route. */
@@ -133,11 +136,11 @@ export interface EngineSettings {
   emergencyRate: EmergencySetting;
   /** Wrong-readback probability (0 / 0.02 / 0.05). */
   pilotErrorRate: number;
+  /** Crews have characters (persona.ts): reply speed, error rate, hesitation and "say again" differ per callsign. Off = every crew is the same. */
+  personas?: boolean;
   strictFrequencies: boolean;
   arcadeIntercept: boolean;
   reducedFinalSep: boolean;
-  /** Crews have characters (persona.ts): reply speed, error rate, hesitation and "say again" differ per callsign. Off = every crew is the same. */
-  personas?: boolean;
   region: 'ICAO' | 'FAA';
   /** Test hook: fixed pilot delay in s (null = realistic 2-4 s air / 4-8 s ground). */
   pilotDelayOverride: number | null;
@@ -1061,10 +1064,13 @@ export class SimEngine implements EngineCommandApi, StageCtx {
   }
 
   // ── paths ──────────────────────────────────────────────────────────────────
-  private buildPath(raw: XY[], kind: DrivePath['kind'], holdAtEnd = false): DrivePath {
+  /** `wide`: corners at these points are on an apron (a stand's lead-in meeting its lane) and take the full turn radius;
+   *  elsewhere a corner must stay on a 23 m taxiway. */
+  private buildPath(raw: XY[], kind: DrivePath['kind'], holdAtEnd = false, wide: XY[] = []): DrivePath {
     const clean = dedupeBacktracks(raw, 3);
-    const uniform = resample(clean, kind === 'taxi' || kind === 'pushback' ? 8 : 30);
-    const pts = kind === 'taxi' || kind === 'pushback' ? chaikin(uniform, 4) : chaikin(uniform, 3);
+    // ground paths: every corner is one circular arc tangent to both legs, then a light pass to settle what is left
+    const R = (c: XY) => (wide.some(w => dist(w, c) < 1.5) ? APRON_TURN_RADIUS_M : TAXI_TURN_RADIUS_M);
+    const pts = kind === 'taxi' || kind === 'pushback' ? smoothPath(filletCorners(clean, R), 5) : chaikin(resample(clean, 30), 3);
     const { cum, total } = arcLengths(pts);
     return { pts, cum, total, kind, holdAt: holdAtEnd ? total : undefined };
   }
@@ -1350,7 +1356,9 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         if (Math.abs(angleDelta(inHdg, h)) > 150) continue; // never push back up the lead-in
         const diff = pushHdg == null ? Math.abs(angleDelta(inHdg, h)) : Math.abs(angleDelta(pushHdg, h));
         const fc = forwardCost(e.to);
-        const score = Number.isFinite(fc) ? fc : 1e6 + diff;   // a lane with a forward way out always beats one without
+        // a lane with a forward way out always beats one without; among those, a push that doubles back on the lead-in
+        // (a hairpin of over 110 degrees) is only taken when nothing else leaves the nose pointing at a way out
+        const score = (Number.isFinite(fc) ? fc : 1e6 + diff) + Math.max(0, Math.abs(angleDelta(inHdg, h)) - 110) * 2000;
         if (score < bestDiff) { bestDiff = score; bestTo = e.to; }
       }
       if (bestTo) break;
@@ -1367,17 +1375,40 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         raw.push(cx); acc += segLen;
         const h0 = headingTo(px, cx);
         const nexts = this.air.nodes.get(cur)!.edges.filter(x => x.to !== prev && x.type !== 'runway');
-        if (!nexts.length) break;
-        const next = nexts.reduce((b, x) => (Math.abs(angleDelta(h0, headingTo(cx, this.nodeXY(x.to)!))) < Math.abs(angleDelta(h0, headingTo(cx, this.nodeXY(b.to)!))) ? x : b));
-        if (Math.abs(angleDelta(h0, headingTo(cx, this.nodeXY(next.to)!))) > 60) break;
+        const next = nexts.length ? nexts.reduce((b, x) => (Math.abs(angleDelta(h0, headingTo(cx, this.nodeXY(x.to)!))) < Math.abs(angleDelta(h0, headingTo(cx, this.nodeXY(b.to)!))) ? x : b)) : null;
+        if (!next || Math.abs(angleDelta(h0, headingTo(cx, this.nodeXY(next.to)!))) > 60) {
+          // the lane ends (a stub into a cul-de-sac between piers) before the aircraft is clear: keep the push straight
+          // for what is left, up to 30 m, so the turn onto the stub is a full arc and not a hook into its last metres
+          raw.push(advance(cx, h0, Math.min(30, pushM - acc))); break;
+        }
         prev = cur; cur = next.to;
       }
     } else raw.push(advance(jx, inHdg, 12 + wb));
-    const path = this.buildPath(raw, 'pushback');
+    const path = this.buildPath(raw, 'pushback', false, [jx]);
     return path.total > 5 ? path : null;
   }
 
   /** Runway exits of a physical runway: taxiway nodes adjacent to centreline nodes. */
+  /** A taxi route as the controller would give it, without giving it: the path, its runway crossings and its named
+   *  stretches in order (arc length along the path), for the tutorial's route preview. null when there is no route. */
+  previewTaxi(a: AircraftState, dest: TaxiDest, via: string[] = []): { path: DrivePath; names: string[]; legs: Array<{ name: string; s0: number; s1: number }>; crossings: Array<{ runway: string; at: number }> } | null {
+    const plan = this.planTaxi(a, dest, via);
+    if ('code' in plan) return null;
+    const path = plan.path, ids = plan.ids;
+    const sOf = (p: XY): number => { let best = Infinity, s = 0; for (let i = 1; i < path.pts.length; i++) { const A = path.pts[i - 1], B = path.pts[i]; const dx = B.x - A.x, dy = B.y - A.y, L2 = dx * dx + dy * dy || 1; const t = Math.max(0, Math.min(1, ((p.x - A.x) * dx + (p.y - A.y) * dy) / L2)); const d = Math.hypot(A.x + dx * t - p.x, A.y + dy * t - p.y); if (d < best) { best = d; s = path.cum[i - 1] + Math.sqrt(L2) * t; } } return s; };
+    const legs: Array<{ name: string; s0: number; s1: number }> = [];
+    for (let i = 1; i < ids.length; i++) {
+      const edge = this.air.nodes.get(ids[i - 1])?.edges.find(x => x.to === ids[i]);
+      const name = edge?.taxiway ?? null; if (!name) continue;
+      const p0 = this.nodeXY(ids[i - 1]), p1 = this.nodeXY(ids[i]); if (!p0 || !p1) continue;
+      const s0 = sOf(p0), s1 = sOf(p1); const last = legs[legs.length - 1];
+      if (last && last.name === name) last.s1 = Math.max(last.s1, s1); else legs.push({ name, s0: Math.min(s0, s1), s1: Math.max(s0, s1) });
+    }
+    for (let i = 0; i < legs.length; i++) { if (i) legs[i].s0 = legs[i - 1].s1; if (i === legs.length - 1) legs[i].s1 = path.total; }
+    if (legs.length) legs[0].s0 = 0;
+    const crossings = (path.holds ?? []).filter(h => !h.isDepartureEntry).map(h => ({ runway: h.runway, at: h.at }));
+    return { path, names: taxiwaysForPath(this.air, ids), legs, crossings };
+  }
   runwayExits(ref: string): RunwayExit[] {
     const c = this.exitsCache.get(ref); if (c) return c;
     const out: RunwayExit[] = [];
@@ -1571,6 +1602,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       suggestedAction: null, answeredAt: null, answeredBy: null,
     };
     req.text = text ?? this.requestText(a, req);
+    if (this.settings.personas && text == null) { const crew = personaOf(a.callsign); if (crew.hesitant) req.text = personaLine(req.text, crew, stressOf(a), rng()); }
     a.requests = [req];
     if (a.delay.firstRequestAt == null) a.delay.firstRequestAt = this.time;
     a.lastTransmissionAt = this.time;
@@ -1602,12 +1634,12 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       case 'cancel_mayday': return `${cs}, cancel MAYDAY, cancel MAYDAY.`;
       case 'return_to_stand': return `${cs}, request return to stand, technical problem.`;
       case 'say_again': return `${cs}, say again.`;
-    if (this.settings.personas && text == null) { const crew = personaOf(a.callsign); if (crew.hesitant) req.text = personaLine(req.text, crew, stressOf(a), rng()); }
       case 'radio_check': return `${unit}, ${cs}, radio check.`;
       case 'further': return `${cs}, over ${req.param ?? ''}, request further.`;
       case 'intersection': return `${cs}, request intersection departure ${req.param ?? ''}.`;
       case 'hold': return `${cs}, request hold.`;
       case 'clearance': return `${cs}, request clearance.`;
+      case 'concern': return `${cs}, traffic${req.param ? `, ${req.param}` : ''}.`;
     }
   }
   /** Mark the open request as answered when a command of an answering kind arrives. */
@@ -1639,7 +1671,6 @@ export class SimEngine implements EngineCommandApi, StageCtx {
 
   // ── pilot delay / readbacks / transmissions ────────────────────────────────
   /** Pilot delay (s): 2-4 s air, 4-8 s ground, x pilotDelayFactor for incapacitation/hijack (03 §8 / §F4.16). */
-      case 'concern': return `${cs}, traffic${req.param ? `, ${req.param}` : ''}.`;
   pilotDelayS(a: AircraftState, kind: CommandAST['kind']): number {
     const f = a.emergency ? EMERGENCY_CATALOGUE[a.emergency.type].perf.pilotDelayFactor : 1;
     if (this.settings.pilotDelayOverride != null) return this.settings.pilotDelayOverride * f;
@@ -1690,6 +1721,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     if (status === 'ok' && this.settings.pilotErrorRate > 0 && chance(this.settings.pilotErrorRate * (crew ? errorFactor(crew, stressOf(a)) : 1))) {
       const m = this.wrongReadback(ast, text, a); if (m) { mismatch = m.mismatch; text = m.text; }
     }
+    if (crew?.hesitant) text = personaLine(text, crew, stressOf(a), rng());
     a.readback = { ...a.readback, status: 'pending', dueAt: at, text: '', mismatch: null, refused: result.refused ?? [] };
     this.readbacks.push({ at, aircraftId: a.id, status: mismatch ? 'mismatch' : status, text, ast, refused: result.refused ?? [], mismatch });
   }
@@ -1721,7 +1753,6 @@ export class SimEngine implements EngineCommandApi, StageCtx {
     return { text: spoken, mismatch };
   }
   private processReadbacks() {
-    if (crew?.hesitant) text = personaLine(text, crew, stressOf(a), rng());
     if (!this.readbacks.length) return;
     const due = this.readbacks.filter(r => r.at <= this.time);
     if (!due.length) return;
@@ -3099,6 +3130,9 @@ export class SimEngine implements EngineCommandApi, StageCtx {
       for (const b of blockers) {
         if (b === a) continue;
         const d = dist(a.pos, b.pos); if (d < 1) continue;
+        // b was told to give way to a and is waiting for it: a goes on unless they would actually touch (both stopping for
+        // each other is the deadlock the instruction exists to prevent)
+        if (b.giveWayTo === a.id && d > a.perf.safetyRadiusMeters + b.perf.safetyRadiusMeters) continue;
         const hs = b.wakeCategory === 'HEAVY' || b.wakeCategory === 'SUPER' ? 20 : 0;
         // still inside a runway's protected zone (just crossed it): close up to the minimum so the tail clears the strip
         const inZone = this.runwaysAt(a.pos, HOLD_LINE_M).length > 0;
@@ -3115,7 +3149,10 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         else {
           const d = dist(a.pos, b.pos);
           const bRel = Math.abs(angleDelta(b.heading, headingTo(b.pos, a.pos)));
-          if (d < 160 && bRel < 100) { a.trafficHold = true; this.sc(a).holdReason ??= `giving way to ${b.callsign}`; } else if (d > 200 || bRel > 120) a.giveWayTo = null;
+          // holds while the other is close and coming this way; the instruction stands until it has gone by (heading away),
+          // so it can be given early: dropped at once when the other was still 200 m out, it left both to meet nose to nose
+          if (d < 160 && bRel < 100) { a.trafficHold = true; this.sc(a).holdReason ??= `giving way to ${b.callsign}`; }
+          else if ((bRel > 120 && d > 40) || d > 1500 || b.phase === 'parked' || b.phase === 'arrived') a.giveWayTo = null;
         }
       }
       if (a.followId != null) {
@@ -3727,6 +3764,7 @@ export class SimEngine implements EngineCommandApi, StageCtx {
 
   // ── per-second tasks ───────────────────────────────────────────────────────
   private perSecond() {
+    try { mindOf(this).tick(this); } catch { /* the pilots' look-out never stops the simulation */ }
     for (const a of this.aircraft) {
       const s = this.sc(a);
       // scheduled pilot requests
@@ -3758,7 +3796,6 @@ export class SimEngine implements EngineCommandApi, StageCtx {
         a.delay.airborneS += 1;
         if (a.fuelMin != null) {
           a.fuelMin -= 1 / 60;
-    try { mindOf(this).tick(this); } catch { /* the pilots' look-out never stops the simulation */ }
           if (a.fuelMin <= 0) {
             this.emit('fuel_exhaustion', a, `${a.callsign} FUEL EXHAUSTION`);
             this.addScore('FUEL_EXHAUSTION', a.callsign);

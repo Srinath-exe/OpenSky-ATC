@@ -105,6 +105,9 @@ def land_from_imagery(icao, bbox, grid, height):
     dark = bright < 0.34
     bluish = (b >= r - 0.02)
     water = (height <= 1.2) & dark & bluish
+    # ... and anything the DEM puts below sea level: shallow, silty bay water photographs brown, and whole rectangles
+    # of it (one imagery tile each) were classed as land - SFO had an island off the 28 thresholds that does not exist
+    water |= height < -0.2
     # tidy the mask: close small gaps, drop specks
     wm = Image.fromarray((water * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.MinFilter(5))
     water = np.asarray(wm) > 127

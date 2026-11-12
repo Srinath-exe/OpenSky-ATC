@@ -1,0 +1,556 @@
+{
+ "voices": {
+  "narrator": "nPczCjzI2devNBz1zQrb",
+  "controller": "onwK4e9ZLuTAKqWW03F9",
+  "pilot": "CwhRBWXzGAHq8TQ4Fs17"
+ },
+ "lines": [
+  {
+   "id": "pro-1",
+   "voice": "narrator",
+   "text": "Every ninety seconds, an aircraft lands in San Francisco."
+  },
+  {
+   "id": "pro-2",
+   "voice": "narrator",
+   "text": "Hundreds of people on board. Thousands of feet up. And every one of them is waiting for a voice."
+  },
+  {
+   "id": "pro-r1",
+   "voice": "pilot",
+   "radio": true,
+   "text": "San Francisco Tower, Starlux twelve, ten mile final, runway two eight right."
+  },
+  {
+   "id": "pro-r2",
+   "voice": "controller",
+   "radio": true,
+   "text": "Starlux twelve, San Francisco Tower, wind two eight zero at twelve, runway two eight right, cleared to land."
+  },
+  {
+   "id": "pro-3",
+   "voice": "narrator",
+   "text": "Tonight, that voice is yours."
+  },
+  {
+   "id": "pro-4",
+   "voice": "narrator",
+   "text": "Three seats. Three ways to run the sky. Pick one."
+  },
+  {
+   "id": "b-g-push",
+   "voice": "narrator",
+   "text": "Mission one. A Lufthansa seven-four-seven sits nose-in at gate A eight, bound for Frankfurt. But a jumbo can't drive backwards. Give the word, and the tug swings it out."
+  },
+  {
+   "id": "b-g-taxi",
+   "voice": "narrator",
+   "text": "From above, the airport is a maze of lettered roads. You call the route, one taxiway at a time, and watch each one light up."
+  },
+  {
+   "id": "b-g-stop",
+   "voice": "narrator",
+   "text": "Down here, things move fast. Sometimes the safest thing you can say is: stop. Hold it. Then let it go."
+  },
+  {
+   "id": "b-g-cross",
+   "voice": "narrator",
+   "text": "This is the big one. Between this jet and its runway lies another runway. And someone is taking off on it. Nobody crosses without your word."
+  },
+  {
+   "id": "b-g-giveway",
+   "voice": "narrator",
+   "text": "Two jets. One taxiway. Rolling straight at each other. Decide who goes first, before they decide for you."
+  },
+  {
+   "id": "b-g-handoff",
+   "voice": "narrator",
+   "text": "The runway belongs to the tower. Your last job on the ground: hand it over, clean."
+  },
+  {
+   "id": "b-t-depart",
+   "voice": "narrator",
+   "text": "Welcome to the tower. One sentence from you sends seventy tons of metal down the runway at a hundred and sixty knots. Make it count."
+  },
+  {
+   "id": "b-t-land",
+   "voice": "narrator",
+   "text": "An Airbus is seven miles out, riding the glide path down. It needs three words from you before its wheels touch the ground."
+  },
+  {
+   "id": "b-t-gap",
+   "voice": "narrator",
+   "text": "At San Francisco, the runways cross. A departure and an arrival, aiming for the same patch of concrete. Timing is everything."
+  },
+  {
+   "id": "b-t-goaround",
+   "voice": "narrator",
+   "text": "There's a Cessna sitting on the runway. And a jet, two miles out, coming in fast. You have seconds."
+  },
+  {
+   "id": "b-a-vectors",
+   "voice": "narrator",
+   "text": "This is the approach radar. Every blip is a plane full of people. You move them with three numbers: heading, altitude, speed."
+  },
+  {
+   "id": "b-a-ils",
+   "voice": "narrator",
+   "text": "Somewhere out there is an invisible beam that leads to the runway. Point the jet at it, gently. Get it right, and it flies itself home."
+  },
+  {
+   "id": "b-a-sep",
+   "voice": "narrator",
+   "text": "Two jets. Same altitude. Closing fast. Three miles apart, or a thousand feet. Keep them there."
+  },
+  {
+   "id": "g-g-push-push",
+   "voice": "narrator",
+   "text": "Approve the pushback."
+  },
+  {
+   "id": "g-g-push-watch",
+   "voice": "narrator",
+   "text": "Now watch the tug swing it out."
+  },
+  {
+   "id": "g-g-taxi-taxi",
+   "voice": "narrator",
+   "text": "Clear it to the runway. Name the taxiways."
+  },
+  {
+   "id": "g-g-stop-hold",
+   "voice": "narrator",
+   "text": "Stop it, right where it is."
+  },
+  {
+   "id": "g-g-stop-go",
+   "voice": "narrator",
+   "text": "Good. Now let it roll again."
+  },
+  {
+   "id": "g-g-cross-wait",
+   "voice": "narrator",
+   "text": "Wait. Let the departure go first."
+  },
+  {
+   "id": "g-g-cross-cross",
+   "voice": "narrator",
+   "text": "Runway's clear. Send it across."
+  },
+  {
+   "id": "g-g-giveway-give",
+   "voice": "narrator",
+   "text": "Make one of them wait."
+  },
+  {
+   "id": "g-g-giveway-clear",
+   "voice": "narrator",
+   "text": "Keep them moving. No conflict."
+  },
+  {
+   "id": "g-g-handoff-contact",
+   "voice": "narrator",
+   "text": "Hand it to the tower."
+  },
+  {
+   "id": "g-t-depart-lineup",
+   "voice": "narrator",
+   "text": "Line it up on the runway."
+  },
+  {
+   "id": "g-t-depart-takeoff",
+   "voice": "narrator",
+   "text": "Clear it for takeoff."
+  },
+  {
+   "id": "g-t-depart-away",
+   "voice": "narrator",
+   "text": "And there it goes."
+  },
+  {
+   "id": "g-t-land-land",
+   "voice": "narrator",
+   "text": "Clear it to land."
+  },
+  {
+   "id": "g-t-land-down",
+   "voice": "narrator",
+   "text": "Watch it touch down."
+  },
+  {
+   "id": "g-t-gap-land",
+   "voice": "narrator",
+   "text": "Arrival first. Clear it to land."
+  },
+  {
+   "id": "g-t-gap-wait",
+   "voice": "narrator",
+   "text": "Hold the departure. Let the arrival pass."
+  },
+  {
+   "id": "g-t-gap-go",
+   "voice": "narrator",
+   "text": "Now. Clear the departure."
+  },
+  {
+   "id": "g-t-goaround-ga",
+   "voice": "narrator",
+   "text": "Send it around. Now."
+  },
+  {
+   "id": "g-a-vectors-hdg",
+   "voice": "narrator",
+   "text": "Turn it."
+  },
+  {
+   "id": "g-a-vectors-alt",
+   "voice": "narrator",
+   "text": "Bring it down."
+  },
+  {
+   "id": "g-a-vectors-spd",
+   "voice": "narrator",
+   "text": "Slow it down."
+  },
+  {
+   "id": "g-a-ils-int",
+   "voice": "narrator",
+   "text": "Point it at the beam."
+  },
+  {
+   "id": "g-a-ils-ils",
+   "voice": "narrator",
+   "text": "Clear the approach."
+  },
+  {
+   "id": "g-a-ils-cap",
+   "voice": "narrator",
+   "text": "Watch it lock on."
+  },
+  {
+   "id": "g-a-ils-twr",
+   "voice": "narrator",
+   "text": "Hand it to the tower."
+  },
+  {
+   "id": "g-a-sep-split",
+   "voice": "narrator",
+   "text": "Split them apart."
+  },
+  {
+   "id": "g-a-sep-safe",
+   "voice": "narrator",
+   "text": "Hold that gap."
+  },
+  {
+   "id": "ok-1",
+   "voice": "narrator",
+   "text": "Nicely done."
+  },
+  {
+   "id": "ok-2",
+   "voice": "narrator",
+   "text": "Good call."
+  },
+  {
+   "id": "ok-3",
+   "voice": "narrator",
+   "text": "That's it."
+  },
+  {
+   "id": "ok-4",
+   "voice": "narrator",
+   "text": "Perfect."
+  },
+  {
+   "id": "done-1",
+   "voice": "narrator",
+   "text": "Mission complete. You're a natural."
+  },
+  {
+   "id": "done-2",
+   "voice": "narrator",
+   "text": "Mission complete. Clean work."
+  },
+  {
+   "id": "warn-1",
+   "voice": "narrator",
+   "text": "Careful. That was too close."
+  },
+  {
+   "id": "b-g-radio",
+   "voice": "narrator",
+   "text": "Before your first call, learn to talk like a controller. Three rules. That's all it takes."
+  },
+  {
+   "id": "r101-cs",
+   "voice": "narrator",
+   "text": "Callsigns. Say the airline's radio name, then the flight number. D L H four five five is Lufthansa four fifty-five."
+  },
+  {
+   "id": "r101-num",
+   "voice": "narrator",
+   "text": "Numbers. Runways and headings, digit by digit. Altitudes in thousands. Zero one right. Heading two seven zero. Five thousand."
+  },
+  {
+   "id": "r101-let",
+   "voice": "narrator",
+   "text": "Letters use the phonetic alphabet. M five is Mike five. A one is Alpha one."
+  },
+  {
+   "id": "r101-done",
+   "voice": "narrator",
+   "text": "That's the language. Now let's move a jumbo jet."
+  },
+  {
+   "id": "ex-dlh",
+   "voice": "controller",
+   "text": "Lufthansa four fifty-five."
+  },
+  {
+   "id": "ex-ual",
+   "voice": "controller",
+   "text": "United two fourteen."
+  },
+  {
+   "id": "ex-swa",
+   "voice": "controller",
+   "text": "Southwest nine zero two."
+  },
+  {
+   "id": "ex-asa",
+   "voice": "controller",
+   "text": "Alaska three thirty-one."
+  },
+  {
+   "id": "ex-rwy",
+   "voice": "controller",
+   "text": "Runway zero one right."
+  },
+  {
+   "id": "ex-hdg",
+   "voice": "controller",
+   "text": "Turn left heading two seven zero."
+  },
+  {
+   "id": "ex-alt",
+   "voice": "controller",
+   "text": "Descend and maintain five thousand."
+  },
+  {
+   "id": "ex-alt2",
+   "voice": "controller",
+   "text": "Climb and maintain one one thousand."
+  },
+  {
+   "id": "ex-spd",
+   "voice": "controller",
+   "text": "Reduce speed to two one zero knots."
+  },
+  {
+   "id": "ex-frq",
+   "voice": "controller",
+   "text": "Contact tower one one eight point five."
+  },
+  {
+   "id": "ex-twy",
+   "voice": "controller",
+   "text": "Taxi via Mike five, Mike one, Alpha two."
+  },
+  {
+   "id": "pa-A",
+   "voice": "controller",
+   "text": "Alpha."
+  },
+  {
+   "id": "pa-B",
+   "voice": "controller",
+   "text": "Bravo."
+  },
+  {
+   "id": "pa-C",
+   "voice": "controller",
+   "text": "Charlie."
+  },
+  {
+   "id": "pa-D",
+   "voice": "controller",
+   "text": "Delta."
+  },
+  {
+   "id": "pa-E",
+   "voice": "controller",
+   "text": "Echo."
+  },
+  {
+   "id": "pa-F",
+   "voice": "controller",
+   "text": "Foxtrot."
+  },
+  {
+   "id": "pa-G",
+   "voice": "controller",
+   "text": "Golf."
+  },
+  {
+   "id": "pa-H",
+   "voice": "controller",
+   "text": "Hotel."
+  },
+  {
+   "id": "pa-I",
+   "voice": "controller",
+   "text": "India."
+  },
+  {
+   "id": "pa-J",
+   "voice": "controller",
+   "text": "Juliett."
+  },
+  {
+   "id": "pa-K",
+   "voice": "controller",
+   "text": "Kilo."
+  },
+  {
+   "id": "pa-L",
+   "voice": "controller",
+   "text": "Lima."
+  },
+  {
+   "id": "pa-M",
+   "voice": "controller",
+   "text": "Mike."
+  },
+  {
+   "id": "pa-N",
+   "voice": "controller",
+   "text": "November."
+  },
+  {
+   "id": "pa-O",
+   "voice": "controller",
+   "text": "Oscar."
+  },
+  {
+   "id": "pa-P",
+   "voice": "controller",
+   "text": "Papa."
+  },
+  {
+   "id": "pa-Q",
+   "voice": "controller",
+   "text": "Quebec."
+  },
+  {
+   "id": "pa-R",
+   "voice": "controller",
+   "text": "Romeo."
+  },
+  {
+   "id": "pa-S",
+   "voice": "controller",
+   "text": "Sierra."
+  },
+  {
+   "id": "pa-T",
+   "voice": "controller",
+   "text": "Tango."
+  },
+  {
+   "id": "pa-U",
+   "voice": "controller",
+   "text": "Uniform."
+  },
+  {
+   "id": "pa-V",
+   "voice": "controller",
+   "text": "Victor."
+  },
+  {
+   "id": "pa-W",
+   "voice": "controller",
+   "text": "Whiskey."
+  },
+  {
+   "id": "pa-X",
+   "voice": "controller",
+   "text": "X-ray."
+  },
+  {
+   "id": "pa-Y",
+   "voice": "controller",
+   "text": "Yankee."
+  },
+  {
+   "id": "pa-Z",
+   "voice": "controller",
+   "text": "Zulu."
+  }
+ ],
+ "sfx": [
+  {
+   "id": "hum",
+   "seconds": 20,
+   "loop": true,
+   "prompt": "Airport at night ambience, distant jet engines idling, soft wind across concrete, low hum, no voices"
+  },
+  {
+   "id": "whoosh",
+   "seconds": 1.4,
+   "prompt": "Fast cinematic whoosh swoosh transition, clean"
+  },
+  {
+   "id": "hit",
+   "seconds": 2.5,
+   "prompt": "Deep cinematic trailer impact boom with heavy sub bass and short reverb tail"
+  },
+  {
+   "id": "riser",
+   "seconds": 4,
+   "prompt": "Cinematic tension riser building up, rising synth swell"
+  },
+  {
+   "id": "ping",
+   "seconds": 1,
+   "prompt": "Soft radar ping, electronic sonar blip with short echo"
+  },
+  {
+   "id": "squelch",
+   "seconds": 0.6,
+   "prompt": "Aviation radio squelch, short static burst click"
+  },
+  {
+   "id": "chime",
+   "seconds": 1.2,
+   "prompt": "Bright positive success chime, two rising notes, modern UI"
+  },
+  {
+   "id": "stamp",
+   "seconds": 1,
+   "prompt": "Heavy rubber stamp thump on paper desk, punchy"
+  },
+  {
+   "id": "tick",
+   "seconds": 0.5,
+   "prompt": "Soft subtle UI tick click"
+  },
+  {
+   "id": "jet",
+   "seconds": 6,
+   "prompt": "Commercial jet airliner takeoff roar passing by, powerful turbofan"
+  },
+  {
+   "id": "tug",
+   "seconds": 5,
+   "prompt": "Airport pushback tug diesel engine rumbling slowly, beeping reverse alarm"
+  }
+ ],
+ "music": [
+  {
+   "id": "bed",
+   "ms": 75000,
+   "prompt": "Cinematic ambient electronic score for a night air traffic control intro: deep pulsing synth bass, slow build, airy pads, tension and wonder, no vocals, builds to a confident swell around 40 seconds then settles"
+  }
+ ]
+}

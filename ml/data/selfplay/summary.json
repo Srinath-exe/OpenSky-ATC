@@ -1,0 +1,396 @@
+{
+ "airport": "EGLL",
+ "seeds": 6,
+ "minutesPerEpisode": 45,
+ "wallSeconds": 835,
+ "mistakes": [
+  {
+   "kind": "level reversed",
+   "injected": 65,
+   "caught": 65,
+   "rate": 1,
+   "examples": [
+    {
+     "kind": "level reversed",
+     "t": 392,
+     "callsign": "AAL791",
+     "crew": "visitor",
+     "said": "AAL791 Altitude 6000",
+     "reply": "American seven niner one, previously cleared to climb FL110, confirm now 6000?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "climb, 8400 ft, runway 27R | told: level FL110"
+    },
+    {
+     "kind": "level reversed",
+     "t": 672,
+     "callsign": "AAL791",
+     "crew": "visitor",
+     "said": "AAL791 Altitude 6000",
+     "reply": "American seven niner one, previously cleared to climb FL120, confirm now 6000?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "climb, 9000 ft, runway 27R | told: level FL120"
+    },
+    {
+     "kind": "level reversed",
+     "t": 1000,
+     "callsign": "EIN591",
+     "crew": "rookie",
+     "said": "EIN591 Altitude 6000",
+     "reply": "Shamrock fife niner one, previously cleared to climb FL110, confirm now 6000?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "climb, 8400 ft, runway 27R | told: level FL110"
+    }
+   ],
+   "misses": []
+  },
+  {
+   "kind": "heading reversed",
+   "injected": 50,
+   "caught": 50,
+   "rate": 1,
+   "examples": [
+    {
+     "kind": "heading reversed",
+     "t": 347,
+     "callsign": "BAW401",
+     "crew": "line",
+     "said": "BAW401 Fly heading 016",
+     "reply": "Speedbird four zero one, previously heading 196, confirm now heading 016?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "cruise, 7000 ft, runway 27R | told: heading 196"
+    },
+    {
+     "kind": "heading reversed",
+     "t": 455,
+     "callsign": "BAW354",
+     "crew": "rookie",
+     "said": "BAW354 Fly heading 204",
+     "reply": "Speedbird tree fife four, previously heading 024, confirm now heading 204?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "descent, 7700 ft, runway 27R | told: heading 024"
+    },
+    {
+     "kind": "heading reversed",
+     "t": 569,
+     "callsign": "BAW401",
+     "crew": "line",
+     "said": "BAW401 Fly heading 294",
+     "reply": "Speedbird four zero one, previously heading 114, confirm now heading 294?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "cruise, 7000 ft, runway 27R | told: heading 114"
+    }
+   ],
+   "misses": []
+  },
+  {
+   "kind": "line up, traffic on short final",
+   "injected": 0,
+   "caught": 0,
+   "rate": null,
+   "examples": [],
+   "misses": []
+  },
+  {
+   "kind": "cross, traffic on short final",
+   "injected": 0,
+   "caught": 0,
+   "rate": null,
+   "examples": [],
+   "misses": []
+  },
+  {
+   "kind": "cross, departure rolling",
+   "injected": 0,
+   "caught": 0,
+   "rate": null,
+   "examples": [],
+   "misses": []
+  },
+  {
+   "kind": "cleared to land, runway occupied",
+   "injected": 0,
+   "caught": 0,
+   "rate": null,
+   "examples": [],
+   "misses": []
+  },
+  {
+   "kind": "cleared to land, wrong runway",
+   "injected": 14,
+   "caught": 14,
+   "rate": 1,
+   "examples": [
+    {
+     "kind": "cleared to land, wrong runway",
+     "t": 1008,
+     "callsign": "BAW127",
+     "crew": "rookie",
+     "said": "BAW127 Cleared to land 27L",
+     "reply": "Speedbird one two seven, we're established on 27R, confirm runway 27L?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "approach, 3000 ft, runway 27R, 10.8 NM final"
+    },
+    {
+     "kind": "cleared to land, wrong runway",
+     "t": 1386,
+     "callsign": "AAL791",
+     "crew": "visitor",
+     "said": "AAL791 Cleared to land 27L",
+     "reply": "American seven niner one, we're established on 27R, confirm runway 27L?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "approach, 3200 ft, runway 27R, 10.0 NM final | told: level FL120"
+    },
+    {
+     "kind": "cleared to land, wrong runway",
+     "t": 1971,
+     "callsign": "BAW354",
+     "crew": "rookie",
+     "said": "BAW354 Cleared to land 27L",
+     "reply": "Speedbird tree fife four, we're established on 27R, confirm runway 27L?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "landing, 1800 ft, runway 27R, 5.5 NM final | told: heading 304 · level FL080"
+    }
+   ],
+   "misses": []
+  },
+  {
+   "kind": "takeoff, traffic on short final",
+   "injected": 0,
+   "caught": 0,
+   "rate": null,
+   "examples": [],
+   "misses": []
+  },
+  {
+   "kind": "instruction for the wrong aircraft",
+   "injected": 102,
+   "caught": 102,
+   "rate": 1,
+   "examples": [
+    {
+     "kind": "instruction for the wrong aircraft",
+     "t": 298,
+     "callsign": "CPA510",
+     "crew": "rookie",
+     "said": "CPA510 Fly heading 180",
+     "reply": "On the ground",
+     "code": "invalid_stage",
+     "verdict": "caught",
+     "knew": "pushback, runway 27L"
+    },
+    {
+     "kind": "instruction for the wrong aircraft",
+     "t": 597,
+     "callsign": "BAW403",
+     "crew": "visitor",
+     "said": "BAW403 Cross 09L",
+     "reply": "Airborne",
+     "code": "invalid_stage",
+     "verdict": "caught",
+     "knew": "cruise, 3000 ft, runway 27R, 10.7 NM final"
+    },
+    {
+     "kind": "instruction for the wrong aircraft",
+     "t": 749,
+     "callsign": "UAE769",
+     "crew": "line",
+     "said": "UAE769 Altitude 5000",
+     "reply": "On the ground",
+     "code": "invalid_stage",
+     "verdict": "caught",
+     "knew": "takeoff, runway 27L"
+    }
+   ],
+   "misses": []
+  },
+  {
+   "kind": "descent below a safe level",
+   "injected": 58,
+   "caught": 58,
+   "rate": 1,
+   "examples": [
+    {
+     "kind": "descent below a safe level",
+     "t": 266,
+     "callsign": "BAW403",
+     "crew": "visitor",
+     "said": "BAW403 Altitude 1000",
+     "reply": "Speedbird four zero tree, 13 miles out, minimum safe altitude 1500, confirm 1000 feet?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "descent, 6900 ft, runway 27R, 12.0 NM final"
+    },
+    {
+     "kind": "descent below a safe level",
+     "t": 727,
+     "callsign": "BAW32",
+     "crew": "line",
+     "said": "BAW32 Altitude 1000",
+     "reply": "Speedbird tree two, 13 miles out, minimum safe altitude 1500, confirm 1000 feet?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "approach, 10000 ft, runway 27R, 8.5 NM final"
+    },
+    {
+     "kind": "descent below a safe level",
+     "t": 818,
+     "callsign": "EIN591",
+     "crew": "rookie",
+     "said": "EIN591 Altitude 1000",
+     "reply": "Shamrock fife niner one, 16 miles out, minimum safe altitude 1500, confirm 1000 feet?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "approach, 8000 ft, runway 27R"
+    }
+   ],
+   "misses": []
+  },
+  {
+   "kind": "speed below what the aircraft can fly",
+   "injected": 48,
+   "caught": 47,
+   "rate": 0.9791666666666666,
+   "examples": [
+    {
+     "kind": "speed below what the aircraft can fly",
+     "t": 241,
+     "callsign": "BAW127",
+     "crew": "rookie",
+     "said": "BAW127 Speed 100",
+     "reply": "Unable one zero zero knots, Speed 100 outside envelope 125-250 kt, Speedbird one two seven.",
+     "code": "unable_envelope",
+     "verdict": "caught",
+     "knew": "approach, 10000 ft, runway 27R, 14.1 NM final"
+    },
+    {
+     "kind": "speed below what the aircraft can fly",
+     "t": 928,
+     "callsign": "VIR527",
+     "crew": "line",
+     "said": "VIR527 Speed 100",
+     "reply": "Unable one zero zero knots, Speed 100 outside envelope 138-250 kt, Virgin fife two seven.",
+     "code": "unable_envelope",
+     "verdict": "caught",
+     "knew": "departed, 11800 ft, runway 27L, 14.8 NM final"
+    },
+    {
+     "kind": "speed below what the aircraft can fly",
+     "t": 1162,
+     "callsign": "BAW326",
+     "crew": "captain",
+     "said": "BAW326 Speed 100",
+     "reply": "Unable one zero zero knots, Speed 100 outside envelope 125-250 kt, Speedbird tree two six.",
+     "code": "unable_envelope",
+     "verdict": "caught",
+     "knew": "cruise, 10000 ft, runway 27R"
+    }
+   ],
+   "misses": [
+    {
+     "kind": "speed below what the aircraft can fly",
+     "t": 287,
+     "callsign": "IGO445",
+     "crew": "line",
+     "said": "IGO445 Speed 100",
+     "reply": "Speed one zero zero knots, IFly four four fife.",
+     "code": "ok_queued",
+     "verdict": "missed",
+     "knew": "descent, 8800 ft, runway 27R"
+    }
+   ]
+  },
+  {
+   "kind": "sent to the ground frequency in the air",
+   "injected": 72,
+   "caught": 72,
+   "rate": 1,
+   "examples": [
+    {
+     "kind": "sent to the ground frequency in the air",
+     "t": 403,
+     "callsign": "BAW127",
+     "crew": "rookie",
+     "said": "BAW127 Contact ground",
+     "reply": "Speedbird one two seven, we're airborne, confirm contact Heathrow Ground?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "cruise, 7000 ft, runway 27R, 6.9 NM final"
+    },
+    {
+     "kind": "sent to the ground frequency in the air",
+     "t": 507,
+     "callsign": "BAW32",
+     "crew": "line",
+     "said": "BAW32 Contact ground",
+     "reply": "Speedbird tree two, we're airborne, confirm contact Heathrow Ground?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "approach, 10000 ft, runway 27R"
+    },
+    {
+     "kind": "sent to the ground frequency in the air",
+     "t": 704,
+     "callsign": "UPS995",
+     "crew": "visitor",
+     "said": "UPS995 Contact ground",
+     "reply": "UPS niner niner fife, we're airborne, confirm contact Heathrow Ground?",
+     "code": "queried",
+     "verdict": "caught",
+     "knew": "descent, 10500 ft, runway 27R"
+    }
+   ],
+   "misses": []
+  }
+ ],
+ "total": {
+  "injected": 409,
+  "caught": 408
+ },
+ "goodController": {
+  "hours": 4.5,
+  "movements": 104,
+  "goArounds": 0,
+  "lines": 4785,
+  "mind": {
+   "runwayCalls": 0,
+   "trafficCalls": 0,
+   "windChecks": 0,
+   "questions": 0
+  },
+  "calls": {
+   "concern": 0,
+   "confirm_cleared": 1,
+   "cross": 2,
+   "direct": 77,
+   "going_around": 0,
+   "higher": 6,
+   "lower": 82,
+   "pushback": 82,
+   "ready": 66,
+   "startup": 11,
+   "taxi": 89,
+   "with_you": 219
+  }
+ },
+ "withAdversary": {
+  "hours": 4.5,
+  "movements": 83,
+  "goArounds": 1,
+  "lines": 5344,
+  "mind": {
+   "runwayCalls": 0,
+   "trafficCalls": 2,
+   "windChecks": 0,
+   "questions": 130
+  }
+ }
+}

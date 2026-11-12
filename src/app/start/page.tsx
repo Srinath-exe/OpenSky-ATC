@@ -8,16 +8,17 @@ import {
 import type { WeightClass } from '@/lib/sim/aircraftDB';
 import type { RunwayEnd, RunwayPair } from '@/lib/runwayManifest';
 import { preferredEnds } from '@/lib/sim/weather';
-import { PageFrame, StateMirror } from './_lib/PageFrame';
+import { PageFrame, StateMirror } from '../_lib/PageFrame';
 import {
-  AIRPORTS, AIRPORT_BY_ICAO, runwaysOf, longestRunwayFt, satelliteUrl, sanitiseRef, windComponents, MAX_TAILWIND_KT, formatFeet, feetToMetres,
+  AIRPORTS, AIRPORT_BY_ICAO, LISTED_AIRPORTS, runwaysOf, longestRunwayFt, satelliteUrl, sanitiseRef, windComponents, MAX_TAILWIND_KT, formatFeet, feetToMetres,
   type AirportMeta,
-} from './_lib/airports';
+} from '../_lib/airports';
 import {
   useSettings, updateSettings, useHighScore, useSessionRunning, writeStartConfig,
   type Difficulty, type Position, type StartConfig,
-} from './_lib/persist';
+} from '../_lib/persist';
 import { sectorAi, sectorPatch } from '@/components/atc/simStore';
+import { RunwayDiagram } from './RunwayDiagram';
 import s from './home.module.css';
 
 const WEIGHTS: WeightClass[] = ['L', 'M', 'H', 'S'];
@@ -25,9 +26,9 @@ const WEIGHT_LABEL: Record<WeightClass, string> = { L: 'Light', M: 'Medium', H: 
 /** What the player works; the other sector goes to the AI (Tower = ground + runway, the 'airfield' sector). */
 type Role = 'both' | 'airfield' | 'approach';
 const ROLES: { id: Role; label: string; hint: string }[] = [
-  { id: 'both', label: 'Both', hint: 'you run tower and approach' },
-  { id: 'airfield', label: 'Tower', hint: 'you run ground and runway, AI runs approach' },
-  { id: 'approach', label: 'Approach', hint: 'you run approach, AI runs ground and runway' },
+  { id: 'both', label: 'Tower + Approach', hint: 'Every aircraft is yours, from the boundary to the gate' },
+  { id: 'airfield', label: 'Tower', hint: 'Ground and runway: push, taxi, take-off, landing. AI runs approach' },
+  { id: 'approach', label: 'Approach', hint: 'Radar: vector arrivals onto the ILS. AI runs ground and runway' },
 ];
 const DIFFICULTIES: { id: Difficulty; label: string }[] = [{ id: 'low', label: 'Low' }, { id: 'normal', label: 'Normal' }, { id: 'high', label: 'High' }];
 
@@ -56,7 +57,9 @@ function initialCfg(icao: string): RunwayCfg {
 // ---------------------------------------------------------------------------
 export default function HomePage() {
   const router = useRouter();
-  const [icao, setIcao] = React.useState<string | null>(null);
+  // one airport at launch: its set-up page is the home page (the picker returns when more fields are listed)
+  const single = LISTED_AIRPORTS.length === 1 ? LISTED_AIRPORTS[0].icao : null;
+  const [icao, setIcao] = React.useState<string | null>(single);
   const running = useSessionRunning();
   const highScore = useHighScore();
 
@@ -75,7 +78,7 @@ export default function HomePage() {
   return (
     <PageFrame testId="page-home" right={right} brandTestId="nav-brand">
       {icao ? (
-        <Detail key={icao} airport={AIRPORT_BY_ICAO[icao]} onBack={() => setIcao(null)} />
+        <Detail key={icao} airport={AIRPORT_BY_ICAO[icao]} onBack={single ? null : () => setIcao(null)} />
       ) : (
         <Picker onPick={setIcao} />
       )}
@@ -94,7 +97,7 @@ function Picker({ onPick }: { onPick: (icao: string) => void }) {
         <p className={cx('body-m', s.heroSub)}>Ground, tower and approach control at twelve real airports. Pick a field, set the runways in use, and take the frequency.</p>
       </section>
       <ul className={cx(s.grid, 'ds-enter')} aria-label="Airports">
-        {AIRPORTS.map((a) => (
+        {LISTED_AIRPORTS.map((a) => (
           <li key={a.icao} className={s.gridItem}>
             <AirportCard airport={a} onClick={() => onPick(a.icao)} />
           </li>
@@ -138,7 +141,7 @@ function AirportCard({ airport, onClick }: { airport: AirportMeta; onClick: () =
 // ---------------------------------------------------------------------------
 //  Detail: runway configuration + shift setup
 // ---------------------------------------------------------------------------
-function Detail({ airport, onBack }: { airport: AirportMeta; onBack: () => void }) {
+function Detail({ airport, onBack }: { airport: AirportMeta; onBack: (() => void) | null }) {
   const router = useRouter();
   const settings = useSettings();
   const runways = runwaysOf(airport.icao);
@@ -152,6 +155,7 @@ function Detail({ airport, onBack }: { airport: AirportMeta; onBack: () => void 
   const [difficulty, setDifficulty] = React.useState<Difficulty>(settings.difficulty);
   const [seed, setSeed] = React.useState('');
   const [starting, setStarting] = React.useState(false);
+  const [hover, setHover] = React.useState<string | null>(null);
 
   const toggleEnd = (end: string) => setCfg((c) => ({ ...c, [end]: { ...c[end], on: !c[end].on } }));
   const toggleWeight = (end: string, w: WeightClass) => setCfg((c) => {
@@ -202,7 +206,7 @@ function Detail({ airport, onBack }: { airport: AirportMeta; onBack: () => void 
         <span className={s.bannerSat} style={{ backgroundImage: `url(${satelliteUrl(airport.icao, true)})` }} aria-hidden="true" />
         <span className={s.bannerVeil} aria-hidden="true" />
         <div className={s.bannerTop}>
-          <Button variant="secondary" iconLeft={<IconChevronLeft size={16} />} onClick={onBack} testId="home-change-airport">Change airport</Button>
+          {onBack ? <Button variant="secondary" iconLeft={<IconChevronLeft size={16} />} onClick={onBack} testId="home-change-airport">Change airport</Button> : <span className={cx('label-xs', s.bannerKicker)}>Set up your shift</span>}
         </div>
         <div className={s.bannerBottom}>
           <div className={s.bannerTitleBlock}>
@@ -212,6 +216,7 @@ function Detail({ airport, onBack }: { airport: AirportMeta; onBack: () => void 
             </p>
           </div>
           <div className={s.bannerPills}>
+            <Pill size="m" tone="glass" tabular count={`${String(wind.dir).padStart(3, '0')}/${wind.kts}`}>wind</Pill>
             <Pill size="m" tone="glass" tabular count={runways.length}>{runways.length === 1 ? 'runway' : 'runways'}</Pill>
             <Pill size="m" tone="glass" tabular count={activeEnds.length} testId="home-active-count">active {activeEnds.length === 1 ? 'end' : 'ends'}</Pill>
           </div>
@@ -227,26 +232,39 @@ function Detail({ airport, onBack }: { airport: AirportMeta; onBack: () => void 
           className={s.runwayPanel}
           testId="home-runways"
         >
-          <p className={cx('body-s', s.hint)}>Switch each runway end on or off and choose which wake categories may use it. Head and cross components preview the wind you set.</p>
-          <ul className={s.rwyList} aria-label="Runways">
-            {runways.map((r) => (
-              <RunwayRow key={r.ref} pair={r} cfg={cfg} wind={wind} onToggleEnd={toggleEnd} onToggleWeight={toggleWeight} />
-            ))}
-          </ul>
+          <p className={cx('body-s', s.hint)}>Click a runway end to put it in use; the chevrons show which way traffic flows. Pick which wake categories may use each end. Head- and crosswind follow the wind you set.</p>
+          <div className={s.rwyLayout}>
+            <div className={s.diagramWrap}>
+              <RunwayDiagram runways={runways} on={(e) => !!cfg[e]?.on} wind={wind} hover={hover} onHover={setHover} onToggle={toggleEnd} />
+            </div>
+            <ul className={s.rwyList} aria-label="Runways">
+              {runways.map((r) => (
+                <RunwayRow key={r.ref} pair={r} cfg={cfg} wind={wind} onToggleEnd={toggleEnd} onToggleWeight={toggleWeight} hover={hover === r.ref} onHover={setHover} />
+              ))}
+            </ul>
+          </div>
         </GlassPanel>
 
         <aside className={s.side}>
           <GlassPanel variant="solid" title="Shift" testId="home-shift">
             <div className={s.field}>
-              <span className={cx('body-s', s.fieldLabel)}>You control</span>
-              <Segmented ariaLabel="You control" value={role} onChange={(v) => setRole(v as Role)} items={ROLES} testId="home-role" />
-              <span className={cx('body-s', s.startHint)} data-testid="home-role-hint">{ROLES.find((r) => r.id === role)?.hint}. Switch any time from the top bar.</span>
+              <span className={cx('body-s', s.fieldLabel)}>Your seat</span>
+              <div className={s.seats} role="radiogroup" aria-label="You control" data-testid="home-role">
+                {ROLES.map((r) => (
+                  <button key={r.id} type="button" role="radio" aria-checked={role === r.id} className={s.seat} onClick={() => setRole(r.id)} data-testid={`home-role-${r.id}`}>
+                    <span className={s.seatDot} aria-hidden="true" />
+                    <span className={s.seatText}><span className={s.seatName}>{r.label}</span><span className={s.seatHint}>{r.hint}</span></span>
+                  </button>
+                ))}
+              </div>
+              <span className={cx('label-xs', s.fieldNote)} data-testid="home-role-hint">Switch seats any time from the top bar.</span>
             </div>
             <div className={s.field}>
               <span className={cx('body-s', s.fieldLabel)}>Traffic difficulty</span>
               <Segmented ariaLabel="Difficulty" value={difficulty} onChange={(v) => setDifficulty(v as Difficulty)} items={DIFFICULTIES} testId="home-difficulty" />
             </div>
-            <div className={s.field}>
+            <details className={s.advanced}>
+              <summary>Advanced</summary>
               <Input
                 label="Seed"
                 placeholder="Random"
@@ -260,7 +278,7 @@ function Detail({ airport, onBack }: { airport: AirportMeta; onBack: () => void 
                 fullWidth
                 testId="home-seed"
               />
-            </div>
+            </details>
             <div className={s.toggles}>
               <StateMirror state={settings.sound ? 'on' : 'off'}>
                 <Toggle checked={settings.sound} onChange={(v) => updateSettings({ sound: v })} label="Sound" description="Radio, alerts and UI cues" labelPosition="left" className={s.toggleRow} testId="home-sound" />
@@ -283,6 +301,7 @@ function Detail({ airport, onBack }: { airport: AirportMeta; onBack: () => void 
               >
                 Start shift
               </Button>
+              <Button variant="secondary" size="lg" fullWidth onClick={() => router.push('/learn')} testId="home-learn">New here? Learn the three seats</Button>
               <p id="home-start-hint" className={cx('body-s', s.startHint)} data-testid="home-start-hint">
                 {anyOn
                   ? <>{airport.icao} · {activeEnds.join(' ')} · {DIFFICULTIES.find((d) => d.id === difficulty)?.label.toLowerCase()} traffic · {role === 'both' ? 'tower + approach' : role === 'airfield' ? 'tower' : 'approach'}</>
@@ -333,14 +352,14 @@ function WindControl({ wind, onChange, onApply }: { wind: { dir: number; kts: nu
 // ---------------------------------------------------------------------------
 //  Runway row
 // ---------------------------------------------------------------------------
-function RunwayRow({ pair, cfg, wind, onToggleEnd, onToggleWeight }: {
+function RunwayRow({ pair, cfg, wind, onToggleEnd, onToggleWeight, hover, onHover }: {
   pair: RunwayPair; cfg: RunwayCfg; wind: { dir: number; kts: number };
-  onToggleEnd: (end: string) => void; onToggleWeight: (end: string, w: WeightClass) => void;
+  onToggleEnd: (end: string) => void; onToggleWeight: (end: string, w: WeightClass) => void; hover: boolean; onHover: (ref: string | null) => void;
 }) {
   const ref = sanitiseRef(pair.ref);
   const anyOn = pair.ends.some((e) => cfg[e.name]?.on);
   return (
-    <li className={cx(s.rwyRow, !anyOn && s.rwyRowOff)} data-testid={`rwy-row-${ref}`} data-ref={pair.ref} data-active={anyOn ? 'true' : 'false'}>
+    <li className={cx(s.rwyRow, !anyOn && s.rwyRowOff)} data-hover={hover || undefined} onMouseEnter={() => onHover(pair.ref)} onMouseLeave={() => onHover(null)} data-testid={`rwy-row-${ref}`} data-ref={pair.ref} data-active={anyOn ? 'true' : 'false'}>
       <div className={s.rwyId}>
         <span className={cx('title-m', 'tabular', s.rwyRef)}>{pair.ends[0].name} <span className={s.rwySlash}>/</span> {pair.ends[1].name}</span>
         <span className={cx('label-xs', 'tabular', s.rwyLen)}>{formatFeet(pair.lengthFt)} · {feetToMetres(pair.lengthFt).toLocaleString('en')} m</span>

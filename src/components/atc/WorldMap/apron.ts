@@ -6,7 +6,9 @@
 import * as THREE from 'three';
 import type { World } from './world';
 import type { OsmAirport, OsmStand } from '@/lib/osmAirport';
-import { PALETTE, TAXIWAY_WIDTH, apronMaterial, mergeGeometries, plateGeometry, ribbon, textAtlas, toV3, type Fade } from './terrain';
+import { PALETTE, TAXIWAY_WIDTH, apronMaterial, glowTexture, markingLines, markingMaterial, mergeGeometries, plateGeometry, ribbon, textAtlas, toV3, type Fade, type NightHandle } from './terrain';
+import { apronLanes, lightPoints, runwayWidth, type Light } from './airfield';
+import { angleDelta, filletCorners, headingTo } from '@/lib/sim/projection';
 
 /** Parked-aircraft envelope per ICAO stand code (wingspan × length, m). */
 const ENVELOPE: Record<string, [number, number]> = { A: [15, 13], B: [24, 24], C: [36, 40], D: [52, 56], E: [65, 70], F: [80, 76] };
@@ -17,36 +19,86 @@ function basis(headingDeg: number): { f: THREE.Vector3; l: THREE.Vector3 } {
   return { f: new THREE.Vector3(Math.sin(h), 0, -Math.cos(h)), l: new THREE.Vector3(-Math.cos(h), 0, -Math.sin(h)) };
 }
 
-/** Stand markings: yellow lead-in + T stop bar, a faint white envelope around the parked aircraft, the number plate. */
+/**
+ * A stand's lead-in marking as polylines (local metres, x east / y north): the straight line from the lane to the stop
+ * mark, and for each way along the lane that an aircraft can turn in from (under 115 degrees) the arc joining them.
+ * Stands that kept a mapped lead-in (nothing straight behind them) are drawn as mapped.
+ */
+function leadInLines(world: World, air: OsmAirport, st: OsmStand): XY[][] {
+  const pts = st.leadInPts.map(p => world.toLocal(p.lng, p.lat));
+  const entry = air.nodes.get(st.entryNodeId);
+  if (pts.length !== 2 || !entry) return [filletCorners(pts, APRON_ARC_M)];
+  const X = pts[0], S = pts[1]; const out: XY[][] = [[X, S]];
+  const xy = (id: string) => { const n = air.nodes.get(id)!; return world.toLocal(n.lng, n.lat); };
+  const axis = headingTo(X, S);
+  const lanes = entry.edges.filter(e => e.type === 'taxiway' && e.to !== st.nodeId);
+  const real = lanes.filter(e => !e.leadIn);
+  for (const e0 of (real.length ? real : lanes)) {
+    // walk ~60 m along the lane from the junction, straightest way on
+    const lane: XY[] = [xy(e0.to)]; let prev = entry.id, cur = e0.to, len = Math.hypot(lane[0].x - X.x, lane[0].y - X.y);
+    for (let hop = 0; hop < 12 && len < 60; hop++) {
+      const here = xy(cur), h0 = headingTo(xy(prev), here);
+      const nexts = air.nodes.get(cur)!.edges.filter(e => e.type === 'taxiway' && e.to !== prev);
+      if (!nexts.length) break;
+      const nx = nexts.reduce((b, e) => (Math.abs(angleDelta(h0, headingTo(here, xy(e.to)))) < Math.abs(angleDelta(h0, headingTo(here, xy(b.to)))) ? e : b));
+      if (Math.abs(angleDelta(h0, headingTo(here, xy(nx.to)))) > 40) break;
+      const q = xy(nx.to); len += Math.hypot(q.x - here.x, q.y - here.y); lane.push(q); prev = cur; cur = nx.to;
+    }
+    const turn = Math.abs(angleDelta(headingTo(lane[0], X), axis));
+    if (turn < 8 || turn > 115 || len < 8) continue;
+    const arc = filletCorners([...lane.reverse(), X, S], APRON_ARC_M);
+    // keep the arc itself: from where it leaves the lane to where it meets the straight
+    const onLane = (p: XY) => { let d = Infinity; for (let i = 1; i <= lane.length; i++) { const a = i === lane.length ? X : lane[i], b = lane[i - 1]; const ex = b.x - a.x, ey = b.y - a.y; const t = Math.max(0, Math.min(1, ((p.x - a.x) * ex + (p.y - a.y) * ey) / (ex * ex + ey * ey || 1))); d = Math.min(d, Math.hypot(p.x - a.x - ex * t, p.y - a.y - ey * t)); } return d; };
+    const first = arc.findIndex(p => onLane(p) > 0.15);
+    const ax = S.x - X.x, ay = S.y - X.y, al = Math.hypot(ax, ay) || 1;
+    let last = arc.length - 1; while (last > 0 && Math.abs((arc[last].x - X.x) * ay - (arc[last].y - X.y) * ax) / al < 0.15) last--;
+    if (first > 0 && last >= first) out.push(arc.slice(first - 1, last + 2));
+  }
+  return out;
+}
+const APRON_ARC_M = 30;
+type XY = { x: number; y: number };
+
+/** Stand markings: yellow lead-in line (black-edged, as painted on concrete) + stop bar, the red stand safety line
+ *  round the parked aircraft, the stand number on a black panel beside the lead-in. */
 export function buildStands(world: World, air: OsmAirport, base: number, fades: Fade[]): THREE.Group {
   const g = new THREE.Group(); g.name = 'stands';
-  const leadPos: number[] = []; const envPos: number[] = []; const barGeos: THREE.BufferGeometry[] = []; const padGeos: THREE.BufferGeometry[] = [];
+  const leadLine: number[] = []; const leadGeos: THREE.BufferGeometry[] = [], leadBack: THREE.BufferGeometry[] = [], envGeos: THREE.BufferGeometry[] = []; const barGeos: THREE.BufferGeometry[] = []; const padGeos: THREE.BufferGeometry[] = []; const panelGeos: THREE.BufferGeometry[] = [];
   // number plates: one atlas texture + one merged mesh for the whole airport (not a mesh and a texture per stand)
   const plateAtlas = textAtlas(air.stands.map(st => st.ref).filter((r): r is string => !!r)); const plateGeos: THREE.BufferGeometry[] = [];
   // stands drawn closer together than their code's wingspan (OSM spacing) get a narrower envelope so the boxes never overlap
   const stopsXY = air.stands.map(st => world.toLocal(st.lng, st.lat));
   const nearestM = (i: number) => { let d = Infinity; for (let j = 0; j < stopsXY.length; j++) if (j !== i) d = Math.min(d, Math.hypot(stopsXY[i].x - stopsXY[j].x, stopsXY[i].y - stopsXY[j].y)); return d; };
   for (const [i, st] of air.stands.entries()) {
-    const pts = st.leadInPts.map(p => world.toLocal(p.lng, p.lat));
-    for (let i = 1; i < pts.length; i++) {
-      const a = toV3(pts[i - 1].x, pts[i - 1].y, base + 0.72), b = toV3(pts[i].x, pts[i].y, base + 0.72); leadPos.push(a.x, a.y, a.z, b.x, b.y, b.z);
+    // the painted lead-in is the line the aircraft drive: straight along the stand's axis, with an arc onto the lane
+    // either way (the same arcs taxi-in and pushback paths are built with)
+    for (const pts of leadInLines(world, air, st)) for (let i = 1; i < pts.length; i++) {
+      const a = toV3(pts[i - 1].x, pts[i - 1].y, base + 0.8), b = toV3(pts[i].x, pts[i].y, base + 0.8);
+      const d = b.clone().sub(a); if (d.length() < 0.05) continue; d.normalize().multiplyScalar(0.2);
+      leadGeos.push(ribbon(a.clone().sub(d), b.clone().add(d), 0.45)); leadLine.push(a.x, a.y, a.z, b.x, b.y, b.z);
+      leadBack.push(ribbon(a.clone().sub(d).setY(base + 0.77), b.clone().add(d).setY(base + 0.77), 0.85));
     }
     const sp = world.toLocal(st.lng, st.lat); const stop = toV3(sp.x, sp.y, base + 0.74);
     const { f, l } = basis(st.headingIn);
     // T stop bar across the lead-in at the nose-wheel stop
-    barGeos.push(ribbon(stop.clone().addScaledVector(l, -2.5), stop.clone().addScaledVector(l, 2.5), 0.5));
+    barGeos.push(ribbon(stop.clone().addScaledVector(l, -3).setY(base + 0.81), stop.clone().addScaledVector(l, 3).setY(base + 0.81), 0.6));
     // envelope: nose 4 m ahead of the stop, tail one length behind; drawn as a thin outline
     const [span0, len] = ENVELOPE[st.size] ?? ENVELOPE.C;
     const half = Math.max(8, Math.min(span0 / 2 + 2, nearestM(i) / 2 - 1.5));
     const nose = stop.clone().addScaledVector(f, 4).setY(base + 0.7), tail = stop.clone().addScaledVector(f, -(len - 2)).setY(base + 0.7);
-    const c = [nose.clone().addScaledVector(l, half), nose.clone().addScaledVector(l, -half), tail.clone().addScaledVector(l, -half), tail.clone().addScaledVector(l, half)];
-    for (let i = 0; i < 4; i++) { const a = c[i], b = c[(i + 1) % 4]; envPos.push(a.x, a.y, a.z, b.x, b.y, b.z); }
+    // stand safety line: down both wingtip sides and across the tail (open toward the terminal)
+    { const yy = base + 0.79; const w = 0.3;
+      const c = [nose.clone().addScaledVector(l, half).setY(yy), tail.clone().addScaledVector(l, half).setY(yy), tail.clone().addScaledVector(l, -half).setY(yy), nose.clone().addScaledVector(l, -half).setY(yy)];
+      const ext = f.clone().multiplyScalar(w / 2);
+      envGeos.push(ribbon(c[0], c[1].clone().sub(ext), w), ribbon(c[1], c[2], w), ribbon(c[2].clone().sub(ext), c[3], w)); }
     // concrete pad under the envelope: gate areas read as paved even where OSM has no apron polygon (sits just below
     // the real apron slab, so it only shows where that is missing)
     padGeos.push(ribbon(nose.clone().addScaledVector(f, 4).setY(base + 0.55), tail.clone().addScaledVector(f, -4).setY(base + 0.55), half * 2 + 6));
     if (!st.ref) continue;
     // the number sits ahead of the nose, on the lead-in, so a parked aircraft never covers it
-    plateGeos.push(plateGeometry(plateAtlas, st.ref, 9, 4.5, stop.clone().addScaledVector(f, 10).setY(base + 0.76), st.headingIn));
+    { const at = stop.clone().addScaledVector(f, 9).setY(base + 0.84);
+      plateGeos.push(plateGeometry(plateAtlas, st.ref, 7, 3.5, at, st.headingIn));
+      panelGeos.push(ribbon(at.clone().addScaledVector(f, -2.1).setY(base + 0.8), at.clone().addScaledVector(f, 2.1).setY(base + 0.8), 7.6)); }
   }
   // The apron pavement where OSM has no apron polygon is built from the things that define an apron, so its edges run
   // with the lanes rather than in 110 m arcs round the terminal: (1) a corridor from every stand to the lane it is
@@ -55,7 +107,7 @@ export function buildStands(world: World, air: OsmAirport, base: number, fades: 
   const y = base + 0.55;
   const V = (p: { x: number; y: number }) => toV3(p.x, p.y, y);
   const nodeXY = (id: string) => { const n = air.nodes.get(id)!; return V(world.toLocal(n.lng, n.lat)); };
-  const servesStands = new Set<string>(air.stands.map(st => st.entryNodeId));
+  const lanes = apronLanes(world, air);
   const near = (v: THREE.Vector3, r: number) => stopsXY.some(q => Math.hypot(q.x - v.x, q.y + v.z) < r);   // toV3 maps y -> -z
   // a ribbon with square ends: extended by half its width at both ends, so slabs meet in square corners rather than
   // round bulges (the T of two lanes, the corner of the terminal band)
@@ -73,10 +125,18 @@ export function buildStands(world: World, air: OsmAirport, base: number, fades: 
   for (const n of air.nodes.values()) for (const e of n.edges) {
     if (e.type !== 'taxiway' || e.leadIn || n.id >= e.to) continue;
     const a = nodeXY(n.id), b = nodeXY(e.to);
-    const apron = servesStands.has(n.id) || servesStands.has(e.to) || (near(a, 100) && near(b, 100));
+    const apron = lanes.has(`${n.id}|${e.to}`);
     segs.push({ a, b, apron });
   }
   const blockers = segs.filter(sg => !sg.apron);
+  // runways stop the apron too (their whole width): it never spills across the grass toward a runway
+  for (const r of air.runways) {
+    const e0 = r.ends[0], e1 = r.ends[1]; if (!e0 || !e1) continue
+    const a = V(world.toLocal(e0.lng, e0.lat)), b = V(world.toLocal(e1.lng, e1.lat))
+    const d = b.clone().sub(a); d.y = 0; const L = d.length(); if (L < 1) continue; d.divideScalar(L)
+    const n = new THREE.Vector3(-d.z, 0, d.x).multiplyScalar(runwayWidth(air.icao, r.ref) / 2 + 40)
+    blockers.push({ a: a.clone().add(n), b: b.clone().add(n), apron: false }, { a: a.clone().sub(n), b: b.clone().sub(n), apron: false })
+  }
   // distance along a ray (from p in direction d, unit, in the x/z plane) to the first blocking taxiway
   const rayHit = (p: THREE.Vector3, d: THREE.Vector3, maxM: number): number => {
     let best = maxM;
@@ -88,6 +148,7 @@ export function buildStands(world: World, air: OsmAirport, base: number, fades: 
     }
     return best;
   };
+  const sides: Array<{ a: THREE.Vector3; b: THREE.Vector3; nrm: THREE.Vector3; depth: number; cap: number }> = [];
   for (const sg of segs) {
     const { a, b } = sg;
     const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz); if (L < 1) continue;
@@ -109,7 +170,20 @@ export function buildStands(world: World, air: OsmAirport, base: number, fades: 
     const cap = Math.min(rayHit(a, nrm, 400), rayHit(mid, nrm, 400), rayHit(b, nrm, 400));
     if (reach > cap) continue;
     const depth = Math.min(cap - TAXIWAY_WIDTH / 2 - 4, reach + 30);
-    if (depth > 10) { const off = nrm.clone().multiplyScalar(depth / 2); padGeos.push(ribbon(a.clone().add(off), b.clone().add(off), depth)); }
+    if (depth > 10) sides.push({ a, b, nrm, depth, cap: cap - TAXIWAY_WIDTH / 2 - 4 });
+  }
+  // (2b) neighbours along a taxiway (touching, paving the same way) take the same depth - the deepest among them, never
+  //      past any one's own blocker - so the apron's edge runs straight instead of stepping edge by edge; a lone sliver
+  //      (a short edge with no such neighbours) is left as grass
+  const touch = (p: THREE.Vector3, q: THREE.Vector3) => Math.hypot(p.x - q.x, p.z - q.z) < 2
+  for (const sd of sides) {
+    const group = sides.filter(o => o === sd || ((touch(o.a, sd.a) || touch(o.a, sd.b) || touch(o.b, sd.a) || touch(o.b, sd.b)) && o.nrm.dot(sd.nrm) > 0.9))
+    const L = Math.hypot(sd.b.x - sd.a.x, sd.b.z - sd.a.z)
+    if (group.length < 2 && L < 30) continue
+    const depth = Math.min(sd.cap, Math.max(...group.map(o => o.depth)))
+    if (depth <= 10) continue
+    const off = sd.nrm.clone().multiplyScalar(depth / 2)
+    padGeos.push(ribbon(sd.a.clone().add(off), sd.b.clone().add(off), depth))
   }
   for (const b of air.buildings) {
     if (b.kind !== 'terminal') continue;
@@ -117,18 +191,15 @@ export function buildStands(world: World, air: OsmAirport, base: number, fades: 
     for (let i = 0; i < poly.length; i++) slab(poly[i], poly[(i + 1) % poly.length], 90);
   }
   if (padGeos.length) { const pm = new THREE.Mesh(mergeGeometries(padGeos), apronMaterial()); pm.renderOrder = 0; g.add(pm); }
-  const leadGeo = new THREE.BufferGeometry(); leadGeo.setAttribute('position', new THREE.Float32BufferAttribute(leadPos, 3));
-  const leadMat = new THREE.LineBasicMaterial({ color: PALETTE.taxiLine, transparent: true, opacity: 0.75 });
-  g.add(new THREE.LineSegments(leadGeo, leadMat)); fades.push({ mat: leadMat, base: 0.75, near: 600, far: 1500 });
-  const envGeo = new THREE.BufferGeometry(); envGeo.setAttribute('position', new THREE.Float32BufferAttribute(envPos, 3));
-  const envMat = new THREE.LineBasicMaterial({ color: 0xe8e8e4, transparent: true, opacity: 0.28 });
-  g.add(new THREE.LineSegments(envGeo, envMat)); fades.push({ mat: envMat, base: 0.28, near: 350, far: 900 });
-  if (barGeos.length) { const bm = new THREE.MeshBasicMaterial({ color: PALETTE.taxiLine, side: THREE.DoubleSide, transparent: true, opacity: 0.9 }); const m = new THREE.Mesh(mergeGeometries(barGeos), bm); m.renderOrder = 3; g.add(m); fades.push({ mat: bm, base: 0.9, near: 400, far: 1100 }); }
+  const yellow = markingMaterial(PALETTE.taxiLine), black = markingMaterial(new THREE.Color('#161718')), red = markingMaterial(new THREE.Color('#b8322a'));
+  const add = (geos: THREE.BufferGeometry[], mat: THREE.Material, order: number) => { if (!geos.length) return; const m = new THREE.Mesh(mergeGeometries(geos), mat); m.renderOrder = order; g.add(m); };
+  g.add(markingLines(leadLine, PALETTE.taxiLine));
+  add(leadBack, black, 3); add(envGeos, red, 3); add(leadGeos, yellow, 4); add(barGeos, yellow, 4); add(panelGeos, black, 4);
   if (plateGeos.length) {
-    const pm = new THREE.MeshBasicMaterial({ map: plateAtlas.texture, transparent: true, depthWrite: false, opacity: 0.9 });
-    const plates = new THREE.Mesh(mergeGeometries(plateGeos), pm); plates.renderOrder = 4; g.add(plates);
-    fades.push({ mat: pm, base: 0.9, near: 350, far: 1000 });
+    const pm = markingMaterial(PALETTE.taxiLine); pm.map = plateAtlas.texture; pm.transparent = true; pm.depthWrite = false; pm.alphaTest = 0.05;
+    const plates = new THREE.Mesh(mergeGeometries(plateGeos), pm); plates.renderOrder = 5; g.add(plates);
   }
+  void fades;
   return g;
 }
 
@@ -147,48 +218,109 @@ function nearestTerminalPoint(polys: THREE.Vector3[][], p: THREE.Vector3, maxM: 
   return best;
 }
 
-/** Jet bridges: a rotunda at the pier, a raised tunnel to the aircraft's forward-left door, a cab and a support leg. */
+/** Where a gate's bridge meets the aircraft and the terminal: the forward-left door (the nose wheel stops about abeam
+ *  it on every type), the cab beside it, and the nearest point of a terminal outline. */
+function gateGeometry(st: OsmStand, world: World, base: number, polys: THREE.Vector3[][]): { door: THREE.Vector3; cab: THREE.Vector3; pier: THREE.Vector3; dir: THREE.Vector3; wide: boolean; f: THREE.Vector3; l: THREE.Vector3 } | null {
+  const sp = world.toLocal(st.lng, st.lat); const stop = toV3(sp.x, sp.y, base);
+  const { f, l } = basis(st.headingIn);
+  const wide = st.size === 'D' || st.size === 'E' || st.size === 'F';
+  const door = stop.clone().addScaledVector(f, -0.8).addScaledVector(l, wide ? 3.1 : 2.0);
+  const cab = door.clone().addScaledVector(l, 2.4);
+  const pier = nearestTerminalPoint(polys, cab, 95); if (!pier) return null;
+  const span = cab.clone().sub(pier); if (span.length() < 0.5) return null;
+  const dir = span.clone().normalize();
+  // a stop line drawn right at the pier still gets a short bridge: the rotunda then sits inside the building
+  if (span.length() < 14) pier.copy(cab).addScaledVector(dir, -14);
+  return { door, cab, pier, dir, wide, f, l };
+}
+
+/**
+ * Jet bridges: a glazed rotunda on its column at the pier, a two-section telescoping tunnel that slopes to the door
+ * sill, the drive column with its wheel bogie, and the cab turned square to the fuselage with its canopy.
+ */
 export function buildJetBridges(world: World, air: OsmAirport, base: number): THREE.Object3D | null {
   const polys = air.buildings.filter(b => b.kind === 'terminal').map(b => b.polygon.map(p => { const q = world.toLocal(p.lng, p.lat); return toV3(q.x, q.y, base); }));
   if (!polys.length) return null;
   const geos: THREE.BufferGeometry[] = []; const colors: number[] = [];
-  const tunnel = new THREE.Color('#c9cbc7'), cab = new THREE.Color('#a4a7a3'), leg = new THREE.Color('#6c6e6b'), glass = new THREE.Color('#5c6670');
-  const box = (cx: THREE.Vector3, dir: THREE.Vector3, len: number, w: number, h: number, yBottom: number, col: THREE.Color) => {
-    const geo = new THREE.BoxGeometry(w, h, len).toNonIndexed();   // non-indexed so the colour array lines up after the merge
-    geo.rotateY(Math.atan2(dir.x, dir.z)); geo.translate(cx.x, yBottom + h / 2, cx.z);
-    const n = geo.getAttribute('position').count; for (let i = 0; i < n; i++) colors.push(col.r, col.g, col.b);
-    geos.push(geo);
+  const body = new THREE.Color('#dfe1de'), roof = new THREE.Color('#b4b7b5'), steel = new THREE.Color('#55585a'), glass = new THREE.Color('#33434f'), dark = new THREE.Color('#26282a');
+  const push = (geo: THREE.BufferGeometry, col: THREE.Color) => { const gg = geo.index ? geo.toNonIndexed() : geo; const n = gg.getAttribute('position').count; for (let i = 0; i < n; i++) colors.push(col.r, col.g, col.b); geos.push(gg); };
+  /** a box from floor point a to floor point b (it may slope), w wide, h tall */
+  const beam = (a: THREE.Vector3, b: THREE.Vector3, w: number, h: number, col: THREE.Color, lift = 0) => {
+    const d = b.clone().sub(a); const len = d.length(); if (len < 0.05) return;
+    const geo = new THREE.BoxGeometry(w, h, len); geo.translate(0, h / 2 + lift, 0);
+    geo.rotateX(-Math.asin(d.y / len)); geo.rotateY(Math.atan2(d.x, d.z));
+    const m = a.clone().add(b).multiplyScalar(0.5); geo.translate(m.x, m.y, m.z); push(geo, col);
   };
+  const cyl = (p: THREE.Vector3, r: number, y0: number, y1: number, col: THREE.Color, seg = 14) => { const geo = new THREE.CylinderGeometry(r, r, y1 - y0, seg); geo.translate(p.x, (y0 + y1) / 2, p.z); push(geo, col); };
   let count = 0;
   for (const st of air.stands) {
     if (st.type === 'remote' || st.closed) continue;
-    const sp = world.toLocal(st.lng, st.lat); const stop = toV3(sp.x, sp.y, base);
-    const { f, l } = basis(st.headingIn);
-    const [, len] = ENVELOPE[st.size] ?? ENVELOPE.C;
-    // forward-left door: ~12 % of the length behind the nose, half a fuselage width out
-    const door = stop.clone().addScaledVector(f, 4 - len * 0.12).addScaledVector(l, 2.6);
-    const pier = nearestTerminalPoint(polys, door, 95);
-    if (!pier) continue;
-    const span = door.clone().sub(pier); let L = span.length(); if (L < 0.5) continue;
-    const dir = span.clone().normalize();
-    // a stop line drawn right at the pier still gets a short bridge: the rotunda then sits inside the building
-    if (L < 12) { pier.copy(door).addScaledVector(dir, -12); L = 12; }
-    const rot = new THREE.CylinderGeometry(2.4, 2.4, 6.2, 12).toNonIndexed(); rot.translate(pier.x + dir.x * 1.5, base + 3.1, pier.z + dir.z * 1.5);
-    { const n = rot.getAttribute('position').count; for (let i = 0; i < n; i++) colors.push(cab.r, cab.g, cab.b); geos.push(rot); }
-    const t0 = pier.clone().addScaledVector(dir, 3), t1 = door.clone().addScaledVector(dir, -3.2);
-    const mid = t0.clone().add(t1).multiplyScalar(0.5);
-    box(mid, dir, t0.distanceTo(t1), 3.2, 2.9, base + 3.6, tunnel);
-    box(mid, dir, t0.distanceTo(t1) - 1.5, 3.3, 0.9, base + 4.5, glass);   // window band
-    box(door.clone().addScaledVector(dir, -1.6), dir, 3.6, 3.6, 3.3, base + 3.4, cab);
-    box(door.clone().addScaledVector(dir, -4.5), dir, 0.9, 0.9, 3.6, base, leg);
-    box(door.clone().addScaledVector(dir, -4.5), dir, 2.2, 3.2, 0.3, base + 0.1, leg);   // wheel bogie
+    const G = gateGeometry(st, world, base, polys); if (!G) continue;
+    const sill = base + (G.wide ? 4.9 : 3.5), hall = base + 4.4;
+    // rotunda: column, glazed drum, roof cap
+    const rot = G.pier.clone().addScaledVector(G.dir, 2.2);
+    cyl(rot, 0.7, base, hall, steel, 8); cyl(rot, 2.5, hall - 0.2, hall + 2.9, body); cyl(rot, 2.56, hall + 0.9, hall + 2.0, glass); cyl(rot, 2.8, hall + 2.9, hall + 3.2, roof);
+    // link back into the building
+    beam(G.pier.clone().addScaledVector(G.dir, -1.5).setY(hall), rot.clone().setY(hall), 3.2, 2.8, body);
+    // tunnel: the fixed outer section, then the narrower inner one sliding out of it
+    const t0 = rot.clone().addScaledVector(G.dir, 2.2).setY(hall); const t1 = G.cab.clone().addScaledVector(G.dir, -1.9).setY(sill);
+    const mid = t0.clone().lerp(t1, 0.56), lap = t0.clone().lerp(t1, 0.5);
+    beam(t0, mid, 3.3, 2.9, body); beam(lap, t1, 2.8, 2.6, body, 0.1);
+    beam(t0.clone().lerp(mid, 0.04), t0.clone().lerp(mid, 0.96), 3.38, 0.95, glass, 1.1); beam(lap.clone().lerp(t1, 0.12), lap.clone().lerp(t1, 0.97), 2.88, 0.9, glass, 1.15);
+    beam(t0, mid, 3.5, 0.18, roof, 2.9); beam(lap, t1, 3.0, 0.16, roof, 2.7);
+    // drive column: two legs on a wheel bogie under the outer end of the tunnel
+    const dc = t0.clone().lerp(t1, 0.8); const sideV = new THREE.Vector3(-G.dir.z, 0, G.dir.x);
+    for (const k of [-1, 1]) { const leg = dc.clone().addScaledVector(sideV, k * 1.9); cyl(leg, 0.28, base + 0.9, dc.y + 0.2, steel, 6); }
+    beam(dc.clone().addScaledVector(sideV, -2.4).setY(base + 0.35), dc.clone().addScaledVector(sideV, 2.4).setY(base + 0.35), 1.3, 0.7, steel);
+    for (const k of [-1, 1]) beam(dc.clone().addScaledVector(sideV, k * 1.9).addScaledVector(G.dir, -0.9).setY(base), dc.clone().addScaledVector(sideV, k * 1.9).addScaledVector(G.dir, 0.9).setY(base), 0.6, 1.0, dark);
+    // cab: square to the fuselage, canopy against the door
+    const c0 = G.cab.clone().addScaledVector(G.l, 1.9).setY(sill - 0.1), c1 = G.door.clone().addScaledVector(G.l, 0.5).setY(sill - 0.1);
+    beam(c0, c1, 3.6, 2.9, body); beam(c0.clone().lerp(c1, 0.1), c0.clone().lerp(c1, 0.8), 3.68, 0.9, glass, 1.2); beam(c0, c1, 3.9, 0.2, roof, 2.9);
+    beam(c1, G.door.clone().addScaledVector(G.l, 0.05).setY(sill - 0.1), 3.2, 2.6, dark);
     if (++count > 600) break;
   }
   if (!geos.length) return null;
   const merged = mergeGeometries(geos); merged.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   const mesh = new THREE.Mesh(merged, new THREE.MeshLambertMaterial({ vertexColors: true })); mesh.name = 'jetbridges';
-  mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(merged, 30), new THREE.LineBasicMaterial({ color: 0x0b0b0c, transparent: true, opacity: 0.3 })));
   return mesh;
+}
+
+/**
+ * Apron floodlighting: a bank of floodlights on the terminal roof line above every gate and on masts at the remote
+ * stands, each with its pool of light on the concrete (masts are drawn; the roof-mounted banks are just the lamps).
+ */
+export function buildFloods(world: World, air: OsmAirport, base: number, night: NightHandle[]): THREE.Group {
+  const g = new THREE.Group(); g.name = 'floods';
+  const polys = air.buildings.filter(b => b.kind === 'terminal').map(b => b.polygon.map(p => { const q = world.toLocal(p.lng, p.lat); return toV3(q.x, q.y, base); }));
+  const lights: Light[] = []; const poolGeos: THREE.BufferGeometry[] = []; const mastGeos: THREE.BufferGeometry[] = [];
+  const warm = new THREE.Color('#ffe6c0'); const placed: THREE.Vector3[] = [];
+  const pool = (c: THREE.Vector3, r: number) => { const gg = new THREE.PlaneGeometry(r * 2, r * 2); gg.rotateX(-Math.PI / 2); gg.translate(c.x, base + 1.0, c.z); poolGeos.push(gg); };
+  for (const st of air.stands) {
+    if (st.closed) continue;
+    const sp = world.toLocal(st.lng, st.lat); const stop = toV3(sp.x, sp.y, base); const { f, l } = basis(st.headingIn);
+    const [span, len] = ENVELOPE[st.size] ?? ENVELOPE.C;
+    const G = st.type === 'remote' ? null : gateGeometry(st, world, base, polys);
+    if (G) {
+      const at = G.pier.clone().setY(base + 16.5);
+      for (const k of [-1, 1]) lights.push({ p: at.clone().addScaledVector(new THREE.Vector3(-G.dir.z, 0, G.dir.x), k * 1.4), color: warm, size: 2.4, day: 0 });
+      pool(stop.clone().addScaledVector(f, -len * 0.35), Math.max(34, span * 0.9));
+    } else {
+      // a mast off the nose, shared by neighbouring stands
+      const at = stop.clone().addScaledVector(f, 16).addScaledVector(l, span * 0.5 + 3);
+      if (placed.some(q => q.distanceTo(at) < 70)) continue; placed.push(at);
+      const pole = new THREE.CylinderGeometry(0.22, 0.4, 24, 6); pole.translate(at.x, base + 12, at.z); mastGeos.push(pole);
+      const head = new THREE.BoxGeometry(3.4, 0.5, 0.9); head.rotateY(Math.atan2(l.x, l.z)); head.translate(at.x, base + 24.2, at.z); mastGeos.push(head);
+      for (const k of [-1, 0, 1]) lights.push({ p: at.clone().addScaledVector(l, k * 1.2).setY(base + 24.3), color: warm, size: 2.4, day: 0 });
+      pool(stop.clone().addScaledVector(f, -len * 0.3), Math.max(46, span * 1.1));
+    }
+  }
+  if (mastGeos.length) g.add(new THREE.Mesh(mergeGeometries(mastGeos), new THREE.MeshLambertMaterial({ color: 0x6a6d6f })));
+  const glowMat = new THREE.MeshBasicMaterial({ map: glowTexture(), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+  let pools: THREE.Mesh | null = null;
+  if (poolGeos.length) { pools = new THREE.Mesh(mergeGeometries(poolGeos), glowMat); pools.visible = false; pools.renderOrder = 6; pools.frustumCulled = false; g.add(pools); }
+  const lh = lightPoints(lights); g.add(lh.points);
+  night.push({ setNight: (n) => { lh.setNight(n); glowMat.opacity = 0.5 * n; if (pools) pools.visible = n > 0.03; } });
+  return g;
 }
 
 /** Static ground equipment around the gates (belt loader + baggage carts on the right of the nose, a tug ahead). */

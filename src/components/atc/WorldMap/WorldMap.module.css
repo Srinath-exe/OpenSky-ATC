@@ -65,3 +65,19 @@
 .windMeta { color: rgba(255, 255, 255, 0.5); }
 .root[data-standalone="false"] .windChip { left: calc(var(--bay-w, 300px) + 2 * var(--float-gap, 12px)); }
 .stats { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 6; pointer-events: none; font: 400 11px / 1 ui-monospace, Menlo, monospace; color: rgba(255, 255, 255, 0.8); background: rgba(0, 0, 0, 0.45); padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
+
+/* the tutorial layer (tutor.ts): a taxiway's location sign, yellow on black as on the field, popping in as it is named */
+.labels :global(.tutorTag) {
+  position: absolute; left: 0; top: 0; padding: 3px 9px 2px; border: 2px solid #f6c518; border-radius: 3px;
+  background: #0b0b0b; color: #f6c518; font: 800 15px/1.05 var(--font-mono, ui-monospace, monospace); letter-spacing: 0.04em;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55); white-space: nowrap; will-change: transform;
+  animation: tutorPop 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.labels :global(.tutorMark) {
+  position: absolute; left: 0; top: 0; padding: 5px 10px; border-radius: 999px; white-space: nowrap; will-change: transform;
+  background: rgba(12, 14, 18, 0.82); color: #fff; font: 600 12px/1 var(--font, system-ui); border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(6px); animation: tutorPop 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.labels :global(.tutorMark-stop) { border-color: rgba(255, 74, 58, 0.8); color: #ffd2cc; }
+.labels :global(.tutorMark-go) { border-color: rgba(59, 234, 122, 0.8); color: #d4ffe2; }
+@keyframes tutorPop { from { opacity: 0; scale: 0.6; } to { opacity: 1; scale: 1; } }

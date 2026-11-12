@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/app/landing/landing.module.css"
+        ],
+        "createdAt": "2026-11-09T19:10:35.355Z",
+        "reason": "Claude: domain convention - the landing's flight strips mirror the game's own StripCard tone bar (src/game/StripBay/StripBay.module.css .bar[data-tone]) and radar data blocks use a leader edge"
+      }
+    ]
+  }
+}

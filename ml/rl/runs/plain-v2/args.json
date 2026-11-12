@@ -1,0 +1,14 @@
+{
+ "out": "runs/plain-v2",
+ "pool": "../data/out6/ds/pool.jsonl",
+ "lr": 0.00015,
+ "batch": 32,
+ "wd": 0.1,
+ "budget": 22000.0,
+ "est_steps": 1000,
+ "eval_every": 500,
+ "eval_n": 200,
+ "threads": 4,
+ "seed": 0,
+ "start": "runs/plain-v1-s1000"
+}

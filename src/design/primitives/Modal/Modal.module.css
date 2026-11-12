@@ -11,6 +11,11 @@
 :global(html[data-lens="1"]) .panel { -webkit-backdrop-filter: url(#lg-lens) saturate(var(--glass-saturate)); backdrop-filter: url(#lg-lens) saturate(var(--glass-saturate)); }
 .panelLeaving { animation: global(ds-fade-out) var(--t-base) var(--ease-out) both; }
 .wide { width: 640px; }
+.xl { width: 1040px; height: min(760px, calc(100vh - 32px)); display: flex; flex-direction: column; overflow: hidden; padding: var(--s-5) 0 var(--s-4); }
+.xl > .head { padding: 0 var(--s-5) var(--s-3); border-bottom: var(--bw) solid var(--line); }
+.xl > .body { flex: 1; min-height: 0; margin-top: 0; display: flex; flex-direction: column; }
+.xl > .footer { margin-top: 0; padding: var(--s-3) var(--s-5) 0; border-top: var(--bw) solid var(--line); }
+@media (max-width: 767px) { .xl { height: 92vh; } }
 .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .title { font: var(--fw-title-l) var(--fs-title-l) / var(--lh-title-l) var(--font); color: var(--text-1); }
 .close { margin: -6px -6px 0 0; }

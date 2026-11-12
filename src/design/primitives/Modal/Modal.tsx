@@ -56,8 +56,8 @@ export interface ModalProps {
   confirmDisabled?: boolean
   confirmLoading?: boolean
   showClose?: boolean
-  /** 640 wide (settings) instead of 440 */
-  wide?: boolean
+  /** 640 wide instead of 440; 'xl': 1040 wide and a fixed height, the body scrolls inside (tabbed settings) */
+  wide?: boolean | 'xl'
   /** click on the scrim closes (default true) */
   dismissOnScrim?: boolean
   /** render inline instead of a portal (showcase) */
@@ -75,7 +75,7 @@ export function Modal({ open, onClose, title, children, footer, footerLeft, conf
   const hasFooter = footer !== undefined || confirmLabel || cancelLabel
   const node = (
     <div className={styles.scrim} data-testid={testId ? `${testId}-scrim` : undefined} onMouseDown={(e) => { if (dismissOnScrim && e.target === e.currentTarget) onClose() }} style={inline ? { position: 'absolute' } : undefined}>
-      <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby={title ? `${id}-title` : undefined} tabIndex={-1} data-testid={testId} className={cx(styles.panel, wide && styles.wide)}>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby={title ? `${id}-title` : undefined} tabIndex={-1} data-testid={testId} className={cx(styles.panel, wide === 'xl' ? styles.xl : wide && styles.wide)}>
         {title || showClose ? (
           <div className={styles.head}>
             {title ? <h2 id={`${id}-title`} className={styles.title}>{title}</h2> : <span />}

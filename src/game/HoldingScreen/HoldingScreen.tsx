@@ -42,7 +42,7 @@ export function HoldingScreen() {
             The strip bay, the map and the command panel sit side by side and need <strong>{MIN_GAME_WIDTH} px</strong> of width. Widen the window or lower the browser zoom. You can continue anyway; panels will overlap.
           </p>
           <div className={styles.actions}>
-            <Button variant="ghost" onClick={() => router.push('/')} testId="desktop-required-home">Home</Button>
+            <Button variant="ghost" onClick={() => router.push('/start')} testId="desktop-required-home">Home</Button>
             <Button variant="secondary" onClick={() => { writeFlag(LS.allowNarrow, true); setAllowed(true) }} testId="desktop-required-continue">Continue anyway</Button>
           </div>
         </div>

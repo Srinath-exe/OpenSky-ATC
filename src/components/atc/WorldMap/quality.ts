@@ -10,7 +10,7 @@
 */
 import { useSyncExternalStore } from 'react';
 
-export type Tier = 'high' | 'medium' | 'low';
+export type Tier = 'ultra' | 'high' | 'medium' | 'low';
 export type GraphicsPref = 'auto' | Tier;
 
 export interface QualityPreset {
@@ -38,12 +38,19 @@ export interface QualityPreset {
   /** Road relief step (m) and whether secondary streets are drawn. */
   roadStep: number;
   minorRoads: boolean;
+  /** Background blur strength (0..1, times the depth-of-field pass's own cap). */
+  dof: number;
+  /** Hold the render scale unless the frame takes longer than this (ms); the scale comes back up below upMs. */
+  slowMs: number;
+  upMs: number;
 }
 
 export const PRESETS: Record<Tier, QualityPreset> = {
-  high: { tier: 'high', dprMax: 1.5, dprMin: 0.75, terrainSegments: 512, bokeh: true, fxaa: true, modelDist: 6500, rain: 1800, fpsCap: 0, anisotropy: 8, buildings: Infinity, buildingShadows: true, roadStep: 60, minorRoads: true },
-  medium: { tier: 'medium', dprMax: 1.0, dprMin: 0.6, terrainSegments: 384, bokeh: true, fxaa: true, modelDist: 4500, rain: 1000, fpsCap: 0, anisotropy: 4, buildings: 2500, buildingShadows: true, roadStep: 90, minorRoads: true },
-  low: { tier: 'low', dprMax: 1.0, dprMin: 0.5, terrainSegments: 256, bokeh: false, fxaa: false, modelDist: 2500, rain: 500, fpsCap: 30, anisotropy: 2, buildings: 1200, buildingShadows: false, roadStep: 120, minorRoads: false },
+  // strong discrete GPUs: the screen's own pixel density (Retina / 4K), sharp at every zoom; the scale only gives way below ~33 fps
+  ultra: { tier: 'ultra', dprMax: 2.5, dprMin: 1.25, terrainSegments: 768, bokeh: true, fxaa: true, modelDist: 9000, rain: 2400, fpsCap: 0, anisotropy: 16, buildings: Infinity, buildingShadows: true, roadStep: 45, minorRoads: true, dof: 0.55, slowMs: 30, upMs: 22 },
+  high: { tier: 'high', dprMax: 2.0, dprMin: 0.9, terrainSegments: 512, bokeh: true, fxaa: true, modelDist: 6500, rain: 1800, fpsCap: 0, anisotropy: 8, buildings: Infinity, buildingShadows: true, roadStep: 60, minorRoads: true, dof: 0.8, slowMs: 24, upMs: 18 },
+  medium: { tier: 'medium', dprMax: 1.0, dprMin: 0.6, terrainSegments: 384, bokeh: true, fxaa: true, modelDist: 4500, rain: 1000, fpsCap: 0, anisotropy: 4, buildings: 2500, buildingShadows: true, roadStep: 90, minorRoads: true, dof: 1, slowMs: 22, upMs: 17.5 },
+  low: { tier: 'low', dprMax: 1.0, dprMin: 0.5, terrainSegments: 256, bokeh: false, fxaa: false, modelDist: 2500, rain: 500, fpsCap: 30, anisotropy: 2, buildings: 1200, buildingShadows: false, roadStep: 120, minorRoads: false, dof: 0, slowMs: 22, upMs: 17.5 },
 };
 
 export interface DeviceInfo { gpu: string; cores: number; memoryGB: number | null; coarse: boolean; saveData: boolean; software: boolean }
@@ -70,6 +77,8 @@ export function tierFor(d: DeviceInfo): Tier {
   if ((d.memoryGB != null && d.memoryGB <= 2) || d.cores <= 2) return 'low';
   // known weak mobile / old integrated parts
   if (/mali-4|mali-t|mali-g5[0-2]\b|adreno \(tm\) [345]\d\d|adreno [345]\d\d|powervr|videocore|intel\(r\) hd graphics( [2-5]\d\d\d| 4\d\d| 5\d\d| 6\d\d)?$|gma |geforce (8|9|gt 2|gt 4|210|610|710)/.test(g)) return 'low';
+  // the strongest: recent discrete GPUs and Apple's Pro / Max / Ultra chips
+  if (/rtx [2-5]0[5-9]0|rtx a\d|rtx \d{4} ada|radeon rx [6-9]\d{3}|radeon pro w[67]\d{3}|apple m\d (pro|max|ultra)/.test(g) && !d.coarse) return 'ultra';
   // discrete desktop GPUs and Apple silicon Macs: high
   if (/nvidia|geforce|rtx|quadro|radeon (rx|pro|vii)|radeon r[79]|apple m\d|apple gpu.*mac|arc\(tm\) a/.test(g) && !d.coarse) return 'high';
   // phones / tablets, integrated laptop GPUs (Iris, UHD, Vega, Adreno 6xx+, Mali-G7x+), unknown: medium
@@ -97,8 +106,8 @@ function read(): GraphicsPref {
   if (cached) return cached;
   let v: string | null = null;
   try { v = typeof window === 'undefined' ? null : localStorage.getItem(KEY); } catch { v = null; }
-  if (typeof window !== 'undefined') { const q = new URLSearchParams(window.location.search).get('quality'); if (q === 'high' || q === 'medium' || q === 'low' || q === 'auto') v = q; }
-  cached = v === 'high' || v === 'medium' || v === 'low' ? v : 'auto';
+  if (typeof window !== 'undefined') { const q = new URLSearchParams(window.location.search).get('quality'); if (q === 'ultra' || q === 'high' || q === 'medium' || q === 'low' || q === 'auto') v = q; }
+  cached = v === 'ultra' || v === 'high' || v === 'medium' || v === 'low' ? v : 'auto';
   return cached;
 }
 export function getGraphicsPref(): GraphicsPref { return read(); }

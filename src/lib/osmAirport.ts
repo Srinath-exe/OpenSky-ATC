@@ -935,13 +935,49 @@ export function buildOsmAirport(icao: string, fc: unknown, opts: BuildOpts = {})
       const stop = { x: c.stop.x - (c.stop.x - prev.x) / seg * back, y: c.stop.y - (c.stop.y - prev.y) / seg * back };
       c.stop = stop; c.stopLL = frame.ll(stop); c.pts[c.pts.length - 1] = c.stopLL;
     }
+    /** The lane node a stand's axis, run straight back from the stop, meets first (the lane is split there), or null
+     *  when nothing sensible lies behind the stand: no lane within 320 m, a near-parallel one, or a terminal in the way. */
+    const canonicalEntry = (c: Cand): OsmNode | null => {
+      // axis from the drawn line: the stop and a point at least 8 m back along it
+      let k = c.pts.length - 2; let back = frame.xy(c.pts[k].lng, c.pts[k].lat);
+      while (k > 0 && Math.hypot(back.x - c.stop.x, back.y - c.stop.y) < 8) { k--; back = frame.xy(c.pts[k].lng, c.pts[k].lat); }
+      const L = Math.hypot(back.x - c.stop.x, back.y - c.stop.y); if (L < 3) return null;
+      const ux = (back.x - c.stop.x) / L, uy = (back.y - c.stop.y) / L;
+      let best: { s: number; t: number; rec: EdgeRec; x: XY } | null = null;
+      for (const rec of collectTaxiEdges()) {
+        if (isRunwayNode(rec.a.id) || isRunwayNode(rec.b.id)) continue;
+        const ex = rec.bx.x - rec.ax.x, ey = rec.bx.y - rec.ax.y; const el = Math.hypot(ex, ey); if (el < 0.5) continue;
+        const den = ux * ey - uy * ex; if (Math.abs(den) / el < 0.34) continue;            // crossing at under 20 degrees
+        const wx = rec.ax.x - c.stop.x, wy = rec.ax.y - c.stop.y;
+        const sAlong = (wx * ey - wy * ex) / den, t = (wx * uy - wy * ux) / den;
+        if (sAlong < 12 || sAlong > 320 || t < 0 || t > 1) continue;
+        if (!best || sAlong < best.s) best = { s: sAlong, t, rec, x: { x: c.stop.x + ux * sAlong, y: c.stop.y + uy * sAlong } };
+      }
+      if (!best) return null;
+      // not through a building (2 m clear of the stop itself, which may sit against the outline)
+      const from = { x: c.stop.x + ux * 2, y: c.stop.y + uy * 2 };
+      for (const tp of terminalPolys) for (let i = 0; i < tp.pts.length; i++) if (segIntersect(from, best.x, tp.pts[i], tp.pts[(i + 1) % tp.pts.length])) return null;
+      const el = Math.hypot(best.rec.bx.x - best.rec.ax.x, best.rec.bx.y - best.rec.ax.y);
+      if (best.t * el < 4) return best.rec.a;
+      if ((1 - best.t) * el < 4) return best.rec.b;
+      return splitEdge(best.rec.a, best.rec.b, frame.ll(best.x));
+    };
     const usedRefs = new Map<string, number>();
     const realRefs = new Set(uniq.map(c => (c.ref ? String(c.ref).trim() : '')).filter(Boolean));
     for (const c of uniq) {
       // entry point on the taxiway network
       let entryNode: OsmNode | null = null;
       let leadPts: LngLat[] = [];
-      if (c.entryLL) {
+      // The lead-in the game drives and paints is the canonical one: straight back along the stand's axis to the first
+      // taxi lane behind it. OSM's drawn lead-in lines are not used for this: they curve onto the lane toward one side
+      // only (a push the other way then doubled back on itself), kink where the arc meets the straight, and some are
+      // chained through other stands' lines with 90-140 degree corners. The corner at the lane is rounded when a path is
+      // built (smoothPath), for whichever way the aircraft turns.
+      const canon = c.pts.length >= 2 ? canonicalEntry(c) : null;
+      if (canon) {
+        entryNode = canon;
+        leadPts = [{ lng: canon.lng, lat: canon.lat }, c.stopLL];
+      } else if (c.entryLL) {
         const ep = frame.xy(c.entryLL.lng, c.entryLL.lat);
         const exact = nodes.get(keyOf(c.entryLL.lng, c.entryLL.lat));
         entryNode = exact && !isRunwayNode(exact.id) ? exact : snapToTaxiway(idx, ep, HOLD_SNAP_M, 45, 120);

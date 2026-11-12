@@ -1,7 +1,7 @@
 /* TX indicator (UX 04 §7.2): lights while a transmission goes out or PTT is held; click toggles the ATC voice. */
 .tx {
   display: inline-flex; align-items: center; gap: var(--s-2);
-  height: 36px; padding: 0 var(--s-3) 0 var(--s-3);
+  height: 40px; padding: 0 var(--s-3) 0 var(--s-3);
   border-radius: var(--r-pill); border: var(--bw) solid var(--line-strong);
   color: var(--text-3); font: var(--fw-medium) var(--fs-label-xs) / 1 var(--font); letter-spacing: 0.06em;
   transition: color var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out), background-color var(--t-fast) var(--ease-out);

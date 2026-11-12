@@ -6,6 +6,7 @@ import { GlassPanel, Button, Kbd } from '@/design'
 import { onboardingSeen, setOnboardingSeen } from '@/components/atc/persist'
 import { sim, useSim } from '../hooks/useSimSelector'
 import { useShell } from '../shellContext'
+import { useLookChosen } from '@/components/atc/WorldMap/cinematic'
 
 export const EV_REPLAY_TIPS = 'atc:replay-tips'
 const STEPS = 5
@@ -20,6 +21,7 @@ export function OnboardingTips() {
   const firstDep = useSim((s) => s.aircraft().find((a) => a.plan.kind === 'departure')?.callsign ?? null)
   const depRunway = useSim((s) => s.runways().find((r) => r.activeDep)?.name ?? null)
   const delayS = useSim((s) => s.settings.pilotDelayS ?? 3)
+  const lookChosen = useLookChosen()   // the first-run look question comes first
 
   const [visible, setVisible] = React.useState(false)
   const [step, setStep] = React.useState(0)
@@ -28,9 +30,9 @@ export function OnboardingTips() {
   const base = React.useRef({ atc: 0, pilot: 0 })
 
   React.useEffect(() => {
-    if (!hasEngine || testMode) return
+    if (!hasEngine || testMode || !lookChosen) return
     if (!onboardingSeen()) { setVisible(true); setStep(0) }
-  }, [hasEngine, testMode])
+  }, [hasEngine, testMode, lookChosen])
   React.useEffect(() => {
     const replay = () => { setOnboardingSeen(false); setVisible(true); setStep(0) }
     window.addEventListener(EV_REPLAY_TIPS, replay)

@@ -64,7 +64,7 @@ export class HomePage {
   /** Open `/` and wait for hydration (`page-home[data-ready="true"]`). */
   async goto(opts: HomeGotoOptions = {}): Promise<void> {
     if (opts.testMode) await this.installStartConfigPatch(opts.testMode);
-    await this.page.goto('/');
+    await this.page.goto('/start');
     await expect(this.root()).toHaveAttribute('data-ready', 'true');
   }
 

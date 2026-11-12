@@ -46,7 +46,7 @@
 .center { display: flex; align-items: center; justify-content: center; gap: var(--s-3); min-width: 0; overflow: hidden; }
 .right { display: inline-flex; align-items: center; gap: var(--s-2); }
 
-.atisChip { max-width: 100%; min-width: 0; overflow: hidden; flex: 0 1 auto; }
+.atisChip { max-width: 100%; min-width: 96px; overflow: hidden; flex: 0 1 auto; }
 .atisChip > :global(*) { min-width: 0; }
 .atisPart { color: var(--text-2); white-space: nowrap; }
 /* Progressive disclosure so the chip never overlaps the tabs or the clock: runways from 1440, QNH from 1700, cloud from 1800. */
@@ -57,7 +57,7 @@
 .atisSep { color: var(--text-4); padding: 0 var(--s-1); }
 .atisLetter { color: var(--text-1); font-weight: var(--fw-medium); }
 
-.clock { display: inline-flex; align-items: baseline; gap: var(--s-2); height: 36px; padding: 0 var(--s-3); border-radius: var(--r-pill); color: var(--text-1); font-variant-numeric: tabular-nums; font-feature-settings: "kern", "tnum"; transition: background-color var(--t-fast) var(--ease-out); }
+.clock { display: inline-flex; align-items: center; gap: var(--s-2); height: 40px; line-height: 1; padding: 0 var(--s-3); border-radius: var(--r-pill); color: var(--text-1); font-variant-numeric: tabular-nums; font-feature-settings: "kern", "tnum"; transition: background-color var(--t-fast) var(--ease-out); }
 .clock:hover { background: var(--w-06); }
 .clock:active { background: var(--w-10); }
 .clock:focus-visible { box-shadow: var(--focus-ring); }
@@ -65,13 +65,19 @@
 .clockSim { color: var(--text-3); font-size: var(--fs-body-s); }
 .clockSim::before { content: "·"; color: var(--text-4); padding-right: var(--s-2); }
 
-.rateGroup { display: inline-flex; align-items: center; gap: var(--s-1); }
-.ff { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--r-pill); color: var(--text-2); transition: background-color var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out); }
+.rateGroup { display: inline-flex; align-items: center; gap: 2px; height: 40px; padding: 0 4px; border: var(--bw) solid var(--line); border-radius: var(--r-pill); background: var(--w-03); }
+/* the 1x / 2x / 4x picker sits in the capsule: centred on its line, the underline just under the figure */
+.rateGroup [role='tablist'] { align-items: center; gap: 2px; height: 32px; }
+.rateGroup [role='tab'] { display: inline-flex; align-items: center; justify-content: center; height: 32px; min-width: 30px; padding: 0 6px; line-height: 1; }
+/* the active rate's underline sits under the figure, inside the capsule */
+.rateGroup [role='tablist'] > span:not([role]) { bottom: 6px; }
+.rateSep { width: 1px; height: 18px; background: var(--line-strong); margin: 0 2px; }
+.ff { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--r-pill); color: var(--text-2); transition: background-color var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out); }
 .ff:hover { background: var(--w-06); color: var(--text-1); }
 .ff[data-state="on"] { background: var(--bg-3); color: var(--orange); }
 .ff:focus-visible { box-shadow: var(--focus-ring); }
 
-.score { position: relative; display: inline-flex; align-items: baseline; gap: var(--s-2); height: 36px; padding: 0 var(--s-4); border-radius: var(--r-pill); background: var(--bg-2); color: var(--text-1); font-variant-numeric: tabular-nums; font-feature-settings: "kern", "tnum"; transition: background-color var(--t-fast) var(--ease-out); }
+.score { position: relative; display: inline-flex; align-items: center; gap: var(--s-2); height: 40px; line-height: 1; padding: 0 var(--s-4); border-radius: var(--r-pill); background: var(--bg-2); color: var(--text-1); font-variant-numeric: tabular-nums; font-feature-settings: "kern", "tnum"; transition: background-color var(--t-fast) var(--ease-out); }
 .score:hover { background: var(--bg-3); }
 .score:active { background: var(--bg-4); }
 .score[data-open="true"] { background: var(--bg-3); }
@@ -114,3 +120,7 @@
   background: var(--orange, #ff8a3d);
   box-shadow: 0 0 6px var(--orange, #ff8a3d);
 }
+
+/* the sector chips need ~300 px: below 1700 px wide the left and right groups would squeeze the ATIS chip to nothing,
+   so they hide (the autopilot button and Settings > Gameplay switch the same thing) */
+@media (max-width: 1699px) { .sectors { display: none; } }

@@ -1,0 +1,20 @@
+const { chromium } = require('playwright');
+(async () => {
+  const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  p.on('pageerror', (e) => console.log('ERR', e.message));
+  await p.addInitScript(() => { localStorage.setItem('skycontrol_world_look', 'standard'); localStorage.setItem('skycontrol_onboarding_seen', '1'); });
+  await p.goto('http://localhost:3007/settings', { timeout: 180000 }); await p.waitForTimeout(2500);
+  await p.screenshot({ path: 'tests/tmp/set-page.jpg', type: 'jpeg', quality: 80, fullPage: true });
+  await p.click('[data-testid="settab-models"]'); await p.waitForTimeout(1500);
+  await p.screenshot({ path: 'tests/tmp/set-page-models.jpg', type: 'jpeg', quality: 80, fullPage: true });
+  await p.click('[data-testid="model-s1-download"]'); await p.waitForTimeout(8000);
+  await p.screenshot({ path: 'tests/tmp/set-page-models2.jpg', type: 'jpeg', quality: 80, fullPage: true });
+  await p.goto('http://localhost:3007/play?icao=KSFO', { timeout: 180000 });
+  await p.waitForSelector('[data-testid="settings-btn"]', { timeout: 180000 }); await p.waitForTimeout(3000);
+  await p.click('[data-testid="settings-btn"]'); await p.waitForTimeout(1200);
+  await p.screenshot({ path: 'tests/tmp/set-modal.jpg', type: 'jpeg', quality: 80 });
+  await p.click('[data-testid="settab-models"]'); await p.waitForTimeout(1200);
+  await p.screenshot({ path: 'tests/tmp/set-modal-models.jpg', type: 'jpeg', quality: 80 });
+  await b.close();
+})();
