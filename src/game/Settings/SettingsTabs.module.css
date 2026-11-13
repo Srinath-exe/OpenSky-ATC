@@ -110,3 +110,5 @@
   .body { padding: 0 var(--s-1) var(--s-4); }
   .root[data-variant="page"] .groups { grid-template-columns: 1fr; }
 }
+.hubLink { color: var(--orange); text-decoration: none; font-family: var(--font); }
+.hubLink:hover { text-decoration: underline; text-underline-offset: 3px; }

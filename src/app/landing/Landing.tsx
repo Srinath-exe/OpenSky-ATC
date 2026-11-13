@@ -551,6 +551,7 @@ export default function Landing() {
               <span className={`${s.line} ${s.ctaRow}`} style={{ ['--i' as string]: 5 }}>
                 <Link href="/start" className={s.ctaLink}>Set up your own shift</Link>
                 <Link href="/settings" className={s.ctaLink}>Voice &amp; settings</Link>
+                <a href="https://huggingface.co/srinath-exe/skycontrol-atc-command-2m" target="_blank" rel="noopener noreferrer" className={s.ctaLink}>Open model on Hugging Face</a>
                 <span className={s.ctaNote}>keep scrolling and it loops</span>
               </span>
             </article>

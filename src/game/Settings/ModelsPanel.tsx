@@ -83,7 +83,7 @@ function ModelCard({ m, st, voice }: { m: ModelInfo; st: ModelState; voice: { en
         </div>
         <span className={s.chip} data-state={st.state}>{chip}</span>
       </header>
-      <p className={s.modelId}>{m.model}</p>
+      <p className={s.modelId}>{m.model}{m.hub ? <> · <a className={s.hubLink} href={m.hub} target="_blank" rel="noopener noreferrer" data-testid={`model-${id}-hub`}>Open on Hugging Face ↗</a></> : null}</p>
       <dl className={s.facts}>
         <div><dt>Download</dt><dd>{st.bytes && st.state === 'ready' ? mb(st.bytes) : `${m.sizeMB} MB`}</dd></div>
         <div><dt>Memory</dt><dd>≈ {m.ramMB} MB</dd></div>
