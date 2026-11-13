@@ -127,7 +127,7 @@ function Gameplay() {
 // ── voice & input ──
 const engineOptions = (): MenuOption<VoiceEngine>[] => [
   ...(nativeSpeechAvailable() ? [{ value: 'native' as const, label: 'Phone', description: 'The OpenATC app transcribes on this phone; audio never leaves it' }] : []),
-  { value: 'server', label: 'Server (tuned for ATC)', description: 'Parakeet + Whisper on this game\'s server, with the callsigns on frequency. The most accurate; text ~0.3 s after you let go. Audio not stored' },
+  { value: 'server', label: 'Server (tuned for ATC)', description: 'SkyControl ATC-ASR 110M, our model fine-tuned on ATC speech, on this game\'s server, with the callsigns on frequency. The most accurate; text ~0.3 s after you let go. Audio not stored' },
   { value: 'local', label: 'On this device', description: 'Moonshine in your browser: audio never leaves this device. Download it under AI models' },
   { value: 'browser', label: 'Browser (Google)', description: 'The built-in recogniser (Chrome sends audio to Google); often mishears aviation words' },
 ]
@@ -317,6 +317,7 @@ const CREDITS: { title: string; subtitle: string; href?: string; icon: IconName 
   { title: 'Esri World Imagery', subtitle: 'Satellite backdrops · Esri, Maxar, Earthstar Geographics', href: 'https://www.esri.com/en-us/legal/terms/data-attributions', icon: 'layers' },
   { title: 'Endless ATC airport format', subtitle: 'Airspace, beacons, ILS and entry-point definitions', icon: 'radio-tower' },
   { title: 'MapLibre GL JS', subtitle: 'Ground map renderer · BSD-3', href: 'https://maplibre.org', icon: 'map-pin' },
+  { title: 'SkyControl ATC-ASR 110M', subtitle: 'Our speech model, fine-tuned from NVIDIA Parakeet TDT 110M (CC-BY-4.0) · CC BY-NC-SA 4.0', icon: 'radio' },
   { title: 'Moonshine, Parakeet, Paradee', subtitle: 'Speech models · MIT / CC-BY-4.0 / Apache-2.0', icon: 'radio' },
   { title: 'DM Sans', subtitle: 'Colophon Foundry · SIL Open Font License', href: 'https://fonts.google.com/specimen/DM+Sans', icon: 'info' },
   { title: 'Lucide', subtitle: 'Line icons · ISC', href: 'https://lucide.dev', icon: 'sparkles' },
